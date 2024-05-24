@@ -7,6 +7,7 @@ val slf4jVersion: String by project
 plugins {
     kotlin("jvm") version "1.9.23"
     jacoco
+    id("org.sonarqube") version "3.5.0.2730"
 }
 
 group = "es.wokis"
@@ -44,7 +45,7 @@ jacoco {
 
 tasks.jacocoTestReport {
     reports {
-        xml.required = false
+        xml.required = true
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
     }
