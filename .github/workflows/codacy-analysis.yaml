@@ -1,6 +1,7 @@
 name: Codacy Analysis CLI
 
-on: ["commit", "push"]
+on: 
+  push
 
 jobs:
   codacy-analysis-cli:
