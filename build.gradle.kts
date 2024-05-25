@@ -25,7 +25,6 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("junit:junit:$junitVersion")
     testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
 }
 
