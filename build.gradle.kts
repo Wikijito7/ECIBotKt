@@ -9,17 +9,19 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
-    maven("https://oss.sonatype.org/content/repositories/snapshots")
 }
 
 dependencies {
     implementation(libs.kord.core)
     implementation(libs.kord.voice)
     implementation(libs.ktor.client.core)
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.core)
+    implementation(libs.slf4j.simple)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
-    testImplementation(libs.slf4j.simple)
+    testImplementation(libs.kotlin.coroutines.test)
 }
 
 tasks.test {
