@@ -51,8 +51,10 @@ tasks.jacocoTestReport {
 
 sonar {
     properties {
-        property("sonar.projectKey", "Wikijito7_ECIBotKt")
-        property("sonar.organization", "wokis")
+        val projectKey = System.getenv("SONAR_PROJECT_KEY")
+        val organization = System.getenv("SONAR_ORGANIZATION")
+        property("sonar.projectKey", projectKey)
+        property("sonar.organization", organization)
         property("sonar.host.url", "https://sonarcloud.io")
     }
 }
