@@ -1,8 +1,6 @@
 import es.wokis.example.Example
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ExampleTest {
@@ -20,20 +18,24 @@ class ExampleTest {
     @Test
     fun `Given name When getCoolName is called Then return cool name`() {
         // Given
-        val example = mockk<Example>()
         val name = "Pepe"
-        val result = "Pepo"
-        every { example.name } returns name
-        every { example.getCoolName() } returns result
+        val example = Example(name)
+        val expected = "Pepe :sunglasses:"
 
         // When
         val actual = example.getCoolName()
 
-        // Then
-        verify(exactly = 1) {
-            example.getCoolName()
-        }
+        assertEquals(actual, expected)
+    }
 
-        assertEquals(actual, result)
+    @Test
+    fun `Given name When name is called Then return name`() {
+        // Given
+        val example = Example()
+
+        // When
+        val actual = example.name
+
+        assertTrue(actual.isEmpty())
     }
 }
