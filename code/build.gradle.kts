@@ -7,7 +7,7 @@ val slf4jVersion: String by project
 plugins {
     kotlin("jvm") version "1.9.23"
     jacoco
-    id("org.sonarqube") version "3.5.0.2730"
+    id("org.sonarqube") version "5.0.0.4638"
 }
 
 group = "es.wokis"
@@ -34,20 +34,29 @@ tasks.test {
     finalizedBy(tasks.jacocoTestReport) // report is always generated after tests run
 }
 
-tasks.jacocoTestReport {
-    dependsOn(tasks.test) // tests are required to run before generating the report
-}
-
 jacoco {
     toolVersion = "0.8.11"
     reportsDirectory = layout.buildDirectory.dir("customJacocoReportDir")
 }
 
 tasks.jacocoTestReport {
+    dependsOn(tasks.test) // tests are required to run before generating the report
     reports {
         xml.required = true
+        xml.outputLocation.set(file("build/reports/jacoco/test-results/jacocoTestReport.xml"))
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
+    }
+}
+
+sonar {
+    properties {
+        property("sonar.java.source", "1.8")
+        property("sonar.java.coveragePlugin", "jacoco")
+        property("sonar.jacoco.reportPaths", "build/reports/jacoco/test-results/jacocoTestReport.xml")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.organization", "wokis")
+        property("sonar.projectKey", "Wikijito7_ECIBotKt")
     }
 }
 
