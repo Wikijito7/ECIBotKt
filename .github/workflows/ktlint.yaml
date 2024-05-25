@@ -1,4 +1,4 @@
-name: reviewdog
+name: ktlint
 on: [pull_request]
 jobs:
   ktlint:
