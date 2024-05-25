@@ -7,7 +7,7 @@ val slf4jVersion: String by project
 plugins {
     kotlin("jvm") version "1.9.23"
     jacoco
-    id("org.sonarqube") version "5.0.0.4638"
+    id("org.sonarqube") version "4.4.1.3373"
 }
 
 group = "es.wokis"
@@ -52,12 +52,9 @@ tasks.jacocoTestReport {
 
 sonar {
     properties {
-        property("sonar.java.source", "1.8")
-        property("sonar.java.coveragePlugin", "jacoco")
-        property("sonar.jacoco.reportPaths", "build/reports/jacoco/test-results/jacocoTestReport.xml")
-        property("sonar.host.url", "https://sonarcloud.io")
-        property("sonar.organization", "wokis")
         property("sonar.projectKey", "Wikijito7_ECIBotKt")
+        property("sonar.organization", "wokis")
+        property("sonar.host.url", "https://sonarcloud.io")
     }
 }
 
