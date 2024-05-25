@@ -1,29 +1,22 @@
----
-name: Pull Request
-about: Create a new Pull Request
-title: "[issue1] [issue2] Your PR title"
-
----
-
 <!-- Change #issue with the issue it is related, if it applies -->
 Solves #issue1, #issue2, #issuen.
 
-## Changelist Summary
+## 📋 Changelist Summary
 Small description of this PR.
 
-## Description
+## 💬 Description
 A longer description of this PR.
 
 <!-- If this PR is not solving a bug, then remove this section -->
 <!-- These steps are important in order to verify it has been solved -->
-## Steps to reproduce bug
+## 🐞 Steps to reproduce bug
 Steps to reproduce the behavior:
 1. Go to '...'
 2. Click on '....'
 3. Scroll down to '....'
 4. See error
 
-## Media
+## 📷 Media
 Add media if applies.
 
 <!-- Uncomment this table if you want to compare Before and After
@@ -33,5 +26,5 @@ Add media if applies.
 -->
 
 
-## Extra info
+## ℹ️ Extra info
 Extra information of this PR, if any.
