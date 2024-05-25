@@ -47,6 +47,7 @@ tasks.jacocoTestReport {
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
     }
+    finalizedBy(tasks.sonar)
 }
 
 sonar {
