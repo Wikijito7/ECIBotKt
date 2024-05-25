@@ -1,13 +1,7 @@
-val kordVersion: String by project
-val ktorVersion: String by project
-val mockkVersion: String by project
-val junitVersion: String by project
-val slf4jVersion: String by project
-
 plugins {
-    kotlin("jvm") version "1.9.23"
+    alias(libs.plugins.kotlin.jvm)
     jacoco
-    id("org.sonarqube") version "4.4.1.3373"
+    alias(libs.plugins.sonarqube)
 }
 
 group = "es.wokis"
@@ -19,13 +13,13 @@ repositories {
 }
 
 dependencies {
-    implementation("dev.kord:kord-core:$kordVersion")
-    implementation("dev.kord:kord-voice:$kordVersion")
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation(libs.kord.core)
+    implementation(libs.kord.voice)
+    implementation(libs.ktor.client.core)
 
-    testImplementation(kotlin("test"))
-    testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.mockk)
+    testImplementation(libs.slf4j.simple)
 }
 
 tasks.test {
@@ -34,7 +28,7 @@ tasks.test {
 }
 
 jacoco {
-    toolVersion = "0.8.11"
+    toolVersion = libs.versions.jacoco.get()
     reportsDirectory = layout.buildDirectory.dir("customJacocoReportDir")
 }
 
