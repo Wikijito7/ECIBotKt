@@ -36,7 +36,7 @@ fun getPresence(debugMode: Boolean) = DiscordPresence(
     status = PresenceStatus.Online,
     afk = debugMode,
     game = DiscordBotActivity(
-        name = if (debugMode)  "~debug mode on" else "~bip-bop",
+        name = if (debugMode) "~debug mode on" else "~bip-bop",
         type = ActivityType.Game
     )
 )
