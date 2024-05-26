@@ -11,7 +11,6 @@ import dev.kord.gateway.DiscordPresence
 import dev.kord.gateway.Intents
 import dev.kord.gateway.PrivilegedIntent
 
-
 @OptIn(PrivilegedIntent::class)
 suspend fun main() {
     val debugMode = false // TODO: Read debug mode from data file
