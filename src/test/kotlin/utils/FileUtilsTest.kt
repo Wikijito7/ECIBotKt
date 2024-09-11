@@ -3,7 +3,6 @@ package utils
 import es.wokis.utils.getOrCreateFile
 import es.wokis.utils.updateFile
 import kotlinx.serialization.json.Json
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.io.File
