@@ -20,6 +20,11 @@ fun getOrCreateFile(parent: String, fileName: String, template: InputStream? = n
     return file
 }
 
+/**
+ * Serializes and writes given value inside given File
+ *
+ * Note: Serialization is made inside this function, you don't need to serialize it before writing
+ */
 inline fun <reified T> File.updateFile(value: T) {
     writer().apply {
         write(Json.encodeToString(value))
