@@ -11,14 +11,16 @@ import kotlin.test.assertTrue
 
 private const val MOCKED_PATH = "./data-test/"
 private const val MOCKED_FILE_NAME = "test.json"
-private val CONFIG_TEMPLATE = {}::class.java.getResourceAsStream("config-test.json")
 
 class FileUtilsTest {
 
     @Test
     fun `Given file path When getOrCreate is called Then return file`() {
+        // Given
+        val configTemplate = {}::class.java.getResourceAsStream("/template/config_template.json")
+
         // When
-        val file = getOrCreateFile(MOCKED_PATH, MOCKED_FILE_NAME, CONFIG_TEMPLATE)
+        val file = getOrCreateFile(MOCKED_PATH, MOCKED_FILE_NAME, configTemplate)
 
         // Then
         assertTrue(file.readLines().isNotEmpty())
@@ -27,14 +29,15 @@ class FileUtilsTest {
     @Test
     fun `Given file When updateFile is called Then update file`() {
         // Given
-        val file = getOrCreateFile(MOCKED_PATH, MOCKED_FILE_NAME, CONFIG_TEMPLATE)
+        val configTemplate = {}::class.java.getResourceAsStream("/template/config_template.json")
+        val file = getOrCreateFile(MOCKED_PATH, MOCKED_FILE_NAME, configTemplate)
         val newData = mapOf("pepe" to "popo")
 
         // When
         file.updateFile(newData)
 
         // Then
-        val newFile = getOrCreateFile(MOCKED_PATH, MOCKED_FILE_NAME, CONFIG_TEMPLATE)
+        val newFile = getOrCreateFile(MOCKED_PATH, MOCKED_FILE_NAME, configTemplate)
         val newDataFromFile =
             Json.decodeFromString<Map<String, String>>(newFile.readLines().joinToString(separator = "") { it.trim() })
         assertEquals(newDataFromFile.size, newData.size)
