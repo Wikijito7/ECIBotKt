@@ -53,8 +53,9 @@ sonar {
         val exclusions = listOf(
             "*BO.kt",
             "*DTO.kt",
-            "Main.kt",
-            "*.kts"
+            "src/main/kotlin/Main.kt",
+            "*.kts",
+            "**/di/*.kt"
         )
         property("sonar.projectKey", projectKey)
         property("sonar.organization", organization)
