@@ -4,6 +4,7 @@ import es.wokis.utils.getOrCreateFile
 import es.wokis.utils.updateFile
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.test.assertEquals
@@ -13,6 +14,20 @@ private const val MOCKED_PATH = "./data-test/"
 private const val MOCKED_FILE_NAME = "test.json"
 
 class FileUtilsTest {
+
+    @AfterEach
+    fun tearDown() {
+        File(MOCKED_PATH).deleteRecursively()
+    }
+
+    @Test
+    fun `Given file path When getOrCreate is called without template Then return file`() {
+        // When
+        val file = getOrCreateFile(MOCKED_PATH, MOCKED_FILE_NAME)
+
+        // Then
+        assertTrue(file.readLines().isEmpty())
+    }
 
     @Test
     fun `Given file path When getOrCreate is called Then return file`() {
@@ -42,13 +57,5 @@ class FileUtilsTest {
             Json.decodeFromString<Map<String, String>>(newFile.readLines().joinToString(separator = "") { it.trim() })
         assertEquals(newDataFromFile.size, newData.size)
         assertEquals(newData.entries, newDataFromFile.entries)
-    }
-
-    companion object {
-        @JvmStatic
-        @AfterAll
-        fun tearDown() {
-            File(MOCKED_PATH).deleteRecursively()
-        }
     }
 }
