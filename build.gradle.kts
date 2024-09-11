@@ -51,8 +51,9 @@ sonar {
         val projectKey = System.getenv("SONAR_PROJECT_KEY")
         val organization = System.getenv("SONAR_ORGANIZATION")
         val exclusions = listOf(
-            "*BO.kt",
-            "*DTO.kt",
+            "**/*BO.kt",
+            "**/*DTO.kt",
+            "**/*Exception.kt",
             "src/main/kotlin/Main.kt",
             "*.kts",
             "**/di/*.kt"
