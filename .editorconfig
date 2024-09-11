@@ -2,5 +2,6 @@
 ktlint_experimental = disabled
 ktlint_code_style = intellij_idea
 ktlint_standard_trailing-comma-on-call-site = disabled
+ktlint_standard_trailing-comma-on-declaration-site = disabled
 ktlint_standard_function-signature = disabled
 ktlint_standard_multiline-expression-wrapping = disabled

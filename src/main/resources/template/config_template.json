@@ -1,0 +1,15 @@
+{
+  "key": "your-discord-key",
+  "openai_key": "your-openai-key",
+  "debug": false,
+  "database": {
+    "enabled": false,
+    "username": "db_username",
+    "password": "db_password",
+    "database": "db_database"
+  },
+  "hugging_chat": {
+    "user": "hugging_chat_user_key",
+    "password": "hugging_chat_password_key"
+  }
+}

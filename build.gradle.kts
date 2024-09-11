@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     jacoco
     alias(libs.plugins.sonarqube)
+    alias(libs.plugins.plugin.serialization)
 }
 
 group = "es.wokis"
@@ -18,6 +19,7 @@ dependencies {
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)
     implementation(libs.slf4j.simple)
+    implementation(libs.kotlinx.serialization)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
@@ -42,16 +44,24 @@ tasks.jacocoTestReport {
         csv.required = false
         html.outputLocation = layout.buildDirectory.dir("jacocoHtml")
     }
-    finalizedBy(tasks.sonar)
 }
 
 sonar {
     properties {
         val projectKey = System.getenv("SONAR_PROJECT_KEY")
         val organization = System.getenv("SONAR_ORGANIZATION")
+        val exclusions = listOf(
+            "**/*BO.kt",
+            "**/*DTO.kt",
+            "**/*Exception.kt",
+            "src/main/kotlin/Main.kt",
+            "*.kts",
+            "**/di/*.kt"
+        )
         property("sonar.projectKey", projectKey)
         property("sonar.organization", organization)
         property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.coverage.exclusions", exclusions)
     }
 }
 
