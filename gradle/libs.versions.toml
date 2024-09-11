@@ -1,13 +1,14 @@
 [versions]
 jacoco = "0.8.11"
 kord = "0.14.0"
-kotlin = "2.0.0"
+kotlin = "2.0.20"
 ktor = "2.3.11"
 mockk = "1.13.11"
 slf4j = "2.0.13"
 sonarqube = "4.4.1.3373"
 kotlin-coroutines-test = "1.8.1"
 koin = "3.5.6"
+serialization = "1.7.2"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -19,7 +20,9 @@ slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref="kotlin-coroutines-test" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
 koin-core = { module = "io.insert-koin:koin-core" }
+kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
