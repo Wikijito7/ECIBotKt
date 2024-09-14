@@ -1,12 +1,8 @@
 package es.wokis.servivces.processor
 
 import dev.kord.common.entity.Snowflake
-import dev.kord.core.behavior.edit
-import dev.kord.core.cache.data.EmojiData
-import dev.kord.core.entity.GuildEmoji
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.ReactionEmoji
-import dev.kord.gateway.Intent
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.utils.asRegex
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -131,5 +127,4 @@ class MessageProcessorService(
     private fun coroutineExceptionHandler(): CoroutineContext = CoroutineExceptionHandler { _, throwable ->
         Logger.getLogger("ecibotkt").log(Level.SEVERE, "There's been an error on MessageProcessorService.", throwable)
     }
-
 }
