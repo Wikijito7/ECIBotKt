@@ -53,7 +53,7 @@ to create the roadmap of the bot.
 - /queue: Shows current queue.
 - /tts <prompt>: Generates a tts sound with the given message.
 - /ask <prompt>: Sends the prompt to OpenAI's API and generate a tts sound with the answer given.
-- /search <local/youtube/youtubemusic/soundcloud> <prompt>: Searches local sounds that contains that prompt or searches it in the specified service and plays the first result. In the case of YouTube Music you can use hashtags to specify the type of content.
+- /search <local/youtube/youtubemusic/soundcloud> <prompt>: Searches local sounds that contains that prompt or searches it in the specified services and plays the first result. In the case of YouTube Music you can use hashtags to specify the type of content.
 - /dalle <prompt>: Generates 9 images in a 3 by 3 array by sending the given prompt to Dall-e mini API. It may take up to a minute to get the images from the API.
 - /confetti <number>: 🎉 Plays the specified number of random Confetti songs.
 - /mix <youtube/youtubemusic/soundcloud> <search query or url>: Plays a mix generated from the given search or url.
@@ -107,11 +107,11 @@ Mantain support on the context menu command (right click a message) in order to 
 
 ### search
 
-Searches local sounds that contains that prompt or searches it in the specified service and plays the first result. In the case of YouTube Music you can use hashtags to specify the type of content.
+Searches local sounds that contains that prompt or searches it in the specified services and plays the first result. In the case of YouTube Music you can use hashtags to specify the type of content.
 
-Mantain support on the context menu command (right click a message) in order to search given url on given service.
+Mantain support on the context menu command (right click a message) in order to search given url on given services.
 
-Maybe, we could add extra functionality in order to give options when being searched on a service (Youtube, Youtube Music, SoundCloud, Spotify?).
+Maybe, we could add extra functionality in order to give options when being searched on a services (Youtube, Youtube Music, SoundCloud, Spotify?).
 
 ### dalle
 

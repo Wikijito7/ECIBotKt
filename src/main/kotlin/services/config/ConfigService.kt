@@ -1,4 +1,4 @@
-package es.wokis.servivces.config
+package es.wokis.services.config
 
 import es.wokis.exceptions.DiscordKeyIsNullException
 import es.wokis.utils.getOrCreateFile

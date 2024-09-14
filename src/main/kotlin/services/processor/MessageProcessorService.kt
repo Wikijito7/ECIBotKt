@@ -1,4 +1,4 @@
-package es.wokis.servivces.processor
+package es.wokis.services.processor
 
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.entity.Message
@@ -13,10 +13,10 @@ import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.coroutines.CoroutineContext
 
-private const val FIXED_UP_TWITTER_URL = "https://fixupx"
-private const val FIXED_UP_INSTAGRAM_URL = "https://ddinstagram"
-private const val FIXED_UP_REDDIT_URL = "https://rxddit"
-private const val FIXED_UP_TIKTOK_URL = "https://tnktok"
+private const val FIXED_UP_TWITTER_URL = "https://fixupx.com"
+private const val FIXED_UP_INSTAGRAM_URL = "https://ddinstagram.com"
+private const val FIXED_UP_REDDIT_URL = "https://rxddit.com"
+private const val FIXED_UP_TIKTOK_URL = "https://tnktok.com"
 
 private const val ISAAC_ID = 378213328570417154
 private const val FRAN_ID = 651163679814844467
@@ -57,9 +57,9 @@ class MessageProcessorService(
                 message.author?.id == Snowflake(ISAAC_ID) -> listOf("🍆")
                 message.author?.id == Snowflake(FRAN_ID) -> listOf("😢")
                 message.author?.id == Snowflake(GUTI_ID) -> listOf("😭")
-                message.content.contains(FRANCE) -> listOf("🇫🇷", "🥖", "🥐", "🍷")
-                message.content.contains(SPAIN) -> listOf("🆙", "🇪🇸", "❤️‍🔥", "💃", "🥘", "🏖️", "🛌", "🇪🇦")
-                message.content.contains(MEXICO) -> listOf("🇲🇽", "🌯", "🌮", "🫔")
+                message.content.contains(FRANCE, ignoreCase = true) -> listOf("🇫🇷", "🥖", "🥐", "🍷")
+                message.content.contains(SPAIN, ignoreCase = true) -> listOf("🆙", "🇪🇸", "❤️‍🔥", "💃", "🥘", "🏖️", "🛌", "🇪🇦")
+                message.content.contains(MEXICO, ignoreCase = true) -> listOf("🇲🇽", "🌯", "🌮", "🫔")
                 else -> emptyList()
             }
             reactions.takeUnless { it.isEmpty() }?.let {

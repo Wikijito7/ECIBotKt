@@ -5,8 +5,8 @@ import dev.kord.common.entity.DiscordBotActivity
 import dev.kord.common.entity.PresenceStatus
 import dev.kord.gateway.DiscordPresence
 import es.wokis.bot.Bot
-import es.wokis.servivces.config.ConfigService
-import es.wokis.servivces.processor.MessageProcessorService
+import es.wokis.services.config.ConfigService
+import es.wokis.services.processor.MessageProcessorService
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

@@ -1,8 +1,8 @@
-package helper
+package services.config
 
-import es.wokis.servivces.config.ConfigService
-import es.wokis.servivces.config.discordToken
-import es.wokis.servivces.config.isDebugMode
+import es.wokis.services.config.ConfigService
+import es.wokis.services.config.discordToken
+import es.wokis.services.config.isDebugMode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test

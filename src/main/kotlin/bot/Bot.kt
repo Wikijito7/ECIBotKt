@@ -11,10 +11,10 @@ import dev.kord.gateway.ALL
 import dev.kord.gateway.DiscordPresence
 import dev.kord.gateway.Intents
 import dev.kord.gateway.PrivilegedIntent
-import es.wokis.servivces.config.ConfigService
-import es.wokis.servivces.config.discordToken
-import es.wokis.servivces.config.isDebugMode
-import es.wokis.servivces.processor.MessageProcessorService
+import es.wokis.services.config.ConfigService
+import es.wokis.services.config.discordToken
+import es.wokis.services.config.isDebugMode
+import es.wokis.services.processor.MessageProcessorService
 import org.koin.core.component.KoinComponent
 
 @OptIn(PrivilegedIntent::class)
