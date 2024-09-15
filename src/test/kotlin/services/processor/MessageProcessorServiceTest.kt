@@ -18,9 +18,9 @@ class MessageProcessorServiceTest {
     private val messageProcessor = MessageProcessorService(dispatchers)
 
     @Test
-    fun `Given message with twitter url When processMessage is called Then process message`() {
+    fun `Given message with twitter status url When processMessage is called Then process message`() {
         // Given
-        val originalMessage = "https://twitter.com/blablabla"
+        val originalMessage = "https://twitter.com/status/blablabla"
         val authorId = Snowflake(123123)
         val authorMention = "manolete"
         val message: Message = mockk {
@@ -28,7 +28,7 @@ class MessageProcessorServiceTest {
             every { author?.id } returns authorId
             every { author?.mention } returns authorMention
         }
-        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://fixupx.com/blablabla"
+        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://fixupx.com/status/blablabla"
 
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
@@ -40,6 +40,31 @@ class MessageProcessorServiceTest {
         coVerify(exactly = 1) {
             message.delete()
             message.channel.createMessage(editedMessage)
+        }
+    }
+
+    @Test
+    fun `Given message with regular twitter url When processMessage is called Then don't process message`() {
+        // Given
+        val originalMessage = "https://twitter.com/blablabla"
+        val authorId = Snowflake(123123)
+        val authorMention = "manolete"
+        val message: Message = mockk {
+            every { content } returns originalMessage
+            every { author?.id } returns authorId
+            every { author?.mention } returns authorMention
+        }
+
+        coJustRun { message.delete() }
+        coJustRun { message.channel.createMessage(any()) }
+
+        // When
+        messageProcessor.processMessage(message)
+
+        // Then
+        coVerify(exactly = 0) {
+            message.delete()
+            message.channel.createMessage(any())
         }
     }
 
@@ -70,9 +95,9 @@ class MessageProcessorServiceTest {
     }
 
     @Test
-    fun `Given message with instagram url When processMessage is called Then process message`() {
+    fun `Given message with instagram picture url When processMessage is called Then process message`() {
         // Given
-        val originalMessage = "https://instagram.com/blablabla"
+        val originalMessage = "https://instagram.com/p/blablabla"
         val authorId = Snowflake(123123)
         val authorMention = "manolete"
         val message: Message = mockk {
@@ -80,7 +105,7 @@ class MessageProcessorServiceTest {
             every { author?.id } returns authorId
             every { author?.mention } returns authorMention
         }
-        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://ddinstagram.com/blablabla"
+        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://ddinstagram.com/p/blablabla"
 
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
@@ -96,6 +121,31 @@ class MessageProcessorServiceTest {
     }
 
     @Test
+    fun `Given message with regular instagram url When processMessage is called Then don't process message`() {
+        // Given
+        val originalMessage = "https://instagram.com/blablabla"
+        val authorId = Snowflake(123123)
+        val authorMention = "manolete"
+        val message: Message = mockk {
+            every { content } returns originalMessage
+            every { author?.id } returns authorId
+            every { author?.mention } returns authorMention
+        }
+
+        coJustRun { message.delete() }
+        coJustRun { message.channel.createMessage(any()) }
+
+        // When
+        messageProcessor.processMessage(message)
+
+        // Then
+        coVerify(exactly = 0) {
+            message.delete()
+            message.channel.createMessage(any())
+        }
+    }
+
+    @Test
     fun `Given message with tiktok url When processMessage is called Then process message`() {
         // Given
         val originalMessage = "https://tiktok.com/blablabla"
@@ -106,7 +156,33 @@ class MessageProcessorServiceTest {
             every { author?.id } returns authorId
             every { author?.mention } returns authorMention
         }
-        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://tnktok.com/blablabla"
+        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://vxtiktok.com/blablabla"
+
+        coJustRun { message.delete() }
+        coJustRun { message.channel.createMessage(any()) }
+
+        // When
+        messageProcessor.processMessage(message)
+
+        // Then
+        coVerify(exactly = 1) {
+            message.delete()
+            message.channel.createMessage(editedMessage)
+        }
+    }
+
+    @Test
+    fun `Given message with vm tiktok url When processMessage is called Then process message`() {
+        // Given
+        val originalMessage = "https://vm.tiktok.com/blablabla"
+        val authorId = Snowflake(123123)
+        val authorMention = "manolete"
+        val message: Message = mockk {
+            every { content } returns originalMessage
+            every { author?.id } returns authorId
+            every { author?.mention } returns authorMention
+        }
+        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://vm.vxtiktok.com/blablabla"
 
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
