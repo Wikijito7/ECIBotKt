@@ -4,19 +4,24 @@ import dev.kord.common.entity.ActivityType
 import dev.kord.common.entity.DiscordBotActivity
 import dev.kord.common.entity.PresenceStatus
 import dev.kord.core.Kord
+import dev.kord.core.entity.Message
 import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.on
 import dev.kord.gateway.ALL
 import dev.kord.gateway.DiscordPresence
 import dev.kord.gateway.Intents
 import dev.kord.gateway.PrivilegedIntent
-import es.wokis.helper.ConfigHelper
-import es.wokis.helper.discordToken
-import es.wokis.helper.isDebugMode
+import es.wokis.services.config.ConfigService
+import es.wokis.services.config.discordToken
+import es.wokis.services.config.isDebugMode
+import es.wokis.services.processor.MessageProcessorService
 import org.koin.core.component.KoinComponent
 
 @OptIn(PrivilegedIntent::class)
-class Bot(private val config: ConfigHelper) : KoinComponent {
+class Bot(
+    private val config: ConfigService,
+    private val messageProcessor: MessageProcessorService
+) : KoinComponent {
 
     suspend fun start() {
         val debugMode = config.isDebugMode
@@ -29,12 +34,13 @@ class Bot(private val config: ConfigHelper) : KoinComponent {
 
         bot.on<MessageCreateEvent> {
             if (message.author?.isBot != false) return@on
-            processMessages(message.data.content)
+            processMessages(message)
         }
     }
 
-    fun processMessages(content: String) {
-        // TODO: Implement processors
+    fun processMessages(message: Message) {
+        messageProcessor.processReactions(message)
+        messageProcessor.processMessage(message)
     }
 
     fun getPresence(debugMode: Boolean) = DiscordPresence(

@@ -1,21 +1,21 @@
-package helper
+package services.config
 
-import es.wokis.helper.ConfigHelper
-import es.wokis.helper.discordToken
-import es.wokis.helper.isDebugMode
+import es.wokis.services.config.ConfigService
+import es.wokis.services.config.discordToken
+import es.wokis.services.config.isDebugMode
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
-class ConfigHelperTest {
+class ConfigServiceTest {
 
-    private val configHelper = ConfigHelper()
+    private val configService = ConfigService()
 
     @Test
     fun `Given fresh config helper When getAllConfig is called Then return a map with default values`() {
         // When
-        val actual = configHelper.config
+        val actual = configService.config
 
         // Then
         assertFalse(actual.debug)
@@ -25,20 +25,20 @@ class ConfigHelperTest {
     @Test
     fun `Given config helper When isDebugMode is called Then return false`() {
         // When
-        val actual = configHelper.isDebugMode
+        val actual = configService.isDebugMode
 
         // Then
         assertFalse(actual)
-        assertEquals(configHelper.config.debug, configHelper.isDebugMode)
+        assertEquals(configService.config.debug, configService.isDebugMode)
     }
 
     @Test
     fun `Given config helper When discordToken is called Then return false`() {
         // When
-        val actual = configHelper.discordToken
+        val actual = configService.discordToken
 
         // Then
         assertTrue(actual.isNotEmpty())
-        assertEquals(configHelper.config.key, configHelper.discordToken)
+        assertEquals(configService.config.key, configService.discordToken)
     }
 }

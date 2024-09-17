@@ -1,6 +1,6 @@
 package es.wokis
 
-import di.fileModule
+import di.servicesModule
 import es.wokis.bot.Bot
 import es.wokis.di.botModule
 import org.koin.core.context.startKoin
@@ -15,6 +15,6 @@ suspend fun main() {
 
 fun initKoin() {
     startKoin {
-        modules(botModule, fileModule)
+        modules(botModule, servicesModule)
     }
 }

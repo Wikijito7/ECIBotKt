@@ -1,4 +1,4 @@
-package es.wokis.helper
+package es.wokis.services.config
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

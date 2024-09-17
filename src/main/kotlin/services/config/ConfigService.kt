@@ -1,4 +1,4 @@
-package es.wokis.helper
+package es.wokis.services.config
 
 import es.wokis.exceptions.DiscordKeyIsNullException
 import es.wokis.utils.getOrCreateFile
@@ -8,7 +8,7 @@ private const val CONFIG_PATH = "./data/"
 private const val FILE_NAME = "config.json"
 private val CONFIG_TEMPLATE = {}::class.java.getResourceAsStream("/template/config_template.json")
 
-class ConfigHelper {
+class ConfigService {
 
     val config: Config = startUpConfig()
 
@@ -19,8 +19,8 @@ class ConfigHelper {
     }
 }
 
-val ConfigHelper.isDebugMode: Boolean
+val ConfigService.isDebugMode: Boolean
     get() = config.debug
 
-val ConfigHelper.discordToken: String
+val ConfigService.discordToken: String
     get() = config.key.takeIf { it.isNotEmpty() } ?: throw DiscordKeyIsNullException
