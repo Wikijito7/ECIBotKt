@@ -19,6 +19,9 @@ class TrackScheduler(
 
     fun queue(track: AudioTrack) {
         queue.add(track)
+        if (player.isPaused) {
+            nextTrack()
+        }
     }
 
     private fun nextTrack() {

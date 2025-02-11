@@ -20,8 +20,8 @@ class GuildLavaPlayerService(
     private val textChannelId: Snowflake,
     private val onNoMatches: suspend (Snowflake) -> Unit,
     private val onLoadFailed: suspend (Snowflake, FriendlyException) -> Unit,
-    private val onTrackLoaded: suspend (Snowflake, String) -> Unit,
-    private val voiceChannelId: Snowflake?,
+    private val onTrackLoaded: suspend (Snowflake, Snowflake, String) -> Unit,
+    private val voiceChannelId: Snowflake,
 ) {
     private val player: AudioPlayer
     private val trackScheduler: TrackScheduler
@@ -43,7 +43,7 @@ class GuildLavaPlayerService(
                 override fun trackLoaded(track: AudioTrack) {
                     trackScheduler.queue(track)
                     coroutineScope.launch {
-                        onTrackLoaded(textChannelId, track.info.title)
+                        onTrackLoaded(textChannelId, voiceChannelId, track.info.title)
                     }
                 }
 
@@ -51,7 +51,7 @@ class GuildLavaPlayerService(
                     playlist.tracks.forEach { track ->
                         trackScheduler.queue(track)
                         coroutineScope.launch {
-                            onTrackLoaded(textChannelId, track.info.title)
+                            onTrackLoaded(textChannelId, voiceChannelId, track.info.title)
                         }
                     }
                 }

@@ -17,6 +17,7 @@ repositories {
 dependencies {
     implementation(libs.kord.core)
     implementation(libs.kord.voice)
+    implementation(libs.kord.core.voice)
     implementation(libs.ktor.client.core)
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)

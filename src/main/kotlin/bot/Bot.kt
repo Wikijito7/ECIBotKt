@@ -1,13 +1,16 @@
 package es.wokis.bot
 
+import dev.kord.common.annotation.KordVoice
 import dev.kord.common.entity.ActivityType
 import dev.kord.common.entity.DiscordBotActivity
 import dev.kord.common.entity.PresenceStatus
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.asChannelOfOrNull
+import dev.kord.core.behavior.channel.connect
 import dev.kord.core.behavior.interaction.respondPublic
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.MessageChannel
+import dev.kord.core.entity.channel.VoiceChannel
 import dev.kord.core.entity.interaction.GlobalChatInputCommandInteraction
 import dev.kord.core.event.gateway.ReadyEvent
 import dev.kord.core.event.interaction.ChatInputCommandInteractionCreateEvent
@@ -24,6 +27,7 @@ import es.wokis.services.config.discordToken
 import es.wokis.services.config.isDebugMode
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.processor.MessageProcessorService
+import es.wokis.utils.getVoiceChannelId
 import org.koin.core.component.KoinComponent
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -35,6 +39,7 @@ class Bot(
     private val appDispatchers: AppDispatchers
 ) : KoinComponent {
 
+    @OptIn(KordVoice::class)
     suspend fun start() {
         val debugMode = config.isDebugMode
         val bot = Kord(token = config.discordToken)
@@ -60,16 +65,21 @@ class Bot(
             }
         }
 
+        bot.createGlobalApplicationCommands {
+            input(name = "test", description = "test test")
+
+            input(name = "test test", description = "sadasdsad") {
+                string(name = "pepe", description = "popopo") {
+                    required = false
+                }
+            }
+        }
+
         // TODO: Create logic to add GuildService to a map of guilds and queue the sounds
         bot.on<ChatInputCommandInteractionCreateEvent> {
             val interaction = interaction as GlobalChatInputCommandInteraction
-            val voiceChannelId = interaction.data.guildId.value?.let { guildId ->
-                bot.getGuildOrNull(guildId)?.let { guild ->
-                    guild.getMemberOrNull(interaction.user.id)?.let { member ->
-                        member.getVoiceStateOrNull()?.channelId
-                    }
-                }
-            } ?: interaction.respondPublic { content = "You need to be in a voice channel" }.let { return@on }
+            val voiceChannelId = interaction.getVoiceChannelId(bot)
+                ?: interaction.respondPublic { content = "You need to be in a voice channel" }.let { return@on }
             GuildLavaPlayerService(
                 appDispatchers = appDispatchers,
                 textChannelId = interaction.channelId,
@@ -80,7 +90,9 @@ class Bot(
                 onLoadFailed = { channelId, exception ->
                     bot.getChannel(channelId)?.asChannelOfOrNull<MessageChannel>()?.createMessage("Load failed: ${exception.message}")
                 },
-                onTrackLoaded = { channelId, title ->
+                onTrackLoaded = { channelId, voiceId, title ->
+                    bot.getChannel(voiceId)?.asChannelOfOrNull<VoiceChannel>()?.connect {
+                    }
                     bot.getChannel(channelId)?.asChannelOfOrNull<MessageChannel>()?.createMessage("Now playing: $title")
                 }
             )
@@ -93,8 +105,8 @@ class Bot(
     }
 
     fun getPresence(debugMode: Boolean) = DiscordPresence(
-        status = PresenceStatus.Online,
-        afk = debugMode,
+        status = if (debugMode) PresenceStatus.Idle else PresenceStatus.Online,
+        afk = false,
         game = DiscordBotActivity(
             name = if (debugMode) "~debug mode on" else "~bip-bop",
             type = ActivityType.Game
