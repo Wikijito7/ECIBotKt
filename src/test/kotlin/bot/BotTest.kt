@@ -5,9 +5,11 @@ import dev.kord.common.entity.DiscordBotActivity
 import dev.kord.common.entity.PresenceStatus
 import dev.kord.gateway.DiscordPresence
 import es.wokis.bot.Bot
+import es.wokis.dispatchers.AppDispatchers
 import es.wokis.services.config.ConfigService
 import es.wokis.services.processor.MessageProcessorService
 import io.mockk.mockk
+import mock.MockedDispatchers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -15,8 +17,9 @@ class BotTest {
 
     private val config: ConfigService = mockk()
     private val messageProcessor: MessageProcessorService = mockk()
+    private val appDispatchers: AppDispatchers = MockedDispatchers()
 
-    private val bot = Bot(config, messageProcessor)
+    private val bot = Bot(config, messageProcessor, appDispatchers)
 
     @Test
     fun `Given debugMode on When getPresence() is called Then return debug mode presence`() {

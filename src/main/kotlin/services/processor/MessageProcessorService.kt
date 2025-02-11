@@ -5,14 +5,9 @@ import dev.kord.core.entity.Message
 import dev.kord.core.entity.ReactionEmoji
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.utils.asRegex
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
+import es.wokis.utils.createCoroutineScope
 import kotlinx.coroutines.launch
-import java.util.logging.Level
-import java.util.logging.Logger
 import java.util.regex.Pattern
-import kotlin.coroutines.CoroutineContext
 
 private const val FIXED_UP_TWITTER_URL = "https://fixupx.com/status/"
 private const val FIXED_UP_INSTAGRAM_URL = "https://ddinstagram.com"
@@ -27,10 +22,12 @@ private const val FRANCE = "francia"
 private const val SPAIN = "españa"
 private val MEXICO = Pattern.compile("m[eé]xico", Pattern.CASE_INSENSITIVE).toRegex()
 
+private const val TAG = "MessageProcessorService"
+
 class MessageProcessorService(
     private val appDispatchers: AppDispatchers
 ) {
-    private val coroutineScope = CoroutineScope(SupervisorJob() + appDispatchers.io + coroutineExceptionHandler())
+    private val coroutineScope = createCoroutineScope(TAG, appDispatchers)
     private val twitterLinks = listOf(
         "https://x.com/status/",
         "https://www.x.com/status/",
@@ -154,7 +151,5 @@ class MessageProcessorService(
     private fun getFixedUpMessage(author: String?, fixedMessage: String) =
         "Post enviado por $author con el enlace arreglado:\n$fixedMessage"
 
-    private fun coroutineExceptionHandler(): CoroutineContext = CoroutineExceptionHandler { _, throwable ->
-        Logger.getLogger("ecibotkt").log(Level.SEVERE, "There's been an error on MessageProcessorService.", throwable)
-    }
+
 }

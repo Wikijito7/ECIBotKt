@@ -11,7 +11,7 @@ version = "1.0-SNAPSHOT"
 repositories {
     maven(url = "https://maven.lavalink.dev/releases")
     mavenCentral()
-    maven (url = "https://jitpack.io")
+    maven(url = "https://jitpack.io")
 }
 
 dependencies {

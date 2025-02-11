@@ -11,9 +11,7 @@ import org.junit.jupiter.api.Test
 
 class MessageProcessorServiceTest {
 
-    private val dispatchers: AppDispatchers = mockk {
-        every { io } returns MockedDispatchers.io
-    }
+    private val dispatchers: AppDispatchers = MockedDispatchers()
 
     private val messageProcessor = MessageProcessorService(dispatchers)
 

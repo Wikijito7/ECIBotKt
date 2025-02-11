@@ -6,22 +6,22 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 
 class TrackScheduler(
-    private val player: AudioPlayer
+    private val player: AudioPlayer,
 ) : AudioEventAdapter() {
 
-
+    private val queue: MutableList<AudioTrack> = mutableListOf()
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
         if (endReason?.mayStartNext == true) {
-
+            nextTrack()
         }
     }
 
-    fun queue(track: String) {
-        
+    fun queue(track: AudioTrack) {
+        queue.add(track)
     }
 
     private fun nextTrack() {
-        player.startTrack()
+        player.startTrack(queue.removeAt(0), true)
     }
 }
