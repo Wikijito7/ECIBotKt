@@ -9,7 +9,9 @@ group = "es.wokis"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    maven(url = "https://maven.lavalink.dev/releases")
     mavenCentral()
+    maven (url = "https://jitpack.io")
 }
 
 dependencies {
@@ -20,6 +22,7 @@ dependencies {
     implementation(libs.koin.core)
     implementation(libs.slf4j.simple)
     implementation(libs.kotlinx.serialization)
+    implementation(libs.lavaplayer)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)

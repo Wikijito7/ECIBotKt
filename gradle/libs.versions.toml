@@ -9,11 +9,15 @@ sonarqube = "4.4.1.3373"
 kotlin-coroutines-test = "1.8.1"
 koin = "3.5.6"
 serialization = "1.7.2"
+lavaplayer = "2.2.2"
+lavaplayer-youtube = "1.8.1"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 kord-core = { module = "dev.kord:kord-core", version.ref = "kord" }
 kord-voice = { module = "dev.kord:kord-voice", version.ref = "kord" }
+lavaplayer = { module = "dev.arbjerg:lavaplayer", version.ref = "lavaplayer" }
+lavaplayer-youtube = { module = "dev.lavalink.youtube:v2", version.ref = "lavaplayer-youtube"}
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
