@@ -151,5 +151,4 @@ class MessageProcessorService(
     private fun getFixedUpMessage(author: String?, fixedMessage: String) =
         "Post enviado por $author con el enlace arreglado:\n$fixedMessage"
 
-
 }
