@@ -71,21 +71,20 @@ class GuildLavaPlayerService(
     }
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
+        if (queue.isEmpty()) {
+            setUpTimer()
+        }
         if (endReason?.mayStartNext == true && queue.isNotEmpty()) {
             resetTimer()
             nextTrack()
-        }
-        if (queue.isEmpty()) {
-            setUpTimer()
         }
     }
 
     @OptIn(KordVoice::class)
     private fun setUpTimer() {
         leaveTimer = Timer().apply {
-            Log.info("Scheduling leave delay")
             schedule(LEAVE_DELAY) {
-                Log.info("Executing leave procedure")
+                if (queue.isNotEmpty()) return@schedule
                 coroutineScope.launch {
                     voiceConnection?.leave()
                     voiceConnection = null
@@ -101,7 +100,7 @@ class GuildLavaPlayerService(
 
     override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
         coroutineScope.launch {
-            textChannel.createMessage("Now playing: ${track?.info?.author} ${track?.info?.title}")
+            textChannel.createMessage("Now playing: ${track?.info?.author} - ${track?.info?.title}")
         }
     }
 
@@ -145,7 +144,7 @@ class GuildLavaPlayerService(
 
     private fun onPlaylistLoaded(playlist: AudioPlaylist) {
         coroutineScope.launch {
-            val message = textChannel.createMessage("Found track list ${playlist.name} with ${playlist.tracks.size} tracks")
+            val message = textChannel.createMessage("Found track list ${playlist.name} with ${playlist.tracks.size} tracks.")
             connectToVoiceChannel()
             queue(playlist.tracks)
             message.edit { "Added ${playlist.tracks.size} songs to the queue." }
@@ -156,8 +155,8 @@ class GuildLavaPlayerService(
         coroutineScope.launch {
             textChannel.createMessage("Added ${track.info.author} - ${track.info.title} to the queue.")
             connectToVoiceChannel()
+            queue(listOf(track))
         }
-        queue(listOf(track))
     }
 
     @OptIn(KordVoice::class)
