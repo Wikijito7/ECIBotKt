@@ -31,7 +31,7 @@ private const val LEAVE_DELAY = 10000L
 
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
-    youtubeOauth2Token: String,
+    youtubeOauth2Token: String?,
     private val textChannel: MessageChannel,
     private val voiceChannel: BaseVoiceChannelBehavior
 ) : AudioEventAdapter(), PlayerService {

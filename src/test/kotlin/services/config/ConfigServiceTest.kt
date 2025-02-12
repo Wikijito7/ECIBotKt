@@ -1,12 +1,10 @@
 package services.config
 
-import es.wokis.services.config.ConfigService
-import es.wokis.services.config.discordToken
-import es.wokis.services.config.isDebugMode
+import es.wokis.exceptions.DiscordKeyIsNullException
+import es.wokis.services.config.*
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
@@ -58,5 +56,64 @@ class ConfigServiceTest {
         // Then
         assertTrue(actual.isNotEmpty())
         assertEquals(configService.config.key, configService.discordToken)
+    }
+
+    @Test
+    fun `Given config helper with null key When discordToken is called Then throw DiscordKeyIsNullException`() {
+        // Given
+        every { configService.config } returns mockk {
+            every { key } returns ""
+        }
+
+        // When
+        try {
+            configService.discordToken
+        } catch (e: Throwable) {
+            // Then
+            assertTrue(e is DiscordKeyIsNullException)
+        }
+    }
+
+    @Test
+    fun `Given config helper with youtube oauth2 token When youtubeOauth2Token is called Then return token`() {
+        // Given
+        every { configService.config } returns mockk {
+            every { youtubeOauth2Token } returns "pepe"
+        }
+
+        // When
+        val actual = configService.youtubeOauth2Token
+
+        // Then
+        assertTrue(actual?.isNotEmpty() == true)
+        assertEquals(configService.config.youtubeOauth2Token, configService.youtubeOauth2Token)
+    }
+
+    @Test
+    fun `Given config helper with default youtube oauth2 token When youtubeOauth2Token is called Then return token`() {
+        // Given
+        every { configService.config } returns mockk {
+            every { youtubeOauth2Token } returns DEFAULT_YOUTUBE_OAUTH2_VALUE
+        }
+
+        // When
+        val actual = configService.youtubeOauth2Token
+
+        // Then
+        assertNull(actual)
+    }
+
+    @Test
+    fun `Given config helper with empty youtube oauth2 token When youtubeOauth2Token is called Then return token`() {
+        // Given
+        every { configService.config } returns mockk {
+            every { youtubeOauth2Token } returns ""
+        }
+
+        // When
+        val actual = configService.youtubeOauth2Token
+
+        // Then
+        assertNull(actual)
     }
 }

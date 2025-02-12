@@ -24,6 +24,7 @@ import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.processor.MessageProcessorService
 import es.wokis.utils.Log
 import es.wokis.utils.getMemberVoiceChannel
+import kotlinx.coroutines.flow.collect
 import org.koin.core.component.KoinComponent
 
 @OptIn(PrivilegedIntent::class)
@@ -57,7 +58,7 @@ class Bot(
                     required = true
                 }
             }
-        }
+        }.collect()
     }
 
     private fun setUpEvents(bot: Kord) {
