@@ -47,19 +47,11 @@ class Bot(
     }
 
     private suspend fun setUpCommands(bot: Kord) {
-        // TODO: Remove this command and create a new one with the logic to play the song
-        bot.createGlobalChatInputCommand(name = "manolete", description = "Play a song") {
-            string(name = "song", description = "The song to play") {
-                required = true
-            }
-        }
-
+        // TODO: Remove these commands and create the real ones
         bot.createGlobalApplicationCommands {
-            input(name = "test", description = "test test")
-
-            input(name = "testtest", description = "sadasdsad") {
+            input(name = "test", description = "test test") {
                 string(name = "pepe", description = "popopo") {
-                    required = false
+                    required = true
                 }
             }
         }
@@ -81,6 +73,8 @@ class Bot(
                 ?: interaction.respondPublic { content = "You need to be in a voice channel" }.let { return@on }
             val textChannel = interaction.channel.asChannelOrNull()
                 ?: interaction.respondPublic { content = "You need to be in a text channel" }.let { return@on }
+            val input: String = interaction.command.strings["pepe"]?.takeUnless { it.isEmpty() }
+                ?: interaction.respondPublic { content = "You need to give provide a url" }.let { return@on }
             interaction.respondPublic { content = "Searching the song" }
             // TODO: Create only one instance of GuildLavaPlayerService per guild and use it
             GuildLavaPlayerService(
@@ -88,7 +82,7 @@ class Bot(
                 textChannel = textChannel,
                 voiceChannel = voiceChannel,
                 youtubeOauth2Token = config.youtubeOauth2Token
-            ).loadAndPlay("https://music.youtube.com/watch?v=9kznlAwE-8o&list=RDAMVM9kznlAwE-8o") // TODO: Get the song from the interaction
+            ).loadAndPlay(input) // TODO: Get the song from the interaction
         }
     }
 
