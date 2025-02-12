@@ -9,7 +9,7 @@ sonarqube = "4.4.1.3373"
 kotlin-coroutines-test = "1.8.1"
 koin = "3.5.6"
 serialization = "1.7.2"
-lavaplayer = "2.2.2"
+lavaplayer = "2.2.3"
 lavaplayer-youtube = "1.8.1"
 
 [libraries]

@@ -86,7 +86,7 @@ class Bot(
                 appDispatchers = appDispatchers,
                 textChannel = textChannel,
                 voiceChannel = voiceChannel
-            ).loadAndPlay("https://soundcloud.com/bbnomula/it-boy") // TODO: Get the song from the interaction
+            ).loadAndPlay("https://www.youtube.com/watch?v=U8F5G5wR1mk") // TODO: Get the song from the interaction
         }
     }
 

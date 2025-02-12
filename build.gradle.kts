@@ -38,6 +38,7 @@ dependencies {
 
     // Lavaplayer
     implementation(libs.lavaplayer)
+    implementation(libs.lavaplayer.youtube)
 
     // Tests
     testImplementation(libs.kotlin.test)

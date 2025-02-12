@@ -13,6 +13,7 @@ import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.behavior.channel.connect
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.voice.AudioFrame
+import dev.lavalink.youtube.YoutubeAudioSourceManager
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.utils.createCoroutineScope
 import kotlinx.coroutines.launch
@@ -29,6 +30,12 @@ class GuildLavaPlayerService(
     private val audioPlayerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
         AudioSourceManagers.registerRemoteSources(this)
         AudioSourceManagers.registerLocalSource(this)
+        AudioSourceManagers.registerRemoteSources(
+            this,
+            com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager::class.java
+        )
+        val ytSourceManager = YoutubeAudioSourceManager()
+        registerSourceManager(ytSourceManager)
 
         player = createPlayer().apply {
             trackScheduler = TrackScheduler(this)
