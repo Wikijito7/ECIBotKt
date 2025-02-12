@@ -10,7 +10,7 @@ kotlin-coroutines-test = "1.8.1"
 koin = "3.5.6"
 serialization = "1.7.2"
 lavaplayer = "2.2.3"
-lavaplayer-youtube = "1.8.1"
+lavaplayer-youtube = "1.11.4"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }

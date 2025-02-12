@@ -29,15 +29,15 @@ class GuildLavaPlayerService(
     private val player: AudioPlayer
     private val trackScheduler: TrackScheduler
     private val audioPlayerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
+        val ytSourceManager = YoutubeAudioSourceManager().apply {
+            useOauth2(youtubeOauth2Token, true)
+        }
+        this.registerSourceManager(ytSourceManager)
         AudioSourceManagers.registerLocalSource(this)
         AudioSourceManagers.registerRemoteSources(
             this,
             com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager::class.java
         )
-        val ytSourceManager = YoutubeAudioSourceManager().apply {
-            useOauth2(youtubeOauth2Token, true)
-        }
-        this.registerSourceManager(ytSourceManager)
 
         player = createPlayer().apply {
             trackScheduler = TrackScheduler(this)
