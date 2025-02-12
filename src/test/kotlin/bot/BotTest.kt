@@ -26,8 +26,8 @@ class BotTest {
         // Given
         val debugMode = true
         val expected = DiscordPresence(
-            status = PresenceStatus.Online,
-            afk = true,
+            status = PresenceStatus.Idle,
+            afk = false,
             game = DiscordBotActivity(
                 name = "~debug mode on",
                 type = ActivityType.Game
