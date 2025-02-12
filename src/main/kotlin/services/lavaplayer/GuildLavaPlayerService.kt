@@ -36,6 +36,7 @@ class GuildLavaPlayerService(
     private val textChannel: MessageChannel,
     private val voiceChannel: BaseVoiceChannelBehavior
 ) : AudioEventAdapter(), PlayerService {
+
     override val player: AudioPlayer
     override val audioPlayerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
         val ytSourceManager = YoutubeAudioSourceManager().apply {
@@ -121,7 +122,6 @@ class GuildLavaPlayerService(
         player.startTrack(queue.removeAt(0), true)
     }
 
-
     private fun audioLoadResultHandler() = object : AudioLoadResultHandler {
         override fun trackLoaded(track: AudioTrack) {
             coroutineScope.launch {
@@ -131,8 +131,8 @@ class GuildLavaPlayerService(
         }
 
         override fun playlistLoaded(playlist: AudioPlaylist) {
-        coroutineScope.launch {
-            val message = textChannel.createMessage("Found track list ${playlist.name} with ${playlist.tracks.size} tracks")
+            coroutineScope.launch {
+                val message = textChannel.createMessage("Found track list ${playlist.name} with ${playlist.tracks.size} tracks")
                 playlist.tracks.forEach { track ->
                     onTrackLoaded(track, message)
                     queue(track)

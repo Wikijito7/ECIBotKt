@@ -2,7 +2,6 @@ package es.wokis.utils
 
 import es.wokis.bot.Bot
 import org.slf4j.LoggerFactory
-import java.lang.Exception
 
 object Log {
     private val logger = LoggerFactory.getLogger(Bot::class.java)

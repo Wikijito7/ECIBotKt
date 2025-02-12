@@ -25,7 +25,6 @@ import es.wokis.services.processor.MessageProcessorService
 import es.wokis.utils.Log
 import es.wokis.utils.getMemberVoiceChannel
 import org.koin.core.component.KoinComponent
-import org.slf4j.LoggerFactory
 
 @OptIn(PrivilegedIntent::class)
 class Bot(
