@@ -19,6 +19,7 @@ import es.wokis.dispatchers.AppDispatchers
 import es.wokis.services.config.ConfigService
 import es.wokis.services.config.discordToken
 import es.wokis.services.config.isDebugMode
+import es.wokis.services.config.youtubeOauth2Token
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.processor.MessageProcessorService
 import es.wokis.utils.getMemberVoiceChannel
@@ -85,8 +86,9 @@ class Bot(
             GuildLavaPlayerService(
                 appDispatchers = appDispatchers,
                 textChannel = textChannel,
-                voiceChannel = voiceChannel
-            ).loadAndPlay("https://www.youtube.com/watch?v=U8F5G5wR1mk") // TODO: Get the song from the interaction
+                voiceChannel = voiceChannel,
+                youtubeOauth2Token = config.youtubeOauth2Token
+            ).loadAndPlay("https://music.youtube.com/watch?v=9kznlAwE-8o&list=RDAMVM9kznlAwE-8o") // TODO: Get the song from the interaction
         }
     }
 

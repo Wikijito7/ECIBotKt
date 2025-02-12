@@ -6,6 +6,7 @@ import kotlinx.serialization.json.Json
 
 private const val CONFIG_PATH = "./data/"
 private const val FILE_NAME = "config.json"
+private const val DEFAULT_YOUTUBE_OAUTH2_VALUE = "your-youtube-oauth2-token"
 private val CONFIG_TEMPLATE = {}::class.java.getResourceAsStream("/template/config_template.json")
 
 class ConfigService {
@@ -24,3 +25,6 @@ val ConfigService.isDebugMode: Boolean
 
 val ConfigService.discordToken: String
     get() = config.key.takeIf { it.isNotEmpty() } ?: throw DiscordKeyIsNullException
+
+val ConfigService.youtubeOauth2Token: String
+    get() = config.youtubeOauth2Token.takeIf { it.isNotEmpty() || it != DEFAULT_YOUTUBE_OAUTH2_VALUE } ?: throw DiscordKeyIsNullException

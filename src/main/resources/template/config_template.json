@@ -1,6 +1,7 @@
 {
   "key": "your-discord-key",
   "openai_key": "your-openai-key",
+  "yt_oauth2_token": "your-youtube-oauth2-token",
   "debug": false,
   "database": {
     "enabled": false,
