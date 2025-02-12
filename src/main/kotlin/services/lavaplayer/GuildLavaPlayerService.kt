@@ -13,17 +13,22 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import dev.kord.common.annotation.KordVoice
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.behavior.channel.connect
+import dev.kord.core.behavior.edit
+import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.voice.AudioFrame
 import dev.kord.voice.VoiceConnection
 import dev.lavalink.youtube.YoutubeAudioSourceManager
-import es.wokis.bot.Bot
 import es.wokis.dispatchers.AppDispatchers
+import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
+import java.util.Timer
+import kotlin.concurrent.schedule
 
 private const val TAG = "GuildLavaPlayerService"
+
+private const val LEAVE_DELAY = 10000L
 
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
@@ -52,6 +57,7 @@ class GuildLavaPlayerService(
     private var voiceConnection: VoiceConnection? = null
     private val coroutineScope = createCoroutineScope(TAG, appDispatchers)
     private val queue: MutableList<AudioTrack> = mutableListOf()
+    private var leaveTimer: Timer? = null
 
     override fun loadAndPlay(url: String) {
         audioPlayerManager.loadItem(
@@ -66,8 +72,31 @@ class GuildLavaPlayerService(
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
         if (endReason?.mayStartNext == true && queue.isNotEmpty()) {
+            resetTimer()
             nextTrack()
         }
+        if (queue.isEmpty()) {
+            setUpTimer()
+        }
+    }
+
+    @OptIn(KordVoice::class)
+    private fun setUpTimer() {
+        leaveTimer = Timer().apply {
+            Log.info("Scheduling leave delay")
+            schedule(LEAVE_DELAY) {
+                Log.info("Executing leave procedure")
+                coroutineScope.launch {
+                    voiceConnection?.leave()
+                    voiceConnection = null
+                }
+            }
+        }
+    }
+
+    private fun resetTimer() {
+        leaveTimer?.cancel()
+        leaveTimer = null
     }
 
     override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
@@ -78,9 +107,7 @@ class GuildLavaPlayerService(
 
     override fun getQueue(): List<AudioTrack> = queue.toList()
 
-    override fun getCurrentPlayingTrack(): AudioTrack {
-        TODO("Not yet implemented")
-    }
+    override fun getCurrentPlayingTrack(): AudioTrack? = player.playingTrack
 
     private fun queue(track: AudioTrack) {
         queue.add(track)
@@ -90,24 +117,25 @@ class GuildLavaPlayerService(
     }
 
     private fun nextTrack() {
-        LoggerFactory.getLogger(Bot::class.java).info("Playing next track")
+        Log.info("Playing next track")
         player.startTrack(queue.removeAt(0), true)
     }
 
 
     private fun audioLoadResultHandler() = object : AudioLoadResultHandler {
         override fun trackLoaded(track: AudioTrack) {
-            queue(track)
             coroutineScope.launch {
                 onTrackLoaded(track)
             }
+            queue(track)
         }
 
         override fun playlistLoaded(playlist: AudioPlaylist) {
-            playlist.tracks.forEach { track ->
-                queue(track)
-                coroutineScope.launch {
-                    onTrackLoaded(track)
+        coroutineScope.launch {
+            val message = textChannel.createMessage("Found track list ${playlist.name} with ${playlist.tracks.size} tracks")
+                playlist.tracks.forEach { track ->
+                    onTrackLoaded(track, message)
+                    queue(track)
                 }
             }
         }
@@ -127,12 +155,17 @@ class GuildLavaPlayerService(
     }
 
     @OptIn(KordVoice::class)
-    private suspend fun onTrackLoaded(track: AudioTrack) {
+    private suspend fun onTrackLoaded(track: AudioTrack, message: Message? = null) {
         if (voiceConnection == null) {
             voiceConnection = voiceChannel.connect {
                 audioProvider { AudioFrame.fromData(player.provide()?.data) }
+                selfDeaf = true
             }
         }
+        val messageContent = "Added ${track.info.author} - ${track.info.title} to the queue."
+        message?.edit {
+            content = messageContent
+        } ?: textChannel.createMessage(messageContent)
     }
 
     private suspend fun onNoMatches() {
@@ -140,6 +173,7 @@ class GuildLavaPlayerService(
     }
 
     private suspend fun onLoadFailed(exception: FriendlyException) {
+        Log.error("GuildLavaPlayerService onLoadFailed", exception)
         textChannel.createMessage("Load failed: ${exception.message}")
     }
 }

@@ -22,6 +22,7 @@ import es.wokis.services.config.isDebugMode
 import es.wokis.services.config.youtubeOauth2Token
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.processor.MessageProcessorService
+import es.wokis.utils.Log
 import es.wokis.utils.getMemberVoiceChannel
 import org.koin.core.component.KoinComponent
 import org.slf4j.LoggerFactory
@@ -32,6 +33,9 @@ class Bot(
     private val messageProcessor: MessageProcessorService,
     private val appDispatchers: AppDispatchers
 ) : KoinComponent {
+
+    // TODO: Remove this variable and create Guild queues
+    private var guildLavaPlayerService: GuildLavaPlayerService? = null
 
     suspend fun start() {
         val debugMode = config.isDebugMode
@@ -59,7 +63,7 @@ class Bot(
 
     private fun setUpEvents(bot: Kord) {
         bot.on<ReadyEvent> {
-            LoggerFactory.getLogger(Bot::class.java).info("${self.username} is ready")
+            Log.info("${self.username} is ready")
         }
 
         bot.on<MessageCreateEvent> {
@@ -77,12 +81,15 @@ class Bot(
                 ?: interaction.respondPublic { content = "You need to give provide a url" }.let { return@on }
             interaction.respondPublic { content = "Searching the song" }
             // TODO: Create only one instance of GuildLavaPlayerService per guild and use it
-            GuildLavaPlayerService(
-                appDispatchers = appDispatchers,
-                textChannel = textChannel,
-                voiceChannel = voiceChannel,
-                youtubeOauth2Token = config.youtubeOauth2Token
-            ).loadAndPlay(input) // TODO: Get the song from the interaction
+            if (guildLavaPlayerService == null) {
+                guildLavaPlayerService = GuildLavaPlayerService(
+                    appDispatchers = appDispatchers,
+                    textChannel = textChannel,
+                    voiceChannel = voiceChannel,
+                    youtubeOauth2Token = config.youtubeOauth2Token
+                )
+            }
+            guildLavaPlayerService?.loadAndPlay(input)
         }
     }
 

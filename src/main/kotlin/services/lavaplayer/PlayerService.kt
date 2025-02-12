@@ -14,5 +14,5 @@ interface PlayerService {
 
     fun getQueue(): List<AudioTrack>
 
-    fun getCurrentPlayingTrack(): AudioTrack
+    fun getCurrentPlayingTrack(): AudioTrack?
 }

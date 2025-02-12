@@ -12,5 +12,5 @@ fun createCoroutineScope(tag: String, appDispatchers: AppDispatchers) =
     CoroutineScope(SupervisorJob() + appDispatchers.io + coroutineExceptionHandler(tag))
 
 private fun coroutineExceptionHandler(tag: String): CoroutineContext = CoroutineExceptionHandler { _, throwable ->
-    Logger.getLogger("ECIBotKt").log(Level.SEVERE, "There's been an error on $tag.", throwable)
+    Log.error("There's been an error on $tag.", throwable)
 }
