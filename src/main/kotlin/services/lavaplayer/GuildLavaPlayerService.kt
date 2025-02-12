@@ -9,12 +9,9 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import dev.kord.common.annotation.KordVoice
-import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
-import dev.kord.core.behavior.channel.asChannelOfOrNull
 import dev.kord.core.behavior.channel.connect
 import dev.kord.core.entity.channel.MessageChannel
-import dev.kord.core.entity.channel.VoiceChannel
 import dev.kord.voice.AudioFrame
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.utils.createCoroutineScope
@@ -87,7 +84,7 @@ class GuildLavaPlayerService(
         textChannel.createMessage("No matches found")
     }
 
-    private suspend fun onLoadFailed (exception: FriendlyException) {
+    private suspend fun onLoadFailed(exception: FriendlyException) {
         textChannel.createMessage("Load failed: ${exception.message}")
     }
 }
