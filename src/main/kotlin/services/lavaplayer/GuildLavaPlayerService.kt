@@ -14,7 +14,6 @@ import dev.kord.common.annotation.KordVoice
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.behavior.channel.connect
 import dev.kord.core.behavior.edit
-import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.voice.AudioFrame
 import dev.kord.voice.VoiceConnection
@@ -110,66 +109,65 @@ class GuildLavaPlayerService(
 
     override fun getCurrentPlayingTrack(): AudioTrack? = player.playingTrack
 
-    private fun queue(track: AudioTrack) {
-        queue.add(track)
+    private fun queue(track: List<AudioTrack>) {
+        resetTimer()
+        queue.addAll(track)
         if (player.playingTrack == null) {
             nextTrack()
         }
     }
 
     private fun nextTrack() {
-        Log.info("Playing next track")
         player.startTrack(queue.removeAt(0), true)
     }
 
     private fun audioLoadResultHandler() = object : AudioLoadResultHandler {
         override fun trackLoaded(track: AudioTrack) {
-            coroutineScope.launch {
-                onTrackLoaded(track)
-            }
-            queue(track)
+            onTrackLoaded(track)
         }
 
         override fun playlistLoaded(playlist: AudioPlaylist) {
-            coroutineScope.launch {
-                val message = textChannel.createMessage("Found track list ${playlist.name} with ${playlist.tracks.size} tracks")
-                playlist.tracks.forEach { track ->
-                    onTrackLoaded(track, message)
-                    queue(track)
-                }
-            }
+            onPlaylistLoaded(playlist)
         }
 
         override fun noMatches() {
             coroutineScope.launch {
-                onNoMatches()
+                textChannel.createMessage("No matches found")
             }
         }
 
         override fun loadFailed(exception: FriendlyException) {
-            exception.printStackTrace()
             coroutineScope.launch {
                 onLoadFailed(exception)
             }
         }
     }
 
+    private fun onPlaylistLoaded(playlist: AudioPlaylist) {
+        coroutineScope.launch {
+            val message = textChannel.createMessage("Found track list ${playlist.name} with ${playlist.tracks.size} tracks")
+            connectToVoiceChannel()
+            queue(playlist.tracks)
+            message.edit { "Added ${playlist.tracks.size} songs to the queue." }
+        }
+    }
+
+    private fun onTrackLoaded(track: AudioTrack) {
+        coroutineScope.launch {
+            textChannel.createMessage("Added ${track.info.author} - ${track.info.title} to the queue.")
+            connectToVoiceChannel()
+        }
+        queue(listOf(track))
+    }
+
     @OptIn(KordVoice::class)
-    private suspend fun onTrackLoaded(track: AudioTrack, message: Message? = null) {
+    private suspend fun connectToVoiceChannel() {
         if (voiceConnection == null) {
             voiceConnection = voiceChannel.connect {
                 audioProvider { AudioFrame.fromData(player.provide()?.data) }
                 selfDeaf = true
             }
         }
-        val messageContent = "Added ${track.info.author} - ${track.info.title} to the queue."
-        message?.edit {
-            content = messageContent
-        } ?: textChannel.createMessage(messageContent)
-    }
-
-    private suspend fun onNoMatches() {
-        textChannel.createMessage("No matches found")
     }
 
     private suspend fun onLoadFailed(exception: FriendlyException) {
