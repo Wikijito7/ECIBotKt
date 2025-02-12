@@ -8,7 +8,14 @@ import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import dev.kord.common.annotation.KordVoice
 import dev.kord.common.entity.Snowflake
+import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
+import dev.kord.core.behavior.channel.asChannelOfOrNull
+import dev.kord.core.behavior.channel.connect
+import dev.kord.core.entity.channel.MessageChannel
+import dev.kord.core.entity.channel.VoiceChannel
+import dev.kord.voice.AudioFrame
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.utils.createCoroutineScope
 import kotlinx.coroutines.launch
@@ -17,11 +24,8 @@ private const val TAG = "GuildLavaPlayerService"
 
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
-    private val textChannelId: Snowflake,
-    private val onNoMatches: suspend (Snowflake) -> Unit,
-    private val onLoadFailed: suspend (Snowflake, FriendlyException) -> Unit,
-    private val onTrackLoaded: suspend (Snowflake, Snowflake, String) -> Unit,
-    private val voiceChannelId: Snowflake,
+    private val textChannel: MessageChannel,
+    private val voiceChannel: BaseVoiceChannelBehavior,
 ) {
     private val player: AudioPlayer
     private val trackScheduler: TrackScheduler
@@ -36,14 +40,14 @@ class GuildLavaPlayerService(
     }
     private val coroutineScope = createCoroutineScope(TAG, appDispatchers)
 
-    fun loadAndPlay() {
+    fun loadAndPlay(searchInput: String) {
         audioPlayerManager.loadItem(
-            "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            searchInput,
             object : AudioLoadResultHandler {
                 override fun trackLoaded(track: AudioTrack) {
                     trackScheduler.queue(track)
                     coroutineScope.launch {
-                        onTrackLoaded(textChannelId, voiceChannelId, track.info.title)
+                        onTrackLoaded(track)
                     }
                 }
 
@@ -51,23 +55,39 @@ class GuildLavaPlayerService(
                     playlist.tracks.forEach { track ->
                         trackScheduler.queue(track)
                         coroutineScope.launch {
-                            onTrackLoaded(textChannelId, voiceChannelId, track.info.title)
+                            onTrackLoaded(track)
                         }
                     }
                 }
 
                 override fun noMatches() {
                     coroutineScope.launch {
-                        onNoMatches(textChannelId)
+                        onNoMatches()
                     }
                 }
 
                 override fun loadFailed(exception: FriendlyException) {
                     coroutineScope.launch {
-                        onLoadFailed(textChannelId, exception)
+                        onLoadFailed(exception)
                     }
                 }
             }
         )
+    }
+
+    @OptIn(KordVoice::class)
+    private suspend fun onTrackLoaded(track: AudioTrack) {
+        voiceChannel.connect {
+            audioProvider { AudioFrame.fromData(player.provide()?.data) }
+        }
+        textChannel.createMessage("Now playing: ${track.info.author} ${track.info.title}")
+    }
+
+    private suspend fun onNoMatches() {
+        textChannel.createMessage("No matches found")
+    }
+
+    private suspend fun onLoadFailed (exception: FriendlyException) {
+        textChannel.createMessage("Load failed: ${exception.message}")
     }
 }

@@ -9,7 +9,7 @@ import es.wokis.dispatchers.AppDispatchers
 import es.wokis.services.config.ConfigService
 import es.wokis.services.processor.MessageProcessorService
 import io.mockk.mockk
-import mock.MockedDispatchers
+import mock.TestDispatchers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -17,7 +17,7 @@ class BotTest {
 
     private val config: ConfigService = mockk()
     private val messageProcessor: MessageProcessorService = mockk()
-    private val appDispatchers: AppDispatchers = MockedDispatchers()
+    private val appDispatchers: AppDispatchers = TestDispatchers()
 
     private val bot = Bot(config, messageProcessor, appDispatchers)
 

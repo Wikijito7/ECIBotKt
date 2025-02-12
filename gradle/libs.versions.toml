@@ -17,6 +17,9 @@ ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 kord-core = { module = "dev.kord:kord-core", version.ref = "kord" }
 kord-core-voice = { module = "dev.kord:kord-core-voice", version.ref = "kord"}
 kord-voice = { module = "dev.kord:kord-voice", version.ref = "kord" }
+kord-common = { module = "dev.kord:kord-common", version.ref = "kord" }
+kord-rest = { module = "dev.kord:kord-rest", version.ref = "kord" }
+kord-gateway = { module = "dev.kord:kord-gateway", version.ref = "kord" }
 lavaplayer = { module = "dev.arbjerg:lavaplayer", version.ref = "lavaplayer" }
 lavaplayer-youtube = { module = "dev.lavalink.youtube:v2", version.ref = "lavaplayer-youtube"}
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }

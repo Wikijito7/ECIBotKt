@@ -4,6 +4,8 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
+import es.wokis.bot.Bot
+import org.slf4j.LoggerFactory
 
 class TrackScheduler(
     private val player: AudioPlayer,
@@ -19,12 +21,13 @@ class TrackScheduler(
 
     fun queue(track: AudioTrack) {
         queue.add(track)
-        if (player.isPaused) {
+        if (player.playingTrack == null) {
             nextTrack()
         }
     }
 
     private fun nextTrack() {
+        LoggerFactory.getLogger(Bot::class.java).info("Playing next track")
         player.startTrack(queue.removeAt(0), true)
     }
 }

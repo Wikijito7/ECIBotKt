@@ -6,7 +6,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 @OptIn(ExperimentalCoroutinesApi::class)
-data class MockedDispatchers(
+data class TestDispatchers(
     override val io: CoroutineDispatcher = UnconfinedTestDispatcher(),
     override val main: CoroutineDispatcher = UnconfinedTestDispatcher(),
     override val default: CoroutineDispatcher = UnconfinedTestDispatcher()

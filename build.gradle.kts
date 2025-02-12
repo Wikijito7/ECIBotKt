@@ -15,16 +15,31 @@ repositories {
 }
 
 dependencies {
+    // Kord
     implementation(libs.kord.core)
     implementation(libs.kord.voice)
     implementation(libs.kord.core.voice)
+    implementation(libs.kord.rest)
+    implementation(libs.kord.gateway)
+    implementation(libs.kord.common)
+
+    // Ktor
     implementation(libs.ktor.client.core)
+
+    // Koin
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core)
+
+    // Logger
     implementation(libs.slf4j.simple)
+
+    // Serialization
     implementation(libs.kotlinx.serialization)
+
+    // Lavaplayer
     implementation(libs.lavaplayer)
 
+    // Tests
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlin.coroutines.test)

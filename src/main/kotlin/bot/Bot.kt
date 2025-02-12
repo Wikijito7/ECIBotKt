@@ -11,7 +11,9 @@ import dev.kord.core.behavior.interaction.respondPublic
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.core.entity.channel.VoiceChannel
+import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.GlobalChatInputCommandInteraction
+import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
 import dev.kord.core.event.gateway.ReadyEvent
 import dev.kord.core.event.interaction.ChatInputCommandInteractionCreateEvent
 import dev.kord.core.event.message.MessageCreateEvent
@@ -21,16 +23,16 @@ import dev.kord.gateway.DiscordPresence
 import dev.kord.gateway.Intents
 import dev.kord.gateway.PrivilegedIntent
 import dev.kord.rest.builder.interaction.string
+import dev.kord.voice.AudioFrame
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.services.config.ConfigService
 import es.wokis.services.config.discordToken
 import es.wokis.services.config.isDebugMode
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.processor.MessageProcessorService
-import es.wokis.utils.getVoiceChannelId
+import es.wokis.utils.getMemberVoiceChannel
 import org.koin.core.component.KoinComponent
-import java.util.logging.Level
-import java.util.logging.Logger
+import org.slf4j.LoggerFactory
 
 @OptIn(PrivilegedIntent::class)
 class Bot(
@@ -39,25 +41,20 @@ class Bot(
     private val appDispatchers: AppDispatchers
 ) : KoinComponent {
 
-    @OptIn(KordVoice::class)
     suspend fun start() {
         val debugMode = config.isDebugMode
         val bot = Kord(token = config.discordToken)
+
+        setUpEvents(bot)
+        setUpCommands(bot)
 
         bot.login {
             presence = getPresence(debugMode)
             intents = Intents.ALL
         }
+    }
 
-        bot.on<ReadyEvent> {
-            Logger.getLogger("ECIBotKt").log(Level.INFO, "${self.username} is ready")
-        }
-
-        bot.on<MessageCreateEvent> {
-            if (message.author?.isBot != false) return@on
-            processMessages(message)
-        }
-
+    private suspend fun setUpCommands(bot: Kord) {
         // TODO: Remove this command and create a new one with the logic to play the song
         bot.createGlobalChatInputCommand(name = "manolete", description = "Play a song") {
             string(name = "song", description = "The song to play") {
@@ -68,34 +65,37 @@ class Bot(
         bot.createGlobalApplicationCommands {
             input(name = "test", description = "test test")
 
-            input(name = "test test", description = "sadasdsad") {
+            input(name = "testtest", description = "sadasdsad") {
                 string(name = "pepe", description = "popopo") {
                     required = false
                 }
             }
         }
+    }
+
+    private fun setUpEvents(bot: Kord) {
+        bot.on<ReadyEvent> {
+            LoggerFactory.getLogger(Bot::class.java).info("${self.username} is ready")
+        }
+
+        bot.on<MessageCreateEvent> {
+            if (message.author?.isBot != false) return@on
+            processMessages(message)
+        }
 
         // TODO: Create logic to add GuildService to a map of guilds and queue the sounds
         bot.on<ChatInputCommandInteractionCreateEvent> {
-            val interaction = interaction as GlobalChatInputCommandInteraction
-            val voiceChannelId = interaction.getVoiceChannelId(bot)
+            val voiceChannel = interaction.getMemberVoiceChannel(bot)
                 ?: interaction.respondPublic { content = "You need to be in a voice channel" }.let { return@on }
+            val textChannel = interaction.channel.asChannelOrNull()
+                ?: interaction.respondPublic { content = "You need to be in a text channel" }.let { return@on }
+            interaction.respondPublic { content = "Searching the song" }
+            // TODO: Create only one instance of GuildLavaPlayerService per guild and use it
             GuildLavaPlayerService(
                 appDispatchers = appDispatchers,
-                textChannelId = interaction.channelId,
-                voiceChannelId = voiceChannelId,
-                onNoMatches = { channelId ->
-                    bot.getChannel(channelId)?.asChannelOfOrNull<MessageChannel>()?.createMessage("No matches found")
-                },
-                onLoadFailed = { channelId, exception ->
-                    bot.getChannel(channelId)?.asChannelOfOrNull<MessageChannel>()?.createMessage("Load failed: ${exception.message}")
-                },
-                onTrackLoaded = { channelId, voiceId, title ->
-                    bot.getChannel(voiceId)?.asChannelOfOrNull<VoiceChannel>()?.connect {
-                    }
-                    bot.getChannel(channelId)?.asChannelOfOrNull<MessageChannel>()?.createMessage("Now playing: $title")
-                }
-            )
+                textChannel = textChannel,
+                voiceChannel = voiceChannel
+            ).loadAndPlay("https://soundcloud.com/bbnomula/it-boy") // TODO: Get the song from the interaction
         }
     }
 
