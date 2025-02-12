@@ -62,7 +62,7 @@ class GuildLavaPlayerService(
     override fun loadAndPlay(url: String) {
         audioPlayerManager.loadItem(
             url,
-            audioLoadResultHandler()
+            getAudioLoadResultHandler()
         )
     }
 
@@ -120,7 +120,7 @@ class GuildLavaPlayerService(
         player.startTrack(queue.removeAt(0), true)
     }
 
-    private fun audioLoadResultHandler() = object : AudioLoadResultHandler {
+    private fun getAudioLoadResultHandler() = object : AudioLoadResultHandler {
         override fun trackLoaded(track: AudioTrack) {
             onTrackLoaded(track)
         }
@@ -147,7 +147,7 @@ class GuildLavaPlayerService(
             val message = textChannel.createMessage("Found track list ${playlist.name} with ${playlist.tracks.size} tracks.")
             connectToVoiceChannel()
             queue(playlist.tracks)
-            message.edit { "Added ${playlist.tracks.size} songs to the queue." }
+            message.edit { content = "Added ${playlist.tracks.size} songs to the queue." }
         }
     }
 
