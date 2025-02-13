@@ -58,6 +58,7 @@ class GuildLavaPlayerService(
     private val coroutineScope = createCoroutineScope(TAG, appDispatchers)
     private val queue: MutableList<AudioTrack> = mutableListOf()
     private var leaveTimer: Timer? = null
+    private var playTrackRetries = 0
 
     override fun loadAndPlay(url: String) {
         audioPlayerManager.loadItem(
@@ -71,12 +72,18 @@ class GuildLavaPlayerService(
     }
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
+        if (endReason in listOf(AudioTrackEndReason.LOAD_FAILED, AudioTrackEndReason.CLEANUP) && playTrackRetries < 3) {
+            player.startTrack(track, true)
+            playTrackRetries++
+            return
+        }
         if (queue.isEmpty()) {
             setUpTimer()
         }
         if (endReason?.mayStartNext == true && queue.isNotEmpty()) {
             resetTimer()
             nextTrack()
+            playTrackRetries = 0
         }
     }
 
@@ -100,7 +107,7 @@ class GuildLavaPlayerService(
 
     override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
         coroutineScope.launch {
-            textChannel.createMessage("Now playing: ${track?.info?.author} - ${track?.info?.title}")
+            textChannel.createMessage("Now playing: ${track?.getDisplayTrackName()}")
         }
     }
 
@@ -153,11 +160,14 @@ class GuildLavaPlayerService(
 
     private fun onTrackLoaded(track: AudioTrack) {
         coroutineScope.launch {
-            textChannel.createMessage("Added ${track.info.author} - ${track.info.title} to the queue.")
+            textChannel.createMessage("Added ${track.getDisplayTrackName()} to the queue.")
             connectToVoiceChannel()
             queue(listOf(track))
         }
     }
+
+    private fun AudioTrack.getDisplayTrackName(): String =
+        if (info.title.contains(" - ")) info.title else "${info.author} - ${info.title}"
 
     @OptIn(KordVoice::class)
     private suspend fun connectToVoiceChannel() {
