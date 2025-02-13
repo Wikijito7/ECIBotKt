@@ -76,8 +76,7 @@ sonar {
             "**/*Exception.kt",
             "src/main/kotlin/Main.kt",
             "*.kts",
-            "**/di/*.kt",
-            "src/main/kotlin/services/lavaplayer/GuildLavaPlayerService.kt" // TODO: Right now, we cannot test it because of how the class is made.
+            "**/di/*.kt"
         )
         property("sonar.projectKey", projectKey)
         property("sonar.organization", organization)

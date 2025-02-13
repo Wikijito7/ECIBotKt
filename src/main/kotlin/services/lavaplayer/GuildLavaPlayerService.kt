@@ -3,9 +3,7 @@ package es.wokis.services.lavaplayer
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
-import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
@@ -17,7 +15,6 @@ import dev.kord.core.behavior.edit
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.voice.AudioFrame
 import dev.kord.voice.VoiceConnection
-import dev.lavalink.youtube.YoutubeAudioSourceManager
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
@@ -31,27 +28,10 @@ private const val LEAVE_DELAY = 10000L
 
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
-    youtubeOauth2Token: String?,
     private val textChannel: MessageChannel,
-    private val voiceChannel: BaseVoiceChannelBehavior
-) : AudioEventAdapter(), PlayerService {
-
-    override val player: AudioPlayer
-    override val audioPlayerManager: AudioPlayerManager = DefaultAudioPlayerManager().apply {
-        val ytSourceManager = YoutubeAudioSourceManager().apply {
-            useOauth2(youtubeOauth2Token, true)
-        }
-        this.registerSourceManager(ytSourceManager)
-        AudioSourceManagers.registerLocalSource(this)
-        AudioSourceManagers.registerRemoteSources(
-            this,
-            com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager::class.java
-        )
-
-        player = createPlayer().apply {
-            addListener(this@GuildLavaPlayerService)
-        }
-    }
+    private val voiceChannel: BaseVoiceChannelBehavior,
+    private val audioPlayerManager: AudioPlayerManager
+) : AudioEventAdapter() {
 
     @OptIn(KordVoice::class)
     private var voiceConnection: VoiceConnection? = null
@@ -59,21 +39,24 @@ class GuildLavaPlayerService(
     private val queue: MutableList<AudioTrack> = mutableListOf()
     private var leaveTimer: Timer? = null
     private var playTrackRetries = 0
+    private val player: AudioPlayer = audioPlayerManager.createPlayer().apply {
+        addListener(this@GuildLavaPlayerService)
+    }
 
-    override fun loadAndPlay(url: String) {
+    fun loadAndPlay(url: String) {
         audioPlayerManager.loadItem(
             url,
             getAudioLoadResultHandler()
         )
     }
 
-    override fun searchAndPlay(searchTerm: String) {
+    fun searchAndPlay(searchTerm: String) {
         // TODO: Implement on next steps
     }
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
         if (endReason in listOf(AudioTrackEndReason.LOAD_FAILED, AudioTrackEndReason.CLEANUP) && playTrackRetries < 3) {
-            player.startTrack(track?.makeClone(), true)
+            player.playTrack(track?.makeClone())
             playTrackRetries++
             return
         }
@@ -111,9 +94,9 @@ class GuildLavaPlayerService(
         }
     }
 
-    override fun getQueue(): List<AudioTrack> = queue.toList()
+    fun getQueue(): List<AudioTrack> = queue.toList()
 
-    override fun getCurrentPlayingTrack(): AudioTrack? = player.playingTrack
+    fun getCurrentPlayingTrack(): AudioTrack? = player.playingTrack
 
     private fun queue(track: List<AudioTrack>) {
         resetTimer()

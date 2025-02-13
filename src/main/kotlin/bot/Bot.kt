@@ -19,7 +19,7 @@ import es.wokis.dispatchers.AppDispatchers
 import es.wokis.services.config.ConfigService
 import es.wokis.services.config.discordToken
 import es.wokis.services.config.isDebugMode
-import es.wokis.services.config.youtubeOauth2Token
+import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.processor.MessageProcessorService
 import es.wokis.utils.Log
@@ -31,7 +31,8 @@ import org.koin.core.component.KoinComponent
 class Bot(
     private val config: ConfigService,
     private val messageProcessor: MessageProcessorService,
-    private val appDispatchers: AppDispatchers
+    private val appDispatchers: AppDispatchers,
+    private val audioPlayerManagerProvider: AudioPlayerManagerProvider
 ) : KoinComponent {
 
     // TODO: Remove this variable and create Guild queues
@@ -86,7 +87,7 @@ class Bot(
                     appDispatchers = appDispatchers,
                     textChannel = textChannel,
                     voiceChannel = voiceChannel,
-                    youtubeOauth2Token = config.youtubeOauth2Token
+                    audioPlayerManager = audioPlayerManagerProvider.createAudioPlayerManager()
                 )
             }
             guildLavaPlayerService?.loadAndPlay(input)
