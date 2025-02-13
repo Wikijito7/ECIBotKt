@@ -8,6 +8,8 @@ data class Config(
     val key: String,
     @SerialName("openai_key")
     val openaiKey: String,
+    @SerialName("yt_oauth2_token")
+    val youtubeOauth2Token: String,
     val debug: Boolean,
     val database: Database,
     @SerialName("hugging_chat")

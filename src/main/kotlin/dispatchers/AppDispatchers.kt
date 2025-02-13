@@ -3,8 +3,14 @@ package es.wokis.dispatchers
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
-data class AppDispatchers(
-    val main: CoroutineDispatcher = Dispatchers.Main,
-    val default: CoroutineDispatcher = Dispatchers.Default,
-    val io: CoroutineDispatcher = Dispatchers.IO
-)
+interface AppDispatchers {
+    val main: CoroutineDispatcher
+    val default: CoroutineDispatcher
+    val io: CoroutineDispatcher
+}
+
+data class AppDispatchersImpl(
+    override val main: CoroutineDispatcher = Dispatchers.Main,
+    override val default: CoroutineDispatcher = Dispatchers.Default,
+    override val io: CoroutineDispatcher = Dispatchers.IO
+) : AppDispatchers

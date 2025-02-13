@@ -6,14 +6,12 @@ import dev.kord.core.entity.ReactionEmoji
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.services.processor.MessageProcessorService
 import io.mockk.*
-import mock.MockedDispatchers
+import mock.TestDispatchers
 import org.junit.jupiter.api.Test
 
 class MessageProcessorServiceTest {
 
-    private val dispatchers: AppDispatchers = mockk {
-        every { io } returns MockedDispatchers.io
-    }
+    private val dispatchers: AppDispatchers = TestDispatchers()
 
     private val messageProcessor = MessageProcessorService(dispatchers)
 
