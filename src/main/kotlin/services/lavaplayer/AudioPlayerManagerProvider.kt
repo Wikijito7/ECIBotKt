@@ -6,6 +6,7 @@ import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import dev.lavalink.youtube.YoutubeAudioSourceManager
 import es.wokis.services.config.ConfigService
 import es.wokis.services.config.youtubeOauth2Token
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager as DeprecatedYoutubeAudioSourceManager
 
 class AudioPlayerManagerProvider(
     private val configService: ConfigService
@@ -19,7 +20,7 @@ class AudioPlayerManagerProvider(
         AudioSourceManagers.registerLocalSource(this)
         AudioSourceManagers.registerRemoteSources(
             this,
-            com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager::class.java
+            DeprecatedYoutubeAudioSourceManager::class.java
         )
     }
 }
