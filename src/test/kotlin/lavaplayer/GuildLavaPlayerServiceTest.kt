@@ -4,11 +4,9 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
-import es.wokis.utils.Log
 import io.mockk.*
 import mock.TestDispatchers
 import org.junit.jupiter.api.Test
-import java.util.concurrent.Future
 import kotlin.test.Ignore
 
 class GuildLavaPlayerServiceTest {

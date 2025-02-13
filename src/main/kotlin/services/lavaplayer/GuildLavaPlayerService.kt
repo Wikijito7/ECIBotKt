@@ -55,6 +55,7 @@ class GuildLavaPlayerService(
     }
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
+        Log.info(endReason?.name.orEmpty())
         if (endReason in listOf(AudioTrackEndReason.LOAD_FAILED, AudioTrackEndReason.CLEANUP) && playTrackRetries < 3) {
             player.playTrack(track?.makeClone())
             playTrackRetries++
@@ -89,6 +90,7 @@ class GuildLavaPlayerService(
     }
 
     override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
+        if (playTrackRetries > 0) return
         coroutineScope.launch {
             textChannel.createMessage("Now playing: ${track?.getDisplayTrackName()}")
         }
