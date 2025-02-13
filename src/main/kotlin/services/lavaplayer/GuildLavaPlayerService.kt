@@ -73,7 +73,7 @@ class GuildLavaPlayerService(
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
         if (endReason in listOf(AudioTrackEndReason.LOAD_FAILED, AudioTrackEndReason.CLEANUP) && playTrackRetries < 3) {
-            player.startTrack(track, true)
+            player.startTrack(track?.makeClone(), true)
             playTrackRetries++
             return
         }
