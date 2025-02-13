@@ -15,7 +15,7 @@ class LogTest {
 
         @JvmStatic
         @BeforeAll
-        fun setUp(): Unit {
+        fun setUp() {
             Log.setLogger(logger)
         }
     }
