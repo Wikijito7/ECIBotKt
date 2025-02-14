@@ -5,12 +5,10 @@ import dev.kord.common.entity.DiscordBotActivity
 import dev.kord.common.entity.PresenceStatus
 import dev.kord.gateway.DiscordPresence
 import es.wokis.bot.Bot
-import es.wokis.dispatchers.AppDispatchers
 import es.wokis.services.config.ConfigService
-import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.processor.MessageProcessorService
+import es.wokis.services.queue.GuildQueueDispatcher
 import io.mockk.mockk
-import mock.TestDispatchers
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -18,14 +16,12 @@ class BotTest {
 
     private val config: ConfigService = mockk()
     private val messageProcessor: MessageProcessorService = mockk()
-    private val appDispatchers: AppDispatchers = TestDispatchers()
-    private val audioPlayerManagerProvider: AudioPlayerManagerProvider = mockk()
+    private val guildQueueDispatcher: GuildQueueDispatcher = mockk()
 
     private val bot = Bot(
         config = config,
         messageProcessor = messageProcessor,
-        appDispatchers = appDispatchers,
-        audioPlayerManagerProvider = audioPlayerManagerProvider
+        guildQueueDispatcher = guildQueueDispatcher
     )
 
     @Test
