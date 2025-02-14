@@ -71,8 +71,8 @@ class Bot(
                 ?: interaction.respondPublic { content = "You need to be in a voice channel" }.let { return@on }
             val textChannel = interaction.channel.asChannelOrNull()
                 ?: interaction.respondPublic { content = "You need to be in a text channel" }.let { return@on }
-            val guildId = interaction.data.guildId.value ?:
-                interaction.respondPublic { content = "You need to be in a guild" }.let { return@on }
+            val guildId = interaction.data.guildId.value
+                ?: interaction.respondPublic { content = "You need to be in a guild" }.let { return@on }
             val input: String = interaction.command.strings["pepe"]?.takeUnless { it.isEmpty() }
                 ?: interaction.respondPublic { content = "You need to give provide a url" }.let { return@on }
             interaction.respondPublic { content = "Searching the song" }
