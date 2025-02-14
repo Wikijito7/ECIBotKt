@@ -21,7 +21,6 @@ class CommandHandlerServiceImpl(
     private val testCommand: TestCommand
 ) : CommandHandlerService {
 
-
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         testCommand.onRegisterCommand(commandBuilder)
     }
@@ -31,8 +30,9 @@ class CommandHandlerServiceImpl(
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
         val commandName = interaction.command.rootName
-        when(CommandsEnum.forCommandName(commandName)) {
+        when (CommandsEnum.forCommandName(commandName)) {
             CommandsEnum.TEST -> testCommand.onExecute(interaction, response)
+
             null -> respondUnknownCommand(response, commandName)
         }
     }
@@ -45,5 +45,4 @@ class CommandHandlerServiceImpl(
             content = "Unknown or unregistered command, command name: $commandName"
         }
     }
-
 }

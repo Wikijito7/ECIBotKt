@@ -8,7 +8,6 @@ import es.wokis.bot.Bot
 import es.wokis.services.commands.CommandHandlerService
 import es.wokis.services.config.ConfigService
 import es.wokis.services.processor.MessageProcessorService
-import es.wokis.services.queue.GuildQueueService
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
