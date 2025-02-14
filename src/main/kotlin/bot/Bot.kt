@@ -15,13 +15,11 @@ import dev.kord.gateway.DiscordPresence
 import dev.kord.gateway.Intents
 import dev.kord.gateway.PrivilegedIntent
 import dev.kord.rest.builder.interaction.string
-import es.wokis.dispatchers.AppDispatchers
 import es.wokis.services.config.ConfigService
 import es.wokis.services.config.discordToken
 import es.wokis.services.config.isDebugMode
-import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
-import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.processor.MessageProcessorService
+import es.wokis.services.queue.GuildQueueDispatcher
 import es.wokis.utils.Log
 import es.wokis.utils.getMemberVoiceChannel
 import kotlinx.coroutines.flow.collect
@@ -31,12 +29,8 @@ import org.koin.core.component.KoinComponent
 class Bot(
     private val config: ConfigService,
     private val messageProcessor: MessageProcessorService,
-    private val appDispatchers: AppDispatchers,
-    private val audioPlayerManagerProvider: AudioPlayerManagerProvider
+    private val guildQueueDispatcher: GuildQueueDispatcher
 ) : KoinComponent {
-
-    // TODO: Remove this variable and create Guild queues
-    private var guildLavaPlayerService: GuildLavaPlayerService? = null
 
     suspend fun start() {
         val debugMode = config.isDebugMode
@@ -72,25 +66,21 @@ class Bot(
             processMessages(message)
         }
 
-        // TODO: Create logic to add GuildService to a map of guilds and queue the sounds
         bot.on<ChatInputCommandInteractionCreateEvent> {
             val voiceChannel = interaction.getMemberVoiceChannel(bot)
                 ?: interaction.respondPublic { content = "You need to be in a voice channel" }.let { return@on }
             val textChannel = interaction.channel.asChannelOrNull()
                 ?: interaction.respondPublic { content = "You need to be in a text channel" }.let { return@on }
+            val guildId = interaction.data.guildId.value ?:
+                interaction.respondPublic { content = "You need to be in a guild" }.let { return@on }
             val input: String = interaction.command.strings["pepe"]?.takeUnless { it.isEmpty() }
                 ?: interaction.respondPublic { content = "You need to give provide a url" }.let { return@on }
             interaction.respondPublic { content = "Searching the song" }
-            // TODO: Create only one instance of GuildLavaPlayerService per guild and use it
-            if (guildLavaPlayerService == null) {
-                guildLavaPlayerService = GuildLavaPlayerService(
-                    appDispatchers = appDispatchers,
-                    textChannel = textChannel,
-                    voiceChannel = voiceChannel,
-                    audioPlayerManager = audioPlayerManagerProvider.createAudioPlayerManager()
-                )
-            }
-            guildLavaPlayerService?.loadAndPlay(input)
+            guildQueueDispatcher.getOrCreateLavaPlayerService(
+                guildId = guildId,
+                textChannel = textChannel,
+                voiceChannel = voiceChannel
+            ).loadAndPlay(input)
         }
     }
 

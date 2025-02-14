@@ -1,4 +1,4 @@
-package lavaplayer
+package services.lavaplayer
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior

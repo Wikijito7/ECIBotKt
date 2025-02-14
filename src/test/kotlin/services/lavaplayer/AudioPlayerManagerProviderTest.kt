@@ -1,4 +1,4 @@
-package lavaplayer
+package services.lavaplayer
 
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import es.wokis.services.config.ConfigService
