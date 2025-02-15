@@ -1,6 +1,5 @@
 package commands.test
 
-import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.interaction.string
@@ -21,8 +20,6 @@ class TestCommandTest {
 
     private val testCommand = TestCommand(guildQueueService)
 
-    @Test
-    @Ignore("Mockk fails")
     /*
         Verification failed: call 2 of 2: List(child of #2#3).add(any())) was not called
         java.lang.AssertionError: Verification failed: call 2 of 2: List(child of #2#3).add(any())) was not called
@@ -39,6 +36,8 @@ class TestCommandTest {
             at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
             at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
      */
+    @Test
+    @Ignore("Mockk fails")
     fun `Given command When onRegisterCommand is called Then register test command`() {
         // Given
         val commandBuilder: GlobalMultiApplicationCommandBuilder = mockk {
