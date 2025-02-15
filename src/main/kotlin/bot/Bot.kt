@@ -13,7 +13,6 @@ import dev.kord.gateway.ALL
 import dev.kord.gateway.DiscordPresence
 import dev.kord.gateway.Intents
 import dev.kord.gateway.PrivilegedIntent
-import dev.kord.rest.builder.interaction.string
 import es.wokis.services.commands.CommandHandlerService
 import es.wokis.services.config.ConfigService
 import es.wokis.services.config.discordToken
