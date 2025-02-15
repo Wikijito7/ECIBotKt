@@ -20,6 +20,7 @@ import es.wokis.services.config.ConfigService
 import es.wokis.services.config.discordToken
 import es.wokis.services.config.isDebugMode
 import es.wokis.services.processor.MessageProcessorService
+import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.Log
 import kotlinx.coroutines.flow.collect
 import org.koin.core.component.KoinComponent
@@ -28,7 +29,8 @@ import org.koin.core.component.KoinComponent
 class Bot(
     private val config: ConfigService,
     private val messageProcessor: MessageProcessorService,
-    private val commandHandlerService: CommandHandlerService
+    private val commandHandlerService: CommandHandlerService,
+    private val guildQueueService: GuildQueueService
 ) : KoinComponent {
 
     suspend fun start() {
@@ -73,7 +75,7 @@ class Bot(
     }
 
     private suspend fun handleDisconnectEvent(guildId: Snowflake) {
-        guildQueueDispatcher.getLavaPlayerService(guildId)?.handleDisconnectEvent()
+        guildQueueService.getLavaPlayerService(guildId)?.handleDisconnectEvent()
     }
 
     private fun processMessages(message: Message) {

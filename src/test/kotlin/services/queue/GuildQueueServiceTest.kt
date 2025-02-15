@@ -127,7 +127,7 @@ class GuildQueueServiceTest {
         }
 
         // When
-        val actual = guildQueueDispatcher.getLavaPlayerService(guildId = guildId)
+        val actual = guildQueueService.getLavaPlayerService(guildId = guildId)
 
         // Then
         assertNull(actual)
@@ -145,10 +145,10 @@ class GuildQueueServiceTest {
         every { audioPlayerManager.createPlayer() } returns mockk {
             justRun { addListener(any<AudioEventListener>()) }
         }
-        guildQueueDispatcher.getOrCreateLavaPlayerService(guildId, textChannel, voiceChannel)
+        guildQueueService.getOrCreateLavaPlayerService(guildId, textChannel, voiceChannel)
 
         // When
-        val actual = guildQueueDispatcher.getLavaPlayerService(guildId = guildId)
+        val actual = guildQueueService.getLavaPlayerService(guildId = guildId)
 
         // Then
         assertNotNull(actual)
