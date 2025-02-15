@@ -5,7 +5,6 @@ import dev.kord.common.entity.DiscordBotActivity
 import dev.kord.common.entity.PresenceStatus
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
-import dev.kord.core.behavior.interaction.respondPublic
 import dev.kord.core.entity.Message
 import dev.kord.core.event.gateway.ReadyEvent
 import dev.kord.core.event.interaction.ChatInputCommandInteractionCreateEvent
@@ -16,14 +15,12 @@ import dev.kord.gateway.ALL
 import dev.kord.gateway.DiscordPresence
 import dev.kord.gateway.Intents
 import dev.kord.gateway.PrivilegedIntent
-import dev.kord.rest.builder.interaction.string
+import es.wokis.services.commands.CommandHandlerService
 import es.wokis.services.config.ConfigService
 import es.wokis.services.config.discordToken
 import es.wokis.services.config.isDebugMode
 import es.wokis.services.processor.MessageProcessorService
-import es.wokis.services.queue.GuildQueueDispatcher
 import es.wokis.utils.Log
-import es.wokis.utils.getMemberVoiceChannel
 import kotlinx.coroutines.flow.collect
 import org.koin.core.component.KoinComponent
 
@@ -31,7 +28,7 @@ import org.koin.core.component.KoinComponent
 class Bot(
     private val config: ConfigService,
     private val messageProcessor: MessageProcessorService,
-    private val guildQueueDispatcher: GuildQueueDispatcher
+    private val commandHandlerService: CommandHandlerService
 ) : KoinComponent {
 
     suspend fun start() {
@@ -48,13 +45,8 @@ class Bot(
     }
 
     private suspend fun setUpCommands(bot: Kord) {
-        // TODO: Remove these commands and create the real ones
         bot.createGlobalApplicationCommands {
-            input(name = "test", description = "test test") {
-                string(name = "pepe", description = "popopo") {
-                    required = true
-                }
-            }
+            commandHandlerService.onRegisterCommand(this)
         }.collect()
     }
 
@@ -75,20 +67,8 @@ class Bot(
         }
 
         bot.on<ChatInputCommandInteractionCreateEvent> {
-            val voiceChannel = interaction.getMemberVoiceChannel(bot)
-                ?: interaction.respondPublic { content = "You need to be in a voice channel" }.let { return@on }
-            val textChannel = interaction.channel.asChannelOrNull()
-                ?: interaction.respondPublic { content = "You need to be in a text channel" }.let { return@on }
-            val guildId = interaction.data.guildId.value
-                ?: interaction.respondPublic { content = "You need to be in a guild" }.let { return@on }
-            val input: String = interaction.command.strings["pepe"]?.takeUnless { it.isEmpty() }
-                ?: interaction.respondPublic { content = "You need to give provide a url" }.let { return@on }
-            interaction.respondPublic { content = "Searching the song" }
-            guildQueueDispatcher.getOrCreateLavaPlayerService(
-                guildId = guildId,
-                textChannel = textChannel,
-                voiceChannel = voiceChannel
-            ).loadAndPlay(input)
+            val response = interaction.deferPublicResponse()
+            commandHandlerService.onExecute(interaction, response)
         }
     }
 

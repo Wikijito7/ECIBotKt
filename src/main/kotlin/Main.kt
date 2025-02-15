@@ -1,8 +1,9 @@
 package es.wokis
 
-import di.servicesModule
 import es.wokis.bot.Bot
 import es.wokis.di.botModule
+import es.wokis.di.commandModule
+import es.wokis.di.servicesModule
 import es.wokis.utils.Log
 import org.koin.core.context.startKoin
 import org.koin.java.KoinJavaComponent.inject
@@ -19,6 +20,6 @@ suspend fun main() {
 
 fun initKoin() {
     startKoin {
-        modules(botModule, servicesModule)
+        modules(botModule, servicesModule, commandModule)
     }
 }

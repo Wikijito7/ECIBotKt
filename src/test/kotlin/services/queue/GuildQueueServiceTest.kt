@@ -7,7 +7,7 @@ import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
-import es.wokis.services.queue.GuildQueueDispatcher
+import es.wokis.services.queue.GuildQueueService
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
@@ -18,12 +18,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
-class GuildQueueDispatcherTest {
+class GuildQueueServiceTest {
 
     private val audioPlayerManagerProvider: AudioPlayerManagerProvider = mockk()
     private val appDispatchers = TestDispatchers()
 
-    private val guildQueueDispatcher = GuildQueueDispatcher(
+    private val guildQueueService = GuildQueueService(
         audioPlayerManagerProvider = audioPlayerManagerProvider,
         appDispatchers = appDispatchers
     )
@@ -42,7 +42,7 @@ class GuildQueueDispatcherTest {
         }
 
         // When
-        val actual = guildQueueDispatcher.getOrCreateLavaPlayerService(
+        val actual = guildQueueService.getOrCreateLavaPlayerService(
             guildId = guildId,
             textChannel = textChannel,
             voiceChannel = voiceChannel
@@ -67,13 +67,13 @@ class GuildQueueDispatcherTest {
         }
 
         // When
-        val lavaPlayerGuild1 = guildQueueDispatcher.getOrCreateLavaPlayerService(
+        val lavaPlayerGuild1 = guildQueueService.getOrCreateLavaPlayerService(
             guildId = guildId1,
             textChannel = textChannel,
             voiceChannel = voiceChannel
         )
 
-        val lavaPlayerGuild2 = guildQueueDispatcher.getOrCreateLavaPlayerService(
+        val lavaPlayerGuild2 = guildQueueService.getOrCreateLavaPlayerService(
             guildId = guildId2,
             textChannel = textChannel,
             voiceChannel = voiceChannel
@@ -98,13 +98,13 @@ class GuildQueueDispatcherTest {
         }
 
         // When
-        val lavaPlayerFirst = guildQueueDispatcher.getOrCreateLavaPlayerService(
+        val lavaPlayerFirst = guildQueueService.getOrCreateLavaPlayerService(
             guildId = guildId1,
             textChannel = textChannel,
             voiceChannel = voiceChannel
         )
 
-        val lavaPlayerSecond = guildQueueDispatcher.getOrCreateLavaPlayerService(
+        val lavaPlayerSecond = guildQueueService.getOrCreateLavaPlayerService(
             guildId = guildId2,
             textChannel = textChannel,
             voiceChannel = voiceChannel
