@@ -7,7 +7,7 @@ import es.wokis.dispatchers.AppDispatchers
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 
-class GuildQueueDispatcher(
+class GuildQueueService(
     private val audioPlayerManagerProvider: AudioPlayerManagerProvider,
     private val appDispatchers: AppDispatchers
 ) {
