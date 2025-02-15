@@ -1,7 +1,5 @@
 {
-  "key": "your-discord-key",
-  "openai_key": "your-openai-key",
-  "yt_oauth2_token": "your-youtube-oauth2-token",
+  "discord_bot_token": "",
   "debug": false,
   "database": {
     "enabled": false,
@@ -9,8 +7,12 @@
     "password": "db_password",
     "database": "db_database"
   },
+  "youtube": {
+    "oauth2_token": null
+  },
   "hugging_chat": {
-    "user": "hugging_chat_user_key",
-    "password": "hugging_chat_password_key"
+    "enabled": false,
+    "user": "hugging_chat_user",
+    "password": "hugging_chat_password"
   }
 }

@@ -5,27 +5,42 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Config(
-    val key: String,
-    @SerialName("openai_key")
-    val openaiKey: String,
-    @SerialName("yt_oauth2_token")
-    val youtubeOauth2Token: String,
+    @SerialName("discord_bot_token")
+    val discordBotToken: String,
+    @SerialName("debug")
     val debug: Boolean,
-    val database: Database,
+    @SerialName("database")
+    val database: DatabaseConfig,
+    @SerialName("youtube")
+    val youtube: YouTubeConfig,
     @SerialName("hugging_chat")
-    val huggingChat: HuggingChat
+    val huggingChat: HuggingChatConfig
 )
 
 @Serializable
-data class HuggingChat(
-    val user: String,
-    val password: String
-)
-
-@Serializable
-data class Database(
+data class DatabaseConfig(
+    @SerialName("enabled")
     val enabled: Boolean,
+    @SerialName("username")
     val username: String,
+    @SerialName("password")
     val password: String,
+    @SerialName("database")
     val database: String
+)
+
+@Serializable
+data class YouTubeConfig(
+    @SerialName("oauth2_token")
+    val oauth2Token: String?
+)
+
+@Serializable
+data class HuggingChatConfig(
+    @SerialName("enabled")
+    val enabled: Boolean,
+    @SerialName("user")
+    val user: String,
+    @SerialName("password")
+    val password: String
 )

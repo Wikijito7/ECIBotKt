@@ -52,8 +52,7 @@ class FileUtilsTest {
 
         // Then
         val newFile = getOrCreateFile(MOCKED_PATH, MOCKED_FILE_NAME, configTemplate)
-        val newDataFromFile =
-            Json.decodeFromString<Map<String, String>>(newFile.readLines().joinToString(separator = "") { it.trim() })
+        val newDataFromFile = Json.decodeFromString<Map<String, String>>(newFile.readText())
         assertEquals(newDataFromFile.size, newData.size)
         assertEquals(newData.entries, newDataFromFile.entries)
     }

@@ -83,10 +83,8 @@ class MessageProcessorService(
                 message.content.contains(MEXICO) -> listOf("🇲🇽", "🌯", "🌮", "🫔")
                 else -> emptyList()
             }
-            reactions.takeUnless { it.isEmpty() }?.let {
-                it.map { reaction -> ReactionEmoji.Unicode(reaction) }.forEach { reaction ->
-                    message.addReaction(reaction)
-                }
+            reactions.forEach {
+                message.addReaction(ReactionEmoji.Unicode(it))
             }
         }
     }

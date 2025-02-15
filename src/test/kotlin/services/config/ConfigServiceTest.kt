@@ -1,6 +1,6 @@
 package services.config
 
-import es.wokis.exceptions.DiscordKeyIsNullException
+import es.wokis.exceptions.EmptyDiscordTokenException
 import es.wokis.services.config.*
 import io.mockk.every
 import io.mockk.mockk
@@ -17,7 +17,7 @@ class ConfigServiceTest {
         // Given
         every { configService.config } returns mockk {
             every { debug } returns false
-            every { key } returns "manolete"
+            every { discordBotToken } returns "manolete"
         }
 
         // When
@@ -25,95 +25,23 @@ class ConfigServiceTest {
 
         // Then
         assertFalse(actual.debug)
-        assertTrue(actual.key.isNotEmpty())
+        assertTrue(actual.discordBotToken.isNotEmpty())
     }
 
     @Test
-    fun `Given config helper When isDebugMode is called Then return false`() {
+    fun `Given config json with empty Discord token When config is validated Then throw EmptyDiscordTokenException`() {
         // Given
-        every { configService.config } returns mockk {
-            every { debug } returns false
-        }
-
-        // When
-        val actual = configService.isDebugMode
-
-        // Then
-        assertFalse(actual)
-        assertEquals(configService.config.debug, configService.isDebugMode)
-    }
-
-    @Test
-    fun `Given config helper When discordToken is called Then return false`() {
-        // Given
-        every { configService.config } returns mockk {
-            every { key } returns "pepe"
-        }
-
-        // When
-        val actual = configService.discordToken
-
-        // Then
-        assertTrue(actual.isNotEmpty())
-        assertEquals(configService.config.key, configService.discordToken)
-    }
-
-    @Test
-    fun `Given config helper with null key When discordToken is called Then throw DiscordKeyIsNullException`() {
-        // Given
-        every { configService.config } returns mockk {
-            every { key } returns ""
+        val config = mockk<Config> {
+            every { discordBotToken } returns ""
         }
 
         // When
         try {
-            configService.discordToken
+            config.validate()
         } catch (e: Throwable) {
             // Then
-            assertTrue(e is DiscordKeyIsNullException)
+            assertTrue(e is EmptyDiscordTokenException)
         }
     }
 
-    @Test
-    fun `Given config helper with youtube oauth2 token When youtubeOauth2Token is called Then return token`() {
-        // Given
-        every { configService.config } returns mockk {
-            every { youtubeOauth2Token } returns "pepe"
-        }
-
-        // When
-        val actual = configService.youtubeOauth2Token
-
-        // Then
-        assertTrue(actual?.isNotEmpty() == true)
-        assertEquals(configService.config.youtubeOauth2Token, configService.youtubeOauth2Token)
-    }
-
-    @Test
-    fun `Given config helper with default youtube oauth2 token When youtubeOauth2Token is called Then return token`() {
-        // Given
-        every { configService.config } returns mockk {
-            every { youtubeOauth2Token } returns DEFAULT_YOUTUBE_OAUTH2_VALUE
-        }
-
-        // When
-        val actual = configService.youtubeOauth2Token
-
-        // Then
-        assertNull(actual)
-    }
-
-    @Test
-    fun `Given config helper with empty youtube oauth2 token When youtubeOauth2Token is called Then return token`() {
-        // Given
-        every { configService.config } returns mockk {
-            every { youtubeOauth2Token } returns ""
-        }
-
-        // When
-        val actual = configService.youtubeOauth2Token
-
-        // Then
-        assertNull(actual)
-    }
 }
