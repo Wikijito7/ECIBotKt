@@ -3,12 +3,14 @@ package es.wokis.bot
 import dev.kord.common.entity.ActivityType
 import dev.kord.common.entity.DiscordBotActivity
 import dev.kord.common.entity.PresenceStatus
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.respondPublic
 import dev.kord.core.entity.Message
 import dev.kord.core.event.gateway.ReadyEvent
 import dev.kord.core.event.interaction.ChatInputCommandInteractionCreateEvent
 import dev.kord.core.event.message.MessageCreateEvent
+import dev.kord.core.event.user.VoiceStateUpdateEvent
 import dev.kord.core.on
 import dev.kord.gateway.ALL
 import dev.kord.gateway.DiscordPresence
@@ -66,6 +68,12 @@ class Bot(
             processMessages(message)
         }
 
+        bot.on<VoiceStateUpdateEvent> {
+            if (state.data.channelId == null) {
+                handleDisconnectEvent(state.guildId)
+            }
+        }
+
         bot.on<ChatInputCommandInteractionCreateEvent> {
             val voiceChannel = interaction.getMemberVoiceChannel(bot)
                 ?: interaction.respondPublic { content = "You need to be in a voice channel" }.let { return@on }
@@ -82,6 +90,10 @@ class Bot(
                 voiceChannel = voiceChannel
             ).loadAndPlay(input)
         }
+    }
+
+    private suspend fun handleDisconnectEvent(guildId: Snowflake) {
+        guildQueueDispatcher.getLavaPlayerService(guildId)?.handleDisconnectEvent()
     }
 
     private fun processMessages(message: Message) {

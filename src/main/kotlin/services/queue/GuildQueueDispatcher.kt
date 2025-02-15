@@ -24,6 +24,8 @@ class GuildQueueDispatcher(
         voiceChannel = voiceChannel
     )
 
+    fun getLavaPlayerService(guildId: Snowflake): GuildLavaPlayerService? = guildQueues[guildId]
+
     private fun createLavaPlayer(
         guild: Snowflake,
         textChannel: MessageChannel,

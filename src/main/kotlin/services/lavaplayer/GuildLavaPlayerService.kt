@@ -71,14 +71,12 @@ class GuildLavaPlayerService(
         }
     }
 
-    @OptIn(KordVoice::class)
     private fun setUpTimer() {
         leaveTimer = Timer().apply {
             schedule(LEAVE_DELAY) {
                 if (queue.isNotEmpty()) return@schedule
                 coroutineScope.launch {
-                    voiceConnection?.leave()
-                    voiceConnection = null
+                    resetVoiceConnection()
                 }
             }
         }
@@ -167,5 +165,18 @@ class GuildLavaPlayerService(
     private suspend fun onLoadFailed(exception: FriendlyException) {
         Log.error("GuildLavaPlayerService onLoadFailed", exception)
         textChannel.createMessage("Load failed: ${exception.message}")
+    }
+
+    suspend fun handleDisconnectEvent() {
+        queue.clear()
+        player.stopTrack()
+        resetVoiceConnection()
+        playTrackRetries = 0
+    }
+
+    @OptIn(KordVoice::class)
+    private suspend fun resetVoiceConnection() {
+        voiceConnection?.leave()
+        voiceConnection = null
     }
 }
