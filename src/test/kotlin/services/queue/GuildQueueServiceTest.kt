@@ -12,7 +12,7 @@ import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import mock.TestDispatchers
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
@@ -113,5 +113,44 @@ class GuildQueueServiceTest {
         // Then
         assertEquals(lavaPlayerFirst, lavaPlayerSecond)
         assertSame(lavaPlayerFirst, lavaPlayerSecond)
+    }
+
+    @Test
+    fun `Given dispatcher When getLavaPlayerService is called on an unknown guild Then return null`() {
+        // Given
+        val guildId = Snowflake(123)
+        val audioPlayerManager: AudioPlayerManager = mockk()
+
+        every { audioPlayerManagerProvider.createAudioPlayerManager() } returns audioPlayerManager
+        every { audioPlayerManager.createPlayer() } returns mockk {
+            justRun { addListener(any<AudioEventListener>()) }
+        }
+
+        // When
+        val actual = guildQueueService.getLavaPlayerService(guildId = guildId)
+
+        // Then
+        assertNull(actual)
+    }
+
+    @Test
+    fun `Given dispatcher When getLavaPlayerService is called Then return given guild audio player`() {
+        // Given
+        val guildId = Snowflake(123)
+        val textChannel: MessageChannel = mockk()
+        val voiceChannel: BaseVoiceChannelBehavior = mockk()
+        val audioPlayerManager: AudioPlayerManager = mockk()
+
+        every { audioPlayerManagerProvider.createAudioPlayerManager() } returns audioPlayerManager
+        every { audioPlayerManager.createPlayer() } returns mockk {
+            justRun { addListener(any<AudioEventListener>()) }
+        }
+        guildQueueService.getOrCreateLavaPlayerService(guildId, textChannel, voiceChannel)
+
+        // When
+        val actual = guildQueueService.getLavaPlayerService(guildId = guildId)
+
+        // Then
+        assertNotNull(actual)
     }
 }

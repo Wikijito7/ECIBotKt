@@ -3,11 +3,13 @@ package es.wokis.bot
 import dev.kord.common.entity.ActivityType
 import dev.kord.common.entity.DiscordBotActivity
 import dev.kord.common.entity.PresenceStatus
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.entity.Message
 import dev.kord.core.event.gateway.ReadyEvent
 import dev.kord.core.event.interaction.ChatInputCommandInteractionCreateEvent
 import dev.kord.core.event.message.MessageCreateEvent
+import dev.kord.core.event.user.VoiceStateUpdateEvent
 import dev.kord.core.on
 import dev.kord.gateway.ALL
 import dev.kord.gateway.DiscordPresence
@@ -18,6 +20,7 @@ import es.wokis.services.config.ConfigService
 import es.wokis.services.config.discordToken
 import es.wokis.services.config.isDebugMode
 import es.wokis.services.processor.MessageProcessorService
+import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.Log
 import kotlinx.coroutines.flow.collect
 import org.koin.core.component.KoinComponent
@@ -26,7 +29,8 @@ import org.koin.core.component.KoinComponent
 class Bot(
     private val config: ConfigService,
     private val messageProcessor: MessageProcessorService,
-    private val commandHandlerService: CommandHandlerService
+    private val commandHandlerService: CommandHandlerService,
+    private val guildQueueService: GuildQueueService
 ) : KoinComponent {
 
     suspend fun start() {
@@ -58,10 +62,20 @@ class Bot(
             processMessages(message)
         }
 
+        bot.on<VoiceStateUpdateEvent> {
+            if (state.data.channelId == null) {
+                handleDisconnectEvent(state.guildId)
+            }
+        }
+
         bot.on<ChatInputCommandInteractionCreateEvent> {
             val response = interaction.deferPublicResponse()
             commandHandlerService.onExecute(interaction, response)
         }
+    }
+
+    private suspend fun handleDisconnectEvent(guildId: Snowflake) {
+        guildQueueService.getLavaPlayerService(guildId)?.handleDisconnectEvent()
     }
 
     private fun processMessages(message: Message) {
