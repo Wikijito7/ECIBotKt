@@ -16,7 +16,8 @@ class AudioPlayerManagerProviderTest {
     @Test
     fun `When createAudioPlayerManager is called Then return DefaultAudioPlayerManager`() {
         // Given
-        every { configService.config.youtube.oauth2Token } returns ""
+        every { configService.config.youtube.oauth2Token } returns null
+        every { configService.config.deezer.enabled } returns false
 
         // When
         val actual = audioPlayerManagerProvider.createAudioPlayerManager()

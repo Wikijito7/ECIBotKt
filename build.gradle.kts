@@ -14,6 +14,7 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     maven(url = "https://maven.lavalink.dev/releases")
+    maven(url = "https://maven.topi.wtf/releases")
     mavenCentral()
     maven(url = "https://jitpack.io")
 }
@@ -43,6 +44,7 @@ dependencies {
     // Lavaplayer
     implementation(libs.lavaplayer)
     implementation(libs.lavaplayer.youtube)
+    implementation(libs.lavaplayer.lavasrc)
 
     // Tests
     testImplementation(libs.kotlin.test)
