@@ -23,7 +23,7 @@ kord-rest = { module = "dev.kord:kord-rest", version.ref = "kord" }
 kord-gateway = { module = "dev.kord:kord-gateway", version.ref = "kord" }
 lavaplayer = { module = "dev.arbjerg:lavaplayer", version.ref = "lavaplayer" }
 lavaplayer-youtube = { module = "dev.lavalink.youtube:v2", version.ref = "lavaplayer-youtube"}
-lavaplayer-lavasrc = { module = "com.github.topi314.lavasrc:lavasrc-plugin", version.ref = "lavaplayer-lavasrc"}
+lavaplayer-lavasrc = { module = "com.github.topi314.lavasrc:lavasrc", version.ref = "lavaplayer-lavasrc" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
