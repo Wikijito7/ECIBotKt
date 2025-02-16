@@ -3,7 +3,6 @@ package services.localization
 import dev.kord.common.Locale
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.localization.NoLocalizationFoundException
-import net.bytebuddy.asm.Advice.Local
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
