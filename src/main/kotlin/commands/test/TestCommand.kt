@@ -7,18 +7,30 @@ import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.Command
 import es.wokis.commands.CommandsEnum
+import es.wokis.localization.LocalizationKeys
+import es.wokis.services.lang.LanguageLocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getMemberVoiceChannel
 import es.wokis.utils.takeIfNotEmpty
 
 class TestCommand(
-    private val guildQueueService: GuildQueueService
+    private val guildQueueService: GuildQueueService,
+    private val languageLocalizationService: LanguageLocalizationService
 ) : Command {
 
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         commandBuilder.apply {
-            input(name = CommandsEnum.TEST.commandName, description = "test test") {
-                string(name = "pepe", description = "popopo") {
+            input(
+                name = CommandsEnum.TEST.commandName,
+                description = languageLocalizationService.getDefaultString(LocalizationKeys.TEST_COMMAND_DESCRIPTION)
+            ) {
+                descriptionLocalizations = languageLocalizationService.getLocalization(LocalizationKeys.TEST_COMMAND_DESCRIPTION)
+                string(
+                    name = languageLocalizationService.getDefaultString(LocalizationKeys.TEST_COMMAND_INPUT_NAME),
+                    description = languageLocalizationService.getDefaultString(LocalizationKeys.TEST_COMMAND_INPUT_DESCRIPTION)
+                ) {
+                    nameLocalizations = languageLocalizationService.getLocalization(LocalizationKeys.TEST_COMMAND_INPUT_NAME)
+                    descriptionLocalizations = languageLocalizationService.getLocalization(LocalizationKeys.TEST_COMMAND_INPUT_DESCRIPTION)
                     required = true
                 }
             }

@@ -5,6 +5,7 @@ import es.wokis.dispatchers.AppDispatchersImpl
 import es.wokis.services.commands.CommandHandlerService
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.config.ConfigService
+import es.wokis.services.lang.LanguageLocalizationService
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.processor.MessageProcessorService
 import es.wokis.services.queue.GuildQueueService
@@ -18,6 +19,7 @@ val servicesModule = module {
     singleOf(::AudioPlayerManagerProvider)
     singleOf(::GuildQueueService)
     singleOf(::CommandHandlerServiceImpl) { bind<CommandHandlerService>() }
+    singleOf(::LanguageLocalizationService)
 
     single<AppDispatchers> { AppDispatchersImpl() }
 }
