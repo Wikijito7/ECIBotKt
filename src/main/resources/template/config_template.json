@@ -14,5 +14,10 @@
     "enabled": false,
     "user": "hugging_chat_user",
     "password": "hugging_chat_password"
+  },
+  "deezer": {
+    "enabled": false,
+    "master_decryption_key": "",
+    "arl_token": ""
   }
 }

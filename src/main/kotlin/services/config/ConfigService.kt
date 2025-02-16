@@ -1,5 +1,6 @@
 package es.wokis.services.config
 
+import es.wokis.exceptions.EmptyDeezerMasterDecryptionKeyException
 import es.wokis.exceptions.EmptyDiscordTokenException
 import es.wokis.utils.getOrCreateFile
 import kotlinx.serialization.json.Json
@@ -22,5 +23,10 @@ class ConfigService {
 }
 
 fun Config.validate() {
-    if (discordBotToken.isEmpty()) throw EmptyDiscordTokenException()
+    if (discordBotToken.isEmpty()) {
+        throw EmptyDiscordTokenException()
+    }
+    if (deezer.enabled && deezer.masterDecryptionKey.isEmpty()) {
+        throw EmptyDeezerMasterDecryptionKeyException()
+    }
 }

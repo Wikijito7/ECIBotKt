@@ -14,7 +14,9 @@ data class Config(
     @SerialName("youtube")
     val youtube: YouTubeConfig,
     @SerialName("hugging_chat")
-    val huggingChat: HuggingChatConfig
+    val huggingChat: HuggingChatConfig,
+    @SerialName("deezer")
+    val deezer: DeezerConfig
 )
 
 @Serializable
@@ -43,4 +45,14 @@ data class HuggingChatConfig(
     val user: String,
     @SerialName("password")
     val password: String
+)
+
+@Serializable
+data class DeezerConfig(
+    @SerialName("enabled")
+    val enabled: Boolean,
+    @SerialName("master_decryption_key")
+    val masterDecryptionKey: String,
+    @SerialName("arl_token")
+    val arlToken: String,
 )

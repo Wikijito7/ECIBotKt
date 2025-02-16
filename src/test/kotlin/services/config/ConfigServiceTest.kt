@@ -1,5 +1,6 @@
 package services.config
 
+import es.wokis.exceptions.EmptyDeezerMasterDecryptionKeyException
 import es.wokis.exceptions.EmptyDiscordTokenException
 import es.wokis.services.config.*
 import io.mockk.every
@@ -41,6 +42,23 @@ class ConfigServiceTest {
         } catch (e: Throwable) {
             // Then
             assertTrue(e is EmptyDiscordTokenException)
+        }
+    }
+
+    @Test
+    fun `Given config with Deezer enabled but empty decryption key When config is validated Then throw EmptyDeezerMasterDecryptionKeyException`() {
+        // Given
+        val config = mockk<Config> {
+            every { deezer.enabled } returns true
+            every { deezer.masterDecryptionKey } returns ""
+        }
+
+        // When
+        try {
+            config.validate()
+        } catch (e: Throwable) {
+            // Then
+            assertTrue(e is EmptyDeezerMasterDecryptionKeyException)
         }
     }
 
