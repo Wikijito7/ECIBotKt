@@ -8,7 +8,7 @@ import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.Command
 import es.wokis.commands.CommandsEnum
 import es.wokis.localization.LocalizationKeys
-import es.wokis.services.lang.LocalizationService
+import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getMemberVoiceChannel
 import es.wokis.utils.takeIfNotEmpty
@@ -29,7 +29,6 @@ class TestCommand(
                     name = "pepe",
                     description = localizationService.getString(LocalizationKeys.TEST_COMMAND_INPUT_DESCRIPTION)
                 ) {
-                    nameLocalizations = localizationService.getLocalizations(LocalizationKeys.TEST_COMMAND_INPUT_NAME)
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.TEST_COMMAND_INPUT_DESCRIPTION)
                     required = true
                 }

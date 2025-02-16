@@ -1,4 +1,4 @@
-package es.wokis.services.lang
+package es.wokis.services.localization
 
 import dev.kord.common.Locale
 import java.nio.file.Paths
@@ -34,7 +34,7 @@ class LocalizationService {
         localizedStrings[key]?.find { it.locale == locale }?.value ?: getDefaultString(key)
 
     fun getStringFormat(key: String, locale: Locale = Locale.ENGLISH_UNITED_STATES, vararg arguments: String) =
-        getString(key, locale).format(arguments)
+        getString(key, locale).format(*arguments)
 
     private fun getDefaultString(key: String): String =
         localizedStrings[key]?.find { it.locale == Locale.ENGLISH_UNITED_STATES }?.value
