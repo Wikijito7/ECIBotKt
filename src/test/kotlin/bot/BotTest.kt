@@ -15,14 +15,14 @@ import org.junit.jupiter.api.Test
 
 class BotTest {
 
-    private val config: ConfigService = mockk()
-    private val messageProcessor: MessageProcessorService = mockk()
+    private val configService: ConfigService = mockk()
+    private val messageProcessorService: MessageProcessorService = mockk()
     private val commandHandlerService: CommandHandlerService = mockk()
     private val guildQueueService: GuildQueueService = mockk()
 
     private val bot = Bot(
-        config = config,
-        messageProcessor = messageProcessor,
+        configService = configService,
+        messageProcessorService = messageProcessorService,
         commandHandlerService = commandHandlerService,
         guildQueueService = guildQueueService
     )

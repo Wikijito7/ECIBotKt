@@ -9,9 +9,10 @@ import es.wokis.commands.Command
 import es.wokis.commands.CommandsEnum
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getMemberVoiceChannel
+import es.wokis.utils.takeIfNotEmpty
 
 class TestCommand(
-    private val guildQueueDispatcher: GuildQueueService
+    private val guildQueueService: GuildQueueService
 ) : Command {
 
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
@@ -34,11 +35,11 @@ class TestCommand(
             ?: response.respond { content = "You need to be in a text channel" }.let { return }
         val guildId = interaction.data.guildId.value
             ?: response.respond { content = "You need to be in a guild" }.let { return }
-        val input: String = interaction.command.strings["pepe"]?.takeUnless { it.isEmpty() }
+        val input: String = interaction.command.strings["pepe"]?.takeIfNotEmpty()
             ?: response.respond { content = "You need to give provide a url" }.let { return }
         response.respond { content = "Searching the song" }
 
-        guildQueueDispatcher.getOrCreateLavaPlayerService(
+        guildQueueService.getOrCreateLavaPlayerService(
             guildId = guildId,
             textChannel = textChannel,
             voiceChannel = voiceChannel

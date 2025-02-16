@@ -1,10 +1,8 @@
 package es.wokis.services.config
 
-import es.wokis.exceptions.DiscordKeyIsNullException
+import es.wokis.exceptions.EmptyDiscordTokenException
 import es.wokis.utils.getOrCreateFile
 import kotlinx.serialization.json.Json
-
-const val DEFAULT_YOUTUBE_OAUTH2_VALUE = "your-youtube-oauth2-token"
 
 private const val CONFIG_PATH = "./data/"
 private const val FILE_NAME = "config.json"
@@ -12,20 +10,17 @@ private val CONFIG_TEMPLATE = {}::class.java.getResourceAsStream("/template/conf
 
 class ConfigService {
 
-    val config: Config = startUpConfig()
+    val config: Config = loadFromFile()
 
-    private fun startUpConfig(): Config {
+    private fun loadFromFile(): Config {
         val file = getOrCreateFile(CONFIG_PATH, FILE_NAME, CONFIG_TEMPLATE)
-        val valuesFromFile = Json.decodeFromString<Config>(file.readLines().joinToString(separator = " ") { it.trim() })
-        return valuesFromFile
+        val config = Json.decodeFromString<Config>(file.readText())
+        config.validate()
+        return config
     }
+
 }
 
-val ConfigService.isDebugMode: Boolean
-    get() = config.debug
-
-val ConfigService.discordToken: String
-    get() = config.key.takeIf { it.isNotEmpty() } ?: throw DiscordKeyIsNullException
-
-val ConfigService.youtubeOauth2Token: String?
-    get() = config.youtubeOauth2Token.takeUnless { it.isEmpty() || it == DEFAULT_YOUTUBE_OAUTH2_VALUE }
+fun Config.validate() {
+    if (discordBotToken.isEmpty()) throw EmptyDiscordTokenException()
+}

@@ -17,8 +17,6 @@ import dev.kord.gateway.Intents
 import dev.kord.gateway.PrivilegedIntent
 import es.wokis.services.commands.CommandHandlerService
 import es.wokis.services.config.ConfigService
-import es.wokis.services.config.discordToken
-import es.wokis.services.config.isDebugMode
 import es.wokis.services.processor.MessageProcessorService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.Log
@@ -27,21 +25,20 @@ import org.koin.core.component.KoinComponent
 
 @OptIn(PrivilegedIntent::class)
 class Bot(
-    private val config: ConfigService,
-    private val messageProcessor: MessageProcessorService,
+    private val configService: ConfigService,
+    private val messageProcessorService: MessageProcessorService,
     private val commandHandlerService: CommandHandlerService,
     private val guildQueueService: GuildQueueService
 ) : KoinComponent {
 
     suspend fun start() {
-        val debugMode = config.isDebugMode
-        val bot = Kord(token = config.discordToken)
+        val bot = Kord(token = configService.config.discordBotToken)
 
         setUpEvents(bot)
         setUpCommands(bot)
 
         bot.login {
-            presence = getPresence(debugMode)
+            presence = getPresence(debugMode = configService.config.debug)
             intents = Intents.ALL
         }
     }
@@ -79,8 +76,8 @@ class Bot(
     }
 
     private fun processMessages(message: Message) {
-        messageProcessor.processReactions(message)
-        messageProcessor.processMessage(message)
+        messageProcessorService.processReactions(message)
+        messageProcessorService.processMessage(message)
     }
 
     fun getPresence(debugMode: Boolean) = DiscordPresence(
