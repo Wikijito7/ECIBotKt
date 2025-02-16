@@ -30,8 +30,14 @@ class LanguageLocalizationService {
     fun getLocalization(key: String): MutableMap<Locale, String> = localizedStrings[key]?.associate { it.locale to it.value }?.toMutableMap()
         ?: throw NoLocalizationFoundException(key)
 
-    fun getDefaultString(key: String): String = localizedStrings[key]?.find { it.locale == Locale.ENGLISH_GREAT_BRITAIN }?.value
+    fun getDefaultString(key: String): String = getString(key, Locale.ENGLISH_GREAT_BRITAIN)
         ?: throw NoLocalizationFoundException(key)
+
+    fun getStringForLocale(key: String, locale: Locale): String = getString(key, locale)
+        ?: getDefaultString(key)
+
+    private fun getString(key: String, locale: Locale): String? =
+        localizedStrings[key]?.find { it.locale == locale }?.value
 }
 
 data class StringLocalized(

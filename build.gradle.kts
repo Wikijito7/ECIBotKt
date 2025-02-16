@@ -99,7 +99,7 @@ tasks.register("generateLangClass") {
         val baseLangFile = file("src/main/resources/lang/lang.yml")
         val outputFile = file("src/main/kotlin/localization/LocalizationKeys.kt")
 
-        val contenido = buildString {
+        val fileContent = buildString {
             appendLine("package es.wokis.localization")
             appendLine()
             appendLine("object LocalizationKeys {")
@@ -111,7 +111,7 @@ tasks.register("generateLangClass") {
             appendLine("}")
         }
 
-        outputFile.writeText(contenido)
+        outputFile.writeText(fileContent)
     }
 }
 
