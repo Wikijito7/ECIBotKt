@@ -1,8 +1,12 @@
+import org.jetbrains.gradle.ext.settings
+import org.jetbrains.gradle.ext.taskTriggers
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     jacoco
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.plugin.serialization)
+    alias(libs.plugins.idea.ext)
 }
 
 group = "es.wokis"
@@ -91,3 +95,35 @@ sonar {
 kotlin {
     jvmToolchain(17)
 }
+
+tasks.register("generateLangClass") {
+    doLast {
+        val baseLangFile = file("src/main/resources/lang/lang.yml")
+        val outputFile = file("src/main/kotlin/localization/LocalizationKeys.kt")
+
+        val fileContent = buildString {
+            appendLine("package es.wokis.localization")
+            appendLine()
+            appendLine("object LocalizationKeys {")
+            baseLangFile.readLines().forEach { line ->
+                val langKey = line.split(": ")[0].trim().replace(" ", "_")
+                val staticLangName = langKey.uppercase()
+                appendLine("    const val $staticLangName = \"$langKey\"")
+            }
+            appendLine("}")
+        }
+
+        outputFile.writeText(fileContent)
+    }
+}
+
+tasks.named("compileKotlin") {
+    dependsOn("generateLangClass")
+}
+
+idea.project.settings {
+    taskTriggers {
+        afterSync(project.tasks.named("generateLangClass"))
+    }
+}
+

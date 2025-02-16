@@ -5,6 +5,7 @@ import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.CommandsEnum
 import es.wokis.commands.test.TestCommand
+import es.wokis.services.localization.LocalizationService
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getMemberVoiceChannel
@@ -17,8 +18,12 @@ import kotlin.test.Ignore
 class TestCommandTest {
 
     private val guildQueueService: GuildQueueService = mockk()
+    private val localizationService: LocalizationService = mockk()
 
-    private val testCommand = TestCommand(guildQueueService)
+    private val testCommand = TestCommand(
+        guildQueueService = guildQueueService,
+        localizationService = localizationService
+    )
 
     /*
         Verification failed: call 2 of 2: List(child of #2#3).add(any())) was not called

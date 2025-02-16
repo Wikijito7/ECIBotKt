@@ -1,0 +1,2 @@
+test_command_description: test in junit tests
+test_args_string: this string has arguments, %s

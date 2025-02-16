@@ -12,6 +12,7 @@ serialization = "1.7.2"
 lavaplayer = "2.2.3"
 lavaplayer-youtube = "1.11.4"
 lavaplayer-lavasrc = "4.4.1"
+idea-ext = "1.1.8"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -36,3 +37,4 @@ kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
+idea-ext = {id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "idea-ext"}
