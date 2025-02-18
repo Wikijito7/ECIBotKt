@@ -8,7 +8,6 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
-import dev.kord.common.Locale
 import dev.kord.common.annotation.KordVoice
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.behavior.channel.connect
@@ -29,6 +28,8 @@ import kotlin.concurrent.schedule
 private const val TAG = "GuildLavaPlayerService"
 
 private const val LEAVE_DELAY = 10000L
+
+private const val UNKNOWN_ERROR = "Unknown error"
 
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
@@ -148,16 +149,37 @@ class GuildLavaPlayerService(
 
     private fun onPlaylistLoaded(playlist: AudioPlaylist) {
         coroutineScope.launch {
-            val message = textChannel.createMessage("Found track list ${playlist.name} with ${playlist.tracks.size} tracks.")
+            val locale = voiceChannel.getLocale()
+            "Found track list ${playlist.name} with ${playlist.tracks.size} tracks."
+            val message = textChannel.createMessage(
+                localizationService.getStringFormat(
+                    key = LocalizationKeys.FOUND_TRACK_LIST,
+                    locale = locale,
+                    arguments = arrayOf(playlist.name, playlist.tracks.size)
+                )
+            )
             connectToVoiceChannel()
             queue(playlist.tracks)
-            message.edit { content = "Added ${playlist.tracks.size} songs to the queue." }
+            message.edit {
+                content = localizationService.getStringFormat(
+                    key = LocalizationKeys.ADDED_SONGS_TO_QUEUE,
+                    locale = locale,
+                    arguments = arrayOf(playlist.tracks.size)
+                )
+            }
         }
     }
 
     private fun onTrackLoaded(track: AudioTrack) {
         coroutineScope.launch {
-            textChannel.createMessage("Added ${track.getDisplayTrackName()} to the queue.")
+            val locale = voiceChannel.getLocale()
+            textChannel.createMessage(
+                localizationService.getStringFormat(
+                    key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
+                    locale = locale,
+                    arguments = arrayOf(track.getDisplayTrackName())
+                )
+            )
             connectToVoiceChannel()
             queue(listOf(track))
         }
@@ -178,7 +200,14 @@ class GuildLavaPlayerService(
 
     private suspend fun onLoadFailed(exception: FriendlyException) {
         Log.error("GuildLavaPlayerService onLoadFailed", exception)
-        textChannel.createMessage("Load failed: ${exception.message}")
+        val locale = voiceChannel.getLocale()
+        textChannel.createMessage(
+            localizationService.getStringFormat(
+                key = LocalizationKeys.LOAD_FAILED,
+                locale = locale,
+                arguments = arrayOf(exception.message ?: UNKNOWN_ERROR)
+            )
+        )
     }
 
     suspend fun handleDisconnectEvent() {

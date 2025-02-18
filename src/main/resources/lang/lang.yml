@@ -3,3 +3,14 @@ test_command_input_description: popopo
 unknown_command: Unknown or unregistered command, command name %s
 now_playing: 🎶 Playing %s in %s
 no_matches: No matches found
+added_track_to_queue: Added %s to the queue
+added_songs_to_queue: Added %d songs to the queue
+found_track_list: Found track list %s with %d tracks
+load_failed: Load failed, %s
+message_processor_invalid_link: I've received an invalid link. The original one was %s
+fixed_up_link: Post sent by %s with fixed link:\n%s
+error_no_voice_channel: You need to be in a voice channel
+error_no_text_channel: You need to be in a text channel
+error_no_guild: You need to be in a guild
+error_no_content_provided: %s is required. You need to provide this field
+searching_song: Searching the song

@@ -11,7 +11,10 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getMemberVoiceChannel
+import es.wokis.utils.orDefaultLocale
 import es.wokis.utils.takeIfNotEmpty
+
+private const val ARGUMENT_NAME = "pepe"
 
 class TestCommand(
     private val guildQueueService: GuildQueueService,
@@ -26,7 +29,7 @@ class TestCommand(
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.TEST_COMMAND_DESCRIPTION)
                 string(
-                    name = "pepe",
+                    name = ARGUMENT_NAME,
                     description = localizationService.getString(LocalizationKeys.TEST_COMMAND_INPUT_DESCRIPTION)
                 ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.TEST_COMMAND_INPUT_DESCRIPTION)
@@ -40,15 +43,30 @@ class TestCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
+        val locale = interaction.guildLocale.orDefaultLocale()
         val voiceChannel = interaction.getMemberVoiceChannel(interaction.kord)
-            ?: response.respond { content = "You need to be in a voice channel" }.let { return }
+            ?: response.respond {
+                content = localizationService.getString(LocalizationKeys.ERROR_NO_VOICE_CHANNEL, locale)
+            }.let { return }
         val textChannel = interaction.channel.asChannelOrNull()
-            ?: response.respond { content = "You need to be in a text channel" }.let { return }
+            ?: response.respond {
+                content = localizationService.getString(LocalizationKeys.ERROR_NO_TEXT_CHANNEL, locale)
+            }.let { return }
         val guildId = interaction.data.guildId.value
-            ?: response.respond { content = "You need to be in a guild" }.let { return }
-        val input: String = interaction.command.strings["pepe"]?.takeIfNotEmpty()
-            ?: response.respond { content = "You need to give provide a url" }.let { return }
-        response.respond { content = "Searching the song" }
+            ?: response.respond {
+                content = localizationService.getString(LocalizationKeys.ERROR_NO_GUILD, locale)
+            }.let { return }
+        val input: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
+            ?: response.respond {
+                content = localizationService.getStringFormat(
+                    key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
+                    locale = locale,
+                    arguments = arrayOf(ARGUMENT_NAME)
+                )
+            }.let { return }
+        response.respond {
+            content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
+        }
 
         guildQueueService.getOrCreateLavaPlayerService(
             guildId = guildId,
