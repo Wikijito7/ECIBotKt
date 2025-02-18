@@ -106,9 +106,11 @@ tasks.register("generateLangClass") {
             appendLine()
             appendLine("object LocalizationKeys {")
             baseLangFile.readLines().forEach { line ->
-                val langKey = line.split(": ")[0].trim().replace(" ", "_")
-                val staticLangName = langKey.uppercase()
-                appendLine("    const val $staticLangName = \"$langKey\"")
+                if (line.trim().isNotEmpty()) {
+                    val langKey = line.split(": ")[0].trim().replace(" ", "_")
+                    val staticLangName = langKey.uppercase()
+                    appendLine("    const val $staticLangName = \"$langKey\"")
+                }
             }
             appendLine("}")
         }
