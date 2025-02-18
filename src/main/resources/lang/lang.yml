@@ -1,2 +1,5 @@
 test_command_description: test test
 test_command_input_description: popopo
+unknown_command: Unknown or unregistered command, command name %s
+now_playing: 🎶 Playing %s in %s
+no_matches: No matches found
