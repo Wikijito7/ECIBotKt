@@ -7,6 +7,7 @@ import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
+import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import io.mockk.every
 import io.mockk.justRun
@@ -22,10 +23,12 @@ class GuildQueueServiceTest {
 
     private val audioPlayerManagerProvider: AudioPlayerManagerProvider = mockk()
     private val appDispatchers = TestDispatchers()
+    private val localizationService: LocalizationService = mockk()
 
     private val guildQueueService = GuildQueueService(
         audioPlayerManagerProvider = audioPlayerManagerProvider,
-        appDispatchers = appDispatchers
+        appDispatchers = appDispatchers,
+        localizationService = localizationService
     )
 
     @Test

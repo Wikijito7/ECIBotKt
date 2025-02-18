@@ -1,5 +1,6 @@
 package commands.test
 
+import dev.kord.common.Locale
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.interaction.string
@@ -91,6 +92,8 @@ class TestCommandTest {
                     voiceChannel = mockedVoiceChannel
                 )
             } returns lavaPlayerService
+            every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { localizationService.getString(any(), any()) } returns ""
 
             // When
             testCommand.onExecute(interaction, mockedResponse)

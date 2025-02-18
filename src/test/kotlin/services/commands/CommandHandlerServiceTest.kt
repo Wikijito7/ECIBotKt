@@ -6,6 +6,7 @@ import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.CommandsEnum
 import es.wokis.commands.test.TestCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
+import es.wokis.services.localization.LocalizationService
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
@@ -13,9 +14,11 @@ import org.junit.jupiter.api.Test
 class CommandHandlerServiceTest {
 
     private val testCommand: TestCommand = mockk()
+    private val localizationService: LocalizationService = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
-        testCommand = testCommand
+        testCommand = testCommand,
+        localizationService = localizationService
     )
 
     @Test
