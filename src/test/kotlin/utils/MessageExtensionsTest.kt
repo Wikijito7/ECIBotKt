@@ -31,7 +31,7 @@ class MessageExtensionsTest {
         // When
         val actual = message.getGuildLocale()
 
-        //Then
+        // Then
         assertEquals(expected, actual)
     }
 
@@ -46,7 +46,7 @@ class MessageExtensionsTest {
         // When
         val actual = message.getGuildLocale()
 
-        //Then
+        // Then
         assertEquals(expected, actual)
     }
 
@@ -65,7 +65,7 @@ class MessageExtensionsTest {
         // When
         val actual = message.getGuildLocale()
 
-        //Then
+        // Then
         assertEquals(expected, actual)
     }
 }
