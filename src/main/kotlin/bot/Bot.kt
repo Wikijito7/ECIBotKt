@@ -60,6 +60,7 @@ class Bot(
         }
 
         bot.on<VoiceStateUpdateEvent> {
+            if (state.userId != bot.selfId) return@on
             if (state.data.channelId == null) {
                 handleDisconnectEvent(state.guildId)
             }
