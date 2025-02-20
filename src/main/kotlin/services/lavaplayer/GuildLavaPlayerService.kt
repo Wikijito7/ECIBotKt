@@ -150,7 +150,6 @@ class GuildLavaPlayerService(
     private fun onPlaylistLoaded(playlist: AudioPlaylist) {
         coroutineScope.launch {
             val locale = voiceChannel.getLocale()
-            "Found track list ${playlist.name} with ${playlist.tracks.size} tracks."
             val message = textChannel.createMessage(
                 localizationService.getStringFormat(
                     key = LocalizationKeys.FOUND_TRACK_LIST,
