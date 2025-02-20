@@ -33,7 +33,7 @@ class LocalizationService {
     fun getString(key: String, locale: Locale = Locale.ENGLISH_UNITED_STATES): String =
         localizedStrings[key]?.find { it.locale == locale }?.value ?: getDefaultString(key)
 
-    fun getStringFormat(key: String, locale: Locale = Locale.ENGLISH_UNITED_STATES, vararg arguments: String) =
+    fun getStringFormat(key: String, locale: Locale = Locale.ENGLISH_UNITED_STATES, vararg arguments: Any) =
         getString(key, locale).format(*arguments)
 
     private fun getDefaultString(key: String): String =

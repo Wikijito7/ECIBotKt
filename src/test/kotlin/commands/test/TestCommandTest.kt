@@ -1,12 +1,13 @@
 package commands.test
 
+import dev.kord.common.Locale
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.CommandsEnum
 import es.wokis.commands.test.TestCommand
-import es.wokis.services.localization.LocalizationService
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
+import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getMemberVoiceChannel
 import io.mockk.*
@@ -91,6 +92,8 @@ class TestCommandTest {
                     voiceChannel = mockedVoiceChannel
                 )
             } returns lavaPlayerService
+            every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { localizationService.getString(any(), any()) } returns ""
 
             // When
             testCommand.onExecute(interaction, mockedResponse)

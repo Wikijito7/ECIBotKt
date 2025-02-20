@@ -1,9 +1,12 @@
 package services.processor
 
+import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.ReactionEmoji
+import dev.kord.core.supplier.EntitySupplyStrategy
 import es.wokis.dispatchers.AppDispatchers
+import es.wokis.services.localization.LocalizationService
 import es.wokis.services.processor.MessageProcessorService
 import io.mockk.*
 import mock.TestDispatchers
@@ -12,8 +15,12 @@ import org.junit.jupiter.api.Test
 class MessageProcessorServiceTest {
 
     private val dispatchers: AppDispatchers = TestDispatchers()
+    private val localizationService: LocalizationService = mockk()
 
-    private val messageProcessor = MessageProcessorService(dispatchers)
+    private val messageProcessor = MessageProcessorService(
+        appDispatchers = dispatchers,
+        localizationService = localizationService
+    )
 
     @Test
     fun `Given message with twitter status url When processMessage is called Then process message`() {
@@ -25,9 +32,21 @@ class MessageProcessorServiceTest {
             every { content } returns originalMessage
             every { author?.id } returns authorId
             every { author?.mention } returns authorMention
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    every { preferredLocale } returns Locale.ENGLISH_UNITED_STATES
+                }
+            }
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://fixupx.com/status/blablabla"
 
+        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 
@@ -76,9 +95,21 @@ class MessageProcessorServiceTest {
             every { content } returns originalMessage
             every { author?.id } returns authorId
             every { author?.mention } returns authorMention
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    every { preferredLocale } returns Locale.ENGLISH_UNITED_STATES
+                }
+            }
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://rxddit.com/blablabla"
 
+        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 
@@ -102,9 +133,21 @@ class MessageProcessorServiceTest {
             every { content } returns originalMessage
             every { author?.id } returns authorId
             every { author?.mention } returns authorMention
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    every { preferredLocale } returns Locale.ENGLISH_UNITED_STATES
+                }
+            }
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://ddinstagram.com/p/blablabla"
 
+        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 
@@ -153,9 +196,21 @@ class MessageProcessorServiceTest {
             every { content } returns originalMessage
             every { author?.id } returns authorId
             every { author?.mention } returns authorMention
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    every { preferredLocale } returns Locale.ENGLISH_UNITED_STATES
+                }
+            }
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://vxtiktok.com/blablabla"
 
+        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 
@@ -179,9 +234,21 @@ class MessageProcessorServiceTest {
             every { content } returns originalMessage
             every { author?.id } returns authorId
             every { author?.mention } returns authorMention
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    every { preferredLocale } returns Locale.ENGLISH_UNITED_STATES
+                }
+            }
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://vm.vxtiktok.com/blablabla"
 
+        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 

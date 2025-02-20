@@ -16,8 +16,11 @@ import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.voice.AudioFrame
 import dev.kord.voice.VoiceConnection
 import es.wokis.dispatchers.AppDispatchers
+import es.wokis.localization.LocalizationKeys
+import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
+import es.wokis.utils.getLocale
 import kotlinx.coroutines.launch
 import java.util.Timer
 import kotlin.concurrent.schedule
@@ -26,11 +29,14 @@ private const val TAG = "GuildLavaPlayerService"
 
 private const val LEAVE_DELAY = 10000L
 
+private const val UNKNOWN_ERROR = "Unknown error"
+
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
     private val textChannel: MessageChannel,
     private val voiceChannel: BaseVoiceChannelBehavior,
-    private val audioPlayerManager: AudioPlayerManager
+    private val audioPlayerManager: AudioPlayerManager,
+    private val localizationService: LocalizationService
 ) : AudioEventAdapter() {
 
     @OptIn(KordVoice::class)
@@ -90,7 +96,15 @@ class GuildLavaPlayerService(
     override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
         if (playTrackRetries > 0) return
         coroutineScope.launch {
-            textChannel.createMessage("Now playing: ${track?.getDisplayTrackName()}")
+            val locale = voiceChannel.getLocale()
+            val voiceChannelName = voiceChannel.asChannel().name
+            textChannel.createMessage(
+                localizationService.getStringFormat(
+                    key = LocalizationKeys.NOW_PLAYING,
+                    locale = locale,
+                    arguments = arrayOf(track?.getDisplayTrackName().orEmpty(), voiceChannelName)
+                )
+            )
         }
     }
 
@@ -121,7 +135,8 @@ class GuildLavaPlayerService(
 
         override fun noMatches() {
             coroutineScope.launch {
-                textChannel.createMessage("No matches found")
+                val locale = voiceChannel.getLocale()
+                textChannel.createMessage(localizationService.getString(LocalizationKeys.NO_MATCHES, locale))
             }
         }
 
@@ -134,16 +149,36 @@ class GuildLavaPlayerService(
 
     private fun onPlaylistLoaded(playlist: AudioPlaylist) {
         coroutineScope.launch {
-            val message = textChannel.createMessage("Found track list ${playlist.name} with ${playlist.tracks.size} tracks.")
+            val locale = voiceChannel.getLocale()
+            val message = textChannel.createMessage(
+                localizationService.getStringFormat(
+                    key = LocalizationKeys.FOUND_TRACK_LIST,
+                    locale = locale,
+                    arguments = arrayOf(playlist.name, playlist.tracks.size)
+                )
+            )
             connectToVoiceChannel()
             queue(playlist.tracks)
-            message.edit { content = "Added ${playlist.tracks.size} songs to the queue." }
+            message.edit {
+                content = localizationService.getStringFormat(
+                    key = LocalizationKeys.ADDED_SONGS_TO_QUEUE,
+                    locale = locale,
+                    arguments = arrayOf(playlist.tracks.size)
+                )
+            }
         }
     }
 
     private fun onTrackLoaded(track: AudioTrack) {
         coroutineScope.launch {
-            textChannel.createMessage("Added ${track.getDisplayTrackName()} to the queue.")
+            val locale = voiceChannel.getLocale()
+            textChannel.createMessage(
+                localizationService.getStringFormat(
+                    key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
+                    locale = locale,
+                    arguments = arrayOf(track.getDisplayTrackName())
+                )
+            )
             connectToVoiceChannel()
             queue(listOf(track))
         }
@@ -164,7 +199,14 @@ class GuildLavaPlayerService(
 
     private suspend fun onLoadFailed(exception: FriendlyException) {
         Log.error("GuildLavaPlayerService onLoadFailed", exception)
-        textChannel.createMessage("Load failed: ${exception.message}")
+        val locale = voiceChannel.getLocale()
+        textChannel.createMessage(
+            localizationService.getStringFormat(
+                key = LocalizationKeys.LOAD_FAILED,
+                locale = locale,
+                arguments = arrayOf(exception.message ?: UNKNOWN_ERROR)
+            )
+        )
     }
 
     suspend fun handleDisconnectEvent() {

@@ -6,10 +6,12 @@ import dev.kord.core.entity.channel.MessageChannel
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
+import es.wokis.services.localization.LocalizationService
 
 class GuildQueueService(
     private val audioPlayerManagerProvider: AudioPlayerManagerProvider,
-    private val appDispatchers: AppDispatchers
+    private val appDispatchers: AppDispatchers,
+    private val localizationService: LocalizationService
 ) {
 
     private val guildQueues: MutableMap<Snowflake, GuildLavaPlayerService> = mutableMapOf()
@@ -34,7 +36,8 @@ class GuildQueueService(
         appDispatchers = appDispatchers,
         textChannel = textChannel,
         voiceChannel = voiceChannel,
-        audioPlayerManager = audioPlayerManagerProvider.createAudioPlayerManager()
+        audioPlayerManager = audioPlayerManagerProvider.createAudioPlayerManager(),
+        localizationService = localizationService
     ).also {
         guildQueues[guild] = it
     }

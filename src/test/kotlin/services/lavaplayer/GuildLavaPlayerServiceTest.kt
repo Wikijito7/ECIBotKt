@@ -4,6 +4,7 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
+import es.wokis.services.localization.LocalizationService
 import io.mockk.*
 import mock.TestDispatchers
 import org.junit.jupiter.api.Test
@@ -19,12 +20,14 @@ class GuildLavaPlayerServiceTest {
             justRun { addListener(any()) }
         }
     }
+    private val localizationService: LocalizationService = mockk()
 
     private val playerService = GuildLavaPlayerService(
         appDispatchers = appDispatchers,
         textChannel = textChannel,
         voiceChannel = voiceChannel,
-        audioPlayerManager = audioPlayerManager
+        audioPlayerManager = audioPlayerManager,
+        localizationService = localizationService
     )
 
     @Ignore("Cannot test atm")
