@@ -16,7 +16,9 @@ data class Config(
     @SerialName("hugging_chat")
     val huggingChat: HuggingChatConfig,
     @SerialName("deezer")
-    val deezer: DeezerConfig
+    val deezer: DeezerConfig,
+    @SerialName("spotify")
+    val spotify: SpotifyConfig
 )
 
 @Serializable
@@ -34,7 +36,11 @@ data class DatabaseConfig(
 @Serializable
 data class YouTubeConfig(
     @SerialName("oauth2_token")
-    val oauth2Token: String?
+    val oauth2Token: String?,
+    @SerialName("po_token")
+    val poToken: String?,
+    @SerialName("visitor_data")
+    val visitorData: String?
 )
 
 @Serializable
@@ -55,4 +61,14 @@ data class DeezerConfig(
     val masterDecryptionKey: String,
     @SerialName("arl_token")
     val arlToken: String,
+)
+
+@Serializable
+data class SpotifyConfig(
+    @SerialName("enabled")
+    val enabled: Boolean,
+    @SerialName("client_id")
+    val clientId: String,
+    @SerialName("client_secret")
+    val clientSecret: String
 )

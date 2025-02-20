@@ -1,5 +1,7 @@
 package es.wokis.services.lavaplayer
 
+import co.touchlab.stately.concurrency.AtomicInt
+import co.touchlab.stately.concurrency.value
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
@@ -21,6 +23,7 @@ import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
 import es.wokis.utils.getLocale
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Timer
 import kotlin.concurrent.schedule
@@ -28,6 +31,7 @@ import kotlin.concurrent.schedule
 private const val TAG = "GuildLavaPlayerService"
 
 private const val LEAVE_DELAY = 10000L
+private val BACK_OFF_DELAY = 1000L
 
 private const val UNKNOWN_ERROR = "Unknown error"
 
@@ -44,7 +48,7 @@ class GuildLavaPlayerService(
     private val coroutineScope = createCoroutineScope(TAG, appDispatchers)
     private val queue: MutableList<AudioTrack> = mutableListOf()
     private var leaveTimer: Timer? = null
-    private var playTrackRetries = 0
+    private var playTrackRetries: AtomicInt = AtomicInt(0)
     private val player: AudioPlayer = audioPlayerManager.createPlayer().apply {
         addListener(this@GuildLavaPlayerService)
     }
@@ -62,9 +66,11 @@ class GuildLavaPlayerService(
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
         Log.info(endReason?.name.orEmpty())
-        if (endReason in listOf(AudioTrackEndReason.LOAD_FAILED, AudioTrackEndReason.CLEANUP) && playTrackRetries < 3) {
-            player.playTrack(track?.makeClone())
-            playTrackRetries++
+        if (endReason in listOf(AudioTrackEndReason.LOAD_FAILED, AudioTrackEndReason.CLEANUP) && playTrackRetries.value <= 3) {
+            coroutineScope.launch {
+                delay(playTrackRetries.addAndGet(1) * BACK_OFF_DELAY)
+                player.playTrack(track?.makeClone())
+            }
             return
         }
         if (queue.isEmpty()) {
@@ -73,7 +79,7 @@ class GuildLavaPlayerService(
         if (endReason?.mayStartNext == true && queue.isNotEmpty()) {
             resetTimer()
             nextTrack()
-            playTrackRetries = 0
+            playTrackRetries.set(0)
         }
     }
 
@@ -94,7 +100,7 @@ class GuildLavaPlayerService(
     }
 
     override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
-        if (playTrackRetries > 0) return
+        if (playTrackRetries.value > 0) return
         coroutineScope.launch {
             val locale = voiceChannel.getLocale()
             val voiceChannelName = voiceChannel.asChannel().name
@@ -213,7 +219,7 @@ class GuildLavaPlayerService(
         queue.clear()
         player.stopTrack()
         resetVoiceConnection()
-        playTrackRetries = 0
+        playTrackRetries.set(0)
     }
 
     @OptIn(KordVoice::class)
