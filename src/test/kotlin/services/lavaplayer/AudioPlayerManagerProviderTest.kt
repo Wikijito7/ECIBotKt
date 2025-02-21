@@ -18,6 +18,9 @@ class AudioPlayerManagerProviderTest {
         // Given
         every { configService.config.youtube.oauth2Token } returns null
         every { configService.config.deezer.enabled } returns false
+        every { configService.config.spotify.enabled } returns false
+        every { configService.config.youtube.poToken } returns null
+        every { configService.config.youtube.visitorData } returns null
 
         // When
         val actual = audioPlayerManagerProvider.createAudioPlayerManager()

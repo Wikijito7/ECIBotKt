@@ -8,7 +8,9 @@
     "database": "db_database"
   },
   "youtube": {
-    "oauth2_token": null
+    "oauth2_token": null,
+    "po_token": null,
+    "visitor_data": null
   },
   "hugging_chat": {
     "enabled": false,
@@ -19,5 +21,10 @@
     "enabled": false,
     "master_decryption_key": "",
     "arl_token": ""
+  },
+  "spotify": {
+    "enabled": false,
+    "client_id": "",
+    "client_secret": ""
   }
 }
