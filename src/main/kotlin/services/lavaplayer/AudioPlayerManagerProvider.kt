@@ -20,8 +20,7 @@ class AudioPlayerManagerProvider(
             useOauth2(configService.config.youtube.oauth2Token, true)
             Web.setPoTokenAndVisitorData(
                 configService.config.youtube.poToken,
-                configService.config.youtube.visitorData,
-
+                configService.config.youtube.visitorData
             )
         }
         this.registerSourceManager(ytSourceManager)
