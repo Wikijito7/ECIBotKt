@@ -57,6 +57,7 @@ class GuildLavaPlayerService(
         maxBackoff = Duration.parse(MAX_BACK_OFF_DELAY),
         maxTries = MAX_BACK_OFF_RETRIES
     )
+    private var isRetrying = false
 
     fun loadAndPlay(url: String) {
         audioPlayerManager.loadItem(
@@ -75,6 +76,7 @@ class GuildLavaPlayerService(
             try {
                 coroutineScope.launch {
                     replayTrackRetry.retry()
+                    isRetrying = true
                     player.playTrack(track?.makeClone())
                 }
             } catch (_: IllegalStateException) {
@@ -91,8 +93,9 @@ class GuildLavaPlayerService(
         }
         if (endReason?.mayStartNext == true && queue.isNotEmpty()) {
             resetTimer()
-            nextTrack()
             replayTrackRetry.reset()
+            isRetrying = false
+            nextTrack()
         }
     }
 
@@ -113,7 +116,7 @@ class GuildLavaPlayerService(
     }
 
     override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
-        if (replayTrackRetry.hasNext) return
+        if (isRetrying) return
         coroutineScope.launch {
             val locale = voiceChannel.getLocale()
             val voiceChannelName = voiceChannel.asChannel().name
@@ -237,10 +240,13 @@ class GuildLavaPlayerService(
     }
 
     suspend fun handleDisconnectEvent() {
+        isRetrying = false
         queue.clear()
         player.stopTrack()
         resetVoiceConnection()
         replayTrackRetry.reset()
+        leaveTimer?.cancel()
+        leaveTimer = null
     }
 
     @OptIn(KordVoice::class)
