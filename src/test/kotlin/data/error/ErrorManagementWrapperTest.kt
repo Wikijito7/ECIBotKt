@@ -4,8 +4,6 @@ import es.wokis.data.error.ErrorManagementWrapper
 import es.wokis.data.response.ErrorType
 import es.wokis.data.response.RemoteResponse
 import io.ktor.client.plugins.*
-import io.ktor.client.statement.*
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.lastOrNull

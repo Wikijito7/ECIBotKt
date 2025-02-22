@@ -1,6 +1,5 @@
 package es.wokis.data.response
 
-
 sealed class RemoteResponse<T>(val data: T?, val message: String?) {
     class Loading<T>(data: T? = null) : RemoteResponse<T>(data, null)
 
