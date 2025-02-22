@@ -5,10 +5,7 @@ import es.wokis.data.response.ErrorType
 import es.wokis.data.response.RemoteResponse
 import io.ktor.client.plugins.*
 import io.mockk.mockk
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.test.runTest
-import mock.TestDispatchers
 import org.junit.jupiter.api.Test
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -21,14 +18,10 @@ import kotlin.test.assertTrue
 
 class ErrorManagementWrapperTest {
 
-    private val appDispatchers = TestDispatchers()
-
-    private val errorManagementWrapper = ErrorManagementWrapper(appDispatchers)
-
     @Test
     fun `When wrap is called Then verify first emit is loading`() = runTest {
         // When
-        val result = errorManagementWrapper.wrap {}.firstOrNull()
+        val result = ErrorManagementWrapper.wrap {}
 
         // Then
         assertNotNull(result)
@@ -39,9 +32,9 @@ class ErrorManagementWrapperTest {
     fun `Given cancellation exception When wrap is called Then verify exception is thrown`() = runTest {
         try {
             // When
-            errorManagementWrapper.wrap {
+            ErrorManagementWrapper.wrap {
                 throw CancellationException()
-            }.firstOrNull()
+            }
         } catch (exc: Exception) {
             // Then
             assertTrue(exc is CancellationException)
@@ -54,9 +47,9 @@ class ErrorManagementWrapperTest {
         val expected = "manolete"
 
         // When
-        val result = errorManagementWrapper.wrap {
+        val result = ErrorManagementWrapper.wrap {
             expected
-        }.lastOrNull()
+        }
 
         // Then
         assertNotNull(result)
@@ -70,9 +63,9 @@ class ErrorManagementWrapperTest {
         val error = IllegalStateException()
 
         // When
-        val result = errorManagementWrapper.wrap {
+        val result = ErrorManagementWrapper.wrap {
             throw error
-        }.lastOrNull()
+        }
 
         // Then
         assertNotNull(result)
@@ -89,9 +82,9 @@ class ErrorManagementWrapperTest {
         )
 
         // When
-        val result = errorManagementWrapper.wrap {
+        val result = ErrorManagementWrapper.wrap {
             throw error
-        }.lastOrNull()
+        }
 
         // Then
         assertNotNull(result)
@@ -108,9 +101,9 @@ class ErrorManagementWrapperTest {
         )
 
         // When
-        val result = errorManagementWrapper.wrap {
+        val result = ErrorManagementWrapper.wrap {
             throw error
-        }.lastOrNull()
+        }
 
         // Then
         assertNotNull(result)
@@ -127,9 +120,9 @@ class ErrorManagementWrapperTest {
         )
 
         // When
-        val result = errorManagementWrapper.wrap {
+        val result = ErrorManagementWrapper.wrap {
             throw error
-        }.lastOrNull()
+        }
 
         // Then
         assertNotNull(result)
@@ -143,9 +136,9 @@ class ErrorManagementWrapperTest {
         val error = ConnectException()
 
         // When
-        val result = errorManagementWrapper.wrap {
+        val result = ErrorManagementWrapper.wrap {
             throw error
-        }.lastOrNull()
+        }
 
         // Then
         assertNotNull(result)
@@ -159,9 +152,9 @@ class ErrorManagementWrapperTest {
         val error = SocketTimeoutException()
 
         // When
-        val result = errorManagementWrapper.wrap {
+        val result = ErrorManagementWrapper.wrap {
             throw error
-        }.lastOrNull()
+        }
 
         // Then
         assertNotNull(result)
@@ -175,9 +168,9 @@ class ErrorManagementWrapperTest {
         val error = UnknownHostException()
 
         // When
-        val result = errorManagementWrapper.wrap {
+        val result = ErrorManagementWrapper.wrap {
             throw error
-        }.lastOrNull()
+        }
 
         // Then
         assertNotNull(result)
@@ -191,9 +184,9 @@ class ErrorManagementWrapperTest {
         val error: IllegalFormatException = mockk()
 
         // When
-        val result = errorManagementWrapper.wrap {
+        val result = ErrorManagementWrapper.wrap {
             throw error
-        }.lastOrNull()
+        }
 
         // Then
         assertNotNull(result)
