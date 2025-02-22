@@ -14,6 +14,7 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.IllegalFormatException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -32,6 +33,20 @@ class ErrorManagementWrapperTest {
         // Then
         assertNotNull(result)
         assertTrue(result is RemoteResponse.Loading)
+    }
+
+    @Test
+    fun `Given cancellation exception When wrap is called Then verify exception is thrown`() = runTest {
+        try {
+            // When
+            errorManagementWrapper.wrap {
+                throw CancellationException()
+            }.firstOrNull()
+        } catch (exc: Exception) {
+            // Then
+            assertTrue(exc is CancellationException)
+        }
+
     }
 
     @Test
