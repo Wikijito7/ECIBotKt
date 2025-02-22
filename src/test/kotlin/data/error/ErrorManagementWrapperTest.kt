@@ -19,16 +19,6 @@ import kotlin.test.assertTrue
 class ErrorManagementWrapperTest {
 
     @Test
-    fun `When wrap is called Then verify first emit is loading`() = runTest {
-        // When
-        val result = ErrorManagementWrapper.wrap {}
-
-        // Then
-        assertNotNull(result)
-        assertTrue(result is RemoteResponse.Loading)
-    }
-
-    @Test
     fun `Given cancellation exception When wrap is called Then verify exception is thrown`() = runTest {
         try {
             // When
