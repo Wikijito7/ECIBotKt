@@ -46,7 +46,6 @@ class ErrorManagementWrapperTest {
             // Then
             assertTrue(exc is CancellationException)
         }
-
     }
 
     @Test
