@@ -4,6 +4,7 @@ import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteract
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.CommandsEnum
+import es.wokis.commands.queue.QueueCommand
 import es.wokis.commands.test.TestCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.localization.LocalizationService
@@ -14,11 +15,13 @@ import org.junit.jupiter.api.Test
 class CommandHandlerServiceTest {
 
     private val testCommand: TestCommand = mockk()
+    private val queueCommand: QueueCommand = mockk()
     private val localizationService: LocalizationService = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
         testCommand = testCommand,
-        localizationService = localizationService
+        localizationService = localizationService,
+        queueCommand = queueCommand
     )
 
     @Test
@@ -30,6 +33,7 @@ class CommandHandlerServiceTest {
             }
         }
         justRun { testCommand.onRegisterCommand(any()) }
+        justRun { queueCommand.onRegisterCommand(any()) }
 
         // When
         commandHandlerService.onRegisterCommand(commandBuilder)

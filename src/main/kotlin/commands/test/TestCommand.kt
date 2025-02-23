@@ -43,35 +43,27 @@ class TestCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
-        val voiceChannel = interaction.getMemberVoiceChannel(interaction.kord)
-            ?: response.respond {
-                content = localizationService.getString(LocalizationKeys.ERROR_NO_VOICE_CHANNEL, locale)
-            }.let { return }
-        val textChannel = interaction.channel.asChannelOrNull()
-            ?: response.respond {
-                content = localizationService.getString(LocalizationKeys.ERROR_NO_TEXT_CHANNEL, locale)
-            }.let { return }
-        val guildId = interaction.data.guildId.value
-            ?: response.respond {
-                content = localizationService.getString(LocalizationKeys.ERROR_NO_GUILD, locale)
-            }.let { return }
-        val input: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
-            ?: response.respond {
-                content = localizationService.getStringFormat(
-                    key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
-                    locale = locale,
-                    arguments = arrayOf(ARGUMENT_NAME)
-                )
-            }.let { return }
-        response.respond {
-            content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
-        }
+        try {
+            val locale = interaction.guildLocale.orDefaultLocale()
+            val input: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
+                ?: response.respond {
+                    content = localizationService.getStringFormat(
+                        key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
+                        locale = locale,
+                        arguments = arrayOf(ARGUMENT_NAME)
+                    )
+                }.let { return }
+            response.respond {
+                content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
+            }
 
-        guildQueueService.getOrCreateLavaPlayerService(
-            guildId = guildId,
-            textChannel = textChannel,
-            voiceChannel = voiceChannel
-        ).loadAndPlay(input)
+            guildQueueService.getOrCreateLavaPlayerService(
+                interaction = interaction
+            ).loadAndPlay(input)
+        } catch (exc: IllegalStateException) {
+            response.respond {
+                content = exc.message
+            }
+        }
     }
 }

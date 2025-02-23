@@ -7,6 +7,7 @@ import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.entity.Message
 import dev.kord.core.event.gateway.ReadyEvent
+import dev.kord.core.event.interaction.ButtonInteractionCreateEvent
 import dev.kord.core.event.interaction.ChatInputCommandInteractionCreateEvent
 import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.event.user.VoiceStateUpdateEvent
@@ -69,6 +70,11 @@ class Bot(
         bot.on<ChatInputCommandInteractionCreateEvent> {
             val response = interaction.deferPublicResponse()
             commandHandlerService.onExecute(interaction, response)
+        }
+
+        bot.on<ButtonInteractionCreateEvent> {
+            interaction.deferEphemeralResponse().delete()
+            commandHandlerService.onInteract(interaction)
         }
     }
 

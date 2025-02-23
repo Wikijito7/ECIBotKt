@@ -21,6 +21,7 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
+import es.wokis.utils.getDisplayTrackName
 import es.wokis.utils.getLocale
 import kotlinx.coroutines.launch
 import java.util.Timer
@@ -142,6 +143,10 @@ class GuildLavaPlayerService(
         handleDisconnectEvent()
     }
 
+    fun shuffle() {
+        queue.shuffle()
+    }
+
     private fun queue(track: List<AudioTrack>) {
         resetTimer()
         queue.addAll(track)
@@ -213,9 +218,6 @@ class GuildLavaPlayerService(
             queue(listOf(track))
         }
     }
-
-    private fun AudioTrack.getDisplayTrackName(): String =
-        if (info.title.contains(" - ")) info.title else "${info.author} - ${info.title}"
 
     @OptIn(KordVoice::class)
     private suspend fun connectToVoiceChannel() {

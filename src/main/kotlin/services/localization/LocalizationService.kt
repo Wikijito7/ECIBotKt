@@ -19,7 +19,7 @@ class LocalizationService {
             val locale = file.nameWithoutExtension.split("_").getOrNull(1)?.let { Locale.fromString(it) } ?: Locale.ENGLISH_UNITED_STATES
             file.readLines().map { line ->
                 val lineSplit = line.split(": ")
-                localizationMap[lineSplit[0]] = (localizationMap[lineSplit[0]] ?: mutableListOf()).apply {
+                localizationMap[lineSplit.first()] = (localizationMap[lineSplit.first()] ?: mutableListOf()).apply {
                     add(LocalizedString(locale, lineSplit[1]))
                 }
             }

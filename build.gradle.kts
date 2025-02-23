@@ -113,7 +113,7 @@ tasks.register("generateLangClass") {
             appendLine("object LocalizationKeys {")
             baseLangFile.readLines().forEach { line ->
                 if (line.trim().isNotEmpty()) {
-                    val langKey = line.split(": ")[0].trim().replace(" ", "_")
+                    val langKey = line.split(": ").first().trim().replace(" ", "_")
                     val staticLangName = langKey.uppercase()
                     appendLine("    const val $staticLangName = \"$langKey\"")
                 }
@@ -134,4 +134,3 @@ idea.project.settings {
         afterSync(project.tasks.named("generateLangClass"))
     }
 }
-
