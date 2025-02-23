@@ -26,7 +26,6 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getDisplayTrackName
-import es.wokis.utils.getMemberVoiceChannel
 import es.wokis.utils.orDefaultLocale
 
 class QueueCommand(
