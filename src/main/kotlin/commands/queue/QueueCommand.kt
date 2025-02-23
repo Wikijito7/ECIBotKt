@@ -48,36 +48,28 @@ class QueueCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
-        val voiceChannel = interaction.getMemberVoiceChannel(interaction.kord)
-            ?: response.respond {
-                content = localizationService.getString(LocalizationKeys.ERROR_NO_VOICE_CHANNEL, locale)
-            }.let { return }
-        val textChannel = interaction.channel.asChannelOrNull()
-            ?: response.respond {
-                content = localizationService.getString(LocalizationKeys.ERROR_NO_TEXT_CHANNEL, locale)
-            }.let { return }
-        val guildId = interaction.data.guildId.value
-            ?: response.respond {
-                content = localizationService.getString(LocalizationKeys.ERROR_NO_GUILD, locale)
-            }.let { return }
-        val guildName = interaction.kord.getGuild(guildId).name
-        val guildQueue = guildQueueService.getOrCreateLavaPlayerService(
-            guildId = guildId,
-            textChannel = textChannel,
-            voiceChannel = voiceChannel
-        )
-        val queue = guildQueue.getQueue().toList()
-        val displayQueue = getDisplayQueue(queue)
-        response.respond {
-            createQueueMessage(
-                locale = locale,
-                currentPage = 1,
-                queueLength = queue.size,
-                guildName = guildName,
-                displayQueuePage = displayQueue.takeIf { it.isNotEmpty() }?.get(0),
-                queuePageLength = displayQueue.size,
-            )
+        try {
+            val locale = interaction.guildLocale.orDefaultLocale()
+            val guildQueue = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
+            // This should never be null, if so it would throw an expected exception on getOrCreateLavaPlayerService
+            val guildId = interaction.data.guildId.value ?: return
+            val guildName = interaction.kord.getGuild(guildId).name
+            val queue = guildQueue.getQueue().toList()
+            val displayQueue = getDisplayQueue(queue)
+            response.respond {
+                createQueueMessage(
+                    locale = locale,
+                    currentPage = 1,
+                    queueLength = queue.size,
+                    guildName = guildName,
+                    displayQueuePage = displayQueue.takeIf { it.isNotEmpty() }?.get(0),
+                    queuePageLength = displayQueue.size,
+                )
+            }
+        } catch (exc: IllegalStateException) {
+            response.respond {
+                content = exc.message
+            }
         }
     }
 
