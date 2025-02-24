@@ -1,4 +1,4 @@
-package commands.test
+package commands.play
 
 import dev.kord.common.Locale
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
