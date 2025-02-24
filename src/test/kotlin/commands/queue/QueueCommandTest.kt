@@ -22,7 +22,6 @@ import mock.mockedDiscordMessage
 import org.junit.jupiter.api.Test
 import kotlin.test.Ignore
 
-
 class QueueCommandTest {
 
     private val guildQueueService: GuildQueueService = mockk()
@@ -94,5 +93,4 @@ class QueueCommandTest {
             response.respond(any())
         }
     }
-
 }
