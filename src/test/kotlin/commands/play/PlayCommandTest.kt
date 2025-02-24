@@ -5,7 +5,6 @@ import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.CommandsEnum
-import es.wokis.commands.test.PlayCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
@@ -77,7 +76,7 @@ class PlayCommandTest {
             }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
-            justRun { loadAndPlay(any()) }
+            justRun { loadAndPlayMultiple(any()) }
         }
 
         coEvery {
@@ -101,7 +100,7 @@ class PlayCommandTest {
             guildQueueService.getOrCreateLavaPlayerService(
                 interaction = interaction
             )
-            lavaPlayerService.loadAndPlay("audio/asd.mp3")
+            lavaPlayerService.loadAndPlayMultiple(listOf("audio/asd.mp3"))
         }
     }
 
@@ -118,7 +117,7 @@ class PlayCommandTest {
             }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
-            justRun { loadAndPlay(any()) }
+            justRun { loadAndPlayMultiple(any()) }
         }
 
         coEvery {
@@ -142,7 +141,7 @@ class PlayCommandTest {
             guildQueueService.getOrCreateLavaPlayerService(
                 interaction = interaction
             )
-            lavaPlayerService.loadAndPlay(url)
+            lavaPlayerService.loadAndPlayMultiple(listOf(url))
         }
     }
 }

@@ -1,4 +1,4 @@
-package es.wokis.commands.test
+package commands.play
 
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond

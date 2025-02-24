@@ -9,7 +9,7 @@ import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.CommandsEnum
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.queue.QueueCommand
-import es.wokis.commands.test.PlayCommand
+import commands.play.PlayCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 
