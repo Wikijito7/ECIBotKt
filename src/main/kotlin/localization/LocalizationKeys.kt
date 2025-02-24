@@ -17,4 +17,10 @@ object LocalizationKeys {
     const val ERROR_NO_GUILD = "error_no_guild"
     const val ERROR_NO_CONTENT_PROVIDED = "error_no_content_provided"
     const val SEARCHING_SONG = "searching_song"
+    const val QUEUE_COMMAND_DESCRIPTION = "queue_command_description"
+    const val QUEUE_EMBED_TITLE = "queue_embed_title"
+    const val QUEUE_EMBED_DESCRIPTION = "queue_embed_description"
+    const val QUEUE_EMBED_FOOTER = "queue_embed_footer"
+    const val QUEUE_PREVIOUS_BUTTON_LABEL = "queue_previous_button_label"
+    const val QUEUE_NEXT_BUTTON_LABEL = "queue_next_button_label"
 }

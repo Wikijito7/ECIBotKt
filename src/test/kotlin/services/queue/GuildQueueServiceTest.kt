@@ -2,16 +2,21 @@ package services.queue
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventListener
+import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
+import dev.kord.core.entity.interaction.ApplicationCommandInteraction
+import dev.kord.core.supplier.EntitySupplyStrategy
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import mock.TestDispatchers
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -155,5 +160,176 @@ class GuildQueueServiceTest {
 
         // Then
         assertNotNull(actual)
+    }
+
+    @Test
+    fun `Given interaction When getOrCreateLavaPlayerService is called Then GuildLavaPlayerService is returned`() = runTest {
+        // Given
+        val mockGuildId = Snowflake(123)
+        val textChannel: MessageChannel = mockk {
+            coEvery { asChannelOrNull() } returns mockk()
+        }
+        val voiceChannel: BaseVoiceChannelBehavior = mockk()
+        val audioPlayerManager: AudioPlayerManager = mockk()
+        val interaction: ApplicationCommandInteraction = mockk {
+            every { guildLocale } returns Locale.BULGARIAN
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    coEvery { getMemberOrNull(any()) } returns mockk {
+                        coEvery { getVoiceStateOrNull() } returns mockk {
+                            coEvery { getChannelOrNull() } returns voiceChannel
+                        }
+                    }
+                }
+                every { user } returns mockk {
+                    every { id } returns mockk()
+                }
+            }
+            every { channel } returns textChannel
+            every { data } returns mockk {
+                every { guildId.value } returns mockGuildId
+            }
+        }
+        every { audioPlayerManagerProvider.createAudioPlayerManager() } returns audioPlayerManager
+        every { audioPlayerManager.createPlayer() } returns mockk {
+            justRun { addListener(any<AudioEventListener>()) }
+        }
+
+        // When
+        val actual = guildQueueService.getOrCreateLavaPlayerService(interaction)
+
+        // Then
+        assertTrue(actual is GuildLavaPlayerService)
+    }
+
+    @Test
+    fun `Given interaction without voice channel When getOrCreateLavaPlayerService is called Then throw exception`() = runTest {
+        // Given
+        val mockGuildId = Snowflake(123)
+        val textChannel: MessageChannel = mockk {
+            coEvery { asChannelOrNull() } returns null
+        }
+        val voiceChannel: BaseVoiceChannelBehavior = mockk()
+        val audioPlayerManager: AudioPlayerManager = mockk()
+        val interaction: ApplicationCommandInteraction = mockk {
+            every { guildLocale } returns Locale.BULGARIAN
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    coEvery { getMemberOrNull(any()) } returns mockk {
+                        coEvery { getVoiceStateOrNull() } returns mockk {
+                            coEvery { getChannelOrNull() } returns voiceChannel
+                        }
+                    }
+                }
+                every { user } returns mockk {
+                    every { id } returns mockk()
+                }
+            }
+            every { channel } returns textChannel
+            every { data } returns mockk {
+                every { guildId.value } returns mockGuildId
+            }
+        }
+        every { audioPlayerManagerProvider.createAudioPlayerManager() } returns audioPlayerManager
+        every { audioPlayerManager.createPlayer() } returns mockk {
+            justRun { addListener(any<AudioEventListener>()) }
+        }
+        every { localizationService.getString(any(), any()) } returns "No text channel found"
+
+        // When
+        try {
+            guildQueueService.getOrCreateLavaPlayerService(interaction)
+        } catch (e: IllegalStateException) {
+            // Then
+            assertEquals("No text channel found", e.message)
+        }
+    }
+
+    @Test
+    fun `Given interaction without text channel When getOrCreateLavaPlayerService is called Then throw exception`() = runTest {
+        // Given
+        val mockGuildId = Snowflake(123)
+        val textChannel: MessageChannel = mockk {
+            coEvery { asChannelOrNull() } returns null
+        }
+        val voiceChannel: BaseVoiceChannelBehavior = mockk()
+        val interaction: ApplicationCommandInteraction = mockk {
+            every { guildLocale } returns Locale.BULGARIAN
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    coEvery { getMemberOrNull(any()) } returns mockk {
+                        coEvery { getVoiceStateOrNull() } returns mockk {
+                            coEvery { getChannelOrNull() } returns voiceChannel
+                        }
+                    }
+                }
+                every { user } returns mockk {
+                    every { id } returns mockk()
+                }
+            }
+            every { channel } returns textChannel
+            every { data } returns mockk {
+                every { guildId.value } returns mockGuildId
+            }
+        }
+        every { localizationService.getString(any(), any()) } returns "No text channel found"
+
+        // When
+        try {
+            guildQueueService.getOrCreateLavaPlayerService(interaction)
+        } catch (e: IllegalStateException) {
+            // Then
+            assertEquals("No text channel found", e.message)
+        }
+    }
+
+    @Test
+    fun `Given interaction without guild When getOrCreateLavaPlayerService is called Then throw exception`() = runTest {
+        // Given
+        val mockGuildId = null
+        val textChannel: MessageChannel = mockk {
+            coEvery { asChannelOrNull() } returns null
+        }
+        val voiceChannel: BaseVoiceChannelBehavior = mockk()
+        val interaction: ApplicationCommandInteraction = mockk {
+            every { guildLocale } returns Locale.BULGARIAN
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    coEvery { getMemberOrNull(any()) } returns mockk {
+                        coEvery { getVoiceStateOrNull() } returns mockk {
+                            coEvery { getChannelOrNull() } returns voiceChannel
+                        }
+                    }
+                }
+                every { user } returns mockk {
+                    every { id } returns mockk()
+                }
+            }
+            every { channel } returns textChannel
+            every { data } returns mockk {
+                every { guildId.value } returns mockGuildId
+            }
+        }
+        every { localizationService.getString(any(), any()) } returns "No guild id found"
+
+        // When
+        try {
+            guildQueueService.getOrCreateLavaPlayerService(interaction)
+        } catch (e: IllegalStateException) {
+            // Then
+            assertEquals("No guild id found", e.message)
+        }
     }
 }

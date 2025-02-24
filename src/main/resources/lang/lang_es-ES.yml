@@ -1,5 +1,5 @@
-test_command_description: test test
-test_command_input_description: popopo
+test_command_description: Comando de pruebas para reproducir cosas
+test_command_input_description: Url de la canción
 unknown_command: Comando desconocido o sin registrar, nombre del comando %s
 now_playing: 🎶 Reproduciendo %s en %s
 no_matches: No se han encontrado resultados
@@ -14,3 +14,9 @@ error_no_text_channel: Necesitas estar en un canal de texto
 error_no_guild: Necesitas estar en un servidor
 error_no_content_provided: El campo %s es requerido. Es necesario que rellenes ese campo
 searching_song: Buscando la canción
+queue_command_description: Muestra la cola actual
+queue_embed_title: Cola de sonidos
+queue_embed_description: Actualmente hay %d sonidos en la cola de %s
+queue_embed_footer: Página %d de %d
+queue_previous_button_label: Anterior
+queue_next_button_label: Siguiente

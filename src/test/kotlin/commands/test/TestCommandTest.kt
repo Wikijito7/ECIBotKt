@@ -85,11 +85,9 @@ class TestCommandTest {
                 interaction.getMemberVoiceChannel(mockedKord)
             } returns mockedVoiceChannel
 
-            every {
+            coEvery {
                 guildQueueService.getOrCreateLavaPlayerService(
-                    guildId = any(),
-                    textChannel = any(),
-                    voiceChannel = mockedVoiceChannel
+                    interaction = interaction
                 )
             } returns lavaPlayerService
             every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
@@ -99,11 +97,9 @@ class TestCommandTest {
             testCommand.onExecute(interaction, mockedResponse)
 
             // Then
-            verify(exactly = 1) {
+            coVerify(exactly = 1) {
                 guildQueueService.getOrCreateLavaPlayerService(
-                    guildId = any(),
-                    textChannel = any(),
-                    voiceChannel = mockedVoiceChannel
+                    interaction = interaction
                 )
                 lavaPlayerService.loadAndPlay("asd")
             }
