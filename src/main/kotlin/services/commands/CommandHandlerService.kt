@@ -9,7 +9,7 @@ import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.CommandsEnum
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.queue.QueueCommand
-import es.wokis.commands.test.TestCommand
+import es.wokis.commands.test.PlayCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 
@@ -26,13 +26,13 @@ interface CommandHandlerService {
 }
 
 class CommandHandlerServiceImpl(
-    private val testCommand: TestCommand,
+    private val playCommand: PlayCommand,
     private val queueCommand: QueueCommand,
     private val localizationService: LocalizationService
 ) : CommandHandlerService {
 
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
-        testCommand.onRegisterCommand(commandBuilder)
+        playCommand.onRegisterCommand(commandBuilder)
         queueCommand.onRegisterCommand(commandBuilder)
     }
 
@@ -42,7 +42,7 @@ class CommandHandlerServiceImpl(
     ) {
         val commandName = interaction.command.rootName
         when (CommandsEnum.forCommandName(commandName)) {
-            CommandsEnum.TEST -> testCommand.onExecute(interaction, response)
+            CommandsEnum.PLAY -> playCommand.onExecute(interaction, response)
 
             CommandsEnum.QUEUE -> queueCommand.onExecute(interaction, response)
 

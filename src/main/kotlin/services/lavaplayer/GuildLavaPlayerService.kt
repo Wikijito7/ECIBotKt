@@ -12,6 +12,7 @@ import dev.kord.common.annotation.KordVoice
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.behavior.channel.connect
 import dev.kord.core.behavior.edit
+import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.gateway.retry.LinearRetry
 import dev.kord.voice.AudioFrame
@@ -59,11 +60,22 @@ class GuildLavaPlayerService(
         maxTries = MAX_BACK_OFF_RETRIES
     )
     private var isRetrying = false
+    private var connectingToVoiceChannel: Boolean = false
+
+    fun loadAndPlayMultiple(tracks: List<String>) {
+        tracks.forEachIndexed { index, track ->
+            audioPlayerManager.loadItemOrdered(
+                index,
+                track,
+                getAudioLoadResultHandler(track)
+            )
+        }
+    }
 
     fun loadAndPlay(url: String) {
         audioPlayerManager.loadItem(
             url,
-            getAudioLoadResultHandler()
+            getAudioLoadResultHandler(url)
         )
     }
 
@@ -159,7 +171,7 @@ class GuildLavaPlayerService(
         player.startTrack(queue.removeAt(0), true)
     }
 
-    private fun getAudioLoadResultHandler() = object : AudioLoadResultHandler {
+    private fun getAudioLoadResultHandler(currentLoadTrack: String) = object : AudioLoadResultHandler {
         override fun trackLoaded(track: AudioTrack) {
             onTrackLoaded(track)
         }
@@ -171,7 +183,13 @@ class GuildLavaPlayerService(
         override fun noMatches() {
             coroutineScope.launch {
                 val locale = voiceChannel.getLocale()
-                textChannel.createMessage(localizationService.getString(LocalizationKeys.NO_MATCHES, locale))
+                textChannel.createMessage(
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.NO_MATCHES,
+                        locale = locale,
+                        arguments = arrayOf(currentLoadTrack)
+                    )
+                )
             }
         }
 
@@ -221,7 +239,8 @@ class GuildLavaPlayerService(
 
     @OptIn(KordVoice::class)
     private suspend fun connectToVoiceChannel() {
-        if (voiceConnection == null) {
+        if (voiceConnection == null && connectingToVoiceChannel.not()) {
+            connectingToVoiceChannel = true
             voiceConnection = voiceChannel.connect {
                 audioProvider { AudioFrame.fromData(player.provide()?.data) }
                 selfDeaf = true
@@ -249,6 +268,7 @@ class GuildLavaPlayerService(
         replayTrackRetry.reset()
         leaveTimer?.cancel()
         leaveTimer = null
+        connectingToVoiceChannel = false
     }
 
     @OptIn(KordVoice::class)

@@ -7,7 +7,7 @@ import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.CommandsEnum
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.queue.QueueCommand
-import es.wokis.commands.test.TestCommand
+import es.wokis.commands.test.PlayCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.localization.LocalizationService
 import io.mockk.*
@@ -16,12 +16,12 @@ import org.junit.jupiter.api.Test
 
 class CommandHandlerServiceTest {
 
-    private val testCommand: TestCommand = mockk()
+    private val playCommand: PlayCommand = mockk()
     private val queueCommand: QueueCommand = mockk()
     private val localizationService: LocalizationService = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
-        testCommand = testCommand,
+        playCommand = playCommand,
         localizationService = localizationService,
         queueCommand = queueCommand
     )
@@ -34,7 +34,7 @@ class CommandHandlerServiceTest {
                 every { add(any()) } returns true
             }
         }
-        justRun { testCommand.onRegisterCommand(any()) }
+        justRun { playCommand.onRegisterCommand(any()) }
         justRun { queueCommand.onRegisterCommand(any()) }
 
         // When
@@ -42,28 +42,28 @@ class CommandHandlerServiceTest {
 
         // Then
         verify(exactly = 1) {
-            testCommand.onRegisterCommand(commandBuilder)
+            playCommand.onRegisterCommand(commandBuilder)
         }
     }
 
     @Test
     fun `Given test command When onExecute is called Then execute TestCommand`() = runTest {
         // Given
-        val commandName = CommandsEnum.TEST.commandName
+        val commandName = CommandsEnum.PLAY.commandName
         val interaction: ChatInputCommandInteraction = mockk {
             every { command } returns mockk {
                 every { rootName } returns commandName
             }
         }
         val response: DeferredPublicMessageInteractionResponseBehavior = mockk()
-        coJustRun { testCommand.onExecute(any(), any()) }
+        coJustRun { playCommand.onExecute(any(), any()) }
 
         // When
         commandHandlerService.onExecute(interaction, response)
 
         // Then
         coVerify(exactly = 1) {
-            testCommand.onExecute(interaction, response)
+            playCommand.onExecute(interaction, response)
         }
     }
 

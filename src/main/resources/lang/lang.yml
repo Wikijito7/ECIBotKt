@@ -1,8 +1,8 @@
-test_command_description: Test command to play things
-test_command_input_description: Track url
+play_command_description: Plays given track with that name or url
+play_command_input_description: Tracks to play, separated by a blank space
 unknown_command: Unknown or unregistered command, command name %s
 now_playing: 🎶 Playing %s in %s
-no_matches: No matches found
+no_matches: No matches found for %s
 added_track_to_queue: Added %s to the queue
 added_songs_to_queue: Added %d songs to the queue
 found_track_list: Found track list %s with %d tracks

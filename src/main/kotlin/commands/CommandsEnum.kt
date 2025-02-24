@@ -1,7 +1,7 @@
 package es.wokis.commands
 
 enum class CommandsEnum(val commandName: String) {
-    TEST("test"),
+    PLAY("play"),
     QUEUE("queue");
 
     companion object {
