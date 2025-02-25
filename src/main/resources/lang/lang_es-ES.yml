@@ -1,8 +1,8 @@
-test_command_description: Comando de pruebas para reproducir cosas
-test_command_input_description: Url de la canción
+play_command_description: Reproduce el sonido con ese nombre o la url indicada
+play_command_input_description: Sonidos a reproducir separado por un espacio
 unknown_command: Comando desconocido o sin registrar, nombre del comando %s
 now_playing: 🎶 Reproduciendo %s en %s
-no_matches: No se han encontrado resultados
+no_matches: No se han encontrado resultados para %s
 added_track_to_queue: Añadido %s a la cola
 added_songs_to_queue: Añadidas %d canciones a la cola
 found_track_list: Encontrada la lista de reproducción %s con %d canciones

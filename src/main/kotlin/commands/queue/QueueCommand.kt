@@ -191,7 +191,7 @@ class QueueCommand(
             currentPage = currentPage,
             queueLength = guildQueue.size,
             guildName = guildName,
-            displayQueuePage = displayQueue[currentPage - 1],
+            displayQueuePage = displayQueue.getOrNull(currentPage - 1),
             queuePageLength = displayQueue.size
         )
     }
