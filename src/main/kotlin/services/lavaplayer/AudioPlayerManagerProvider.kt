@@ -17,6 +17,7 @@ class AudioPlayerManagerProvider(
 
     fun createAudioPlayerManager(): AudioPlayerManager = DefaultAudioPlayerManager().apply {
         val ytSourceManager = YoutubeAudioSourceManager().apply {
+            setPlaylistPageCount(Integer.MAX_VALUE)
             useOauth2(configService.config.youtube.oauth2Token, true)
             Web.setPoTokenAndVisitorData(
                 configService.config.youtube.poToken,
