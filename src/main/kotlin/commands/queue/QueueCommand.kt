@@ -72,6 +72,26 @@ class QueueCommand(
         }
     }
 
+    override suspend fun onInteract(interaction: ComponentInteraction) {
+        val guildId = interaction.data.guildId.value ?: return
+        val interactionCustomId = (interaction as? ButtonInteraction)?.component?.customId
+        val updatePageBy = if (interactionCustomId == ComponentsEnum.QUEUE_PREVIOUS.customId) -1 else 1
+        val guildName = interaction.kord.getGuild(guildId).name
+        val guildQueue = guildQueueService.getLavaPlayerService(guildId)?.getQueue().orEmpty()
+        val displayQueue = getDisplayQueue(guildQueue)
+        val currentPage = interaction.message.embeds.firstOrNull()
+            ?.footer?.text?.split(" ")?.get(1)?.toIntOrNull()?.plus(updatePageBy)
+            ?.takeUnless { it > displayQueue.size } ?: 1
+        updateQueueMessage(
+            interaction = interaction,
+            currentPage = currentPage,
+            queueLength = guildQueue.size,
+            guildName = guildName,
+            displayQueuePage = displayQueue.getOrNull(currentPage - 1),
+            queuePageLength = displayQueue.size
+        )
+    }
+
     private fun AbstractMessageModifyBuilder.createQueueMessage(
         locale: Locale,
         currentPage: Int,
@@ -173,27 +193,10 @@ class QueueCommand(
                 currentString = displayTrackName
             }
         }
+        if (currentString.isNotEmpty()) {
+            displayQueue.add(currentString)
+        }
         return displayQueue.toList()
-    }
-
-    override suspend fun onInteract(interaction: ComponentInteraction) {
-        val guildId = interaction.data.guildId.value ?: return
-        val interactionCustomId = (interaction as? ButtonInteraction)?.component?.customId
-        val updatePageBy = if (interactionCustomId == ComponentsEnum.QUEUE_PREVIOUS.customId) -1 else 1
-        val guildName = interaction.kord.getGuild(guildId).name
-        val guildQueue = guildQueueService.getLavaPlayerService(guildId)?.getQueue().orEmpty()
-        val displayQueue = getDisplayQueue(guildQueue)
-        val currentPage = interaction.message.embeds.firstOrNull()
-            ?.footer?.text?.split(" ")?.get(1)?.toIntOrNull()?.plus(updatePageBy)
-            ?.takeUnless { it > displayQueue.size } ?: 1
-        updateQueueMessage(
-            interaction = interaction,
-            currentPage = currentPage,
-            queueLength = guildQueue.size,
-            guildName = guildName,
-            displayQueuePage = displayQueue.getOrNull(currentPage - 1),
-            queuePageLength = displayQueue.size
-        )
     }
 
     private suspend fun updateQueueMessage(
