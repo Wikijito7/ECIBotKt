@@ -146,6 +146,47 @@ class PlayCommandTest {
     }
 
     @Test
+    fun `Given command with empty url When onExecute is called Then play url`() = runTest {
+        // Given
+        val url = ""
+        val mockedStrings: Map<String, String> = mapOf("sounds" to url)
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { kord } returns mockedKord
+            every { channel } returns mockedTextChannel
+            every { command } returns mockk {
+                every { strings } returns mockedStrings
+            }
+        }
+        val lavaPlayerService = mockk<GuildLavaPlayerService> {
+            justRun { loadAndPlayMultiple(any()) }
+        }
+
+        coEvery {
+            interaction.getMemberVoiceChannel(mockedKord)
+        } returns mockedVoiceChannel
+
+        coEvery {
+            guildQueueService.getOrCreateLavaPlayerService(
+                interaction = interaction
+            )
+        } returns lavaPlayerService
+        every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
+        every { localizationService.getString(any(), any()) } returns ""
+        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+
+        // When
+        playCommand.onExecute(interaction, mockedResponse)
+
+        // Then
+        coVerify(exactly = 0) {
+            guildQueueService.getOrCreateLavaPlayerService(
+                interaction = interaction
+            )
+            lavaPlayerService.loadAndPlayMultiple(any())
+        }
+    }
+
+    @Test
     fun `Given command without url When onExecute is called Then play url`() = runTest {
         // Given
         val mockedStrings: Map<String, String> = emptyMap()

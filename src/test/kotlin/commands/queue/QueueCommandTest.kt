@@ -4,10 +4,10 @@ import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
-import dev.kord.core.behavior.interaction.response.respond
+import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
-import dev.kord.rest.builder.message.modify.InteractionResponseModifyBuilder
+import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.queue.QueueCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
@@ -16,11 +16,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import kotlinx.coroutines.test.runTest
-import mock.mockedDiscordMessage
 import org.junit.jupiter.api.Test
-import kotlin.test.Ignore
 
 class QueueCommandTest {
 
@@ -32,19 +29,9 @@ class QueueCommandTest {
         localizationService = localizationService
     )
 
-    /*
-     * Receiver class kotlin.jvm.functions.Function1$Subclass4 does not define or inherit an
-     * implementation of the resolved method 'abstract java.lang.Object invoke(java.lang.Object)'
-     * of interface kotlin.jvm.functions.Function1.
-     *
-     * modifyInteractionResponse(..., builder: InteractionResponseModifyBuilder.() -> Unit)
-     */
     @Test
-    @Ignore("Fails trying to test")
     fun `Given interaction When onExecute Then respond with queue message`() = runTest {
         // Given
-        val slot = slot<InteractionResponseModifyBuilder.() -> Unit>()
-
         val mockKord: Kord = mockk {
             every { resources } returns mockk {
                 every { defaultStrategy } returns EntitySupplyStrategy.rest
@@ -54,15 +41,7 @@ class QueueCommandTest {
                 every { name } returns "TestGuild"
             }
             every { rest } returns mockk {
-                every { interaction } returns mockk {
-                    coEvery {
-                        modifyInteractionResponse(any(), any(), capture(slot))
-                    } answers {
-                        val builder = mockk<InteractionResponseModifyBuilder>(relaxed = true)
-                        slot.captured.invoke(builder)
-                        mockedDiscordMessage
-                    }
-                }
+                every { interaction } returns mockk(relaxed = true)
             }
         }
         val interaction = mockk<ChatInputCommandInteraction> {
@@ -90,7 +69,50 @@ class QueueCommandTest {
 
         // Then
         coVerify(exactly = 1) {
-            response.respond(any())
+            guildLavaPlayerService.getQueue()
+        }
+    }
+
+    @Test
+    fun `Given interaction When onInteract Then respond with queue message`() = runTest {
+        // Given
+        val mockKord: Kord = mockk {
+            every { resources } returns mockk {
+                every { defaultStrategy } returns EntitySupplyStrategy.rest
+            }
+            every { defaultSupplier } returns mockk()
+            coEvery { getGuild(any()) } returns mockk {
+                every { name } returns "TestGuild"
+            }
+            every { rest } returns mockk {
+                every { interaction } returns mockk(relaxed = true)
+            }
+        }
+        val interaction = mockk<ButtonInteraction> {
+            every { guildLocale } returns Locale.BULGARIAN
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockKord
+            every { component } returns mockk {
+                every { customId } returns ComponentsEnum.QUEUE_PREVIOUS.customId
+            }
+            every { message } returns mockk(relaxed = true)
+        }
+        val guildLavaPlayerService: GuildLavaPlayerService = mockk {
+            every { getQueue() } returns listOf()
+        }
+
+        coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
+        every { localizationService.getString(any(), any()) } returns "TestMessage"
+        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+
+        // When
+        queueCommand.onInteract(interaction)
+
+        // Then
+        coVerify(exactly = 1) {
+            guildLavaPlayerService.getQueue()
         }
     }
 }
