@@ -91,24 +91,29 @@ class GuildLavaPlayerService(
                     isRetrying = true
                     player.playTrack(track?.makeClone())
                 }
-            } catch (_: IllegalStateException) {
-                tryPlayNextTrack(endReason)
+            } catch (e: IllegalStateException) {
+                Log.error("An error has occurred on onTrackEnd", exception = e)
+                tryPlayNextTrack()
             }
             return
         }
-        tryPlayNextTrack(endReason)
+        tryPlayNextTrack()
     }
 
-    private fun tryPlayNextTrack(endReason: AudioTrackEndReason?) {
+    private fun tryPlayNextTrack() {
         if (queue.isEmpty()) {
             setUpTimer()
         }
-        if (endReason?.mayStartNext == true && queue.isNotEmpty()) {
-            resetTimer()
-            replayTrackRetry.reset()
-            isRetrying = false
-            nextTrack()
+        if (queue.isNotEmpty()) {
+            playNextTrack()
         }
+    }
+
+    private fun playNextTrack() {
+        resetTimer()
+        replayTrackRetry.reset()
+        isRetrying = false
+        nextTrack()
     }
 
     private fun setUpTimer() {

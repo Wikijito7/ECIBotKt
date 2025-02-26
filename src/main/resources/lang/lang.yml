@@ -20,3 +20,7 @@ queue_embed_description: Currently there are %d tracks on %s's queue
 queue_embed_footer: Page %d out of %d
 queue_previous_button_label: Previous
 queue_next_button_label: Next
+skip_command_description: Stops current playing track
+skip_command_response: Track skipped
+shuffle_command_description: Reorders current queue randomly
+shuffle_command_response: Reordered current queue randomly

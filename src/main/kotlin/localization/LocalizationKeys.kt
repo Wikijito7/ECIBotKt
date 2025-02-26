@@ -23,4 +23,8 @@ object LocalizationKeys {
     const val QUEUE_EMBED_FOOTER = "queue_embed_footer"
     const val QUEUE_PREVIOUS_BUTTON_LABEL = "queue_previous_button_label"
     const val QUEUE_NEXT_BUTTON_LABEL = "queue_next_button_label"
+    const val SKIP_COMMAND_DESCRIPTION = "skip_command_description"
+    const val SKIP_COMMAND_RESPONSE = "skip_command_response"
+    const val SHUFFLE_COMMAND_DESCRIPTION = "shuffle_command_description"
+    const val SHUFFLE_COMMAND_RESPONSE = "shuffle_command_response"
 }
