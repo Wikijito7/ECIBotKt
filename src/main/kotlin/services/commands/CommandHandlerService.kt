@@ -10,6 +10,8 @@ import es.wokis.commands.CommandsEnum
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
+import es.wokis.commands.shuffle.ShuffleCommand
+import es.wokis.commands.skip.SkipCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 
@@ -28,12 +30,16 @@ interface CommandHandlerService {
 class CommandHandlerServiceImpl(
     private val playCommand: PlayCommand,
     private val queueCommand: QueueCommand,
+    private val skipCommand: SkipCommand,
+    private val shuffleCommand: ShuffleCommand,
     private val localizationService: LocalizationService
 ) : CommandHandlerService {
 
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         playCommand.onRegisterCommand(commandBuilder)
         queueCommand.onRegisterCommand(commandBuilder)
+        skipCommand.onRegisterCommand(commandBuilder)
+        shuffleCommand.onRegisterCommand(commandBuilder)
     }
 
     override suspend fun onExecute(
@@ -45,6 +51,10 @@ class CommandHandlerServiceImpl(
             CommandsEnum.PLAY -> playCommand.onExecute(interaction, response)
 
             CommandsEnum.QUEUE -> queueCommand.onExecute(interaction, response)
+
+            CommandsEnum.SKIP -> skipCommand.onExecute(interaction, response)
+
+            CommandsEnum.SHUFFLE -> shuffleCommand.onExecute(interaction, response)
 
             null -> respondUnknownCommand(response, interaction.guildLocale, commandName)
         }

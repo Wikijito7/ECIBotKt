@@ -8,6 +8,8 @@ import es.wokis.commands.CommandsEnum
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
+import es.wokis.commands.shuffle.ShuffleCommand
+import es.wokis.commands.skip.SkipCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.localization.LocalizationService
 import io.mockk.*
@@ -18,12 +20,16 @@ class CommandHandlerServiceTest {
 
     private val playCommand: PlayCommand = mockk()
     private val queueCommand: QueueCommand = mockk()
+    private val skipCommand: SkipCommand = mockk()
+    private val shuffleCommand: ShuffleCommand = mockk()
     private val localizationService: LocalizationService = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
         playCommand = playCommand,
         localizationService = localizationService,
-        queueCommand = queueCommand
+        queueCommand = queueCommand,
+        skipCommand = skipCommand,
+        shuffleCommand = shuffleCommand
     )
 
     @Test
@@ -36,6 +42,8 @@ class CommandHandlerServiceTest {
         }
         justRun { playCommand.onRegisterCommand(any()) }
         justRun { queueCommand.onRegisterCommand(any()) }
+        justRun { skipCommand.onRegisterCommand(any()) }
+        justRun { shuffleCommand.onRegisterCommand(any()) }
 
         // When
         commandHandlerService.onRegisterCommand(commandBuilder)
@@ -85,6 +93,48 @@ class CommandHandlerServiceTest {
         // Then
         coVerify(exactly = 1) {
             queueCommand.onExecute(interaction, response)
+        }
+    }
+
+    @Test
+    fun `Given skip command When onExecute is called Then execute SkipCommand`() = runTest {
+        // Given
+        val commandName = CommandsEnum.SKIP.commandName
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { command } returns mockk {
+                every { rootName } returns commandName
+            }
+        }
+        val response: DeferredPublicMessageInteractionResponseBehavior = mockk()
+        coJustRun { skipCommand.onExecute(any(), any()) }
+
+        // When
+        commandHandlerService.onExecute(interaction, response)
+
+        // Then
+        coVerify(exactly = 1) {
+            skipCommand.onExecute(interaction, response)
+        }
+    }
+
+    @Test
+    fun `Given shuffle command When onExecute is called Then execute ShuffleCommand`() = runTest {
+        // Given
+        val commandName = CommandsEnum.SHUFFLE.commandName
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { command } returns mockk {
+                every { rootName } returns commandName
+            }
+        }
+        val response: DeferredPublicMessageInteractionResponseBehavior = mockk()
+        coJustRun { shuffleCommand.onExecute(any(), any()) }
+
+        // When
+        shuffleCommand.onExecute(interaction, response)
+
+        // Then
+        coVerify(exactly = 1) {
+            shuffleCommand.onExecute(interaction, response)
         }
     }
 

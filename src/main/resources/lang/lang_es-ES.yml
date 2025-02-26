@@ -20,3 +20,7 @@ queue_embed_description: Actualmente hay %d sonidos en la cola de %s
 queue_embed_footer: Página %d de %d
 queue_previous_button_label: Anterior
 queue_next_button_label: Siguiente
+skip_command_description: Para el sonido actual que se está reproduciendo
+skip_command_response: Sonido parado
+shuffle_command_description: Reordena la cola actual de manera aleatoria
+shuffle_command_response: Reordenada la cola de manera aleatoria

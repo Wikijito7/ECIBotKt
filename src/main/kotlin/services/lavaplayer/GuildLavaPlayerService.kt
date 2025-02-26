@@ -104,11 +104,15 @@ class GuildLavaPlayerService(
             setUpTimer()
         }
         if (endReason?.mayStartNext == true && queue.isNotEmpty()) {
-            resetTimer()
-            replayTrackRetry.reset()
-            isRetrying = false
-            nextTrack()
+            playNextTrack()
         }
+    }
+
+    private fun playNextTrack() {
+        resetTimer()
+        replayTrackRetry.reset()
+        isRetrying = false
+        nextTrack()
     }
 
     private fun setUpTimer() {
@@ -148,6 +152,7 @@ class GuildLavaPlayerService(
 
     fun skip() {
         player.stopTrack()
+        playNextTrack()
     }
 
     suspend fun stop() {
