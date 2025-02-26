@@ -91,7 +91,8 @@ class GuildLavaPlayerService(
                     isRetrying = true
                     player.playTrack(track?.makeClone())
                 }
-            } catch (_: IllegalStateException) {
+            } catch (e: IllegalStateException) {
+                Log.error("An error has occurred on onTrackEnd", exception = e)
                 tryPlayNextTrack()
             }
             return
