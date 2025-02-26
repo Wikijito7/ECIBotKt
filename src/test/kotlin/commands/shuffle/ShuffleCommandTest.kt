@@ -24,7 +24,7 @@ class ShuffleCommandTest {
     )
 
     @Test
-    fun `Given interaction When onExecute is called Then execute skip command`() = runTest {
+    fun `Given interaction When onExecute is called Then execute shuffle command`() = runTest {
         // Given
         val mockKord: Kord = mockk {
             every { resources } returns mockk {
@@ -64,7 +64,7 @@ class ShuffleCommandTest {
     }
 
     @Test
-    fun `Given invalid interaction When onExecute is called Then don't execute skip command`() = runTest {
+    fun `Given invalid interaction When onExecute is called Then don't execute shuffle command`() = runTest {
         // Given
         val mockKord: Kord = mockk {
             every { resources } returns mockk {

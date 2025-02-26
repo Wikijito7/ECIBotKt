@@ -92,18 +92,18 @@ class GuildLavaPlayerService(
                     player.playTrack(track?.makeClone())
                 }
             } catch (_: IllegalStateException) {
-                tryPlayNextTrack(endReason)
+                tryPlayNextTrack()
             }
             return
         }
-        tryPlayNextTrack(endReason)
+        tryPlayNextTrack()
     }
 
-    private fun tryPlayNextTrack(endReason: AudioTrackEndReason?) {
+    private fun tryPlayNextTrack() {
         if (queue.isEmpty()) {
             setUpTimer()
         }
-        if (endReason?.mayStartNext == true && queue.isNotEmpty()) {
+        if (queue.isNotEmpty()) {
             playNextTrack()
         }
     }
@@ -152,7 +152,6 @@ class GuildLavaPlayerService(
 
     fun skip() {
         player.stopTrack()
-        playNextTrack()
     }
 
     suspend fun stop() {
