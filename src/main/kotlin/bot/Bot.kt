@@ -73,7 +73,7 @@ class Bot(
         }
 
         bot.on<ButtonInteractionCreateEvent> {
-            interaction.deferEphemeralResponse().delete()
+            interaction.deferPublicMessageUpdate()
             commandHandlerService.onInteract(interaction)
         }
     }
