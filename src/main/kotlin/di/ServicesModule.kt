@@ -9,6 +9,7 @@ import es.wokis.services.localization.LocalizationService
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.processor.MessageProcessorService
 import es.wokis.services.queue.GuildQueueService
+import es.wokis.services.tts.TTSService
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -20,6 +21,7 @@ val servicesModule = module {
     singleOf(::GuildQueueService)
     singleOf(::CommandHandlerServiceImpl) { bind<CommandHandlerService>() }
     singleOf(::LocalizationService)
+    singleOf(::TTSService)
 
     single<AppDispatchers> { AppDispatchersImpl() }
 }

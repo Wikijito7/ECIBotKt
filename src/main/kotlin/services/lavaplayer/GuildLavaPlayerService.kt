@@ -19,10 +19,7 @@ import dev.kord.voice.VoiceConnection
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
-import es.wokis.utils.Log
-import es.wokis.utils.createCoroutineScope
-import es.wokis.utils.getDisplayTrackName
-import es.wokis.utils.getLocale
+import es.wokis.utils.*
 import kotlinx.coroutines.launch
 import java.util.Timer
 import kotlin.concurrent.schedule
@@ -67,6 +64,23 @@ class GuildLavaPlayerService(
                 index,
                 track,
                 getAudioLoadResultHandler(track)
+            )
+        }
+    }
+
+    suspend fun loadAndPlayTts(messages: List<String>) {
+        messages.mapNotNull {
+            audioPlayerManager.loadItemSync(it)?.let { item -> item as? AudioTrack }
+        }.let { ttsQueue ->
+            val locale = voiceChannel.getLocale()
+            connectToVoiceChannel()
+            queue(ttsQueue)
+            textChannel.createMessage(
+                localizationService.getStringFormat(
+                    key = LocalizationKeys.ADDED_SONGS_TO_QUEUE,
+                    locale = locale,
+                    arguments = arrayOf(ttsQueue.size)
+                )
             )
         }
     }

@@ -4,7 +4,8 @@ enum class CommandsEnum(val commandName: String) {
     PLAY("play"),
     QUEUE("queue"),
     SKIP("skip"),
-    SHUFFLE("shuffle");
+    SHUFFLE("shuffle"),
+    TTS("tts");
 
     companion object {
         fun forCommandName(commandName: String) = entries.find { it.commandName == commandName }

@@ -3,6 +3,7 @@ package es.wokis.utils
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.interaction.ApplicationCommandInteraction
+import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 
 suspend fun ApplicationCommandInteraction.getMemberVoiceChannel(bot: Kord): BaseVoiceChannelBehavior? = data.guildId.value?.let { guildId ->
     bot.getGuildOrNull(guildId)?.let { guild ->
@@ -11,3 +12,8 @@ suspend fun ApplicationCommandInteraction.getMemberVoiceChannel(bot: Kord): Base
         }
     }
 }
+
+fun ChatInputCommandInteraction.getArgument(
+    argumentName: String
+): String? = command.strings[argumentName]?.takeIfNotEmpty()
+
