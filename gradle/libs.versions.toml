@@ -13,6 +13,7 @@ lavaplayer = "2.2.3"
 lavaplayer-youtube = "1.11.5"
 lavaplayer-lavasrc = "4.4.1"
 idea-ext = "1.1.8"
+junit-parametized = "5.12.0"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -39,6 +40,7 @@ kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-te
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
 koin-core = { module = "io.insert-koin:koin-core" }
 kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+junit-parametrized = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit-parametized" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

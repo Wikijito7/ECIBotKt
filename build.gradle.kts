@@ -57,6 +57,7 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlin.coroutines.test)
+    testImplementation(libs.junit.parametrized)
 }
 
 tasks.test {
