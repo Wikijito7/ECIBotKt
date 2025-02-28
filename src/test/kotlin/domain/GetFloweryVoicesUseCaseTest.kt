@@ -6,20 +6,20 @@ import mock.getMockedHttpClient
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-
 class GetFloweryVoicesUseCaseTest {
-    private val mockedResponse = """
-                {
-                    "voices": [
-                        {
-                            "language": {
-                                "code": "%s"
-                            },
-                            "id": "%s"
-                        }
-                    ]
-                }
-            """.trimIndent()
+    private val mockedResponse =
+        """
+            {
+                "voices": [
+                    {
+                        "language": {
+                            "code": "%s"
+                        },
+                        "id": "%s"
+                    }
+                ]
+            }
+        """.trimIndent()
 
     @Test
     fun `Given request with spanish voice When getFloweryVoicesUseCase is executed Then return spanish voices`() = runTest {
