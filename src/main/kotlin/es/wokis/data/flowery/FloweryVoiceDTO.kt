@@ -8,13 +8,13 @@ import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 
 @Serializable
 @JsonIgnoreUnknownKeys
-data class FloweryVoice(
+data class FloweryVoiceDTO(
     val id: String,
-    val language: FloweryVoiceLanguage
+    val language: FloweryVoiceLanguageDTO
 )
 
 @Serializable
 @JsonIgnoreUnknownKeys
-data class FloweryVoiceLanguage(
+data class FloweryVoiceLanguageDTO(
     val code: String
 )

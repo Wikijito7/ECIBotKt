@@ -6,7 +6,7 @@ import mock.getMockedHttpClient
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-class GetFloweryVoicesUseCaseTest {
+class GetFloweryVoicesDTOUseCaseTestDTO {
     private val mockedResponse =
         """
             {
