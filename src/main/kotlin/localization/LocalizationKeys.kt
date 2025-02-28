@@ -27,4 +27,7 @@ object LocalizationKeys {
     const val SKIP_COMMAND_RESPONSE = "skip_command_response"
     const val SHUFFLE_COMMAND_DESCRIPTION = "shuffle_command_description"
     const val SHUFFLE_COMMAND_RESPONSE = "shuffle_command_response"
+    const val TTS_COMMAND_DESCRIPTION = "tts_command_description"
+    const val TTS_COMMAND_INPUT_DESCRIPTION = "tts_command_input_description"
+    const val TTS_COMMAND_RESPONSE = "tts_command_response"
 }

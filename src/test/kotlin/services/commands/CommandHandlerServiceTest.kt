@@ -10,6 +10,7 @@ import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
+import es.wokis.commands.tts.TTSCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.localization.LocalizationService
 import io.mockk.*
@@ -22,6 +23,7 @@ class CommandHandlerServiceTest {
     private val queueCommand: QueueCommand = mockk()
     private val skipCommand: SkipCommand = mockk()
     private val shuffleCommand: ShuffleCommand = mockk()
+    private val ttsCommand: TTSCommand = mockk()
     private val localizationService: LocalizationService = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
@@ -29,7 +31,8 @@ class CommandHandlerServiceTest {
         localizationService = localizationService,
         queueCommand = queueCommand,
         skipCommand = skipCommand,
-        shuffleCommand = shuffleCommand
+        shuffleCommand = shuffleCommand,
+        ttsCommand = ttsCommand
     )
 
     @Test
@@ -44,6 +47,7 @@ class CommandHandlerServiceTest {
         justRun { queueCommand.onRegisterCommand(any()) }
         justRun { skipCommand.onRegisterCommand(any()) }
         justRun { shuffleCommand.onRegisterCommand(any()) }
+        justRun { ttsCommand.onRegisterCommand(any()) }
 
         // When
         commandHandlerService.onRegisterCommand(commandBuilder)
@@ -135,6 +139,27 @@ class CommandHandlerServiceTest {
         // Then
         coVerify(exactly = 1) {
             shuffleCommand.onExecute(interaction, response)
+        }
+    }
+
+    @Test
+    fun `Given tts command When onExecute is called Then execute TTSCommand`() = runTest {
+        // Given
+        val commandName = CommandsEnum.TTS.commandName
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { command } returns mockk {
+                every { rootName } returns commandName
+            }
+        }
+        val response: DeferredPublicMessageInteractionResponseBehavior = mockk()
+        coJustRun { ttsCommand.onExecute(any(), any()) }
+
+        // When
+        ttsCommand.onExecute(interaction, response)
+
+        // Then
+        coVerify(exactly = 1) {
+            ttsCommand.onExecute(interaction, response)
         }
     }
 

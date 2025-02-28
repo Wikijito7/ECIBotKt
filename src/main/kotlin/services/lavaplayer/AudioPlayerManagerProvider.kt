@@ -5,11 +5,14 @@ import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
 import dev.lavalink.youtube.YoutubeAudioSourceManager
 import com.github.topi314.lavasrc.deezer.DeezerAudioSourceManager
+import com.github.topi314.lavasrc.flowerytts.FloweryTTSSourceManager
 import com.github.topi314.lavasrc.mirror.DefaultMirroringAudioTrackResolver
 import com.github.topi314.lavasrc.spotify.SpotifySourceManager
 import dev.lavalink.youtube.clients.Web
 import es.wokis.services.config.ConfigService
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager as DeprecatedYoutubeAudioSourceManager
+
+private const val DEFAULT_TTS_VOICE = "4ba7bd1b-cb5f-5c3f-9e1c-9ee8be2b0bdd"
 
 class AudioPlayerManagerProvider(
     private val configService: ConfigService
@@ -44,6 +47,11 @@ class AudioPlayerManagerProvider(
                 )
             )
         }
+        this.registerSourceManager(
+            FloweryTTSSourceManager(DEFAULT_TTS_VOICE).apply {
+                setSpeed(1.1f)
+            }
+        )
         AudioSourceManagers.registerLocalSource(this)
         AudioSourceManagers.registerRemoteSources(
             this,

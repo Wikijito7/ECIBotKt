@@ -12,3 +12,8 @@ suspend fun ApplicationCommandInteraction.getMemberVoiceChannel(bot: Kord): Base
         }
     }
 }
+
+fun ChatInputCommandInteraction.getArgument(
+    argumentName: String
+): String? = command.strings[argumentName]?.takeIfNotEmpty()
+

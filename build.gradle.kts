@@ -36,6 +36,7 @@ dependencies {
     implementation(libs.ktor.client.serialization.kotlin.json)
     implementation(libs.ktor.client.client.resources)
     implementation(libs.ktor.client.client.auth)
+    implementation(libs.ktor.client.mock)
 
     // Koin
     implementation(platform(libs.koin.bom))
@@ -56,6 +57,7 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlin.coroutines.test)
+    testImplementation(libs.junit.parametrized)
 }
 
 tasks.test {
