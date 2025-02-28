@@ -38,7 +38,6 @@ class TTSCommandTest {
         localizationService = localizationService,
         guildQueueService = guildQueueService
     )
-    
     /*
         Verification failed: call 6 of 6: List(child of #4#6).add(eq(dev.kord.rest.builder.interaction.ChatInputCreateBuilderImpl@30cb489a))) was not called
         java.lang.AssertionError: Verification failed: call 6 of 6: List(child of #4#6).add(eq(dev.kord.rest.builder.interaction.ChatInputCreateBuilderImpl@30cb489a))) was not called
