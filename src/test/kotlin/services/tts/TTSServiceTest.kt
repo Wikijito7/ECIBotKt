@@ -68,6 +68,32 @@ class TTSServiceTest {
     }
 
     @Test
+    fun `Given message with length greater than 2048 with two separators When loadAndPlayMessage is executed Then load and play tts`() = runTest {
+        // Given
+        val guildLavaPlayerService = mockk<GuildLavaPlayerService>()
+        val firstPart = "a".repeat(1200)
+        val secondPart = "a".repeat(1300)
+        val thirdPart = "b".repeat(1200)
+        val originalMessage = "$firstPart\n$secondPart.$thirdPart"
+        val voice = "voice"
+        val firstEncodedMessage = "ftts://$firstPart?voice=$voice"
+        val secondEncodedMessage = "ftts://$secondPart?voice=$voice"
+        val thirdEncodedMessage = "ftts://$thirdPart?voice=$voice"
+        val messages = listOf(firstEncodedMessage, secondEncodedMessage, thirdEncodedMessage)
+
+        coEvery { getFloweryVoicesUseCase() } returns listOf(voice)
+        coJustRun { guildLavaPlayerService.loadAndPlayTts(any()) }
+
+        // When
+        ttsService.loadAndPlayMessage(guildLavaPlayerService, originalMessage)
+
+        // Then
+        coVerify(exactly = 1) {
+            guildLavaPlayerService.loadAndPlayTts(messages)
+        }
+    }
+
+    @Test
     fun `Given message with length greater than 2048 separated by new line without voice When loadAndPlayMessage is executed Then load and play tts`() = runTest {
         // Given
         val guildLavaPlayerService = mockk<GuildLavaPlayerService>()
