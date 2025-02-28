@@ -9,7 +9,5 @@ import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 @Serializable
 @JsonIgnoreUnknownKeys
 data class FloweryVoices(
-    val count: Int,
-    val default: FloweryVoice,
     val voices: List<FloweryVoice>
 )

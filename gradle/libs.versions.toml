@@ -22,6 +22,7 @@ ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negoti
 ktor-client-serialization-kotlin-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-client-resources = { module = "io.ktor:ktor-client-resources", version.ref = "ktor" }
 ktor-client-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 kord-core = { module = "dev.kord:kord-core", version.ref = "kord" }
 kord-core-voice = { module = "dev.kord:kord-core-voice", version.ref = "kord"}
 kord-voice = { module = "dev.kord:kord-voice", version.ref = "kord" }

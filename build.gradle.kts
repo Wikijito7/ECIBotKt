@@ -36,6 +36,7 @@ dependencies {
     implementation(libs.ktor.client.serialization.kotlin.json)
     implementation(libs.ktor.client.client.resources)
     implementation(libs.ktor.client.client.auth)
+    implementation(libs.ktor.client.mock)
 
     // Koin
     implementation(platform(libs.koin.bom))
