@@ -1,6 +1,5 @@
 package es.wokis.di
 
-import es.wokis.domain.GetFloweryVoicesUseCase
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
@@ -9,7 +8,6 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.logging.*
 import io.ktor.client.plugins.resources.*
 import io.ktor.serialization.kotlinx.json.*
-import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 private const val SOCKET_TIMEOUT_MILLIS = 20000L
@@ -17,8 +15,6 @@ private const val CONNECT_TIMEOUT_MILLIS = 20000L
 private const val REQUEST_TIMEOUT_MILLIS = 20000L
 
 val remoteModule = module {
-    singleOf(::GetFloweryVoicesUseCase)
-
     single<HttpClient> {
         HttpClient(CIO) {
             BrowserUserAgent()

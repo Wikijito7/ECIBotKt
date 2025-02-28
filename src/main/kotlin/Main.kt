@@ -1,14 +1,8 @@
 package es.wokis
 
 import es.wokis.bot.Bot
-import es.wokis.di.botModule
-import es.wokis.di.commandModule
-import es.wokis.di.remoteModule
-import es.wokis.di.servicesModule
+import es.wokis.di.*
 import es.wokis.utils.Log
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.http.*
 import org.koin.core.context.startKoin
 import org.koin.java.KoinJavaComponent.inject
 import org.slf4j.LoggerFactory
@@ -24,6 +18,6 @@ suspend fun main() {
 
 fun initKoin() {
     startKoin {
-        modules(botModule, servicesModule, commandModule, remoteModule)
+        modules(botModule, servicesModule, commandModule, remoteModule, domainModule)
     }
 }

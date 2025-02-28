@@ -18,8 +18,8 @@ class TTSService(
     private var voices: List<String> = emptyList()
 
     suspend fun loadAndPlayMessage(guildLavaPlayerService: GuildLavaPlayerService, message: String) {
+        val randomVoice = getRandomVoice()
         val messages = getMessageChunked(message).map { chunkedMessage ->
-            val randomVoice = getRandomVoice()
             FLOWERY_TTS + URLEncoder
                 .encode(chunkedMessage, StandardCharsets.UTF_8.toString())
                 .replace(URL_ENCODED_SPACE, SPACE_UTF_8)
