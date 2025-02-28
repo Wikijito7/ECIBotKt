@@ -25,12 +25,14 @@ class TTSCommand(
         commandBuilder.apply {
             input(
                 name = CommandsEnum.TTS.commandName,
-                description = "tts"
+                description = localizationService.getString(key = LocalizationKeys.TTS_COMMAND_DESCRIPTION)
             ) {
+                descriptionLocalizations = localizationService.getLocalizations(key = LocalizationKeys.TTS_COMMAND_DESCRIPTION)
                 string(
                     name = TTS_ARGUMENT_NAME,
-                    description = "mensaje"
+                    description = localizationService.getString(key = LocalizationKeys.TTS_COMMAND_INPUT_DESCRIPTION)
                 ) {
+                    descriptionLocalizations = localizationService.getLocalizations(key = LocalizationKeys.TTS_COMMAND_INPUT_DESCRIPTION)
                     required = true
                 }
             }
@@ -52,7 +54,12 @@ class TTSCommand(
                     )
                 }.let { return }
             val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
-            response.respond { content = "Generando mensaje tts" }
+            response.respond {
+                content = localizationService.getString(
+                    key = LocalizationKeys.TTS_COMMAND_RESPONSE,
+                    locale = locale
+                )
+            }
             ttsService.loadAndPlayMessage(guildLavaPlayerService, message)
         } catch (exc: IllegalStateException) {
             response.respond {

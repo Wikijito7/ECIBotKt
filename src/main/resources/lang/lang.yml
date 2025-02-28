@@ -24,3 +24,6 @@ skip_command_description: Stops current playing track
 skip_command_response: Track skipped
 shuffle_command_description: Reorders current queue randomly
 shuffle_command_response: Reordered current queue randomly
+tts_command_description: Generates a TTS message
+tts_command_input_description: Text to generate TTS message
+tts_command_response: Generating TTS message

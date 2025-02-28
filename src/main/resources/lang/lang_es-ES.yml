@@ -24,3 +24,5 @@ skip_command_description: Para el sonido actual que se está reproduciendo
 skip_command_response: Sonido parado
 shuffle_command_description: Reordena la cola actual de manera aleatoria
 shuffle_command_response: Reordenada la cola de manera aleatoria
+tts_command_description: Genera un mensaje TTS
+tts_command_input_description: Texto para generar el mensaje TTS
