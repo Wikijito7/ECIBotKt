@@ -2,6 +2,7 @@ package es.wokis.di
 
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
+import es.wokis.commands.player.PlayerCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.tts.TTSCommand
@@ -14,4 +15,5 @@ val commandModule = module {
     singleOf(::SkipCommand)
     singleOf(::ShuffleCommand)
     singleOf(::TTSCommand)
+    singleOf(::PlayerCommand)
 }
