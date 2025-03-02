@@ -4,7 +4,7 @@ enum class ComponentsEnum(val customId: String) {
     QUEUE_PREVIOUS("queue_previous"),
     QUEUE_NEXT("queue_next"),
     PLAYER_SKIP("player_skip"),
-    PLAYER_STOP("player_stop"),
+    PLAYER_DISCONNECT("player_disconnect"),
     PLAYER_SHUFFLE("player_shuffle");
 
     companion object {

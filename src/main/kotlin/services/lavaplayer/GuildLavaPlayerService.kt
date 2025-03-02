@@ -8,14 +8,17 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
+import dev.kord.common.Locale
 import dev.kord.common.annotation.KordVoice
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.behavior.channel.connect
 import dev.kord.core.behavior.edit
+import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.gateway.retry.LinearRetry
 import dev.kord.voice.AudioFrame
 import dev.kord.voice.VoiceConnection
+import es.wokis.commands.player.createPlayerEmbed
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
@@ -57,6 +60,7 @@ class GuildLavaPlayerService(
     )
     private var isRetrying = false
     private var connectingToVoiceChannel: Boolean = false
+    private var playerMessage: Message? = null
 
     fun loadAndPlayMultiple(tracks: List<String>) {
         tracks.forEachIndexed { index, track ->
@@ -82,6 +86,7 @@ class GuildLavaPlayerService(
                     arguments = arrayOf(ttsQueue.size)
                 )
             )
+            updatePlayerEmbed()
         }
     }
 
@@ -151,14 +156,24 @@ class GuildLavaPlayerService(
         coroutineScope.launch {
             val locale = voiceChannel.getLocale()
             val voiceChannelName = voiceChannel.asChannel().name
-            textChannel.createMessage(
-                localizationService.getStringFormat(
-                    key = LocalizationKeys.NOW_PLAYING,
-                    locale = locale,
-                    arguments = arrayOf(track?.getDisplayTrackName().orEmpty(), voiceChannelName)
-                )
-            )
+            playerMessage?.let {
+                updatePlayerEmbed()
+            } ?: sendNowPlayingMessage(locale, track, voiceChannelName)
         }
+    }
+
+    private suspend fun sendNowPlayingMessage(
+        locale: Locale,
+        track: AudioTrack?,
+        voiceChannelName: String
+    ) {
+        textChannel.createMessage(
+            localizationService.getStringFormat(
+                key = LocalizationKeys.NOW_PLAYING,
+                locale = locale,
+                arguments = arrayOf(track?.getDisplayTrackName().orEmpty(), voiceChannelName)
+            )
+        )
     }
 
     fun getQueue(): List<AudioTrack> = queue.toList()
@@ -237,6 +252,7 @@ class GuildLavaPlayerService(
                     arguments = arrayOf(playlist.tracks.size)
                 )
             }
+            updatePlayerEmbed()
         }
     }
 
@@ -252,6 +268,7 @@ class GuildLavaPlayerService(
             )
             connectToVoiceChannel()
             queue(listOf(track))
+            updatePlayerEmbed()
         }
     }
 
@@ -287,11 +304,24 @@ class GuildLavaPlayerService(
         leaveTimer?.cancel()
         leaveTimer = null
         connectingToVoiceChannel = false
+        updatePlayerEmbed()
     }
 
     @OptIn(KordVoice::class)
     private suspend fun resetVoiceConnection() {
         voiceConnection?.leave()
         voiceConnection = null
+    }
+
+    fun savePlayerMessage(message: Message) {
+        this.playerMessage = message
+    }
+
+    private suspend fun updatePlayerEmbed() {
+        playerMessage?.let {
+            it.edit {
+                createPlayerEmbed(getCurrentPlayingTrack(), getQueue())
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 package es.wokis.commands.player
 
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -7,8 +8,6 @@ import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
-import dev.kord.rest.builder.message.embed
-import dev.kord.rest.builder.message.modify.AbstractMessageModifyBuilder
 import es.wokis.commands.Command
 import es.wokis.commands.CommandsEnum
 import es.wokis.commands.Component
@@ -35,8 +34,12 @@ class PlayerCommand(
     ) {
         try {
             val lavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
+            val currentTrack = lavaPlayerService.getCurrentPlayingTrack()
+            val queue: List<AudioTrack> = lavaPlayerService.getQueue().orEmpty()
             response.respond {
-                createEmbed()
+                createPlayerEmbed(currentTrack, queue)
+            }.also {
+                lavaPlayerService.savePlayerMessage(it.message)
             }
         } catch (exc: IllegalStateException) {
             response.respond {
@@ -46,24 +49,19 @@ class PlayerCommand(
     }
 
     override suspend fun onInteract(interaction: ComponentInteraction) {
-        val lavaPlayerService = guildQueueService.getLavaPlayerService(interaction.id)
+        val lavaPlayerService = interaction.data.guildId.value?.let { guildQueueService.getLavaPlayerService(it) }
         val currentCustomId = (interaction as? ButtonInteraction)?.component?.customId
 
         when (currentCustomId) {
             ComponentsEnum.PLAYER_SKIP.customId -> lavaPlayerService?.skip()
-            ComponentsEnum.PLAYER_STOP.customId -> lavaPlayerService?.stop()
+            ComponentsEnum.PLAYER_DISCONNECT.customId -> lavaPlayerService?.stop()
             ComponentsEnum.PLAYER_SHUFFLE.customId -> lavaPlayerService?.shuffle()
             else -> return
         }
-
+        val currentTrack = lavaPlayerService?.getCurrentPlayingTrack()
+        val queue: List<AudioTrack> = lavaPlayerService?.getQueue().orEmpty()
         interaction.message.edit {
-            createEmbed()
-        }
-    }
-
-    private fun AbstractMessageModifyBuilder.createEmbed() {
-        embed {
-
+            createPlayerEmbed(currentTrack, queue)
         }
     }
 }
