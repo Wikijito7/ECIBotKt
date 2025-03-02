@@ -24,7 +24,7 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(currentTrack: AudioTrack?, qu
             val duration = it.duration.toDisplayDuration()
             field {
                 name = "Current Track"
-                value = "**${it.info.title}**\n${it.info.author}\n${duration}"
+                value = "**${it.info.title}**\n${it.info.author}\n$duration"
             }
         }
         if (queue.isNotEmpty()) {
@@ -39,7 +39,7 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(currentTrack: AudioTrack?, qu
     components = if (queue.isNotEmpty()) createPlayerComponents() else mutableListOf()
 }
 
-private fun AbstractMessageModifyBuilder.createPlayerComponents(): MutableList<MessageComponentBuilder> =
+private fun createPlayerComponents(): MutableList<MessageComponentBuilder> =
     mutableListOf(
         ActionRowBuilder().apply {
             interactionButton(
