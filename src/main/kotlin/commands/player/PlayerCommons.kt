@@ -22,9 +22,14 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(currentTrack: AudioTrack?, qu
         color = Color(0x01B05B)
         currentTrack?.let {
             val duration = it.duration.toDisplayDuration()
+            val currentSeek = it.position.toDisplayDuration()
             field {
                 name = "Current Track"
-                value = "**${it.info.title}**\n${it.info.author}\n$duration"
+                value = "**${it.info.title}**\n${it.info.author}"
+            }
+            field {
+                name = "Playback position"
+                value = "\uD83C\uDFB6 $currentSeek - [-------------] - $duration"
             }
         }
         if (queue.isNotEmpty()) {
@@ -84,18 +89,20 @@ private fun createPlayerComponents(isPaused: Boolean): MutableList<MessageCompon
     )
 
 private fun List<AudioTrack>.getDisplayQueue(): String {
-    val firstTrack = getOrNull(0)?.getDisplayTrackName()
-    val secondTrack = getOrNull(1)?.getDisplayTrackName()
-    val thirdTrack = getOrNull(2)?.getDisplayTrackName()
+    val firstTrack = getOrNull(0)
+    val secondTrack = getOrNull(1)
+    val thirdTrack = getOrNull(2)
     val queueRemaining = (size - 3).takeIf { it > 0 }
     val duration = sumOf { it.duration }.toDisplayDuration()
-    return firstTrack
-        ?.plus(secondTrack?.let { "\n$it" }.orEmpty())
-        ?.plus(thirdTrack?.let { "\n$it" }.orEmpty())
+    return firstTrack?.getDisplayNameAndDuration()
+        ?.plus(secondTrack?.let { "\n${it.getDisplayNameAndDuration()}" }.orEmpty())
+        ?.plus(thirdTrack?.let { "\n${it.getDisplayNameAndDuration()}" }.orEmpty())
         ?.plus(queueRemaining?.let { "\nand another $it tracks" }.orEmpty())
         ?.plus("\n$duration remaining")
         .orEmpty()
 }
+
+private fun AudioTrack.getDisplayNameAndDuration() = "${getDisplayTrackName()} (${duration.toDisplayDuration()})"
 
 private fun Long.toDisplayDuration() = toDuration(DurationUnit.MILLISECONDS).toComponents { hours, minutes, seconds, _ ->
     "%02d:%02d:%02d".format(hours, minutes, seconds)

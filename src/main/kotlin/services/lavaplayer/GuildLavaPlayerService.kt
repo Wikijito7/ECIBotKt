@@ -23,9 +23,11 @@ import es.wokis.dispatchers.AppDispatchers
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Timer
 import kotlin.concurrent.schedule
+import kotlin.concurrent.timerTask
 import kotlin.time.Duration
 
 private const val TAG = "GuildLavaPlayerService"
@@ -34,8 +36,8 @@ private const val LEAVE_DELAY = 10000L
 private const val FIRST_BACK_OFF_DELAY = "250ms"
 private const val MAX_BACK_OFF_DELAY = "2s"
 private const val MAX_BACK_OFF_RETRIES = 5
-
 private const val UNKNOWN_ERROR = "Unknown error"
+private const val SEEK_UPDATE_DELAY = 3000L
 
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
@@ -61,6 +63,7 @@ class GuildLavaPlayerService(
     private var isRetrying = false
     private var connectingToVoiceChannel: Boolean = false
     private var playerMessage: Message? = null
+    private var seekTimer: Timer? = null
 
     fun loadAndPlayMultiple(tracks: List<String>) {
         tracks.forEachIndexed { index, track ->
@@ -159,7 +162,27 @@ class GuildLavaPlayerService(
             playerMessage?.let {
                 updatePlayerEmbed()
             } ?: sendNowPlayingMessage(locale, track, voiceChannelName)
+            startSeekUpdateTimer()
         }
+    }
+
+    private fun startSeekUpdateTimer() {
+        if (seekTimer != null) return
+        seekTimer = Timer()
+        seekTimer?.scheduleAtFixedRate(
+            timerTask {
+                if (player.playingTrack == null) {
+                    seekTimer?.cancel()
+                    seekTimer = null
+                    return@timerTask
+                }
+                coroutineScope.launch {
+                    updatePlayerEmbed()
+                }
+            },
+            0,
+            SEEK_UPDATE_DELAY
+        )
     }
 
     private suspend fun sendNowPlayingMessage(
