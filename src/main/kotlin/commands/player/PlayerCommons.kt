@@ -13,7 +13,7 @@ import es.wokis.utils.getDisplayTrackName
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-fun AbstractMessageModifyBuilder.createPlayerEmbed(currentTrack: AudioTrack?, queue: List<AudioTrack>) {
+fun AbstractMessageModifyBuilder.createPlayerEmbed(currentTrack: AudioTrack?, queue: List<AudioTrack>, isPaused: Boolean) {
     embed {
         title = "Player"
         thumbnail {
@@ -36,12 +36,29 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(currentTrack: AudioTrack?, qu
             description = "Currently, there are no tracks queued"
         }
     }
-    components = if (queue.isNotEmpty()) createPlayerComponents() else mutableListOf()
+    components = if (queue.isNotEmpty()) createPlayerComponents(isPaused) else mutableListOf()
 }
 
-private fun createPlayerComponents(): MutableList<MessageComponentBuilder> =
+private fun createPlayerComponents(isPaused: Boolean): MutableList<MessageComponentBuilder> =
     mutableListOf(
         ActionRowBuilder().apply {
+            if (isPaused) {
+                interactionButton(
+                    style = ButtonStyle.Secondary,
+                    customId = ComponentsEnum.PLAYER_RESUME.customId
+                ) {
+                    label = "Resume"
+                    emoji = DiscordPartialEmoji(name = "▶️")
+                }
+            } else {
+                interactionButton(
+                    style = ButtonStyle.Secondary,
+                    customId = ComponentsEnum.PLAYER_PAUSE.customId
+                ) {
+                    label = "Pause"
+                    emoji = DiscordPartialEmoji(name = "⏸")
+                }
+            }
             interactionButton(
                 style = ButtonStyle.Secondary,
                 customId = ComponentsEnum.PLAYER_SKIP.customId

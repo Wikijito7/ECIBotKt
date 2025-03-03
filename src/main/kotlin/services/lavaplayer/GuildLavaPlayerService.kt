@@ -180,6 +180,16 @@ class GuildLavaPlayerService(
 
     fun getCurrentPlayingTrack(): AudioTrack? = player.playingTrack
 
+    fun isPaused(): Boolean = player.isPaused
+
+    fun resume() {
+        player.isPaused = false
+    }
+
+    fun pause() {
+        player.isPaused = true
+    }
+
     fun skip() {
         player.stopTrack()
     }
@@ -320,7 +330,7 @@ class GuildLavaPlayerService(
     private suspend fun updatePlayerEmbed() {
         playerMessage?.let {
             it.edit {
-                createPlayerEmbed(getCurrentPlayingTrack(), getQueue())
+                createPlayerEmbed(getCurrentPlayingTrack(), getQueue(), isPaused())
             }
         }
     }

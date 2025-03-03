@@ -35,9 +35,9 @@ class PlayerCommand(
         try {
             val lavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
             val currentTrack = lavaPlayerService.getCurrentPlayingTrack()
-            val queue: List<AudioTrack> = lavaPlayerService.getQueue().orEmpty()
+            val queue: List<AudioTrack> = lavaPlayerService.getQueue()
             response.respond {
-                createPlayerEmbed(currentTrack, queue)
+                createPlayerEmbed(currentTrack, queue, lavaPlayerService.isPaused())
             }.also {
                 lavaPlayerService.savePlayerMessage(it.message)
             }
@@ -53,6 +53,8 @@ class PlayerCommand(
         val currentCustomId = (interaction as? ButtonInteraction)?.component?.customId
 
         when (currentCustomId) {
+            ComponentsEnum.PLAYER_RESUME.customId -> lavaPlayerService?.resume()
+            ComponentsEnum.PLAYER_PAUSE.customId -> lavaPlayerService?.pause()
             ComponentsEnum.PLAYER_SKIP.customId -> lavaPlayerService?.skip()
             ComponentsEnum.PLAYER_DISCONNECT.customId -> lavaPlayerService?.stop()
             ComponentsEnum.PLAYER_SHUFFLE.customId -> lavaPlayerService?.shuffle()
@@ -61,7 +63,7 @@ class PlayerCommand(
         val currentTrack = lavaPlayerService?.getCurrentPlayingTrack()
         val queue: List<AudioTrack> = lavaPlayerService?.getQueue().orEmpty()
         interaction.message.edit {
-            createPlayerEmbed(currentTrack, queue)
+            createPlayerEmbed(currentTrack, queue, lavaPlayerService?.isPaused() == true)
         }
     }
 }

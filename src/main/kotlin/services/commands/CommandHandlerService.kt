@@ -77,7 +77,8 @@ class CommandHandlerServiceImpl(
         when (ComponentsEnum.forCustomId(customId)) {
             ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
 
-            ComponentsEnum.PLAYER_SKIP, ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE -> playerCommand.onInteract(interaction)
+            ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
+            ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE -> playerCommand.onInteract(interaction)
 
             null -> Unit
         }
