@@ -23,9 +23,12 @@ import es.wokis.dispatchers.AppDispatchers
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.*
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Timer
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
 import kotlin.concurrent.schedule
 import kotlin.concurrent.timerTask
 import kotlin.time.Duration
@@ -171,7 +174,7 @@ class GuildLavaPlayerService(
         seekTimer = Timer()
         seekTimer?.scheduleAtFixedRate(
             timerTask {
-                if (player.playingTrack == null) {
+                if (player.playingTrack == null && isRetrying.not()) {
                     seekTimer?.cancel()
                     seekTimer = null
                     return@timerTask
