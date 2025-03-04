@@ -22,12 +22,14 @@ import es.wokis.commands.player.createPlayerEmbed
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
-import es.wokis.utils.*
+import es.wokis.utils.Log
+import es.wokis.utils.createCoroutineScope
+import es.wokis.utils.getDisplayTrackName
+import es.wokis.utils.getLocale
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Timer
+import java.util.*
 import java.util.concurrent.Executors
 import kotlin.concurrent.schedule
 import kotlin.concurrent.timerTask
@@ -109,7 +111,11 @@ class GuildLavaPlayerService(
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
         Log.info(endReason?.name.orEmpty().plus(" ").plus(track?.state))
-        if (endReason in listOf(AudioTrackEndReason.LOAD_FAILED, AudioTrackEndReason.CLEANUP) && replayTrackRetry.hasNext) {
+        if (endReason in listOf(
+                AudioTrackEndReason.LOAD_FAILED,
+                AudioTrackEndReason.CLEANUP
+            ) && replayTrackRetry.hasNext
+        ) {
             try {
                 coroutineScope.launch {
                     replayTrackRetry.retry()
@@ -352,15 +358,17 @@ class GuildLavaPlayerService(
     private fun updatePlayerEmbed() {
         playerMessage?.let {
             coroutineScope.launch(updateSeekDispatcher) {
-                Log.info("${
-                    SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS").let { formatter ->
-                        Calendar.getInstance().apply { 
-                            timeInMillis = System.currentTimeMillis()
-                        }.let { calendar ->
-                            formatter.format(calendar.time)
+                Log.info(
+                    "${
+                        SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS").let { formatter ->
+                            Calendar.getInstance().apply {
+                                timeInMillis = System.currentTimeMillis()
+                            }.let { calendar ->
+                                formatter.format(calendar.time)
+                            }
                         }
-                    }                    
-                } - Updating player embed")
+                    } - Updating player embed"
+                )
                 it.edit {
                     createPlayerEmbed(getCurrentPlayingTrack(), getQueue(), isPaused())
                 }.also {
