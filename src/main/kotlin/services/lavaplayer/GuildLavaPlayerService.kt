@@ -26,13 +26,11 @@ import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
 import es.wokis.utils.getDisplayTrackName
 import es.wokis.utils.getLocale
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.Executors
 import kotlin.concurrent.schedule
-import kotlin.concurrent.timerTask
 import kotlin.time.Duration
 
 private const val TAG = "GuildLavaPlayerService"
@@ -68,8 +66,16 @@ class GuildLavaPlayerService(
     private var isRetrying = false
     private var connectingToVoiceChannel: Boolean = false
     private var playerMessage: Message? = null
-    private var seekTimer: Timer? = null
-    private val updateSeekDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private var seekTimerJob: Job? = null
+    private val updateSeekChannel = Channel<Unit>(Channel.CONFLATED)
+
+    init {
+        coroutineScope.launch {
+            for (event in updateSeekChannel) {
+                updatePlayerEmbed()
+            }
+        }
+    }
 
     fun loadAndPlayMultiple(tracks: List<String>) {
         tracks.forEachIndexed { index, track ->
@@ -137,7 +143,7 @@ class GuildLavaPlayerService(
     }
 
     private fun playNextTrack() {
-        resetTimer()
+        resetLeaveTimer()
         replayTrackRetry.reset()
         isRetrying = false
         nextTrack()
@@ -154,7 +160,7 @@ class GuildLavaPlayerService(
         }
     }
 
-    private fun resetTimer() {
+    private fun resetLeaveTimer() {
         leaveTimer?.cancel()
         leaveTimer = null
     }
@@ -171,20 +177,13 @@ class GuildLavaPlayerService(
     }
 
     private fun startSeekUpdateTimer() {
-        if (playerMessage == null || seekTimer != null) return
-        seekTimer = Timer()
-        seekTimer?.scheduleAtFixedRate(
-            timerTask {
-                if (queue.isEmpty()) {
-                    seekTimer?.cancel()
-                    seekTimer = null
-                    return@timerTask
-                }
-                updatePlayerEmbed()
-            },
-            SEEK_UPDATE_DELAY,
-            SEEK_UPDATE_DELAY
-        )
+        if (playerMessage == null || seekTimerJob != null) return
+        seekTimerJob = coroutineScope.launch {
+            while (true) {
+                delay(SEEK_UPDATE_DELAY)
+                updateSeekChannel.send(Unit)
+            }
+        }
     }
 
     private suspend fun sendNowPlayingMessage(
@@ -228,7 +227,7 @@ class GuildLavaPlayerService(
     }
 
     private fun queue(track: List<AudioTrack>) {
-        resetTimer()
+        resetLeaveTimer()
         queue.addAll(track)
         if (player.playingTrack == null) {
             nextTrack()
@@ -334,10 +333,15 @@ class GuildLavaPlayerService(
         player.stopTrack()
         resetVoiceConnection()
         replayTrackRetry.reset()
-        leaveTimer?.cancel()
-        leaveTimer = null
+        resetLeaveTimer()
+        resetSeekTimerJob()
         connectingToVoiceChannel = false
         updatePlayerEmbed()
+    }
+
+    private fun resetSeekTimerJob() {
+        seekTimerJob?.cancel()
+        seekTimerJob = null
     }
 
     @OptIn(KordVoice::class)
@@ -351,26 +355,35 @@ class GuildLavaPlayerService(
         startSeekUpdateTimer()
     }
 
-    private fun updatePlayerEmbed() {
+    private suspend fun updatePlayerEmbed() {
         playerMessage?.let {
-            coroutineScope.launch(updateSeekDispatcher) {
-                Log.info(
-                    "${
-                        SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS").let { formatter ->
-                            Calendar.getInstance().apply {
-                                timeInMillis = System.currentTimeMillis()
-                            }.let { calendar ->
-                                formatter.format(calendar.time)
-                            }
+            Log.info(
+                "${
+                    SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS").let { formatter ->
+                        Calendar.getInstance().apply {
+                            timeInMillis = System.currentTimeMillis()
+                        }.let { calendar ->
+                            formatter.format(calendar.time)
                         }
-                    } - Updating player embed"
-                )
-                it.edit {
-                    createPlayerEmbed(getCurrentPlayingTrack(), getQueue(), isPaused())
-                }.also {
-                    playerMessage = it
-                }
+                    }
+                } - Updating player embed"
+            )
+            it.edit {
+                createPlayerEmbed(player.playingTrack, queue, player.isPaused)
+            }.also { editedMessage ->
+                playerMessage = editedMessage
             }
+            Log.info(
+                "${
+                    SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS").let { formatter ->
+                        Calendar.getInstance().apply {
+                            timeInMillis = System.currentTimeMillis()
+                        }.let { calendar ->
+                            formatter.format(calendar.time)
+                        }
+                    }
+                } - Updated player embed"
+            )
         }
     }
 }
