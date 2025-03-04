@@ -8,6 +8,7 @@ import es.wokis.commands.CommandsEnum
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
+import es.wokis.commands.player.PlayerCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.tts.TTSCommand
@@ -24,6 +25,7 @@ class CommandHandlerServiceTest {
     private val skipCommand: SkipCommand = mockk()
     private val shuffleCommand: ShuffleCommand = mockk()
     private val ttsCommand: TTSCommand = mockk()
+    private val playerCommand: PlayerCommand = mockk()
     private val localizationService: LocalizationService = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
@@ -32,7 +34,8 @@ class CommandHandlerServiceTest {
         queueCommand = queueCommand,
         skipCommand = skipCommand,
         shuffleCommand = shuffleCommand,
-        ttsCommand = ttsCommand
+        ttsCommand = ttsCommand,
+        playerCommand = playerCommand
     )
 
     @Test
@@ -48,6 +51,7 @@ class CommandHandlerServiceTest {
         justRun { skipCommand.onRegisterCommand(any()) }
         justRun { shuffleCommand.onRegisterCommand(any()) }
         justRun { ttsCommand.onRegisterCommand(any()) }
+        justRun { playerCommand.onRegisterCommand(any()) }
 
         // When
         commandHandlerService.onRegisterCommand(commandBuilder)
@@ -55,6 +59,11 @@ class CommandHandlerServiceTest {
         // Then
         verify(exactly = 1) {
             playCommand.onRegisterCommand(commandBuilder)
+            queueCommand.onRegisterCommand(commandBuilder)
+            skipCommand.onRegisterCommand(commandBuilder)
+            shuffleCommand.onRegisterCommand(commandBuilder)
+            ttsCommand.onRegisterCommand(commandBuilder)
+            playerCommand.onRegisterCommand(commandBuilder)
         }
     }
 
