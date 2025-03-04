@@ -111,11 +111,7 @@ class GuildLavaPlayerService(
 
     override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
         Log.info(endReason?.name.orEmpty().plus(" ").plus(track?.state))
-        if (endReason in listOf(
-                AudioTrackEndReason.LOAD_FAILED,
-                AudioTrackEndReason.CLEANUP
-            ) && replayTrackRetry.hasNext
-        ) {
+        if (endReason in listOf(AudioTrackEndReason.LOAD_FAILED, AudioTrackEndReason.CLEANUP) && replayTrackRetry.hasNext) {
             try {
                 coroutineScope.launch {
                     replayTrackRetry.retry()
