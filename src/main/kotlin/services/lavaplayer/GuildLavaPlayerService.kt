@@ -24,11 +24,11 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.*
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Timer
 import java.util.concurrent.Executors
-import java.util.concurrent.ThreadPoolExecutor
 import kotlin.concurrent.schedule
 import kotlin.concurrent.timerTask
 import kotlin.time.Duration
@@ -67,6 +67,7 @@ class GuildLavaPlayerService(
     private var connectingToVoiceChannel: Boolean = false
     private var playerMessage: Message? = null
     private var seekTimer: Timer? = null
+    private val updateSeekDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     fun loadAndPlayMultiple(tracks: List<String>) {
         tracks.forEachIndexed { index, track ->
@@ -92,7 +93,6 @@ class GuildLavaPlayerService(
                     arguments = arrayOf(ttsQueue.size)
                 )
             )
-            updatePlayerEmbed()
         }
     }
 
@@ -163,27 +163,24 @@ class GuildLavaPlayerService(
             val locale = voiceChannel.getLocale()
             val voiceChannelName = voiceChannel.asChannel().name
             playerMessage?.let {
-                updatePlayerEmbed()
+                startSeekUpdateTimer()
             } ?: sendNowPlayingMessage(locale, track, voiceChannelName)
-            startSeekUpdateTimer()
         }
     }
 
     private fun startSeekUpdateTimer() {
-        if (seekTimer != null) return
+        if (playerMessage == null || seekTimer != null) return
         seekTimer = Timer()
         seekTimer?.scheduleAtFixedRate(
             timerTask {
-                if (player.playingTrack == null && isRetrying.not()) {
+                if (queue.isEmpty()) {
                     seekTimer?.cancel()
                     seekTimer = null
                     return@timerTask
                 }
-                coroutineScope.launch {
-                    updatePlayerEmbed()
-                }
+                updatePlayerEmbed()
             },
-            0,
+            SEEK_UPDATE_DELAY,
             SEEK_UPDATE_DELAY
         )
     }
@@ -288,7 +285,6 @@ class GuildLavaPlayerService(
                     arguments = arrayOf(playlist.tracks.size)
                 )
             }
-            updatePlayerEmbed()
         }
     }
 
@@ -304,7 +300,6 @@ class GuildLavaPlayerService(
             )
             connectToVoiceChannel()
             queue(listOf(track))
-            updatePlayerEmbed()
         }
     }
 
@@ -351,12 +346,26 @@ class GuildLavaPlayerService(
 
     fun savePlayerMessage(message: Message) {
         this.playerMessage = message
+        startSeekUpdateTimer()
     }
 
-    private suspend fun updatePlayerEmbed() {
+    private fun updatePlayerEmbed() {
         playerMessage?.let {
-            it.edit {
-                createPlayerEmbed(getCurrentPlayingTrack(), getQueue(), isPaused())
+            coroutineScope.launch(updateSeekDispatcher) {
+                Log.info("${
+                    SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS").let { formatter ->
+                        Calendar.getInstance().apply { 
+                            timeInMillis = System.currentTimeMillis()
+                        }.let { calendar ->
+                            formatter.format(calendar.time)
+                        }
+                    }                    
+                } - Updating player embed")
+                it.edit {
+                    createPlayerEmbed(getCurrentPlayingTrack(), getQueue(), isPaused())
+                }.also {
+                    playerMessage = it
+                }
             }
         }
     }
