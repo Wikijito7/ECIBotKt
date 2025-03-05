@@ -171,17 +171,31 @@ class GuildLavaPlayerService(
             val locale = voiceChannel.getLocale()
             val voiceChannelName = voiceChannel.asChannel().name
             playerMessage?.let {
-                startSeekUpdateTimer()
+                seekTimerJob?.let {
+                    updateSeekChannel.send(Unit)
+                } ?: startSeekUpdateTimer()
             } ?: sendNowPlayingMessage(locale, track, voiceChannelName)
         }
     }
 
     private fun startSeekUpdateTimer() {
-        if (playerMessage == null || seekTimerJob != null) return
+        if (playerMessage == null) return
+        resetSeekTimerJob()
         seekTimerJob = coroutineScope.launch {
             while (true) {
-                delay(SEEK_UPDATE_DELAY)
+                Log.info(
+                    "${
+                        SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS").let { formatter ->
+                            Calendar.getInstance().apply {
+                                timeInMillis = System.currentTimeMillis()
+                            }.let { calendar ->
+                                formatter.format(calendar.time)
+                            }
+                        }
+                    } - Sending update event"
+                )
                 updateSeekChannel.send(Unit)
+                delay(SEEK_UPDATE_DELAY)
             }
         }
     }
@@ -370,8 +384,6 @@ class GuildLavaPlayerService(
             )
             it.edit {
                 createPlayerEmbed(player.playingTrack, queue, player.isPaused)
-            }.also { editedMessage ->
-                playerMessage = editedMessage
             }
             Log.info(
                 "${
