@@ -10,6 +10,7 @@ import dev.kord.rest.builder.message.embed
 import dev.kord.rest.builder.message.modify.AbstractMessageModifyBuilder
 import es.wokis.commands.ComponentsEnum
 import es.wokis.utils.getDisplayTrackName
+import kotlin.math.max
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -29,7 +30,7 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(currentTrack: AudioTrack?, qu
             }
             field {
                 name = "Playback position"
-                value = "\uD83C\uDFB6 $currentSeek - [-------------] - $duration"
+                value = "`$currentSeek ${generatePlayerPosition(it.position, it.duration)} $duration`"
             }
         }
         if (queue.isNotEmpty()) {
@@ -42,6 +43,15 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(currentTrack: AudioTrack?, qu
         }
     }
     components = if (queue.isNotEmpty()) createPlayerComponents(isPaused) else mutableListOf()
+}
+
+private fun generatePlayerPosition(currentSeek: Long, maxDuration: Long): String {
+    val safeMaxDuration = maxDuration.takeUnless { it == 0L } ?: 1
+    val position = ((currentSeek / 1000f) / (safeMaxDuration / 1000f) * 9).toInt() + 1
+    val playerString = "─────────".split("").toMutableList().apply {
+        add(position, "●")
+    }.joinToString(separator = "")
+    return playerString
 }
 
 private fun createPlayerComponents(isPaused: Boolean): MutableList<MessageComponentBuilder> =
@@ -83,7 +93,6 @@ private fun createPlayerComponents(isPaused: Boolean): MutableList<MessageCompon
                 customId = ComponentsEnum.PLAYER_DISCONNECT.customId
             ) {
                 label = "Disconnect"
-                emoji = DiscordPartialEmoji(name = "⏹")
             }
         }
     )
