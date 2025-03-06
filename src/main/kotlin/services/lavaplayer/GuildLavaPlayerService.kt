@@ -171,29 +171,17 @@ class GuildLavaPlayerService(
             val locale = voiceChannel.getLocale()
             val voiceChannelName = voiceChannel.asChannel().name
             playerMessage?.let {
-                seekTimerJob?.let {
-                    updateSeekChannel.send(Unit)
-                } ?: startSeekUpdateTimer()
+                updateSeekChannel.send(Unit)
             } ?: sendNowPlayingMessage(locale, track, voiceChannelName)
         }
     }
 
+    // TODO: Take a look in the future to solve discord update request error or delete it
     private fun startSeekUpdateTimer() {
         if (playerMessage == null) return
         resetSeekTimerJob()
         seekTimerJob = coroutineScope.launch {
             while (true) {
-                Log.info(
-                    "${
-                        SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS").let { formatter ->
-                            Calendar.getInstance().apply {
-                                timeInMillis = System.currentTimeMillis()
-                            }.let { calendar ->
-                                formatter.format(calendar.time)
-                            }
-                        }
-                    } - Sending update event"
-                )
                 updateSeekChannel.send(Unit)
                 delay(SEEK_UPDATE_DELAY)
             }
@@ -246,6 +234,7 @@ class GuildLavaPlayerService(
         if (player.playingTrack == null) {
             nextTrack()
         }
+        updateSeekChannel.trySend(Unit)
     }
 
     private fun nextTrack() {
@@ -366,36 +355,14 @@ class GuildLavaPlayerService(
 
     fun savePlayerMessage(message: Message) {
         this.playerMessage = message
-        startSeekUpdateTimer()
+        updateSeekChannel.trySend(Unit)
     }
 
     private suspend fun updatePlayerEmbed() {
         playerMessage?.let {
-            Log.info(
-                "${
-                    SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS").let { formatter ->
-                        Calendar.getInstance().apply {
-                            timeInMillis = System.currentTimeMillis()
-                        }.let { calendar ->
-                            formatter.format(calendar.time)
-                        }
-                    }
-                } - Updating player embed"
-            )
             it.edit {
                 createPlayerEmbed(player.playingTrack, queue, player.isPaused)
             }
-            Log.info(
-                "${
-                    SimpleDateFormat("dd/MM/yyyy hh:mm:ss.SSS").let { formatter ->
-                        Calendar.getInstance().apply {
-                            timeInMillis = System.currentTimeMillis()
-                        }.let { calendar ->
-                            formatter.format(calendar.time)
-                        }
-                    }
-                } - Updated player embed"
-            )
         }
     }
 }

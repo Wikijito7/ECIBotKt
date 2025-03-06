@@ -1,5 +1,6 @@
 package es.wokis.commands.player
 
+import com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import dev.kord.common.Color
 import dev.kord.common.entity.ButtonStyle
@@ -28,9 +29,16 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(currentTrack: AudioTrack?, qu
                 name = "Current Track"
                 value = "**${it.info.title}**\n${it.info.author}"
             }
+            if (false) {
+                // TODO: Take a look in the future to solve discord update request error or delete it
+                field {
+                    name = "Playback position"
+                    value = "`$currentSeek ${generatePlayerPosition(it.position, it.duration)} $duration`"
+                }
+            }
             field {
-                name = "Playback position"
-                value = "`$currentSeek ${generatePlayerPosition(it.position, it.duration)} $duration`"
+                name = "Track duration"
+                value = duration.takeUnless { currentTrack.duration == DURATION_MS_UNKNOWN } ?: "Unknown/Stream"
             }
         }
         if (queue.isNotEmpty()) {
