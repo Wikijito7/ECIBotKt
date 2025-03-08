@@ -17,6 +17,8 @@ import es.wokis.utils.getDisplayTrackName
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
+private const val ENABLE_PLAYBACK_POSITION = false
+
 fun AbstractMessageModifyBuilder.createPlayerEmbed(
     localizationService: LocalizationService,
     locale: Locale,
@@ -37,7 +39,7 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(
                 name = localizationService.getString(key = LocalizationKeys.PLAYER_CURRENT_TRACK, locale = locale)
                 value = "**${it.info.title}**\n${it.info.author}"
             }
-            if (false) {
+            if (ENABLE_PLAYBACK_POSITION) {
                 // TODO: Take a look in the future to solve discord update request error or delete it
                 field {
                     name = localizationService.getString(key = LocalizationKeys.PLAYER_PLAYBACK_POSITION, locale = locale)
