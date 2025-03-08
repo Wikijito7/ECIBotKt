@@ -173,6 +173,27 @@ class CommandHandlerServiceTest {
     }
 
     @Test
+    fun `Given player command When onExecute is called Then execute PlayerCommand`() = runTest {
+        // Given
+        val commandName = CommandsEnum.PLAYER.commandName
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { command } returns mockk {
+                every { rootName } returns commandName
+            }
+        }
+        val response: DeferredPublicMessageInteractionResponseBehavior = mockk()
+        coJustRun { playerCommand.onExecute(any(), any()) }
+
+        // When
+        playerCommand.onExecute(interaction, response)
+
+        // Then
+        coVerify(exactly = 1) {
+            playerCommand.onExecute(interaction, response)
+        }
+    }
+
+    @Test
     fun `Given previous interaction When onInteract is called Then execute QueueCommand onInteract`() = runTest {
         // Given
         val componentId = ComponentsEnum.QUEUE_PREVIOUS.customId
