@@ -28,7 +28,6 @@ import es.wokis.utils.getDisplayTrackName
 import es.wokis.utils.getLocale
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.schedule
 import kotlin.time.Duration
@@ -361,7 +360,13 @@ class GuildLavaPlayerService(
     private suspend fun updatePlayerEmbed() {
         playerMessage?.let {
             it.edit {
-                createPlayerEmbed(player.playingTrack, queue, player.isPaused)
+                createPlayerEmbed(
+                    localizationService = localizationService,
+                    locale = voiceChannel.getLocale(),
+                    currentTrack = player.playingTrack,
+                    queue = queue,
+                    isPaused = player.isPaused
+                )
             }
         }
     }

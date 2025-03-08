@@ -27,3 +27,19 @@ shuffle_command_response: Reordered current queue randomly
 tts_command_description: Generates a TTS message
 tts_command_input_description: Text to generate TTS message
 tts_command_response: Generating TTS message
+player_command_description: Shows the player for this guild
+player_title: %s Player
+player_current_track: Current track
+player_playback_position: Playback position
+player_track_duration: Track duration
+player_track_duration_unknown: Unknown
+player_track_duration_stream: Stream
+player_server_queue: Server's queue
+player_server_queue_empty: Currently, there are no tracks queued
+player_resume: Resume
+player_pause: Pause
+player_skip: Skip
+player_shuffle: Shuffle
+player_disconnect: Disconnect
+player_queue_tracks_remaining: and another %d tracks
+player_duration_remaining: %s remaining

@@ -12,8 +12,10 @@ import es.wokis.commands.Command
 import es.wokis.commands.CommandsEnum
 import es.wokis.commands.Component
 import es.wokis.commands.ComponentsEnum
+import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
+import es.wokis.utils.orDefaultLocale
 
 class PlayerCommand(
     private val localizationService: LocalizationService,
@@ -22,8 +24,11 @@ class PlayerCommand(
 
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         commandBuilder.apply {
-            input(CommandsEnum.PLAYER.commandName, "player") {
-                descriptionLocalizations
+            input(
+                name = CommandsEnum.PLAYER.commandName,
+                description = localizationService.getString(key = LocalizationKeys.PLAYER_COMMAND_DESCRIPTION)
+            ) {
+                descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.PLAYER_COMMAND_DESCRIPTION)
             }
         }
     }
@@ -36,8 +41,15 @@ class PlayerCommand(
             val lavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
             val currentTrack = lavaPlayerService.getCurrentPlayingTrack()
             val queue: List<AudioTrack> = lavaPlayerService.getQueue()
+            val locale = interaction.locale.orDefaultLocale()
             response.respond {
-                createPlayerEmbed(currentTrack, queue, lavaPlayerService.isPaused())
+                createPlayerEmbed(
+                    localizationService = localizationService,
+                    locale = locale,
+                    currentTrack = currentTrack,
+                    queue = queue,
+                    isPaused = lavaPlayerService.isPaused()
+                )
             }.also {
                 lavaPlayerService.savePlayerMessage(it.message)
             }
@@ -62,8 +74,16 @@ class PlayerCommand(
         }
         val currentTrack = lavaPlayerService?.getCurrentPlayingTrack()
         val queue: List<AudioTrack> = lavaPlayerService?.getQueue().orEmpty()
+        val locale = interaction.locale.orDefaultLocale()
+
         interaction.message.edit {
-            createPlayerEmbed(currentTrack, queue, lavaPlayerService?.isPaused() == true)
+            createPlayerEmbed(
+                localizationService = localizationService,
+                locale = locale,
+                currentTrack = currentTrack,
+                queue = queue,
+                isPaused = lavaPlayerService?.isPaused() == true
+            )
         }
     }
 }
