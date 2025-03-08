@@ -91,7 +91,8 @@ sonar {
             "src/main/kotlin/Main.kt",
             "*.kts",
             "**/di/*.kt",
-            "src/main/kotlin/services/lavaplayer/GuildLavaPlayerService.kt" // TODO: Right now, we cannot test it because of how the class is made.
+            "src/main/kotlin/services/lavaplayer/GuildLavaPlayerService.kt", // TODO: Right now, we cannot test it because of how the class is made.,
+            "src/main/kotlin/commands/player/PlayerCommons.kt" // This class needs a lot of mocking of Kord, which isn't really prepared for it
         )
         property("sonar.projectKey", projectKey)
         property("sonar.organization", organization)
