@@ -137,13 +137,13 @@ private fun List<AudioTrack>.getDisplayQueue(localizationService: LocalizationSe
         ?.plus(thirdTrack?.let { "\n${it.getDisplayNameAndDuration()}" }.orEmpty())
         ?.plus(
             queueRemaining?.let {
-            "\n".plus(
-                localizationService.getStringFormat(
-                    key = LocalizationKeys.PLAYER_QUEUE_TRACKS_REMAINING,
-                    locale = locale,
-                    arguments = arrayOf(it)
+                "\n".plus(
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.PLAYER_QUEUE_TRACKS_REMAINING,
+                        locale = locale,
+                        arguments = arrayOf(it)
+                    )
                 )
-            )
             }.orEmpty()
         )
         ?.plus(
