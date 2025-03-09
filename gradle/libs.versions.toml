@@ -11,7 +11,7 @@ koin = "4.0.2"
 serialization = "1.8.0"
 lavaplayer = "2.2.3"
 lavaplayer-youtube = "1.11.5"
-lavaplayer-lavasrc = "4.4.1"
+lavaplayer-lavasrc = "4.4.2"
 idea-ext = "1.1.8"
 junit-parametized = "5.12.0"
 

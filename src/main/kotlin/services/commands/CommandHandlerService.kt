@@ -10,6 +10,7 @@ import es.wokis.commands.CommandsEnum
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
+import es.wokis.commands.player.PlayerCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.tts.TTSCommand
@@ -34,6 +35,7 @@ class CommandHandlerServiceImpl(
     private val skipCommand: SkipCommand,
     private val shuffleCommand: ShuffleCommand,
     private val ttsCommand: TTSCommand,
+    private val playerCommand: PlayerCommand,
     private val localizationService: LocalizationService
 ) : CommandHandlerService {
 
@@ -43,6 +45,7 @@ class CommandHandlerServiceImpl(
         skipCommand.onRegisterCommand(commandBuilder)
         shuffleCommand.onRegisterCommand(commandBuilder)
         ttsCommand.onRegisterCommand(commandBuilder)
+        playerCommand.onRegisterCommand(commandBuilder)
     }
 
     override suspend fun onExecute(
@@ -61,6 +64,8 @@ class CommandHandlerServiceImpl(
 
             CommandsEnum.TTS -> ttsCommand.onExecute(interaction, response)
 
+            CommandsEnum.PLAYER -> playerCommand.onExecute(interaction, response)
+
             null -> respondUnknownCommand(response, interaction.guildLocale, commandName)
         }
     }
@@ -71,6 +76,9 @@ class CommandHandlerServiceImpl(
         val customId = interaction.component.customId ?: return
         when (ComponentsEnum.forCustomId(customId)) {
             ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
+
+            ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
+            ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE -> playerCommand.onInteract(interaction)
 
             null -> Unit
         }

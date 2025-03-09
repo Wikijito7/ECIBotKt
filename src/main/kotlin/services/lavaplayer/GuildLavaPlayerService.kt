@@ -8,20 +8,27 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
+import dev.kord.common.Locale
 import dev.kord.common.annotation.KordVoice
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.behavior.channel.connect
 import dev.kord.core.behavior.edit
+import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.gateway.retry.LinearRetry
 import dev.kord.voice.AudioFrame
 import dev.kord.voice.VoiceConnection
+import es.wokis.commands.player.createPlayerEmbed
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
-import es.wokis.utils.*
-import kotlinx.coroutines.launch
-import java.util.Timer
+import es.wokis.utils.Log
+import es.wokis.utils.createCoroutineScope
+import es.wokis.utils.getDisplayTrackName
+import es.wokis.utils.getLocale
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import java.util.*
 import kotlin.concurrent.schedule
 import kotlin.time.Duration
 
@@ -31,8 +38,8 @@ private const val LEAVE_DELAY = 10000L
 private const val FIRST_BACK_OFF_DELAY = "250ms"
 private const val MAX_BACK_OFF_DELAY = "2s"
 private const val MAX_BACK_OFF_RETRIES = 5
-
 private const val UNKNOWN_ERROR = "Unknown error"
+private const val SEEK_UPDATE_DELAY = 3000L
 
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
@@ -57,6 +64,53 @@ class GuildLavaPlayerService(
     )
     private var isRetrying = false
     private var connectingToVoiceChannel: Boolean = false
+    private var playerMessage: Message? = null
+    private var seekTimerJob: Job? = null
+    private val updateSeekChannel = Channel<Unit>(Channel.CONFLATED)
+
+    init {
+        coroutineScope.launch {
+            for (event in updateSeekChannel) {
+                updatePlayerEmbed()
+            }
+        }
+    }
+
+    override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
+        Log.info(endReason?.name.orEmpty().plus(" ").plus(track?.state))
+        if (endReason in listOf(AudioTrackEndReason.LOAD_FAILED, AudioTrackEndReason.CLEANUP) && replayTrackRetry.hasNext) {
+            try {
+                coroutineScope.launch {
+                    replayTrackRetry.retry()
+                    isRetrying = true
+                    player.playTrack(track?.makeClone())
+                }
+            } catch (e: IllegalStateException) {
+                Log.error("An error has occurred on onTrackEnd", exception = e)
+                tryPlayNextTrack()
+            }
+            return
+        }
+        tryPlayNextTrack()
+    }
+
+    override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
+        if (isRetrying) return
+        coroutineScope.launch {
+            val locale = voiceChannel.getLocale()
+            val voiceChannelName = voiceChannel.asChannel().name
+            playerMessage?.let {
+                updateSeekChannel.send(Unit)
+            } ?: sendNowPlayingMessage(locale, track, voiceChannelName)
+        }
+    }
+
+    fun loadAndPlay(url: String) {
+        audioPlayerManager.loadItem(
+            url,
+            getAudioLoadResultHandler(url)
+        )
+    }
 
     fun loadAndPlayMultiple(tracks: List<String>) {
         tracks.forEachIndexed { index, track ->
@@ -85,33 +139,50 @@ class GuildLavaPlayerService(
         }
     }
 
-    fun loadAndPlay(url: String) {
-        audioPlayerManager.loadItem(
-            url,
-            getAudioLoadResultHandler(url)
-        )
-    }
-
     fun searchAndPlay(searchTerm: String) {
         // TODO: Implement on next steps
     }
 
-    override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
-        Log.info(endReason?.name.orEmpty().plus(" ").plus(track?.state))
-        if (endReason in listOf(AudioTrackEndReason.LOAD_FAILED, AudioTrackEndReason.CLEANUP) && replayTrackRetry.hasNext) {
-            try {
-                coroutineScope.launch {
-                    replayTrackRetry.retry()
-                    isRetrying = true
-                    player.playTrack(track?.makeClone())
-                }
-            } catch (e: IllegalStateException) {
-                Log.error("An error has occurred on onTrackEnd", exception = e)
-                tryPlayNextTrack()
-            }
-            return
-        }
-        tryPlayNextTrack()
+    fun getQueue(): List<AudioTrack> = queue.toList()
+
+    fun getCurrentPlayingTrack(): AudioTrack? = player.playingTrack
+
+    fun isPaused(): Boolean = player.isPaused
+
+    fun resume() {
+        player.isPaused = false
+    }
+
+    fun pause() {
+        player.isPaused = true
+    }
+
+    fun skip() {
+        player.stopTrack()
+    }
+
+    suspend fun stop() {
+        handleDisconnectEvent()
+    }
+
+    fun shuffle() {
+        queue.shuffle()
+    }
+
+    suspend fun handleDisconnectEvent() {
+        isRetrying = false
+        queue.clear()
+        player.stopTrack()
+        resetVoiceConnection()
+        replayTrackRetry.reset()
+        resetLeaveTimer()
+        resetSeekTimerJob()
+        connectingToVoiceChannel = false
+        updatePlayerEmbed()
+    }
+
+    fun savePlayerMessage(message: Message) {
+        this.playerMessage = message
     }
 
     private fun tryPlayNextTrack() {
@@ -124,7 +195,7 @@ class GuildLavaPlayerService(
     }
 
     private fun playNextTrack() {
-        resetTimer()
+        resetLeaveTimer()
         replayTrackRetry.reset()
         isRetrying = false
         nextTrack()
@@ -141,48 +212,44 @@ class GuildLavaPlayerService(
         }
     }
 
-    private fun resetTimer() {
+    private fun resetLeaveTimer() {
         leaveTimer?.cancel()
         leaveTimer = null
     }
 
-    override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
-        if (isRetrying) return
-        coroutineScope.launch {
-            val locale = voiceChannel.getLocale()
-            val voiceChannelName = voiceChannel.asChannel().name
-            textChannel.createMessage(
-                localizationService.getStringFormat(
-                    key = LocalizationKeys.NOW_PLAYING,
-                    locale = locale,
-                    arguments = arrayOf(track?.getDisplayTrackName().orEmpty(), voiceChannelName)
-                )
-            )
+    // TODO: Take a look in the future to solve discord update request error or delete it
+    private fun startSeekUpdateTimer() {
+        if (playerMessage == null) return
+        resetSeekTimerJob()
+        seekTimerJob = coroutineScope.launch {
+            while (true) {
+                updateSeekChannel.send(Unit)
+                delay(SEEK_UPDATE_DELAY)
+            }
         }
     }
-
-    fun getQueue(): List<AudioTrack> = queue.toList()
-
-    fun getCurrentPlayingTrack(): AudioTrack? = player.playingTrack
-
-    fun skip() {
-        player.stopTrack()
+    private suspend fun sendNowPlayingMessage(
+        locale: Locale,
+        track: AudioTrack?,
+        voiceChannelName: String
+    ) {
+        textChannel.createMessage(
+            localizationService.getStringFormat(
+                key = LocalizationKeys.NOW_PLAYING,
+                locale = locale,
+                arguments = arrayOf(track?.getDisplayTrackName().orEmpty(), voiceChannelName)
+            )
+        )
     }
 
-    suspend fun stop() {
-        handleDisconnectEvent()
-    }
-
-    fun shuffle() {
-        queue.shuffle()
-    }
 
     private fun queue(track: List<AudioTrack>) {
-        resetTimer()
+        resetLeaveTimer()
         queue.addAll(track)
         if (player.playingTrack == null) {
             nextTrack()
         }
+        updateSeekChannel.trySend(Unit)
     }
 
     private fun nextTrack() {
@@ -278,20 +345,28 @@ class GuildLavaPlayerService(
         )
     }
 
-    suspend fun handleDisconnectEvent() {
-        isRetrying = false
-        queue.clear()
-        player.stopTrack()
-        resetVoiceConnection()
-        replayTrackRetry.reset()
-        leaveTimer?.cancel()
-        leaveTimer = null
-        connectingToVoiceChannel = false
+    private fun resetSeekTimerJob() {
+        seekTimerJob?.cancel()
+        seekTimerJob = null
     }
 
     @OptIn(KordVoice::class)
     private suspend fun resetVoiceConnection() {
         voiceConnection?.leave()
         voiceConnection = null
+    }
+
+    private suspend fun updatePlayerEmbed() {
+        playerMessage?.let {
+            it.edit {
+                createPlayerEmbed(
+                    localizationService = localizationService,
+                    locale = voiceChannel.getLocale(),
+                    currentTrack = player.playingTrack,
+                    queue = queue,
+                    isPaused = player.isPaused
+                )
+            }
+        }
     }
 }
