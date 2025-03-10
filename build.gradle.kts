@@ -2,6 +2,7 @@ import org.jetbrains.gradle.ext.settings
 import org.jetbrains.gradle.ext.taskTriggers
 
 plugins {
+    application
     alias(libs.plugins.kotlin.jvm)
     jacoco
     alias(libs.plugins.sonarqube)
@@ -106,6 +107,8 @@ kotlin {
 }
 
 tasks.register("generateLangClass") {
+    description = "Generates LocalizationKeys content from lang.yml keys"
+    group = "lang"
     doLast {
         val baseLangFile = file("src/main/resources/lang/lang.yml")
         val outputFile = file("src/main/kotlin/localization/LocalizationKeys.kt")
@@ -135,5 +138,26 @@ tasks.named("compileKotlin") {
 idea.project.settings {
     taskTriggers {
         afterSync(project.tasks.named("generateLangClass"))
+    }
+}
+
+application {
+    mainClass.set("es.wokis.MainKt")
+}
+
+tasks {
+    val fatJar = register<Jar>("fatJar") {
+        // We need this for Gradle optimization to work
+        dependsOn.addAll(listOf("compileJava", "compileKotlin", "processResources"))
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        manifest { attributes(mapOf("Main-Class" to application.mainClass)) }
+        val sourcesMain = sourceSets.main.get()
+        val contents = configurations.runtimeClasspath.get()
+            .map { if (it.isDirectory) it else zipTree(it) } +
+                sourcesMain.output
+        from(contents)
+    }
+    build {
+        dependsOn(fatJar)
     }
 }
