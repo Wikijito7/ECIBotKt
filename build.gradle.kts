@@ -148,7 +148,7 @@ application {
 tasks {
     val fatJar = register<Jar>("fatJar") {
         // We need this for Gradle optimization to work
-        dependsOn.addAll(listOf("compileJava", "compileKotlin", "processResources"))
+        dependsOn.addAll(listOf("compileJava", "compileKotlin", "processResources", "distTar", "distZip"))
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         manifest { attributes(mapOf("Main-Class" to application.mainClass)) }
         val sourcesMain = sourceSets.main.get()
