@@ -20,6 +20,7 @@ import kotlin.time.toDuration
 private const val ENABLE_PLAYBACK_POSITION = false
 
 fun AbstractMessageModifyBuilder.createPlayerEmbed(
+    guildName: String,
     localizationService: LocalizationService,
     locale: Locale,
     currentTrack: AudioTrack?,
@@ -27,7 +28,11 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(
     isPaused: Boolean
 ) {
     embed {
-        title = localizationService.getString(key = LocalizationKeys.PLAYER_TITLE, locale = locale)
+        title = localizationService.getStringFormat(
+            key = LocalizationKeys.PLAYER_TITLE,
+            locale = locale,
+            arguments = arrayOf(guildName)
+        )
         thumbnail {
             url = currentTrack?.info?.artworkUrl.orEmpty()
         }
@@ -51,7 +56,7 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(
                 value = duration.takeUnless {
                     currentTrack.duration == DURATION_MS_UNKNOWN
                 } ?: localizationService.getString(
-                    key = if (currentTrack.info.isStream) LocalizationKeys.PLAYER_TRACK_DURATION_STREAM else LocalizationKeys.UNKNOWN_COMMAND,
+                    key = if (currentTrack.info.isStream) LocalizationKeys.PLAYER_TRACK_DURATION_STREAM else LocalizationKeys.PLAYER_TRACK_DURATION_UNKNOWN,
                     locale = locale
                 )
             }
