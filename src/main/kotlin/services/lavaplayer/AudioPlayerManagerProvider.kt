@@ -8,7 +8,10 @@ import com.github.topi314.lavasrc.deezer.DeezerAudioSourceManager
 import com.github.topi314.lavasrc.flowerytts.FloweryTTSSourceManager
 import com.github.topi314.lavasrc.mirror.DefaultMirroringAudioTrackResolver
 import com.github.topi314.lavasrc.spotify.SpotifySourceManager
+import dev.lavalink.youtube.clients.MusicWithThumbnail
+import dev.lavalink.youtube.clients.TvHtml5EmbeddedWithThumbnail
 import dev.lavalink.youtube.clients.Web
+import dev.lavalink.youtube.clients.WebWithThumbnail
 import es.wokis.services.config.ConfigService
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager as DeprecatedYoutubeAudioSourceManager
 
@@ -19,7 +22,7 @@ class AudioPlayerManagerProvider(
 ) {
 
     fun createAudioPlayerManager(): AudioPlayerManager = DefaultAudioPlayerManager().apply {
-        val ytSourceManager = YoutubeAudioSourceManager().apply {
+        val ytSourceManager = YoutubeAudioSourceManager(TvHtml5EmbeddedWithThumbnail(), WebWithThumbnail(), MusicWithThumbnail()).apply {
             setPlaylistPageCount(Integer.MAX_VALUE)
             useOauth2(configService.config.youtube.oauth2Token, true)
             Web.setPoTokenAndVisitorData(

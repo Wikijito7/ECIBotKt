@@ -301,7 +301,7 @@ class GuildLavaPlayerService(
                 content = localizationService.getStringFormat(
                     key = LocalizationKeys.ADDED_SONGS_TO_QUEUE,
                     locale = locale,
-                    arguments = arrayOf(playlist.tracks.size)
+                    arguments = arrayOf(playlist.name, playlist.tracks.size)
                 )
             }
         }
@@ -358,8 +358,10 @@ class GuildLavaPlayerService(
 
     private suspend fun updatePlayerEmbed() {
         playerMessage?.let {
+            val guildName = textChannel.data.guildId.value?.let { guildId -> textChannel.kord.getGuild(guildId) }?.name.orEmpty()
             it.edit {
                 createPlayerEmbed(
+                    guildName = guildName,
                     localizationService = localizationService,
                     locale = voiceChannel.getLocale(),
                     currentTrack = player.playingTrack,

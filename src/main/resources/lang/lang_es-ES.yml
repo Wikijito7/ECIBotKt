@@ -4,7 +4,7 @@ unknown_command: Comando desconocido o sin registrar, nombre del comando %s
 now_playing: 🎶 Reproduciendo %s en %s
 no_matches: No se han encontrado resultados para %s
 added_track_to_queue: Añadido %s a la cola
-added_songs_to_queue: Añadidas %d canciones a la cola
+added_songs_to_queue: Añadida %s (%d canciones) a la cola
 found_track_list: Encontrada la lista de reproducción %s con %d canciones
 load_failed: Error al cargar, %s
 message_processor_invalid_link: He recibido un enlace incorrecto. El original era %s
@@ -13,7 +13,7 @@ error_no_voice_channel: Necesitas estar conectado en un canal de voz
 error_no_text_channel: Necesitas estar en un canal de texto
 error_no_guild: Necesitas estar en un servidor
 error_no_content_provided: El campo %s es requerido. Es necesario que rellenes ese campo
-searching_song: Buscando la canción
+searching_song: Buscando el contenido…
 queue_command_description: Muestra la cola actual
 queue_embed_title: Cola de sonidos
 queue_embed_description: Actualmente hay %d sonidos en la cola de %s
@@ -26,6 +26,7 @@ shuffle_command_description: Reordena la cola actual de manera aleatoria
 shuffle_command_response: Reordenada la cola de manera aleatoria
 tts_command_description: Genera un mensaje TTS
 tts_command_input_description: Texto para generar el mensaje TTS
+tts_command_response: Generando el mensage TTS
 player_command_description: Shows the player for this guild
 player_title: Reproductor de %s
 player_current_track: Pista de audio actual
