@@ -1,7 +1,6 @@
 package es.wokis.services.localization
 
 import dev.kord.common.Locale
-import es.wokis.utils.Log
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files

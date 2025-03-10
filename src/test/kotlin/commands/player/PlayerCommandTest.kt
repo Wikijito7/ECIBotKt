@@ -46,7 +46,7 @@ class PlayerCommandTest {
                 every { guildId.value } returns Snowflake(123)
             }
             every { kord } returns mockKord
-            every { locale } returns Locale.BULGARIAN
+            every { guildLocale } returns Locale.BULGARIAN
         }
         val response = mockk<DeferredPublicMessageInteractionResponseBehavior> {
             every { kord } returns mockKord
@@ -99,7 +99,7 @@ class PlayerCommandTest {
                 every { guildId.value } returns Snowflake(123)
             }
             every { kord } returns mockKord
-            every { locale } returns Locale.BULGARIAN
+            every { guildLocale } returns Locale.BULGARIAN
             every { component } returns mockk {
                 every { customId } returns ComponentsEnum.PLAYER_RESUME.customId
             }
@@ -152,7 +152,7 @@ class PlayerCommandTest {
                 every { guildId.value } returns Snowflake(123)
             }
             every { kord } returns mockKord
-            every { locale } returns Locale.BULGARIAN
+            every { guildLocale } returns Locale.BULGARIAN
             every { component } returns mockk {
                 every { customId } returns ComponentsEnum.PLAYER_SKIP.customId
             }
@@ -205,7 +205,7 @@ class PlayerCommandTest {
                 every { guildId.value } returns Snowflake(123)
             }
             every { kord } returns mockKord
-            every { locale } returns Locale.BULGARIAN
+            every { guildLocale } returns Locale.BULGARIAN
             every { component } returns mockk {
                 every { customId } returns ComponentsEnum.PLAYER_SHUFFLE.customId
             }
@@ -258,7 +258,7 @@ class PlayerCommandTest {
                 every { guildId.value } returns Snowflake(123)
             }
             every { kord } returns mockKord
-            every { locale } returns Locale.BULGARIAN
+            every { guildLocale } returns Locale.BULGARIAN
             every { component } returns mockk {
                 every { customId } returns ComponentsEnum.PLAYER_DISCONNECT.customId
             }
@@ -314,7 +314,7 @@ class PlayerCommandTest {
                 every { guildId.value } returns Snowflake(123)
             }
             every { kord } returns mockKord
-            every { locale } returns Locale.BULGARIAN
+            every { guildLocale } returns Locale.BULGARIAN
             every { component } returns mockk {
                 every { customId } returns ComponentsEnum.PLAYER_PAUSE.customId
             }
