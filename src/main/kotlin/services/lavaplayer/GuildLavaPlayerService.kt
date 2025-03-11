@@ -18,6 +18,7 @@ import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.gateway.retry.LinearRetry
 import dev.kord.voice.AudioFrame
 import dev.kord.voice.VoiceConnection
+import dev.kord.voice.gateway.Close
 import es.wokis.commands.player.createPlayerEmbed
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.localization.LocalizationKeys
@@ -29,6 +30,7 @@ import es.wokis.utils.getLocale
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.schedule
 import kotlin.time.Duration
 
@@ -103,6 +105,21 @@ class GuildLavaPlayerService(
                 updateSeekChannel.send(Unit)
             } ?: sendNowPlayingMessage(locale, track, voiceChannelName)
         }
+    }
+
+    override fun onTrackStuck(player: AudioPlayer?, track: AudioTrack?, thresholdMs: Long) {
+        super.onTrackStuck(player, track, thresholdMs)
+        Log.warning("Track stuck: $track")
+    }
+
+    override fun onTrackStuck(
+        player: AudioPlayer?,
+        track: AudioTrack?,
+        thresholdMs: Long,
+        stackTrace: Array<out StackTraceElement>?
+    ) {
+        super.onTrackStuck(player, track, thresholdMs, stackTrace)
+        Log.warning("Track stuck: $track")
     }
 
     fun loadAndPlay(url: String) {
@@ -327,8 +344,17 @@ class GuildLavaPlayerService(
         if (voiceConnection == null && connectingToVoiceChannel.not()) {
             connectingToVoiceChannel = true
             voiceConnection = voiceChannel.connect {
-                audioProvider { AudioFrame.fromData(player.provide()?.data) }
+                audioProvider { AudioFrame.fromData(player.provide(20L, TimeUnit.MILLISECONDS)?.data) }
                 selfDeaf = true
+            }.also {
+                connectingToVoiceChannel = false
+                coroutineScope.launch {
+                    it.voiceGateway.events.collect { event ->
+                        if (event is Close) {
+                            Log.warning("Voice connection closed: $event")
+                        }
+                    }
+                }
             }
         }
     }
