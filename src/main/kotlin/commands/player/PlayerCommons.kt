@@ -66,11 +66,11 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(
                 name = localizationService.getString(key = LocalizationKeys.PLAYER_SERVER_QUEUE, locale = locale)
                 value = queue.getDisplayQueue(localizationService, locale)
             }
-        } else {
+        } else if (currentTrack == null) {
             description = localizationService.getString(key = LocalizationKeys.PLAYER_SERVER_QUEUE_EMPTY, locale = locale)
         }
     }
-    components = if (queue.isNotEmpty() && currentTrack != null) {
+    components = if (queue.isNotEmpty() || currentTrack != null) {
         createPlayerComponents(
             localizationService = localizationService,
             locale = locale,
@@ -138,7 +138,7 @@ private fun List<AudioTrack>.getDisplayQueue(localizationService: LocalizationSe
     val secondTrack = getOrNull(1)
     val thirdTrack = getOrNull(2)
     val queueRemaining = (size - 3).takeIf { it > 0 }
-    val duration = sumOf { it.duration }.toDisplayDuration()
+    val duration = filterNot { it.info.isStream || it.duration == DURATION_MS_UNKNOWN }.sumOf { it.duration }.toDisplayDuration()
     return firstTrack?.getDisplayNameAndDuration()
         ?.plus(secondTrack?.let { "\n${it.getDisplayNameAndDuration()}" }.orEmpty())
         ?.plus(thirdTrack?.let { "\n${it.getDisplayNameAndDuration()}" }.orEmpty())
