@@ -139,9 +139,9 @@ private fun List<AudioTrack>.getDisplayQueue(localizationService: LocalizationSe
     val thirdTrack = getOrNull(2)
     val queueRemaining = (size - 3).takeIf { it > 0 }
     val duration = filterNot { it.info.isStream || it.duration == DURATION_MS_UNKNOWN }.sumOf { it.duration }.toDisplayDuration()
-    return firstTrack?.getDisplayNameAndDuration()
-        ?.plus(secondTrack?.let { "\n${it.getDisplayNameAndDuration()}" }.orEmpty())
-        ?.plus(thirdTrack?.let { "\n${it.getDisplayNameAndDuration()}" }.orEmpty())
+    return firstTrack?.getDisplayNameAndDuration(localizationService, locale)
+        ?.plus(secondTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, locale)}" }.orEmpty())
+        ?.plus(thirdTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, locale)}" }.orEmpty())
         ?.plus(
             queueRemaining?.let {
                 "\n".plus(
@@ -164,7 +164,14 @@ private fun List<AudioTrack>.getDisplayQueue(localizationService: LocalizationSe
         ).orEmpty()
 }
 
-private fun AudioTrack.getDisplayNameAndDuration() = "${getDisplayTrackName()} (${duration.toDisplayDuration()})"
+private fun AudioTrack.getDisplayNameAndDuration(localizationService: LocalizationService, locale: Locale): String {
+    val displayDuration = if (duration != DURATION_MS_UNKNOWN) {
+        duration.toDisplayDuration()
+    } else {
+        localizationService.getString(LocalizationKeys.PLAYER_TRACK_DURATION_STREAM, locale)
+    }
+    return "${getDisplayTrackName()} ($displayDuration)"
+}
 
 private fun Long.toDisplayDuration() = toDuration(DurationUnit.MILLISECONDS).toComponents { hours, minutes, seconds, _ ->
     "%02d:%02d:%02d".format(hours, minutes, seconds)

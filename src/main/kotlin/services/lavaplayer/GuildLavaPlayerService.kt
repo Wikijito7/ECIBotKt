@@ -385,15 +385,19 @@ class GuildLavaPlayerService(
     private suspend fun updatePlayerEmbed() {
         playerMessage?.let {
             val guildName = textChannel.data.guildId.value?.let { guildId -> textChannel.kord.getGuild(guildId) }?.name.orEmpty()
-            it.edit {
-                createPlayerEmbed(
-                    guildName = guildName,
-                    localizationService = localizationService,
-                    locale = voiceChannel.getLocale(),
-                    currentTrack = player.playingTrack,
-                    queue = queue,
-                    isPaused = player.isPaused
-                )
+            try {
+                it.edit {
+                    createPlayerEmbed(
+                        guildName = guildName,
+                        localizationService = localizationService,
+                        locale = voiceChannel.getLocale(),
+                        currentTrack = player.playingTrack,
+                        queue = queue,
+                        isPaused = player.isPaused
+                    )
+                }
+            } catch (t: Throwable) {
+                Log.error("There's been an error trying to update the embed message", t)
             }
         }
     }
