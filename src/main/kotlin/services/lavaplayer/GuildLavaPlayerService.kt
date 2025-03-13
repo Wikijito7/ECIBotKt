@@ -69,6 +69,7 @@ class GuildLavaPlayerService(
     private var playerMessage: Message? = null
     private var seekTimerJob: Job? = null
     private val updateSeekChannel = Channel<Unit>(Channel.CONFLATED)
+    private var frameTimeOut = 20L
 
     init {
         coroutineScope.launch {
@@ -167,10 +168,12 @@ class GuildLavaPlayerService(
     fun isPaused(): Boolean = player.isPaused
 
     fun resume() {
+        frameTimeOut = 20L
         player.isPaused = false
     }
 
     fun pause() {
+        frameTimeOut = 0L
         player.isPaused = true
     }
 
@@ -344,7 +347,7 @@ class GuildLavaPlayerService(
         if (voiceConnection == null && connectingToVoiceChannel.not()) {
             connectingToVoiceChannel = true
             voiceConnection = voiceChannel.connect {
-                audioProvider { AudioFrame.fromData(player.provide(20L, TimeUnit.MILLISECONDS)?.data) }
+                audioProvider { AudioFrame.fromData(player.provide(frameTimeOut, TimeUnit.MILLISECONDS)?.data) }
                 selfDeaf = true
             }.also {
                 connectingToVoiceChannel = false
