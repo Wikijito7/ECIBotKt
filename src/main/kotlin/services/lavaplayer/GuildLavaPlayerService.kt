@@ -29,6 +29,7 @@ import es.wokis.utils.getLocale
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.schedule
 import kotlin.time.Duration
 
@@ -67,6 +68,7 @@ class GuildLavaPlayerService(
     private var playerMessage: Message? = null
     private var seekTimerJob: Job? = null
     private val updateSeekChannel = Channel<Unit>(Channel.CONFLATED)
+    private var frameTimeOut = 20L
 
     init {
         coroutineScope.launch {
@@ -150,10 +152,12 @@ class GuildLavaPlayerService(
     fun isPaused(): Boolean = player.isPaused
 
     fun resume() {
+        frameTimeOut = 20L
         player.isPaused = false
     }
 
     fun pause() {
+        frameTimeOut = 0L
         player.isPaused = true
     }
 
@@ -327,8 +331,10 @@ class GuildLavaPlayerService(
         if (voiceConnection == null && connectingToVoiceChannel.not()) {
             connectingToVoiceChannel = true
             voiceConnection = voiceChannel.connect {
-                audioProvider { AudioFrame.fromData(player.provide()?.data) }
+                audioProvider { AudioFrame.fromData(player.provide(frameTimeOut, TimeUnit.MILLISECONDS)?.data) }
                 selfDeaf = true
+            }.also {
+                connectingToVoiceChannel = false
             }
         }
     }
@@ -359,15 +365,19 @@ class GuildLavaPlayerService(
     private suspend fun updatePlayerEmbed() {
         playerMessage?.let {
             val guildName = textChannel.data.guildId.value?.let { guildId -> textChannel.kord.getGuild(guildId) }?.name.orEmpty()
-            it.edit {
-                createPlayerEmbed(
-                    guildName = guildName,
-                    localizationService = localizationService,
-                    locale = voiceChannel.getLocale(),
-                    currentTrack = player.playingTrack,
-                    queue = queue,
-                    isPaused = player.isPaused
-                )
+            try {
+                it.edit {
+                    createPlayerEmbed(
+                        guildName = guildName,
+                        localizationService = localizationService,
+                        locale = voiceChannel.getLocale(),
+                        currentTrack = player.playingTrack,
+                        queue = queue,
+                        isPaused = player.isPaused
+                    )
+                }
+            } catch (t: Throwable) {
+                Log.error("There's been an error trying to update the embed message on $guildName", t)
             }
         }
     }
