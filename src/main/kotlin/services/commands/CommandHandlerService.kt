@@ -13,6 +13,7 @@ import commands.play.PlayCommand
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
+import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.tts.TTSCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
@@ -36,6 +37,7 @@ class CommandHandlerServiceImpl(
     private val shuffleCommand: ShuffleCommand,
     private val ttsCommand: TTSCommand,
     private val playerCommand: PlayerCommand,
+    private val soundsCommand: SoundsCommand,
     private val localizationService: LocalizationService
 ) : CommandHandlerService {
 
@@ -46,6 +48,7 @@ class CommandHandlerServiceImpl(
         shuffleCommand.onRegisterCommand(commandBuilder)
         ttsCommand.onRegisterCommand(commandBuilder)
         playerCommand.onRegisterCommand(commandBuilder)
+        soundsCommand.onRegisterCommand(commandBuilder)
     }
 
     override suspend fun onExecute(
@@ -66,6 +69,8 @@ class CommandHandlerServiceImpl(
 
             CommandsEnum.PLAYER -> playerCommand.onExecute(interaction, response)
 
+            CommandsEnum.SOUNDS -> soundsCommand.onExecute(interaction, response)
+
             null -> respondUnknownCommand(response, interaction.guildLocale, commandName)
         }
     }
@@ -79,6 +84,8 @@ class CommandHandlerServiceImpl(
 
             ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
             ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE -> playerCommand.onInteract(interaction)
+
+            ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
 
             null -> Unit
         }

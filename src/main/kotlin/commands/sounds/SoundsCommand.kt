@@ -1,6 +1,5 @@
-package es.wokis.commands.queue
+package es.wokis.commands.sounds
 
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -16,21 +15,22 @@ import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.commons.createPaginatedEmbedMessage
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
-import es.wokis.services.queue.GuildQueueService
-import es.wokis.utils.getDisplayTrackName
+import es.wokis.utils.getFolderContent
 import es.wokis.utils.orDefaultLocale
+import java.io.File
 
-class QueueCommand(
-    private val guildQueueService: GuildQueueService,
+private const val SOUNDS_PATH = "./audio"
+
+class SoundsCommand(
     private val localizationService: LocalizationService
 ) : Command, Component {
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         commandBuilder.apply {
             input(
-                name = CommandsEnum.QUEUE.commandName,
-                description = localizationService.getString(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION)
+                name = CommandsEnum.SOUNDS.commandName,
+                description = localizationService.getString(LocalizationKeys.SOUNDS_DESCRIPTION)
             ) {
-                descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION)
+                descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SOUNDS_DESCRIPTION)
             }
         }
     }
@@ -41,28 +41,25 @@ class QueueCommand(
     ) {
         try {
             val locale = interaction.guildLocale.orDefaultLocale()
-            val guildQueue = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
-            // This should never be null, if so it would throw an expected exception on getOrCreateLavaPlayerService
-            val guildId = interaction.data.guildId.value ?: return
-            val guildName = interaction.kord.getGuild(guildId).name
-            val queue = guildQueue.getQueue().toList()
-            val displayQueue = getDisplayQueue(queue)
+            val sounds: List<File> = getFolderContent(SOUNDS_PATH)
+            val displaySounds = getDisplaySounds(sounds)
+            val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, locale = locale)
             val description = localizationService.getStringFormat(
-                key = LocalizationKeys.QUEUE_EMBED_DESCRIPTION,
+                key = LocalizationKeys.SOUNDS_EMBED_DESCRIPTION,
                 locale = locale,
-                arguments = arrayOf(queue.size, guildName)
+                arguments = arrayOf(sounds.size)
             )
             response.respond {
                 createPaginatedEmbedMessage(
                     locale = locale,
                     localizationService = localizationService,
-                    title = localizationService.getString(LocalizationKeys.QUEUE_EMBED_TITLE, locale),
+                    title = title,
                     description = description,
                     currentPage = 1,
-                    currentDisplayPage = displayQueue.takeIf { it.isNotEmpty() }?.get(0),
-                    pageCount = displayQueue.size,
-                    previousButtonCustomId = ComponentsEnum.QUEUE_PREVIOUS.customId,
-                    nextButtonCustomId = ComponentsEnum.QUEUE_NEXT.customId
+                    currentDisplayPage = displaySounds.takeIf { it.isNotEmpty() }?.get(0),
+                    pageCount = displaySounds.size,
+                    previousButtonCustomId = ComponentsEnum.SOUNDS_PREVIOUS.customId,
+                    nextButtonCustomId = ComponentsEnum.SOUNDS_NEXT.customId
                 )
             }
         } catch (exc: IllegalStateException) {
@@ -73,71 +70,68 @@ class QueueCommand(
     }
 
     override suspend fun onInteract(interaction: ComponentInteraction) {
-        val guildId = interaction.data.guildId.value ?: return
         val interactionCustomId = (interaction as? ButtonInteraction)?.component?.customId
         val updatePageBy = if (interactionCustomId == ComponentsEnum.QUEUE_PREVIOUS.customId) -1 else 1
-        val guildName = interaction.kord.getGuild(guildId).name
-        val guildQueue = guildQueueService.getLavaPlayerService(guildId)?.getQueue().orEmpty()
-        val displayQueue = getDisplayQueue(guildQueue)
+        val sounds: List<File> = getFolderContent(SOUNDS_PATH)
+        val displayQueue = getDisplaySounds(sounds)
         val currentPage = interaction.message.embeds.firstOrNull()
             ?.footer?.text?.split(" ")?.get(1)?.toIntOrNull()?.plus(updatePageBy)
             ?.takeUnless { it > displayQueue.size } ?: 1
         updateQueueMessage(
             interaction = interaction,
             currentPage = currentPage,
-            queueLength = guildQueue.size,
-            guildName = guildName,
-            displayQueuePage = displayQueue.getOrNull(currentPage - 1),
-            queuePageLength = displayQueue.size
+            soundsCount = sounds.size,
+            displaySoundsPage = displayQueue.getOrNull(currentPage - 1),
+            pageCount = displayQueue.size
         )
     }
 
-    private fun getDisplayQueue(queue: List<AudioTrack>): List<String> {
-        if (queue.isEmpty()) return emptyList()
-        var currentString = queue.first().getDisplayTrackName()
-        val displayQueue: MutableList<String> = mutableListOf()
+    private fun getDisplaySounds(sounds: List<File>): List<String> {
+        if (sounds.isEmpty()) return emptyList()
+        var currentString = sounds.first().nameWithoutExtension
+        val displaySounds: MutableList<String> = mutableListOf()
 
-        queue.drop(1).forEach { track ->
-            val displayTrackName = track.getDisplayTrackName()
-            val appendDisplayTrackName = ", ".plus(displayTrackName)
+        sounds.drop(1).forEach { sound ->
+            val soundName = sound.nameWithoutExtension
+            val appendDisplayTrackName = ", ".plus(soundName)
             if (currentString.length + appendDisplayTrackName.length <= EmbedBuilder.Field.Limits.value) {
                 currentString += appendDisplayTrackName
             } else {
-                displayQueue.add(currentString)
-                currentString = displayTrackName
+                displaySounds.add(currentString)
+                currentString = soundName
             }
         }
         if (currentString.isNotEmpty()) {
-            displayQueue.add(currentString)
+            displaySounds.add(currentString)
         }
-        return displayQueue.toList()
+        return displaySounds.toList()
     }
 
     private suspend fun updateQueueMessage(
         interaction: ComponentInteraction,
         currentPage: Int,
-        queueLength: Int,
-        guildName: String,
-        displayQueuePage: String?,
-        queuePageLength: Int
+        soundsCount: Int,
+        displaySoundsPage: String?,
+        pageCount: Int
     ) {
         val locale = interaction.guildLocale.orDefaultLocale()
+        val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, locale = locale)
         val description = localizationService.getStringFormat(
-            key = LocalizationKeys.QUEUE_EMBED_DESCRIPTION,
+            key = LocalizationKeys.SOUNDS_EMBED_DESCRIPTION,
             locale = locale,
-            arguments = arrayOf(queueLength, guildName)
+            arguments = arrayOf(soundsCount)
         )
         interaction.message.edit {
             createPaginatedEmbedMessage(
                 locale = locale,
                 localizationService = localizationService,
-                title = localizationService.getString(LocalizationKeys.QUEUE_EMBED_TITLE, locale),
+                title = title,
                 description = description,
                 currentPage = currentPage,
-                currentDisplayPage = displayQueuePage,
-                pageCount = queuePageLength,
-                previousButtonCustomId = ComponentsEnum.QUEUE_PREVIOUS.customId,
-                nextButtonCustomId = ComponentsEnum.QUEUE_NEXT.customId
+                currentDisplayPage = displaySoundsPage,
+                pageCount = pageCount,
+                previousButtonCustomId = ComponentsEnum.SOUNDS_PREVIOUS.customId,
+                nextButtonCustomId = ComponentsEnum.SOUNDS_NEXT.customId
             )
         }
     }

@@ -7,7 +7,9 @@ enum class ComponentsEnum(val customId: String) {
     PLAYER_PAUSE("player_pause"),
     PLAYER_SKIP("player_skip"),
     PLAYER_DISCONNECT("player_disconnect"),
-    PLAYER_SHUFFLE("player_shuffle");
+    PLAYER_SHUFFLE("player_shuffle"),
+    SOUNDS_PREVIOUS("sounds_previous"),
+    SOUNDS_NEXT("sounds_next");
 
     companion object {
         fun forCustomId(customId: String) = entries.find { it.customId == customId }

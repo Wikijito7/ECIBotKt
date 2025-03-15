@@ -11,15 +11,16 @@ import es.wokis.services.processor.MessageProcessorService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.services.tts.TTSService
 import org.koin.core.module.dsl.bind
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val servicesModule = module {
     singleOf(::ConfigService)
-    singleOf(::MessageProcessorService)
-    singleOf(::AudioPlayerManagerProvider)
+    factoryOf(::MessageProcessorService)
+    factoryOf(::AudioPlayerManagerProvider)
     singleOf(::GuildQueueService)
-    singleOf(::CommandHandlerServiceImpl) { bind<CommandHandlerService>() }
+    factoryOf(::CommandHandlerServiceImpl) { bind<CommandHandlerService>() }
     singleOf(::LocalizationService)
     singleOf(::TTSService)
 

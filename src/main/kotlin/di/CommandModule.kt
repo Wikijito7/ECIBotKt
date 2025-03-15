@@ -5,15 +5,18 @@ import commands.play.PlayCommand
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
+import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.tts.TTSCommand
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val commandModule = module {
-    singleOf(::PlayCommand)
-    singleOf(::QueueCommand)
-    singleOf(::SkipCommand)
-    singleOf(::ShuffleCommand)
-    singleOf(::TTSCommand)
-    singleOf(::PlayerCommand)
+    factoryOf(::PlayCommand)
+    factoryOf(::QueueCommand)
+    factoryOf(::SkipCommand)
+    factoryOf(::ShuffleCommand)
+    factoryOf(::TTSCommand)
+    factoryOf(::PlayerCommand)
+    factoryOf(::SoundsCommand)
 }
