@@ -52,6 +52,7 @@ class QueueCommand(
                 locale = locale,
                 arguments = arrayOf(queue.size, guildName)
             )
+            val currentPageContent = displayQueue.takeIf { it.isNotEmpty() }?.get(0)?.let { listOf(it) }
             response.respond {
                 createPaginatedEmbedMessage(
                     locale = locale,
@@ -59,7 +60,8 @@ class QueueCommand(
                     title = localizationService.getString(LocalizationKeys.QUEUE_EMBED_TITLE, locale),
                     description = description,
                     currentPage = 1,
-                    currentDisplayPage = displayQueue.takeIf { it.isNotEmpty() }?.get(0),
+                    currentPageContent = currentPageContent,
+                    columns = 1,
                     pageCount = displayQueue.size,
                     previousButtonCustomId = ComponentsEnum.QUEUE_PREVIOUS.customId,
                     nextButtonCustomId = ComponentsEnum.QUEUE_NEXT.customId
@@ -127,6 +129,7 @@ class QueueCommand(
             locale = locale,
             arguments = arrayOf(queueLength, guildName)
         )
+        val currentPageContent = displayQueuePage?.let { listOf(it) }
         interaction.message.edit {
             createPaginatedEmbedMessage(
                 locale = locale,
@@ -134,7 +137,8 @@ class QueueCommand(
                 title = localizationService.getString(LocalizationKeys.QUEUE_EMBED_TITLE, locale),
                 description = description,
                 currentPage = currentPage,
-                currentDisplayPage = displayQueuePage,
+                columns = 1,
+                currentPageContent = currentPageContent,
                 pageCount = queuePageLength,
                 previousButtonCustomId = ComponentsEnum.QUEUE_PREVIOUS.customId,
                 nextButtonCustomId = ComponentsEnum.QUEUE_NEXT.customId

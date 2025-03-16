@@ -11,6 +11,7 @@ import dev.kord.rest.builder.message.modify.AbstractMessageModifyBuilder
 import es.wokis.constants.BLANK_SPACE
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
+import es.wokis.utils.takeIfNotEmpty
 
 fun AbstractMessageModifyBuilder.createPaginatedEmbedMessage(
     locale: Locale,
@@ -18,7 +19,8 @@ fun AbstractMessageModifyBuilder.createPaginatedEmbedMessage(
     title: String,
     description: String?,
     currentPage: Int,
-    currentDisplayPage: String?,
+    currentPageContent: List<String>?,
+    columns: Int,
     pageCount: Int,
     previousButtonCustomId: String,
     nextButtonCustomId: String
@@ -29,7 +31,8 @@ fun AbstractMessageModifyBuilder.createPaginatedEmbedMessage(
         embedTitle = title,
         embedDescription = description,
         currentPage = currentPage,
-        currentDisplayPage = currentDisplayPage,
+        currentPageContent = currentPageContent,
+        columns = columns,
         pageCount = pageCount
     )
     if (pageCount > 1) {
@@ -50,7 +53,8 @@ private fun AbstractMessageModifyBuilder.createEmbed(
     embedTitle: String,
     embedDescription: String?,
     currentPage: Int,
-    currentDisplayPage: String?,
+    currentPageContent: List<String>?,
+    columns: Int,
     pageCount: Int
 ) {
     embed {
@@ -59,11 +63,14 @@ private fun AbstractMessageModifyBuilder.createEmbed(
             description = it
         }
         color = Color(0x01B05B)
-        currentDisplayPage?.let { displayMessage ->
-            field {
-                name = BLANK_SPACE
-                value = displayMessage
-                inline = true
+        if (currentPageContent.isNullOrEmpty().not()) {
+            for (column in (0 until columns)) {
+                val displayMessage = currentPageContent?.getOrNull(column)?.takeIfNotEmpty() ?: BLANK_SPACE
+                field {
+                    name = BLANK_SPACE
+                    value = displayMessage
+                    inline = true
+                }
             }
         }
         if (pageCount > 0) {
