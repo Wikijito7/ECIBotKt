@@ -17,9 +17,9 @@ searching_song: Searching content…
 queue_command_description: Shows current queue
 queue_embed_title: Track queue
 queue_embed_description: Currently there are %d tracks on %s's queue
-queue_embed_footer: Page %d out of %d
-queue_previous_button_label: Previous
-queue_next_button_label: Next
+paginated_embed_footer: Page %d out of %d
+paginated_embed_previous_button_label: Previous
+paginated_embed_next_button_label: Next
 skip_command_description: Stops current playing track
 skip_command_response: Track skipped
 shuffle_command_description: Reorders current queue randomly
@@ -43,3 +43,6 @@ player_shuffle: Shuffle
 player_disconnect: Disconnect
 player_queue_tracks_remaining: and another %d tracks
 player_duration_remaining: %s remaining
+sounds_description: List all local sounds
+sounds_embed_title: Local sounds
+sounds_embed_description: There are %d sounds available
