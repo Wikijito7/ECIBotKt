@@ -3,13 +3,11 @@ package commands.sounds
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
-import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
 import es.wokis.commands.ComponentsEnum
-import es.wokis.commands.commons.createPaginatedEmbedMessage
 import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.getFolderContent
