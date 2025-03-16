@@ -8,7 +8,6 @@ import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.tts.TTSCommand
 import org.koin.core.module.dsl.factoryOf
-import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val commandModule = module {
