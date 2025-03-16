@@ -92,24 +92,23 @@ private fun getMessageComponentBuilders(
     nextButtonCustomId: String,
     disablePrevious: Boolean,
     disableNext: Boolean
-): MutableList<MessageComponentBuilder> =
-    mutableListOf(
-        ActionRowBuilder().apply {
-            interactionButton(
-                style = ButtonStyle.Secondary,
-                customId = previousButtonCustomId
-            ) {
-                label = localizationService.getString(LocalizationKeys.PAGINATED_EMBED_PREVIOUS_BUTTON_LABEL, locale)
-                emoji = DiscordPartialEmoji(name = "⬅")
-                disabled = disablePrevious
-            }
-            interactionButton(
-                style = ButtonStyle.Secondary,
-                customId = nextButtonCustomId
-            ) {
-                label = localizationService.getString(LocalizationKeys.PAGINATED_EMBED_NEXT_BUTTON_LABEL, locale)
-                emoji = DiscordPartialEmoji(name = "➡")
-                disabled = disableNext
-            }
+): MutableList<MessageComponentBuilder> = mutableListOf(
+    ActionRowBuilder().apply {
+        interactionButton(
+            style = ButtonStyle.Secondary,
+            customId = previousButtonCustomId
+        ) {
+            label = localizationService.getString(LocalizationKeys.PAGINATED_EMBED_PREVIOUS_BUTTON_LABEL, locale)
+            emoji = DiscordPartialEmoji(name = "⬅")
+            disabled = disablePrevious
         }
-    )
+        interactionButton(
+            style = ButtonStyle.Secondary,
+            customId = nextButtonCustomId
+        ) {
+            label = localizationService.getString(LocalizationKeys.PAGINATED_EMBED_NEXT_BUTTON_LABEL, locale)
+            emoji = DiscordPartialEmoji(name = "➡")
+            disabled = disableNext
+        }
+    }
+)
