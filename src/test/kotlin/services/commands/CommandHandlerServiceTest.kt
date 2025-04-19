@@ -11,6 +11,7 @@ import commands.play.PlayCommand
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
+import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.tts.TTSCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.localization.LocalizationService
@@ -26,6 +27,7 @@ class CommandHandlerServiceTest {
     private val shuffleCommand: ShuffleCommand = mockk()
     private val ttsCommand: TTSCommand = mockk()
     private val playerCommand: PlayerCommand = mockk()
+    private val soundsCommand: SoundsCommand = mockk()
     private val localizationService: LocalizationService = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
@@ -35,7 +37,8 @@ class CommandHandlerServiceTest {
         skipCommand = skipCommand,
         shuffleCommand = shuffleCommand,
         ttsCommand = ttsCommand,
-        playerCommand = playerCommand
+        playerCommand = playerCommand,
+        soundsCommand = soundsCommand
     )
 
     @Test
@@ -52,6 +55,7 @@ class CommandHandlerServiceTest {
         justRun { shuffleCommand.onRegisterCommand(any()) }
         justRun { ttsCommand.onRegisterCommand(any()) }
         justRun { playerCommand.onRegisterCommand(any()) }
+        justRun { soundsCommand.onRegisterCommand(any()) }
 
         // When
         commandHandlerService.onRegisterCommand(commandBuilder)
@@ -64,6 +68,7 @@ class CommandHandlerServiceTest {
             shuffleCommand.onRegisterCommand(commandBuilder)
             ttsCommand.onRegisterCommand(commandBuilder)
             playerCommand.onRegisterCommand(commandBuilder)
+            soundsCommand.onRegisterCommand(commandBuilder)
         }
     }
 
@@ -194,7 +199,28 @@ class CommandHandlerServiceTest {
     }
 
     @Test
-    fun `Given previous interaction When onInteract is called Then execute QueueCommand onInteract`() = runTest {
+    fun `Given sounds command When onExecute is called Then execute SoundsCommand`() = runTest {
+        // Given
+        val commandName = CommandsEnum.SOUNDS.commandName
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { command } returns mockk {
+                every { rootName } returns commandName
+            }
+        }
+        val response: DeferredPublicMessageInteractionResponseBehavior = mockk()
+        coJustRun { soundsCommand.onExecute(any(), any()) }
+
+        // When
+        soundsCommand.onExecute(interaction, response)
+
+        // Then
+        coVerify(exactly = 1) {
+            soundsCommand.onExecute(interaction, response)
+        }
+    }
+
+    @Test
+    fun `Given queue previous interaction When onInteract is called Then execute QueueCommand onInteract`() = runTest {
         // Given
         val componentId = ComponentsEnum.QUEUE_PREVIOUS.customId
         val interaction: ButtonInteraction = mockk {
@@ -214,7 +240,7 @@ class CommandHandlerServiceTest {
     }
 
     @Test
-    fun `Given next interaction When onInteract is called Then execute QueueCommand onInteract`() = runTest {
+    fun `Given queue next interaction When onInteract is called Then execute QueueCommand onInteract`() = runTest {
         // Given
         val componentId = ComponentsEnum.QUEUE_NEXT.customId
         val interaction: ButtonInteraction = mockk {
@@ -230,6 +256,46 @@ class CommandHandlerServiceTest {
         // Then
         coVerify(exactly = 1) {
             queueCommand.onInteract(interaction)
+        }
+    }
+
+    @Test
+    fun `Given sound previous interaction When onInteract is called Then execute QueueCommand onInteract`() = runTest {
+        // Given
+        val componentId = ComponentsEnum.SOUNDS_PREVIOUS.customId
+        val interaction: ButtonInteraction = mockk {
+            every { component } returns mockk {
+                every { customId } returns componentId
+            }
+        }
+        coJustRun { soundsCommand.onInteract(any()) }
+
+        // When
+        commandHandlerService.onInteract(interaction)
+
+        // Then
+        coVerify(exactly = 1) {
+            soundsCommand.onInteract(interaction)
+        }
+    }
+
+    @Test
+    fun `Given sound next interaction When onInteract is called Then execute QueueCommand onInteract`() = runTest {
+        // Given
+        val componentId = ComponentsEnum.SOUNDS_NEXT.customId
+        val interaction: ButtonInteraction = mockk {
+            every { component } returns mockk {
+                every { customId } returns componentId
+            }
+        }
+        coJustRun { soundsCommand.onInteract(any()) }
+
+        // When
+        commandHandlerService.onInteract(interaction)
+
+        // Then
+        coVerify(exactly = 1) {
+            soundsCommand.onInteract(interaction)
         }
     }
 }

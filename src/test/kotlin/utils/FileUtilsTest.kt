@@ -1,7 +1,11 @@
 package utils
 
+import es.wokis.utils.getFolderContent
 import es.wokis.utils.getOrCreateFile
 import es.wokis.utils.updateFile
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -55,5 +59,33 @@ class FileUtilsTest {
         val newDataFromFile = Json.decodeFromString<Map<String, String>>(newFile.readText())
         assertEquals(newDataFromFile.size, newData.size)
         assertEquals(newData.entries, newDataFromFile.entries)
+    }
+
+    @Test
+    fun `Given path When getFolderContent is called Then list all files`() {
+        // Given
+        mockkStatic(::getFolderContent)
+        val path = "./pepe"
+        every { getFolderContent(any()) } returns listOf(mockk(), mockk())
+
+        // When
+        val actual = getFolderContent(path)
+
+        // Then
+        assertEquals(actual.size, 2)
+    }
+
+    @Test
+    fun `Given empty path When getFolderContent is called Then return empty list`() {
+        // Given
+        mockkStatic(::getFolderContent)
+        val path = "./pepe"
+        every { getFolderContent(any()) } returns emptyList()
+
+        // When
+        val actual = getFolderContent(path)
+
+        // Then
+        assertTrue(actual.isEmpty())
     }
 }
