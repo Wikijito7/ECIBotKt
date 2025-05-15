@@ -4,7 +4,9 @@ unknown_command: Comando desconocido o sin registrar, nombre del comando %s
 now_playing: 🎶 Reproduciendo %s en %s
 no_matches: No se han encontrado resultados para %s
 added_track_to_queue: Añadido %s a la cola
-added_songs_to_queue: Añadida %s (%d canciones) a la cola
+added_track_to_queue_with_link: Añadido [%s](%s) a la cola
+added_songs_to_queue: Añadido %s (%d canciones) a la cola
+added_songs_to_queue_with_link: Añadido [%s](%s) (%d canciones) a la cola
 found_track_list: Encontrada la lista de reproducción %s con %d canciones
 load_failed: Error al cargar, %s
 message_processor_invalid_link: He recibido un enlace incorrecto. El original era %s
