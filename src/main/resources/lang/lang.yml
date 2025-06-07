@@ -4,7 +4,9 @@ unknown_command: Unknown or unregistered command, command name %s
 now_playing: 🎶 Playing %s in %s
 no_matches: No matches found for %s
 added_track_to_queue: Added %s to the queue
+added_track_to_queue_with_link: Added [%s](%s) to the queue
 added_songs_to_queue: Added %s (%d tracks) to the queue
+added_songs_to_queue_with_link: Added [%s](%s) (%d tracks) to the queue
 found_track_list: Found track list %s with %d tracks
 load_failed: Load failed, %s
 message_processor_invalid_link: I've received an invalid link. The original one was %s

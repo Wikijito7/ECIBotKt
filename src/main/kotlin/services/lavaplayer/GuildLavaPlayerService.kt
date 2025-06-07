@@ -1,5 +1,6 @@
 package es.wokis.services.lavaplayer
 
+import com.github.topi314.lavasrc.ExtendedAudioPlaylist
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
@@ -26,6 +27,7 @@ import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
 import es.wokis.utils.getDisplayTrackName
 import es.wokis.utils.getLocale
+import es.wokis.utils.isValidUrl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.util.*
@@ -301,12 +303,21 @@ class GuildLavaPlayerService(
             )
             connectToVoiceChannel()
             queue(playlist.tracks)
+            val playlistUrl = (playlist as? ExtendedAudioPlaylist)?.url
             message.edit {
-                content = localizationService.getStringFormat(
-                    key = LocalizationKeys.ADDED_SONGS_TO_QUEUE,
-                    locale = locale,
-                    arguments = arrayOf(playlist.name, playlist.tracks.size)
-                )
+                content = if (playlistUrl?.isValidUrl() == true) {
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.ADDED_SONGS_TO_QUEUE_WITH_LINK,
+                        locale = locale,
+                        arguments = arrayOf(playlist.name, playlistUrl, playlist.tracks.size)
+                    )
+                } else {
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.ADDED_SONGS_TO_QUEUE,
+                        locale = locale,
+                        arguments = arrayOf(playlist.name, playlist.tracks.size)
+                    )
+                }
             }
         }
     }
@@ -315,11 +326,19 @@ class GuildLavaPlayerService(
         coroutineScope.launch {
             val locale = voiceChannel.getLocale()
             textChannel.createMessage(
-                localizationService.getStringFormat(
-                    key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
-                    locale = locale,
-                    arguments = arrayOf(track.getDisplayTrackName())
-                )
+                if (track.info.uri.isValidUrl()) {
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
+                        locale = locale,
+                        arguments = arrayOf(track.getDisplayTrackName(), track.info.uri)
+                    )
+                } else {
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
+                        locale = locale,
+                        arguments = arrayOf(track.getDisplayTrackName())
+                    )
+                }
             )
             connectToVoiceChannel()
             queue(listOf(track))
