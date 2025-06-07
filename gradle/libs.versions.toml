@@ -1,19 +1,19 @@
 [versions]
 jacoco = "0.8.12"
 kord = "0.15.0"
-kotlin = "2.1.10"
-ktor = "3.1.0"
-mockk = "1.13.16"
-slf4j = "2.0.16"
+kotlin = "2.1.21"
+ktor = "3.1.3"
+mockk = "1.14.2"
+slf4j = "2.0.17"
 sonarqube = "6.0.1.5171"
 kotlin-coroutines-test = "1.10.1"
 koin = "4.0.2"
-serialization = "1.8.0"
+serialization = "1.8.1"
 lavaplayer = "2.2.3"
-lavaplayer-youtube = "1.13.0"
-lavaplayer-lavasrc = "4.6.0"
-idea-ext = "1.1.8"
-junit-parametized = "5.12.0"
+lavaplayer-youtube = "1.13.2"
+lavaplayer-lavasrc = "4.7.0"
+idea-ext = "1.1.10"
+junit-parametized = "5.13.0"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
