@@ -4,11 +4,12 @@ import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteract
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
-import es.wokis.commands.CommandsEnum
+import es.wokis.commands.CommandName
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
 import es.wokis.commands.player.PlayerCommand
+import es.wokis.commands.radio.RadioGroupCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sounds.SoundsCommand
@@ -29,6 +30,7 @@ class CommandHandlerServiceTest {
     private val playerCommand: PlayerCommand = mockk()
     private val soundsCommand: SoundsCommand = mockk()
     private val localizationService: LocalizationService = mockk()
+    private val radioGroupCommand: RadioGroupCommand = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
         playCommand = playCommand,
@@ -38,11 +40,12 @@ class CommandHandlerServiceTest {
         shuffleCommand = shuffleCommand,
         ttsCommand = ttsCommand,
         playerCommand = playerCommand,
-        soundsCommand = soundsCommand
+        soundsCommand = soundsCommand,
+        radioGroupCommand = radioGroupCommand
     )
 
     @Test
-    fun `When onRegisterCommand is called Then register all commands`() {
+    fun `When onRegisterSimpleCommand is called Then register all commands`() {
         // Given
         val commandBuilder: GlobalMultiApplicationCommandBuilder = mockk {
             every { commands } returns mockk {
@@ -58,7 +61,7 @@ class CommandHandlerServiceTest {
         justRun { soundsCommand.onRegisterCommand(any()) }
 
         // When
-        commandHandlerService.onRegisterCommand(commandBuilder)
+        commandHandlerService.onRegisterSimpleCommand(commandBuilder)
 
         // Then
         verify(exactly = 1) {
@@ -75,7 +78,7 @@ class CommandHandlerServiceTest {
     @Test
     fun `Given test command When onExecute is called Then execute TestCommand`() = runTest {
         // Given
-        val commandName = CommandsEnum.PLAY.commandName
+        val commandName = CommandName.Play.commandName
         val interaction: ChatInputCommandInteraction = mockk {
             every { command } returns mockk {
                 every { rootName } returns commandName
@@ -96,7 +99,7 @@ class CommandHandlerServiceTest {
     @Test
     fun `Given queue command When onExecute is called Then execute QueueCommand`() = runTest {
         // Given
-        val commandName = CommandsEnum.QUEUE.commandName
+        val commandName = CommandName.Queue.commandName
         val interaction: ChatInputCommandInteraction = mockk {
             every { command } returns mockk {
                 every { rootName } returns commandName
@@ -117,7 +120,7 @@ class CommandHandlerServiceTest {
     @Test
     fun `Given skip command When onExecute is called Then execute SkipCommand`() = runTest {
         // Given
-        val commandName = CommandsEnum.SKIP.commandName
+        val commandName = CommandName.Skip.commandName
         val interaction: ChatInputCommandInteraction = mockk {
             every { command } returns mockk {
                 every { rootName } returns commandName
@@ -138,7 +141,7 @@ class CommandHandlerServiceTest {
     @Test
     fun `Given shuffle command When onExecute is called Then execute ShuffleCommand`() = runTest {
         // Given
-        val commandName = CommandsEnum.SHUFFLE.commandName
+        val commandName = CommandName.Shuffle.commandName
         val interaction: ChatInputCommandInteraction = mockk {
             every { command } returns mockk {
                 every { rootName } returns commandName
@@ -159,7 +162,7 @@ class CommandHandlerServiceTest {
     @Test
     fun `Given tts command When onExecute is called Then execute TTSCommand`() = runTest {
         // Given
-        val commandName = CommandsEnum.TTS.commandName
+        val commandName = CommandName.Tts.commandName
         val interaction: ChatInputCommandInteraction = mockk {
             every { command } returns mockk {
                 every { rootName } returns commandName
@@ -180,7 +183,7 @@ class CommandHandlerServiceTest {
     @Test
     fun `Given player command When onExecute is called Then execute PlayerCommand`() = runTest {
         // Given
-        val commandName = CommandsEnum.PLAYER.commandName
+        val commandName = CommandName.Player.commandName
         val interaction: ChatInputCommandInteraction = mockk {
             every { command } returns mockk {
                 every { rootName } returns commandName
@@ -201,7 +204,7 @@ class CommandHandlerServiceTest {
     @Test
     fun `Given sounds command When onExecute is called Then execute SoundsCommand`() = runTest {
         // Given
-        val commandName = CommandsEnum.SOUNDS.commandName
+        val commandName = CommandName.Sounds.commandName
         val interaction: ChatInputCommandInteraction = mockk {
             every { command } returns mockk {
                 every { rootName } returns commandName

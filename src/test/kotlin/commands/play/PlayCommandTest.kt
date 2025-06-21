@@ -4,7 +4,7 @@ import dev.kord.common.Locale
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.interaction.string
-import es.wokis.commands.CommandsEnum
+import es.wokis.commands.CommandName
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
@@ -56,7 +56,7 @@ class PlayCommandTest {
 
         // Then
         verify(exactly = 1) {
-            commandBuilder.input(name = CommandsEnum.PLAY.commandName, description = "test test") {
+            commandBuilder.input(name = CommandName.Play.commandName, description = "test test") {
                 string(name = "pepe", description = "popopo") {
                     required = true
                 }

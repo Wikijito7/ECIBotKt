@@ -46,8 +46,9 @@ class Bot(
 
     private suspend fun setUpCommands(bot: Kord) {
         bot.createGlobalApplicationCommands {
-            commandHandlerService.onRegisterCommand(this)
+            commandHandlerService.onRegisterSimpleCommand(this)
         }.collect()
+        commandHandlerService.onRegisterGroupCommand(bot)
     }
 
     private fun setUpEvents(bot: Kord) {

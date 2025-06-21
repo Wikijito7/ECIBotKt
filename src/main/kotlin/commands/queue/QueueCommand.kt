@@ -10,7 +10,7 @@ import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.message.EmbedBuilder
 import es.wokis.commands.Command
-import es.wokis.commands.CommandsEnum
+import es.wokis.commands.CommandName
 import es.wokis.commands.Component
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.commons.createPaginatedEmbedMessage
@@ -27,7 +27,7 @@ class QueueCommand(
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         commandBuilder.apply {
             input(
-                name = CommandsEnum.QUEUE.commandName,
+                name = CommandName.Queue.commandName,
                 description = localizationService.getString(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION)
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION)

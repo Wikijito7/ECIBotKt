@@ -6,7 +6,7 @@ import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.Command
-import es.wokis.commands.CommandsEnum
+import es.wokis.commands.CommandName
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
@@ -28,7 +28,7 @@ class PlayCommand(
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         commandBuilder.apply {
             input(
-                name = CommandsEnum.PLAY.commandName,
+                name = CommandName.Play.commandName,
                 description = localizationService.getString(LocalizationKeys.PLAY_COMMAND_DESCRIPTION)
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.PLAY_COMMAND_DESCRIPTION)
