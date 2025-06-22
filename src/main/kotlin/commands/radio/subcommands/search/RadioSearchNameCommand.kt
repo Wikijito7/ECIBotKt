@@ -1,25 +1,24 @@
-package es.wokis.commands.radio.subcommands
+package es.wokis.commands.radio.subcommands.search
 
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
+import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalChatInputCreateBuilder
-import dev.kord.rest.builder.interaction.subCommand
+import es.wokis.commands.Component
 import es.wokis.commands.SubCommand
 
-class RadioPlayCommand : SubCommand {
+class RadioSearchNameCommand : SubCommand, Component {
 
-    override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
-        builder.apply {
-            subCommand("play", "play") {
-
-            }
-        }
-    }
+    override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) = Unit
 
     override suspend fun onExecute(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun onInteract(interaction: ComponentInteraction) {
         TODO("Not yet implemented")
     }
 }
