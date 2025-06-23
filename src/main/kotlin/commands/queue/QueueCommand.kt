@@ -15,6 +15,7 @@ import es.wokis.commands.Component
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.commons.createPaginatedEmbedMessage
 import es.wokis.localization.LocalizationKeys
+import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getDisplayTrackName
@@ -94,7 +95,7 @@ class QueueCommand(
         )
     }
 
-    private fun getDisplayQueue(queue: List<AudioTrack>): List<String> {
+    private fun getDisplayQueue(queue: List<TrackBO>): List<String> {
         if (queue.isEmpty()) return emptyList()
         var currentString = queue.first().getDisplayTrackName()
         val displayQueue: MutableList<String> = mutableListOf()

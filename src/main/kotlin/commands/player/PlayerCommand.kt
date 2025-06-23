@@ -13,6 +13,7 @@ import es.wokis.commands.CommandName
 import es.wokis.commands.Component
 import es.wokis.commands.ComponentsEnum
 import es.wokis.localization.LocalizationKeys
+import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getGuildName
@@ -41,7 +42,7 @@ class PlayerCommand(
         try {
             val lavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
             val currentTrack = lavaPlayerService.getCurrentPlayingTrack()
-            val queue: List<AudioTrack> = lavaPlayerService.getQueue()
+            val queue: List<TrackBO> = lavaPlayerService.getQueue()
             val locale = interaction.guildLocale.orDefaultLocale()
             val guildName = interaction.getGuildName()
             response.respond {
@@ -76,7 +77,7 @@ class PlayerCommand(
             else -> return
         }
         val currentTrack = lavaPlayerService?.getCurrentPlayingTrack()
-        val queue: List<AudioTrack> = lavaPlayerService?.getQueue().orEmpty()
+        val queue: List<TrackBO> = lavaPlayerService?.getQueue().orEmpty()
         val locale = interaction.guildLocale.orDefaultLocale()
         val guildName = interaction.getGuildName()
 

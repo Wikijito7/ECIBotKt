@@ -22,6 +22,7 @@ import dev.kord.voice.VoiceConnection
 import es.wokis.commands.player.createPlayerEmbed
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.localization.LocalizationKeys
+import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
@@ -32,6 +33,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.sound.midi.Track
 import kotlin.concurrent.schedule
 import kotlin.time.Duration
 
@@ -55,7 +57,7 @@ class GuildLavaPlayerService(
     @OptIn(KordVoice::class)
     private var voiceConnection: VoiceConnection? = null
     private val coroutineScope = createCoroutineScope(TAG, appDispatchers)
-    private val queue: MutableList<AudioTrack> = mutableListOf()
+    private val queue: MutableList<TrackBO> = mutableListOf()
     private var leaveTimer: Timer? = null
     private val player: AudioPlayer = audioPlayerManager.createPlayer().apply {
         addListener(this@GuildLavaPlayerService)
@@ -71,6 +73,7 @@ class GuildLavaPlayerService(
     private var seekTimerJob: Job? = null
     private val updateSeekChannel = Channel<Unit>(Channel.CONFLATED)
     private var frameTimeOut = 20L
+    private var currentTrack: TrackBO? = null
 
     init {
         coroutineScope.launch {
@@ -105,7 +108,7 @@ class GuildLavaPlayerService(
             val voiceChannelName = voiceChannel.asChannel().name
             playerMessage?.let {
                 updateSeekChannel.send(Unit)
-            } ?: sendNowPlayingMessage(locale, track, voiceChannelName)
+            } ?: sendNowPlayingMessage(locale, voiceChannelName)
         }
     }
 
@@ -129,16 +132,23 @@ class GuildLavaPlayerService(
     suspend fun loadAndPlayTts(messages: List<String>) {
         messages.mapNotNull {
             audioPlayerManager.loadItemSync(it)?.let { item -> item as? AudioTrack }
+        }.map {
+            TrackBO(
+                customName = "FloweryTTS - tts message",
+                audioTrack = it
+            )
         }.let { ttsQueue ->
             val locale = voiceChannel.getLocale()
             connectToVoiceChannel()
-            queue(ttsQueue)
             textChannel.createMessage(
                 localizationService.getStringFormat(
                     key = LocalizationKeys.ADDED_SONGS_TO_QUEUE,
                     locale = locale,
                     arguments = arrayOf(ttsQueue.size)
                 )
+            )
+            queue(
+                tracks = ttsQueue
             )
         }
     }
@@ -147,9 +157,31 @@ class GuildLavaPlayerService(
         // TODO: Implement on next steps
     }
 
-    fun getQueue(): List<AudioTrack> = queue.toList()
+    suspend fun playRadio(radioName: String, radioUrl: String, customFavicon: String) {
+        audioPlayerManager.loadItemSync(radioUrl)?.let { item -> item as? AudioTrack }?.let {
+            TrackBO(
+                customName = radioName,
+                customFavicon = customFavicon,
+                audioTrack = it
+            )
+        }?.let {
+            connectToVoiceChannel()
+            val locale = voiceChannel.getLocale()
+            connectToVoiceChannel()
+            textChannel.createMessage(
+                localizationService.getStringFormat(
+                    key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
+                    locale = locale,
+                    arguments = arrayOf(radioName, radioUrl)
+                )
+            )
+            queue(listOf(it))
+        }
+    }
 
-    fun getCurrentPlayingTrack(): AudioTrack? = player.playingTrack
+    fun getQueue(): List<TrackBO> = queue.toList()
+
+    fun getCurrentPlayingTrack(): TrackBO = currentTrack ?: TrackBO(audioTrack = player.playingTrack)
 
     fun isPaused(): Boolean = player.isPaused
 
@@ -236,22 +268,21 @@ class GuildLavaPlayerService(
     }
     private suspend fun sendNowPlayingMessage(
         locale: Locale,
-        track: AudioTrack?,
         voiceChannelName: String
     ) {
         textChannel.createMessage(
             localizationService.getStringFormat(
                 key = LocalizationKeys.NOW_PLAYING,
                 locale = locale,
-                arguments = arrayOf(track?.getDisplayTrackName().orEmpty(), voiceChannelName)
+                arguments = arrayOf(currentTrack?.getDisplayTrackName().orEmpty(), voiceChannelName)
             )
         )
     }
 
 
-    private fun queue(track: List<AudioTrack>) {
+    private fun queue(tracks: List<TrackBO>) {
         resetLeaveTimer()
-        queue.addAll(track)
+        queue.addAll(tracks)
         if (player.playingTrack == null) {
             nextTrack()
         }
@@ -259,7 +290,13 @@ class GuildLavaPlayerService(
     }
 
     private fun nextTrack() {
-        player.startTrack(queue.removeAt(0), true)
+        val currentTrack = queue.removeAt(0).also {
+            currentTrack = it
+        }
+        player.startTrack(
+            /* track = */ currentTrack.audioTrack,
+            /* noInterrupt = */ true
+        )
     }
 
     private fun getAudioLoadResultHandler(currentLoadTrack: String) = object : AudioLoadResultHandler {
@@ -302,7 +339,7 @@ class GuildLavaPlayerService(
                 )
             )
             connectToVoiceChannel()
-            queue(playlist.tracks)
+            queue(playlist.tracks.map { TrackBO(audioTrack = it) })
             val playlistUrl = (playlist as? ExtendedAudioPlaylist)?.url
             message.edit {
                 content = if (playlistUrl?.isValidUrl() == true) {
@@ -325,23 +362,25 @@ class GuildLavaPlayerService(
     private fun onTrackLoaded(track: AudioTrack) {
         coroutineScope.launch {
             val locale = voiceChannel.getLocale()
-            textChannel.createMessage(
-                if (track.info.uri.isValidUrl()) {
-                    localizationService.getStringFormat(
-                        key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
-                        locale = locale,
-                        arguments = arrayOf(track.getDisplayTrackName(), track.info.uri)
-                    )
-                } else {
-                    localizationService.getStringFormat(
-                        key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
-                        locale = locale,
-                        arguments = arrayOf(track.getDisplayTrackName())
-                    )
-                }
-            )
+            currentTrack?.let { currentTrack ->
+                textChannel.createMessage(
+                    if (track.info.uri.isValidUrl()) {
+                        localizationService.getStringFormat(
+                            key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
+                            locale = locale,
+                            arguments = arrayOf(currentTrack.getDisplayTrackName(), track.info.uri)
+                        )
+                    } else {
+                        localizationService.getStringFormat(
+                            key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
+                            locale = locale,
+                            arguments = arrayOf(currentTrack.getDisplayTrackName())
+                        )
+                    }
+                )
+            }
             connectToVoiceChannel()
-            queue(listOf(track))
+            queue(listOf(TrackBO(audioTrack = track)))
         }
     }
 
@@ -390,7 +429,7 @@ class GuildLavaPlayerService(
                         guildName = guildName,
                         localizationService = localizationService,
                         locale = voiceChannel.getLocale(),
-                        currentTrack = player.playingTrack,
+                        currentTrack = currentTrack,
                         queue = queue,
                         isPaused = player.isPaused
                     )

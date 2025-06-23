@@ -12,6 +12,7 @@ import dev.kord.rest.builder.message.embed
 import dev.kord.rest.builder.message.modify.AbstractMessageModifyBuilder
 import es.wokis.commands.ComponentsEnum
 import es.wokis.localization.LocalizationKeys
+import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.getDisplayTrackName
 import kotlin.time.DurationUnit
@@ -23,8 +24,8 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(
     guildName: String,
     localizationService: LocalizationService,
     locale: Locale,
-    currentTrack: AudioTrack?,
-    queue: List<AudioTrack>,
+    currentTrack: TrackBO?,
+    queue: List<TrackBO>,
     isPaused: Boolean
 ) {
     embed {
@@ -34,29 +35,29 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(
             arguments = arrayOf(guildName)
         )
         thumbnail {
-            url = currentTrack?.info?.artworkUrl.orEmpty()
+            url = currentTrack?.customFavicon ?: currentTrack?.audioTrack?.info?.artworkUrl.orEmpty()
         }
         color = Color(0x01B05B)
         currentTrack?.let {
-            val duration = it.duration.toDisplayDuration()
-            val currentSeek = it.position.toDisplayDuration()
+            val duration = it.audioTrack.duration.toDisplayDuration()
+            val currentSeek = it.audioTrack.position.toDisplayDuration()
             field {
                 name = localizationService.getString(key = LocalizationKeys.PLAYER_CURRENT_TRACK, locale = locale)
-                value = "**${it.info.title}**\n${it.info.author}"
+                value = it.getTrackName()
             }
             if (ENABLE_PLAYBACK_POSITION) {
                 // TODO: Take a look in the future to solve discord update request error or delete it
                 field {
                     name = localizationService.getString(key = LocalizationKeys.PLAYER_PLAYBACK_POSITION, locale = locale)
-                    value = "`$currentSeek ${generatePlayerPosition(it.position, it.duration)} $duration`"
+                    value = "`$currentSeek ${generatePlayerPosition(it.audioTrack.position, it.audioTrack.duration)} $duration`"
                 }
             }
             field {
                 name = localizationService.getString(key = LocalizationKeys.PLAYER_TRACK_DURATION, locale = locale)
                 value = duration.takeUnless {
-                    currentTrack.duration == DURATION_MS_UNKNOWN
+                    currentTrack.audioTrack.duration == DURATION_MS_UNKNOWN
                 } ?: localizationService.getString(
-                    key = if (currentTrack.info.isStream) LocalizationKeys.PLAYER_TRACK_DURATION_STREAM else LocalizationKeys.PLAYER_TRACK_DURATION_UNKNOWN,
+                    key = if (currentTrack.audioTrack.info.isStream) LocalizationKeys.PLAYER_TRACK_DURATION_STREAM else LocalizationKeys.PLAYER_TRACK_DURATION_UNKNOWN,
                     locale = locale
                 )
             }
@@ -80,6 +81,10 @@ fun AbstractMessageModifyBuilder.createPlayerEmbed(
         mutableListOf()
     }
 }
+
+private fun TrackBO.getTrackName() = customName?.let {
+    "**$customName**"
+} ?: "**${audioTrack.info.title}**\n${audioTrack.info.author}"
 
 private fun generatePlayerPosition(currentSeek: Long, maxDuration: Long): String {
     val safeMaxDuration = maxDuration.takeUnless { it == 0L } ?: 1
@@ -133,12 +138,12 @@ private fun createPlayerComponents(localizationService: LocalizationService, loc
         }
     )
 
-private fun List<AudioTrack>.getDisplayQueue(localizationService: LocalizationService, locale: Locale): String {
+private fun List<TrackBO>.getDisplayQueue(localizationService: LocalizationService, locale: Locale): String {
     val firstTrack = getOrNull(0)
     val secondTrack = getOrNull(1)
     val thirdTrack = getOrNull(2)
     val queueRemaining = (size - 3).takeIf { it > 0 }
-    val duration = filterNot { it.info.isStream || it.duration == DURATION_MS_UNKNOWN }.sumOf { it.duration }.toDisplayDuration()
+    val duration = filterNot { it.audioTrack.info.isStream || it.audioTrack.duration == DURATION_MS_UNKNOWN }.sumOf { it.audioTrack.duration }.toDisplayDuration()
     return firstTrack?.getDisplayNameAndDuration(localizationService, locale)
         ?.plus(secondTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, locale)}" }.orEmpty())
         ?.plus(thirdTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, locale)}" }.orEmpty())
@@ -164,9 +169,9 @@ private fun List<AudioTrack>.getDisplayQueue(localizationService: LocalizationSe
         ).orEmpty()
 }
 
-private fun AudioTrack.getDisplayNameAndDuration(localizationService: LocalizationService, locale: Locale): String {
-    val displayDuration = if (duration != DURATION_MS_UNKNOWN) {
-        duration.toDisplayDuration()
+private fun TrackBO.getDisplayNameAndDuration(localizationService: LocalizationService, locale: Locale): String {
+    val displayDuration = if (audioTrack.duration != DURATION_MS_UNKNOWN) {
+        audioTrack.duration.toDisplayDuration()
     } else {
         localizationService.getString(LocalizationKeys.PLAYER_TRACK_DURATION_STREAM, locale)
     }

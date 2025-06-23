@@ -3,8 +3,10 @@ package es.wokis.commands.radio
 import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
+import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.ComponentInteraction
+import es.wokis.commands.Autocomplete
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
 import es.wokis.commands.GroupCommand
@@ -18,7 +20,7 @@ class RadioGroupCommand(
     private val radioPlayCommand: RadioPlayCommand,
     private val radioListCommand: RadioListCommand,
     private val radioSearchGroupCommand: RadioSearchGroupCommand
-) : GroupCommand, Component {
+) : GroupCommand, Component, Autocomplete {
 
     override suspend fun onRegisterCommand(kord: Kord) {
         kord.createGlobalChatInputCommand("radio", "radio") {
@@ -46,5 +48,12 @@ class RadioGroupCommand(
 
     override suspend fun onInteract(interaction: ComponentInteraction) {
         TODO("Not yet implemented")
+    }
+
+    override suspend fun onAutoComplete(interaction: AutoCompleteInteraction) {
+        val commandName = (interaction.command as? KordSubCommand)?.name ?: (interaction.command as? KordGroupCommand)?.groupName
+        when (commandName) {
+            CommandName.Radio.Play.commandName -> radioPlayCommand.onAutoComplete(interaction)
+        }
     }
 }

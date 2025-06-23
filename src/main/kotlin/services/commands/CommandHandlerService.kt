@@ -11,6 +11,7 @@ import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
 import dev.kord.core.Kord
+import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.commands.radio.RadioGroupCommand
 import es.wokis.commands.shuffle.ShuffleCommand
@@ -32,6 +33,8 @@ interface CommandHandlerService {
     )
 
     suspend fun onInteract(interaction: ButtonInteraction)
+
+    suspend fun onAutocomplete(interaction: AutoCompleteInteraction)
 }
 
 class CommandHandlerServiceImpl(
@@ -99,6 +102,10 @@ class CommandHandlerServiceImpl(
 
             null -> Unit
         }
+    }
+
+    override suspend fun onAutocomplete(interaction: AutoCompleteInteraction) {
+        radioGroupCommand.onAutoComplete(interaction)
     }
 
     private suspend fun respondUnknownCommand(
