@@ -49,20 +49,23 @@ class RadioPlayCommand(
         val radioName = interaction.command.strings[RADIO_INPUT_NAME]
         val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
         radioName?.let {
-            radioService.findRadio(radioName, guildLavaPlayerService).let { added ->
-                val locale = interaction.guildLocale.orDefaultLocale()
-                val originalResponse = response.respond {
-                    content = localizationService.getStringFormat(
-                        key = LocalizationKeys.SEARCHING_SONG,
-                        locale = locale
-                    )
-                }
+            val locale = interaction.guildLocale.orDefaultLocale()
+            val originalResponse = response.respond {
+                content = localizationService.getStringFormat(
+                    key = LocalizationKeys.SEARCHING_SONG,
+                    locale = locale
+                )
+            }
+            radioService.findRadio(radioName).let { radio ->
                 originalResponse.edit {
-                    content = if (added) {
-                        "Radio found, tuning in…"
-                    } else {
-                        "Radio not found, try again."
-                    }
+                    content = radio?.let { "Radio found, tuning in…" } ?: "Radio not found, try again."
+                }
+                radio?.let {
+                    guildLavaPlayerService.playRadio(
+                        radioName = radio.radioName,
+                        radioUrl = radio.url,
+                        customFavicon = radio.thumbnailUrl
+                    )
                 }
             }
         } ?: response.respond {

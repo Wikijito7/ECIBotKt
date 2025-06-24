@@ -16,5 +16,6 @@ sealed class CommandName(val commandName: String) {
             data object CountryCode : CommandName("countrycode")
         }
         data object Random : CommandName("random")
+        data object CountryCodes : CommandName("countrycodes")
     }
 }

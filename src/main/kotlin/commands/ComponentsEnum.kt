@@ -9,7 +9,13 @@ enum class ComponentsEnum(val customId: String) {
     PLAYER_DISCONNECT("player_disconnect"),
     PLAYER_SHUFFLE("player_shuffle"),
     SOUNDS_PREVIOUS("sounds_previous"),
-    SOUNDS_NEXT("sounds_next");
+    SOUNDS_NEXT("sounds_next"),
+    RADIO_LIST_NEXT("radio_list_next"),
+    RADIO_LIST_PREVIOUS("radio_list_previous"),
+    RADIO_SEARCH_NAME_NEXT("radio_search_name_next"),
+    RADIO_SEARCH_NAME_PREVIOUS("radio_search_name_previous"),
+    RADIO_SEARCH_COUNTRY_CODE_NEXT("radio_search_country_code_next"),
+    RADIO_SEARCH_COUNTRY_CODE_PREVIOUS("radio_search_country_code_previous");
 
     companion object {
         fun forCustomId(customId: String) = entries.find { it.customId == customId }

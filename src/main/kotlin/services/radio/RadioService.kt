@@ -5,7 +5,6 @@ import es.wokis.data.radio.RadioDTO
 import es.wokis.data.radio.RadioPageDTO
 import es.wokis.data.response.RemoteResponse
 import es.wokis.services.config.ConfigService
-import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.utils.asEncodedUrl
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -20,18 +19,10 @@ class RadioService(
     private val configService: ConfigService
 ) {
 
-    suspend fun findRadio(radioName: String, guildLavaPlayerService: GuildLavaPlayerService): Boolean {
+    suspend fun findRadio(radioName: String): RadioDTO? {
         val encodedName = radioName.dropLast(1)
-        searchRadio(encodedName).let {
-            (it as? RemoteResponse.Success)?.data?.firstOrNull()?.let { radio ->
-                guildLavaPlayerService.playRadio(
-                    radioName = radio.radioName,
-                    radioUrl = radio.url,
-                    customFavicon = radio.thumbnailUrl
-                )
-                return true
-            }
-            return false
+        return searchRadio(encodedName).let {
+            (it as? RemoteResponse.Success)?.data?.firstOrNull()
         }
     }
 
@@ -42,10 +33,17 @@ class RadioService(
         ).body<List<RadioDTO>>()
     }
 
-    suspend fun searchRadioPaged(prompt: String, page: Int): RemoteResponse<RadioPageDTO> = ErrorManagementWrapper.wrap {
+    suspend fun searchRadioByNamePaged(prompt: String, page: Int): RemoteResponse<RadioPageDTO> = ErrorManagementWrapper.wrap {
         val encodedPrompt = prompt.asEncodedUrl()
         httpClient.get(
-            urlString = getUrlNormalized("${getBaseEndpoint()}/radio/find/name/$encodedPrompt")
+            urlString = getUrlNormalized("${getBaseEndpoint()}/radio/find/name/$encodedPrompt/page/$page")
+        ).body<RadioPageDTO>()
+    }
+
+    suspend fun searchRadioByCountryCodePaged(prompt: String, page: Int): RemoteResponse<RadioPageDTO> = ErrorManagementWrapper.wrap {
+        val encodedPrompt = prompt.asEncodedUrl()
+        httpClient.get(
+            urlString = getUrlNormalized("${getBaseEndpoint()}/radio/find/countrycode/$encodedPrompt/page/$page")
         ).body<RadioPageDTO>()
     }
 

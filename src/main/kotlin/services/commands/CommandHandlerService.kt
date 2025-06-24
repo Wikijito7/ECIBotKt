@@ -18,6 +18,7 @@ import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.tts.TTSCommand
+import es.wokis.constants.CUSTOM_COMPONENT_SEPARATOR
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 
@@ -91,7 +92,7 @@ class CommandHandlerServiceImpl(
     override suspend fun onInteract(
         interaction: ButtonInteraction
     ) {
-        val customId = interaction.component.customId ?: return
+        val customId = interaction.component.customId?.split(CUSTOM_COMPONENT_SEPARATOR)?.firstOrNull() ?: return
         when (ComponentsEnum.forCustomId(customId)) {
             ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
 
@@ -99,6 +100,10 @@ class CommandHandlerServiceImpl(
             ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE -> playerCommand.onInteract(interaction)
 
             ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
+
+            ComponentsEnum.RADIO_LIST_NEXT, ComponentsEnum.RADIO_LIST_PREVIOUS, ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
+            ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
+            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS -> radioGroupCommand.onInteract(interaction)
 
             null -> Unit
         }

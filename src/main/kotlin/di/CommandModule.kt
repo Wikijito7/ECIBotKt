@@ -4,8 +4,10 @@ import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.commands.radio.RadioGroupCommand
+import es.wokis.commands.radio.subcommands.countrycodes.RadioCountryCodesCommand
 import es.wokis.commands.radio.subcommands.list.RadioListCommand
 import es.wokis.commands.radio.subcommands.play.RadioPlayCommand
+import es.wokis.commands.radio.subcommands.random.RadioRandomCommand
 import es.wokis.commands.radio.subcommands.search.RadioSearchCountryCodeCommand
 import es.wokis.commands.radio.subcommands.search.RadioSearchGroupCommand
 import es.wokis.commands.radio.subcommands.search.RadioSearchNameCommand
@@ -30,4 +32,6 @@ val commandModule = module {
     factoryOf(::RadioSearchGroupCommand)
     factoryOf(::RadioSearchNameCommand)
     factoryOf(::RadioSearchCountryCodeCommand)
+    factoryOf(::RadioRandomCommand)
+    factoryOf(::RadioCountryCodesCommand)
 }
