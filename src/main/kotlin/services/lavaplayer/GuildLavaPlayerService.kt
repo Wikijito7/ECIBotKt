@@ -167,7 +167,6 @@ class GuildLavaPlayerService(
         }?.let {
             connectToVoiceChannel()
             val locale = voiceChannel.getLocale()
-            connectToVoiceChannel()
             textChannel.createMessage(
                 localizationService.getStringFormat(
                     key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
@@ -224,6 +223,7 @@ class GuildLavaPlayerService(
     }
 
     private fun tryPlayNextTrack() {
+        currentTrack = null
         if (queue.isEmpty()) {
             setUpTimer()
         }
@@ -362,25 +362,24 @@ class GuildLavaPlayerService(
     private fun onTrackLoaded(track: AudioTrack) {
         coroutineScope.launch {
             val locale = voiceChannel.getLocale()
-            currentTrack?.let { currentTrack ->
-                textChannel.createMessage(
-                    if (track.info.uri.isValidUrl()) {
-                        localizationService.getStringFormat(
-                            key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
-                            locale = locale,
-                            arguments = arrayOf(currentTrack.getDisplayTrackName(), track.info.uri)
-                        )
-                    } else {
-                        localizationService.getStringFormat(
-                            key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
-                            locale = locale,
-                            arguments = arrayOf(currentTrack.getDisplayTrackName())
-                        )
-                    }
-                )
-            }
+            val currentTrack = TrackBO(audioTrack = track)
+            textChannel.createMessage(
+                if (track.info.uri.isValidUrl()) {
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
+                        locale = locale,
+                        arguments = arrayOf(currentTrack.getDisplayTrackName(), track.info.uri)
+                    )
+                } else {
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
+                        locale = locale,
+                        arguments = arrayOf(currentTrack.getDisplayTrackName())
+                    )
+                }
+            )
             connectToVoiceChannel()
-            queue(listOf(TrackBO(audioTrack = track)))
+            queue(listOf(currentTrack))
         }
     }
 
