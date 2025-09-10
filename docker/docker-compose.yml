@@ -1,0 +1,77 @@
+services:
+  bot:
+    restart: always
+    stdin_open: true
+    tty: true
+    build: ./bot/.
+    depends_on:
+      - server
+      - spotify-tokener
+    volumes:
+      - ./bot/:/usr/src/bot/
+    command: "sh run.sh"
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  server:
+    restart: always
+    stdin_open: true
+    tty: true
+    build: ./server/.
+    depends_on:
+      - mongo
+    volumes:
+      - ./server/:/usr/src/server/
+    command: "sh run.sh"
+    ports:
+      - "8083:8080"
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  mongo:
+    image: mongo
+    restart: always
+    volumes:
+      - ./data/mongo/:/data/db/
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: custom_password
+    ports:
+      - "127.0.0.1:27019:27017" # database should be only accessible on localhost. NEVER expose databases to the internet.
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    depends_on:
+      - mongo
+    ports:
+      - 6789:8081
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://root:custom_password@mongo:27017/
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      ME_CONFIG_BASICAUTH: "true"
+      ME_CONFIG_BASICAUTH_USERNAME: "custom_name"
+      ME_CONFIG_BASICAUTH_PASSWORD: "custom_password"
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  spotify-tokener:
+    image: ghcr.io/topi314/spotify-tokener:master
+    container_name: spotify-tokener
+    restart: unless-stopped
+    environment:
+      - SPOTIFY_TOKENER_ADDR=0.0.0.0:8086
+      #      - SPOTIFY_TOKENER_CHROME_PATH=chrome
+      - SPOTIFY_TOKENER_LOG_LEVEL=DEBUG # INFO for PRO
+    ports:
+      - "127.0.0.1:8086:8086"

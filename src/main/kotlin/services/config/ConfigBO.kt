@@ -70,5 +70,7 @@ data class SpotifyConfig(
     @SerialName("client_id")
     val clientId: String,
     @SerialName("client_secret")
-    val clientSecret: String
+    val clientSecret: String,
+    @SerialName("custom_endpoint")
+    val customEndpoint: String
 )

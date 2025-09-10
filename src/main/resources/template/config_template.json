@@ -25,6 +25,7 @@
   "spotify": {
     "enabled": false,
     "client_id": "",
-    "client_secret": ""
+    "client_secret": "",
+    "custom_endpoint": ""
   }
 }

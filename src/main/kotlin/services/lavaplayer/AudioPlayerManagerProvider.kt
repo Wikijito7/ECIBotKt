@@ -13,6 +13,7 @@ import dev.lavalink.youtube.clients.TvHtml5EmbeddedWithThumbnail
 import dev.lavalink.youtube.clients.Web
 import dev.lavalink.youtube.clients.WebWithThumbnail
 import es.wokis.services.config.ConfigService
+import es.wokis.utils.takeIfNotEmpty
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager as DeprecatedYoutubeAudioSourceManager
 
 private const val DEFAULT_TTS_VOICE = "4ba7bd1b-cb5f-5c3f-9e1c-9ee8be2b0bdd"
@@ -47,7 +48,12 @@ class AudioPlayerManagerProvider(
                     null,
                     this,
                     DefaultMirroringAudioTrackResolver(null)
-                )
+                ).apply {
+                    configService.config.spotify.customEndpoint.takeIfNotEmpty()?.let {
+                        setCustomTokenEndpoint(it)
+                        setPreferAnonymousToken(false)
+                    }
+                }
             )
         }
         this.registerSourceManager(
