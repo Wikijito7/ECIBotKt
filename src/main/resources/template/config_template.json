@@ -29,5 +29,10 @@
     "client_id": "",
     "client_secret": "",
     "custom_endpoint": ""
+  },
+  "tidal": {
+    "enabled": false,
+    "country_code": "ES",
+    "token": ""
   }
 }

@@ -17,8 +17,16 @@ class AudioPlayerManagerProviderTest {
     fun `When createAudioPlayerManager is called Then return DefaultAudioPlayerManager`() {
         // Given
         every { configService.config.youtube.oauth2Token } returns null
-        every { configService.config.deezer.enabled } returns false
-        every { configService.config.spotify.enabled } returns false
+        every { configService.config.deezer.enabled } returns true
+        every { configService.config.deezer.masterDecryptionKey } returns "master_key"
+        every { configService.config.deezer.arlToken } returns "altoke"
+        every { configService.config.spotify.enabled } returns true
+        every { configService.config.spotify.clientId } returns "client_id"
+        every { configService.config.spotify.clientSecret } returns "client_secret"
+        every { configService.config.spotify.customEndpoint } returns ""
+        every { configService.config.tidal.enabled } returns true
+        every { configService.config.tidal.countryCode } returns "ES"
+        every { configService.config.tidal.token } returns "altoke"
         every { configService.config.youtube.poToken } returns null
         every { configService.config.youtube.visitorData } returns null
         every { configService.config.youtube.remoteCipherUrl } returns null

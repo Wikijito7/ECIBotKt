@@ -18,7 +18,9 @@ data class Config(
     @SerialName("deezer")
     val deezer: DeezerConfig,
     @SerialName("spotify")
-    val spotify: SpotifyConfig
+    val spotify: SpotifyConfig,
+    @SerialName("tidal")
+    val tidal: TidalConfig
 )
 
 @Serializable
@@ -77,4 +79,14 @@ data class SpotifyConfig(
     val clientSecret: String,
     @SerialName("custom_endpoint")
     val customEndpoint: String
+)
+
+@Serializable
+data class TidalConfig(
+    @SerialName("enabled")
+    val enabled: Boolean,
+    @SerialName("country_code")
+    val countryCode: String,
+    @SerialName("token")
+    val token: String
 )
