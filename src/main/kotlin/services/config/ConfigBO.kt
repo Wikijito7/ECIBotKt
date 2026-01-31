@@ -40,7 +40,11 @@ data class YouTubeConfig(
     @SerialName("po_token")
     val poToken: String?,
     @SerialName("visitor_data")
-    val visitorData: String?
+    val visitorData: String?,
+    @SerialName("remote_cipher_url")
+    val remoteCipherUrl: String?,
+    @SerialName("remote_cipher_password")
+    val remoteCipherPassword: String?
 )
 
 @Serializable

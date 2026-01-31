@@ -71,7 +71,15 @@ services:
     restart: unless-stopped
     environment:
       - SPOTIFY_TOKENER_ADDR=0.0.0.0:8086
-      #      - SPOTIFY_TOKENER_CHROME_PATH=chrome
       - SPOTIFY_TOKENER_LOG_LEVEL=DEBUG # INFO for PRO
     ports:
       - "127.0.0.1:8086:8086"
+
+  yt-cipher:
+    image: ghcr.io/kikkia/yt-cipher:master
+    container_name: yt-cipher
+    ports:
+      - "8001:8001"
+    environment:
+      - API_TOKEN=yourTokenHere
+    restart: unless-stopped

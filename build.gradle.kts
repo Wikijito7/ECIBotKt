@@ -14,6 +14,11 @@ group = "es.wokis"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    flatDir {
+        dirs("libs")
+    }
+    // Keep mavenLocal for transitive dependencies of local JARs
+    mavenLocal()
     maven(url = "https://maven.lavalink.dev/releases")
     maven(url = "https://maven.topi.wtf/releases")
     mavenCentral()
@@ -21,17 +26,28 @@ repositories {
 }
 
 dependencies {
-    // Kord
-    implementation(libs.kord.core)
-    implementation(libs.kord.voice)
-    implementation(libs.kord.core.voice)
-    implementation(libs.kord.rest)
-    implementation(libs.kord.gateway)
-    implementation(libs.kord.common)
+    // Kord - Local SNAPSHOT JARs (voice encryption branch)
+    // TODO: Switch back to version catalog when Kord merges voice encryption to main
+    implementation(fileTree("libs") { include("kord-*.jar") })
+    
+    // Transitive dependencies required by local Kord JARs (flatDir doesn't resolve these)
+    // TODO: Remove when Kord merges voice encryption to main
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.kord.cache)
+    implementation(libs.kord.cache.map)
+
+    //    implementation(libs.kord.core)
+    //    implementation(libs.kord.voice)
+    //    implementation(libs.kord.core.voice)
+    //    implementation(libs.kord.rest)
+    //    implementation(libs.kord.gateway)
+    //    implementation(libs.kord.common)
 
     // Ktor
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
+    // TODO: Remove when Kord merges voice encryption to main (Kord needs OkHttp engine)
+    implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.logging)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.client.serialization.kotlin.json)

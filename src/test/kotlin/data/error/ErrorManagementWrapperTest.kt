@@ -171,7 +171,7 @@ class ErrorManagementWrapperTest {
     @Test
     fun `Given request with wrong response type When wrap is called Then verify last emit is data parse error`() = runTest {
         // Given
-        val error: IllegalFormatException = mockk()
+        val error: IllegalFormatException = mockk(relaxed = true)
 
         // When
         val result = ErrorManagementWrapper.wrap {

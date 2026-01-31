@@ -51,4 +51,9 @@ object LocalizationKeys {
     const val SOUNDS_DESCRIPTION = "sounds_description"
     const val SOUNDS_EMBED_TITLE = "sounds_embed_title"
     const val SOUNDS_EMBED_DESCRIPTION = "sounds_embed_description"
+    const val RADIO_RANDOM_SEARCHING = "radio_random_searching"
+    const val RADIO_RANDOM_ERROR = "radio_random_error"
+    const val RADIO_COUNTRYCODES_LIST = "radio_countrycodes_list"
+    const val RADIO_COUNTRYCODES_EMPTY = "radio_countrycodes_empty"
+    const val RADIO_COUNTRYCODES_ERROR = "radio_countrycodes_error"
 }

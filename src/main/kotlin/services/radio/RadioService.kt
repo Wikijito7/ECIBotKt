@@ -1,6 +1,7 @@
 package es.wokis.services.radio
 
 import es.wokis.data.error.ErrorManagementWrapper
+import es.wokis.data.radio.RadioCountryCodeDTO
 import es.wokis.data.radio.RadioDTO
 import es.wokis.data.radio.RadioPageDTO
 import es.wokis.data.response.RemoteResponse
@@ -51,6 +52,18 @@ class RadioService(
         httpClient.get(
             urlString = getUrlNormalized("${getBaseEndpoint()}/radio/page/$page")
         ).body<RadioPageDTO>()
+    }
+
+    suspend fun getRandomRadio(): RemoteResponse<RadioDTO> = ErrorManagementWrapper.wrap {
+        httpClient.get(
+            urlString = getUrlNormalized("${getBaseEndpoint()}/radio/random")
+        ).body<RadioDTO>()
+    }
+
+    suspend fun getCountryCodes(): RemoteResponse<RadioCountryCodeDTO> = ErrorManagementWrapper.wrap {
+        httpClient.get(
+            urlString = getUrlNormalized("${getBaseEndpoint()}/radio/countrycodes")
+        ).body<RadioCountryCodeDTO>()
     }
 
     private fun getBaseEndpoint() =
