@@ -103,7 +103,8 @@ class CommandHandlerServiceImpl(
 
             ComponentsEnum.RADIO_LIST_NEXT, ComponentsEnum.RADIO_LIST_PREVIOUS, ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
             ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
-            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS -> radioGroupCommand.onInteract(interaction)
+            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS, ComponentsEnum.RADIO_COUNTRYCODES_NEXT,
+            ComponentsEnum.RADIO_COUNTRYCODES_PREVIOUS -> radioGroupCommand.onInteract(interaction)
 
             null -> Unit
         }

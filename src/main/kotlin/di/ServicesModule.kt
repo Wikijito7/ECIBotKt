@@ -24,7 +24,7 @@ val servicesModule = module {
     factoryOf(::CommandHandlerServiceImpl) { bind<CommandHandlerService>() }
     singleOf(::LocalizationService)
     singleOf(::TTSService)
-    factoryOf(::RadioService)
+    singleOf(::RadioService)
 
     single<AppDispatchers> { AppDispatchersImpl() }
 }

@@ -29,7 +29,7 @@ dependencies {
     // Kord - Local SNAPSHOT JARs (voice encryption branch)
     // TODO: Switch back to version catalog when Kord merges voice encryption to main
     implementation(fileTree("libs") { include("kord-*.jar") })
-    
+
     // Transitive dependencies required by local Kord JARs (flatDir doesn't resolve these)
     // TODO: Remove when Kord merges voice encryption to main
     implementation(libs.kotlinx.datetime)

@@ -50,11 +50,16 @@ class AudioPlayerManagerProvider(
         if (configService.config.spotify.enabled) {
             this.registerSourceManager(
                 SpotifySourceManager(
-                    /* clientId = */ configService.config.spotify.clientId,
-                    /* clientSecret = */ configService.config.spotify.clientSecret,
-                    /* countryCode = */ null,
-                    /* audioPlayerManager = */ this,
-                    /* mirroringAudioTrackResolver = */ DefaultMirroringAudioTrackResolver(null)
+                    /* clientId = */
+                    configService.config.spotify.clientId,
+                    /* clientSecret = */
+                    configService.config.spotify.clientSecret,
+                    /* countryCode = */
+                    null,
+                    /* audioPlayerManager = */
+                    this,
+                    /* mirroringAudioTrackResolver = */
+                    DefaultMirroringAudioTrackResolver(null)
                 ).apply {
                     configService.config.spotify.customEndpoint.takeIfNotEmpty()?.let {
                         setCustomTokenEndpoint(it)

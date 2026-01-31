@@ -9,6 +9,7 @@ import es.wokis.commands.CommandName
 import es.wokis.commands.Component
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.SubCommand
+import es.wokis.localization.LocalizationKeys
 import es.wokis.commands.radio.onExecuteRadioListCommand
 import es.wokis.commands.radio.onInteractRadioListCommand
 import es.wokis.services.localization.LocalizationService
@@ -21,7 +22,9 @@ class RadioListCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Radio.List.commandName, "Lists available radios")
+            subCommand(CommandName.Radio.List.commandName, localizationService.getString(LocalizationKeys.RADIO_LIST_COMMAND_DESCRIPTION)) {
+                descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_LIST_COMMAND_DESCRIPTION)
+            }
         }
     }
 

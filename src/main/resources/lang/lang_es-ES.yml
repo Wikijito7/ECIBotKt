@@ -45,3 +45,30 @@ player_shuffle: Reordenar
 player_disconnect: Desconectar
 player_queue_tracks_remaining: y otras %d pistas de audio
 player_duration_remaining: %s restante
+sounds_description: Lista todos los sonidos locales
+sounds_embed_title: Sonidos locales
+sounds_embed_description: Hay %d sonidos disponibles
+radio_random_searching: Buscando una emisora de radio aleatoria...
+radio_random_error: No se pudo encontrar una emisora de radio aleatoria. Inténtalo de nuevo más tarde.
+radio_countrycodes_list: Códigos de país disponibles: %s
+radio_countrycodes_embed_title: Códigos de País
+radio_countrycodes_empty: No hay códigos de país disponibles en este momento.
+radio_countrycodes_error: No se pudieron obtener los códigos de país. Inténtalo de nuevo más tarde.
+radio_command_description: Gestionar emisoras de radio
+radio_list_command_description: Lista las radios disponibles
+radio_list_embed_title: Lista de Radios
+radio_list_embed_description: Lista de radios disponibles
+radio_play_command_description: Reproducir una emisora de radio
+radio_play_input_description: Nombre de la emisora
+radio_play_found: Emisora encontrada, sintonizando...
+radio_play_not_found: Emisora no encontrada, inténtalo de nuevo.
+radio_play_required: El nombre de la emisora es obligatorio
+radio_search_command_description: Buscar emisoras de radio
+radio_search_name_command_description: Buscar por nombre
+radio_search_countrycode_command_description: Buscar por código de país
+radio_search_name_input_description: Nombre de la emisora a buscar
+radio_search_countrycode_input_description: Código de país a buscar
+radio_random_command_description: Selecciona una emisora aleatoria
+radio_countrycodes_command_description: Obtener códigos de país
+radio_unknown_message: Mensaje desconocido
+flowery_tts_custom_name: FloweryTTS - Mensaje TTS

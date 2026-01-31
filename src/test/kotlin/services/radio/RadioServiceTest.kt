@@ -67,7 +67,7 @@ class RadioServiceTest {
     fun `Given valid country codes list When getCountryCodes is called Then return list`() = runTest {
         // Given
         val countryCodesJson = """
-            ["US", "ES", "FR", "DE", "IT"]
+            {"countryCode": ["US", "ES", "FR", "DE", "IT"]}
         """.trimIndent()
 
         val httpClient = getMockedHttpClient(countryCodesJson)
@@ -78,7 +78,8 @@ class RadioServiceTest {
 
         // Then
         assertTrue(result is RemoteResponse.Success)
-        val codes = (result as RemoteResponse.Success).data.orEmpty()
+        val codes = (result as RemoteResponse.Success).data?.countryCodes.orEmpty()
+        println(codes)
         assertEquals(5, codes.size)
         assertEquals("US", codes[0])
         assertEquals("ES", codes[1])
@@ -88,17 +89,18 @@ class RadioServiceTest {
     @Test
     fun `Given empty country codes list When getCountryCodes is called Then return empty list`() = runTest {
         // Given
-        val countryCodesJson = "[]"
+        val countryCodesJson = """{"countryCode": []}"""
 
         val httpClient = getMockedHttpClient(countryCodesJson)
         val radioService = RadioService(httpClient, configService)
 
         // When
         val result = radioService.getCountryCodes()
+        println(result)
 
         // Then
         assertTrue(result is RemoteResponse.Success)
-        val codes = (result as RemoteResponse.Success).data.orEmpty()
+        val codes = (result as RemoteResponse.Success).data?.countryCodes.orEmpty()
         assertTrue(codes.isEmpty())
     }
 }

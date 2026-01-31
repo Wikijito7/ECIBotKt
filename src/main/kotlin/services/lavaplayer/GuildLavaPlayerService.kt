@@ -134,7 +134,7 @@ class GuildLavaPlayerService(
             audioPlayerManager.loadItemSync(it)?.let { item -> item as? AudioTrack }
         }.map {
             TrackBO(
-                customName = "FloweryTTS - tts message",
+                customName = localizationService.getString(LocalizationKeys.FLOWERY_TTS_CUSTOM_NAME, voiceChannel.getLocale()),
                 audioTrack = it
             )
         }.let { ttsQueue ->

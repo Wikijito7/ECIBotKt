@@ -14,11 +14,15 @@ import java.net.URI
 
 private const val PRE_ECIBOT_ENDPOINT = "https://pre-ecibot.wokis.es/"
 private const val PRO_ECIBOT_ENDPOINT = "https://ecibot.wokis.es/"
+private const val CACHE_EXPIRATION_MS = 3600000L // 1 hour in milliseconds
 
 class RadioService(
     private val httpClient: HttpClient,
     private val configService: ConfigService
 ) {
+    // In-memory cache for country codes
+    private var cachedCountryCodes: RadioCountryCodeDTO? = null
+    private var cacheTimestamp: Long = 0
 
     suspend fun findRadio(radioName: String): RadioDTO? {
         val encodedName = radioName.dropLast(1)
@@ -60,10 +64,24 @@ class RadioService(
         ).body<RadioDTO>()
     }
 
-    suspend fun getCountryCodes(): RemoteResponse<RadioCountryCodeDTO> = ErrorManagementWrapper.wrap {
-        httpClient.get(
-            urlString = getUrlNormalized("${getBaseEndpoint()}/radio/countrycodes")
-        ).body<RadioCountryCodeDTO>()
+    suspend fun getCountryCodes(): RemoteResponse<RadioCountryCodeDTO> {
+        // Check if cache is valid (not expired and not null)
+        val currentTime = System.currentTimeMillis()
+        cachedCountryCodes?.let {
+            if ((currentTime - cacheTimestamp) < CACHE_EXPIRATION_MS) {
+                return RemoteResponse.Success(it)
+            }
+        }
+
+        // Fetch from API and update cache
+        return ErrorManagementWrapper.wrap {
+            httpClient.get(
+                urlString = getUrlNormalized("${getBaseEndpoint()}/radio/countrycodes")
+            ).body<RadioCountryCodeDTO>().also {
+                cachedCountryCodes = it
+                cacheTimestamp = currentTime
+            }
+        }
     }
 
     private fun getBaseEndpoint() =

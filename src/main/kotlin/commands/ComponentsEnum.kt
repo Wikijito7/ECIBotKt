@@ -15,7 +15,9 @@ enum class ComponentsEnum(val customId: String) {
     RADIO_SEARCH_NAME_NEXT("radio_search_name_next"),
     RADIO_SEARCH_NAME_PREVIOUS("radio_search_name_previous"),
     RADIO_SEARCH_COUNTRY_CODE_NEXT("radio_search_country_code_next"),
-    RADIO_SEARCH_COUNTRY_CODE_PREVIOUS("radio_search_country_code_previous");
+    RADIO_SEARCH_COUNTRY_CODE_PREVIOUS("radio_search_country_code_previous"),
+    RADIO_COUNTRYCODES_NEXT("radio_countrycodes_next"),
+    RADIO_COUNTRYCODES_PREVIOUS("radio_countrycodes_previous");
 
     companion object {
         fun forCustomId(customId: String) = entries.find { it.customId == customId }

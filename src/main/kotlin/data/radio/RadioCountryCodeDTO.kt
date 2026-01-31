@@ -9,6 +9,6 @@ import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 @Serializable
 @JsonIgnoreUnknownKeys
 data class RadioCountryCodeDTO(
-    @SerialName("countryCodes")
+    @SerialName("countryCode")
     val countryCodes: List<String>
 )

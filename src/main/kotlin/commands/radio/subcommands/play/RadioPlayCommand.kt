@@ -33,8 +33,10 @@ class RadioPlayCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Radio.Play.commandName, "asdasd") {
-                string(RADIO_INPUT_NAME, "Radio name") {
+            subCommand(CommandName.Radio.Play.commandName, localizationService.getString(LocalizationKeys.RADIO_PLAY_COMMAND_DESCRIPTION)) {
+                descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_COMMAND_DESCRIPTION)
+                string(RADIO_INPUT_NAME, localizationService.getString(LocalizationKeys.RADIO_PLAY_INPUT_DESCRIPTION)) {
+                    descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_INPUT_DESCRIPTION)
                     required = true
                     autocomplete = true
                 }
@@ -57,8 +59,11 @@ class RadioPlayCommand(
                 )
             }
             radioService.findRadio(radioName).let { radio ->
+                val responseLocale = interaction.guildLocale.orDefaultLocale()
                 originalResponse.edit {
-                    content = radio?.let { "Radio found, tuning in…" } ?: "Radio not found, try again."
+                    content = radio?.let {
+                        localizationService.getString(LocalizationKeys.RADIO_PLAY_FOUND, responseLocale)
+                    } ?: localizationService.getString(LocalizationKeys.RADIO_PLAY_NOT_FOUND, responseLocale)
                 }
                 radio?.let {
                     guildLavaPlayerService.playRadio(
@@ -69,7 +74,8 @@ class RadioPlayCommand(
                 }
             }
         } ?: response.respond {
-            content = "RadioName is required"
+            val errorLocale = interaction.guildLocale.orDefaultLocale()
+            content = localizationService.getString(LocalizationKeys.RADIO_PLAY_REQUIRED, errorLocale)
         }
     }
 

@@ -7,6 +7,7 @@ import dev.kord.rest.builder.interaction.GlobalChatInputCreateBuilder
 import dev.kord.rest.builder.interaction.subCommand
 import es.wokis.commands.CommandName
 import es.wokis.commands.SubCommand
+import es.wokis.localization.LocalizationKeys
 import es.wokis.data.radio.RadioDTO
 import es.wokis.data.response.RemoteResponse
 import es.wokis.services.localization.LocalizationService
@@ -22,7 +23,9 @@ class RadioRandomCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Radio.Random.commandName, "Selects a random station")
+            subCommand(CommandName.Radio.Random.commandName, localizationService.getString(LocalizationKeys.RADIO_RANDOM_COMMAND_DESCRIPTION)) {
+                descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_RANDOM_COMMAND_DESCRIPTION)
+            }
         }
     }
 
@@ -35,7 +38,7 @@ class RadioRandomCommand(
 
         response.respond {
             content = localizationService.getString(
-                key = "radio_random_searching",
+                key = LocalizationKeys.RADIO_RANDOM_SEARCHING,
                 locale = locale
             )
         }
@@ -50,15 +53,16 @@ class RadioRandomCommand(
                     )
                 } ?: response.respond {
                     content = localizationService.getString(
-                        key = "radio_random_error",
+                        key = LocalizationKeys.RADIO_RANDOM_ERROR,
                         locale = locale
                     )
                 }
             }
+
             is RemoteResponse.Error -> {
                 response.respond {
                     content = localizationService.getString(
-                        key = "radio_random_error",
+                        key = LocalizationKeys.RADIO_RANDOM_ERROR,
                         locale = locale
                     )
                 }
