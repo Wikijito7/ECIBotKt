@@ -46,6 +46,7 @@ private const val MAX_BACK_OFF_DELAY = "2s"
 private const val MAX_BACK_OFF_RETRIES = 5
 private const val UNKNOWN_ERROR = "Unknown error"
 private const val SEEK_UPDATE_DELAY = 3000L
+private const val RECONNECT_DELAY = 500L
 
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
@@ -391,7 +392,7 @@ class GuildLavaPlayerService(
         if (isReconnecting || !isConnected()) return
         isReconnecting = true
         resetVoiceConnection()
-        delay(500)
+        delay(RECONNECT_DELAY)
         connectToVoiceChannel()
         isReconnecting = false
     }
