@@ -73,3 +73,6 @@ radio_countrycodes_command_description: Get country codes
 radio_unknown_message: Unknown message
 flowery_tts_custom_name: FloweryTTS - TTS message
 radio_countrycodes_more: "... and %d more country codes. Use /radio search countrycode to explore!"
+player_channel_created: Created <#%s> channel for music controls
+player_channel_creation_failed: Could not create player channel. Showing player here instead.
+player_shown_on_existing_channel: Created player on <#%s>

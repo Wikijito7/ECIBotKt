@@ -72,3 +72,6 @@ radio_random_command_description: Selecciona una emisora aleatoria
 radio_countrycodes_command_description: Obtener códigos de país
 radio_unknown_message: Mensaje desconocido
 flowery_tts_custom_name: FloweryTTS - Mensaje TTS
+player_channel_created: Canal <#%s> creado para controles de música
+player_channel_creation_failed: No se pudo crear el canal de reproductor. Mostrando el reproductor aquí.
+player_shown_on_existing_channel: Reproductor creado en <#%s>

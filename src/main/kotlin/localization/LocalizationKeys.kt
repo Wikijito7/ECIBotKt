@@ -76,4 +76,7 @@ object LocalizationKeys {
     const val RADIO_UNKNOWN_MESSAGE = "radio_unknown_message"
     const val FLOWERY_TTS_CUSTOM_NAME = "flowery_tts_custom_name"
     const val RADIO_COUNTRYCODES_MORE = "radio_countrycodes_more"
+    const val PLAYER_CHANNEL_CREATED = "player_channel_created"
+    const val PLAYER_CHANNEL_CREATION_FAILED = "player_channel_creation_failed"
+    const val PLAYER_SHOWN_ON_EXISTING_CHANNEL = "player_shown_on_existing_channel"
 }

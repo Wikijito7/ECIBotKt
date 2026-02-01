@@ -1,6 +1,5 @@
 package es.wokis.commands.player
 
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -15,13 +14,15 @@ import es.wokis.commands.ComponentsEnum
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
+import es.wokis.services.player.PlayerChannelService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getGuildName
 import es.wokis.utils.orDefaultLocale
 
 class PlayerCommand(
     private val localizationService: LocalizationService,
-    private val guildQueueService: GuildQueueService
+    private val guildQueueService: GuildQueueService,
+    private val playerChannelService: PlayerChannelService
 ) : Command, Component {
 
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
@@ -45,7 +46,8 @@ class PlayerCommand(
             val queue: List<TrackBO> = lavaPlayerService.getQueue()
             val locale = interaction.guildLocale.orDefaultLocale()
             val guildName = interaction.getGuildName()
-            response.respond {
+
+            val playerMessageResult = playerChannelService.sendPlayerMessage(interaction) {
                 createPlayerEmbed(
                     guildName = guildName,
                     localizationService = localizationService,
@@ -54,8 +56,51 @@ class PlayerCommand(
                     queue = queue,
                     isPaused = lavaPlayerService.isPaused()
                 )
-            }.also {
-                lavaPlayerService.savePlayerMessage(it.message)
+            }
+
+            if (playerMessageResult.isSuccess) {
+                val result = playerMessageResult.getOrNull()
+                result?.message?.let {
+                    lavaPlayerService.savePlayerMessage(it)
+                }
+                // Show appropriate message based on whether channel was created or already existed
+                if (result?.isNewChannel == true) {
+                    // Newly created channel
+                    response.respond {
+                        content = localizationService.getStringFormat(
+                            LocalizationKeys.PLAYER_CHANNEL_CREATED,
+                            locale,
+                            result.channel.id.toString()
+                        )
+                    }
+                } else {
+                    // Using existing channel
+                    response.respond {
+                        content = localizationService.getStringFormat(
+                            LocalizationKeys.PLAYER_SHOWN_ON_EXISTING_CHANNEL,
+                            locale,
+                            result?.channel?.id?.toString() ?: ""
+                        )
+                    }
+                }
+            } else {
+                val warningMessage = localizationService.getString(
+                    LocalizationKeys.PLAYER_CHANNEL_CREATION_FAILED,
+                    locale
+                )
+                response.respond {
+                    content = warningMessage
+                    createPlayerEmbed(
+                        guildName = guildName,
+                        localizationService = localizationService,
+                        locale = locale,
+                        currentTrack = currentTrack,
+                        queue = queue,
+                        isPaused = lavaPlayerService.isPaused()
+                    )
+                }.also {
+                    lavaPlayerService.savePlayerMessage(it.message)
+                }
             }
         } catch (exc: IllegalStateException) {
             response.respond {
