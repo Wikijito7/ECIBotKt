@@ -104,5 +104,4 @@ class RadioListCommandTest {
             radioService.getRadioList(1)
         }
     }
-
 }

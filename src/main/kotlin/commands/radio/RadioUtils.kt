@@ -10,6 +10,7 @@ import es.wokis.commands.commons.createPaginatedEmbedMessage
 import es.wokis.constants.BLANK_SPACE
 import es.wokis.data.radio.RadioDTO
 import es.wokis.data.radio.RadioPageDTO
+import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.orDefaultLocale
 import es.wokis.utils.takeAtMost
@@ -37,8 +38,8 @@ suspend fun onExecuteRadioListCommand(
         createPaginatedEmbedMessage(
             locale = locale,
             localizationService = localizationService,
-            title = "Radio List",
-            description = "List of radios available",
+            title = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_TITLE, locale),
+            description = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_DESCRIPTION, locale),
             currentPage = 1,
             currentPageContent = radioPageContent,
             columns = RADIO_LIST_COLUMNS,
@@ -70,8 +71,8 @@ suspend fun onInteractRadioListCommand(
         createPaginatedEmbedMessage(
             locale = locale,
             localizationService = localizationService,
-            title = "Radio List",
-            description = "List of radios available",
+            title = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_TITLE, locale),
+            description = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_DESCRIPTION, locale),
             currentPage = currentPage,
             currentPageContent = radioPageContent,
             columns = RADIO_LIST_COLUMNS,

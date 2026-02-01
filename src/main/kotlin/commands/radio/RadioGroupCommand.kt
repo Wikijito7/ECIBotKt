@@ -7,8 +7,6 @@ import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.ComponentInteraction
-import dev.kord.core.entity.interaction.GroupCommand as KordGroupCommand
-import dev.kord.core.entity.interaction.SubCommand as KordSubCommand
 import es.wokis.commands.Autocomplete
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
@@ -22,6 +20,8 @@ import es.wokis.commands.radio.subcommands.search.RadioSearchGroupCommand
 import es.wokis.constants.CUSTOM_COMPONENT_SEPARATOR
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
+import dev.kord.core.entity.interaction.GroupCommand as KordGroupCommand
+import dev.kord.core.entity.interaction.SubCommand as KordSubCommand
 
 class RadioGroupCommand(
     private val radioPlayCommand: RadioPlayCommand,

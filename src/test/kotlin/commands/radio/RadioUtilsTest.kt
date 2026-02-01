@@ -147,4 +147,31 @@ class RadioUtilsTest {
         // Name should be truncated to 20 characters
         assertTrue(result[0].length <= 20 || result[0].contains("This is a very long "))
     }
+
+    @Test
+    fun `Given two radios When chunked Then distribute across columns`() {
+        // Given
+        val radios = listOf(
+            RadioDTO(
+                radioName = "Radio A",
+                url = "http://radioa.stream",
+                thumbnailUrl = "http://radioa.icon.png",
+                countryCode = "US"
+            ),
+            RadioDTO(
+                radioName = "Radio B",
+                url = "http://radiob.stream",
+                thumbnailUrl = "http://radiob.icon.png",
+                countryCode = "GB"
+            )
+        )
+
+        // When
+        val result = radios.chunked(3)
+
+        // Then - With 2 items and 3 columns, size/columns = 2/3 = 0, coerceAtLeast(1) = 1
+        assertEquals(2, result.size) // Each radio becomes its own "chunk" in the list
+        assertTrue(result[0].contains("Radio A"))
+        assertTrue(result[1].contains("Radio B"))
+    }
 }

@@ -65,6 +65,7 @@ class RadioSearchGroupCommand(
         when (customId) {
             ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT.customId,
             ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS.customId -> radioSearchCountryCodeCommand.onInteract(interaction)
+
             ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS.customId,
             ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT.customId -> radioSearchNameCommand.onInteract(interaction)
         }
