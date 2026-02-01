@@ -1,12 +1,18 @@
 package es.wokis.commands.radio.subcommands.search
 
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
-import dev.kord.core.entity.interaction.*
+import dev.kord.core.entity.interaction.AutoCompleteInteraction
+import dev.kord.core.entity.interaction.ButtonInteraction
+import dev.kord.core.entity.interaction.ChatInputCommandInteraction
+import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.core.entity.interaction.GroupCommand
 import dev.kord.rest.builder.interaction.GlobalChatInputCreateBuilder
 import dev.kord.rest.builder.interaction.group
 import dev.kord.rest.builder.interaction.string
-import es.wokis.commands.*
+import es.wokis.commands.Autocomplete
+import es.wokis.commands.CommandName
+import es.wokis.commands.Component
+import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.SubCommand
 import es.wokis.constants.CUSTOM_COMPONENT_SEPARATOR
 import es.wokis.localization.LocalizationKeys
@@ -59,7 +65,6 @@ class RadioSearchGroupCommand(
         when (customId) {
             ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT.customId,
             ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS.customId -> radioSearchCountryCodeCommand.onInteract(interaction)
-
             ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS.customId,
             ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT.customId -> radioSearchNameCommand.onInteract(interaction)
         }

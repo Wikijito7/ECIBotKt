@@ -294,8 +294,8 @@ class GuildLavaPlayerService(
             currentTrack = it
         }
         player.startTrack(
-            /* track = */ currentTrack.audioTrack,
-            /* noInterrupt = */ true
+            currentTrack.audioTrack,
+            true
         )
     }
 

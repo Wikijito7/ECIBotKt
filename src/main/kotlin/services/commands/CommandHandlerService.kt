@@ -70,21 +70,13 @@ class CommandHandlerServiceImpl(
     ) {
         when (val commandName = interaction.command.rootName) {
             CommandName.Play.commandName -> playCommand.onExecute(interaction, response)
-
             CommandName.Queue.commandName -> queueCommand.onExecute(interaction, response)
-
             CommandName.Skip.commandName -> skipCommand.onExecute(interaction, response)
-
             CommandName.Shuffle.commandName -> shuffleCommand.onExecute(interaction, response)
-
             CommandName.Tts.commandName -> ttsCommand.onExecute(interaction, response)
-
             CommandName.Player.commandName -> playerCommand.onExecute(interaction, response)
-
             CommandName.Sounds.commandName -> soundsCommand.onExecute(interaction, response)
-
             CommandName.Radio.commandName -> radioGroupCommand.onExecute(interaction, response)
-
             else -> respondUnknownCommand(response, interaction.guildLocale, commandName)
         }
     }

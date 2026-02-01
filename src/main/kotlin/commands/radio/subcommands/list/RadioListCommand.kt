@@ -9,9 +9,9 @@ import es.wokis.commands.CommandName
 import es.wokis.commands.Component
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.SubCommand
-import es.wokis.localization.LocalizationKeys
 import es.wokis.commands.radio.onExecuteRadioListCommand
 import es.wokis.commands.radio.onInteractRadioListCommand
+import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.radio.RadioService
 

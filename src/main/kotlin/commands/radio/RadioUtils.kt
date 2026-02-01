@@ -18,7 +18,7 @@ private const val RADIO_LIST_COLUMNS = 3
 
 fun List<RadioDTO>.chunked(columns: Int): List<String> = map {
     (if (it.radioName.contains(Regex("^[#*-]"))) "\\" else "").plus(it.radioName.takeAtMost(20))
-}.chunked(size / columns).map {
+}.chunked((size / columns).coerceAtLeast(1)).map {
     it.joinToString(separator = "$BLANK_SPACE$BLANK_SPACE\n")
 }
 

@@ -21,29 +21,27 @@ private const val MAX_FIELD_LENGTH = 1000 // Stay under 1024 limit
 private const val MAX_FIELDS = 25 // Discord embed limit
 private const val ITEMS_PER_LINE = 8
 
-private fun getFlagEmoji(countryCode: String): String {
-    return if (countryCode == "UNK") {
-        "❓"
-    } else {
-        countryCode.uppercase().map { char ->
-            Character.toChars(0x1F1E6 + (char - 'A')).joinToString("")
-        }.joinToString("")
-    }
+private fun getFlagEmoji(countryCode: String): String = if (countryCode == "UNK") {
+    "❓"
+} else {
+    countryCode.uppercase().map { char ->
+        Character.toChars(0x1F1E6 + (char - 'A')).joinToString("")
+    }.joinToString("")
 }
 
 private fun groupCountryCodesToFields(countryCodes: List<String>): List<String> {
     if (countryCodes.isEmpty()) return emptyList()
-    
+
     val formattedCodes = countryCodes.map { "${getFlagEmoji(it)} $it" }
     val fields = mutableListOf<String>()
     var currentField = StringBuilder()
-    
+
     formattedCodes.forEachIndexed { index, code ->
         val isLastItem = index == formattedCodes.size - 1
         val separator = if ((index + 1) % ITEMS_PER_LINE == 0 || isLastItem) "" else BLANK_SPACE
-        val nextLength = currentField.length + code.length + separator.length + 
+        val nextLength = currentField.length + code.length + separator.length +
             if ((index + 1) % ITEMS_PER_LINE == 0) 1 else 0 // Account for newline
-        
+
         // Check if we need to start a new field
         if (nextLength > MAX_FIELD_LENGTH && currentField.isNotEmpty()) {
             fields.add(currentField.toString())
@@ -52,7 +50,7 @@ private fun groupCountryCodesToFields(countryCodes: List<String>): List<String> 
                 return fields // Stop at max fields
             }
         }
-        
+
         currentField.append(code)
         if (!isLastItem) {
             if ((index + 1) % ITEMS_PER_LINE == 0) {
@@ -62,12 +60,12 @@ private fun groupCountryCodesToFields(countryCodes: List<String>): List<String> 
             }
         }
     }
-    
+
     // Add remaining content
     if (currentField.isNotEmpty() && fields.size < MAX_FIELDS) {
         fields.add(currentField.toString())
     }
-    
+
     return fields
 }
 
@@ -113,7 +111,7 @@ class RadioCountryCodesCommand(
                             locale = locale
                         )
                         color = Color(0x01B05B)
-                        
+
                         fieldGroups.forEach { fieldContent ->
                             field {
                                 name = BLANK_SPACE

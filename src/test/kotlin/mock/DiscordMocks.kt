@@ -79,6 +79,9 @@ val mockedKord: Kord = mockk {
             coEvery {
                 modifyInteractionResponse(any<Snowflake>(), any<String>(), any<MultipartInteractionResponseModifyRequest>())
             } returns mockedDiscordMessage
+            coEvery {
+                createAutoCompleteInteractionResponse(any(), any(), any())
+            } returns mockk()
         }
     }
     every { defaultSupplier } returns mockk()
