@@ -21,6 +21,8 @@ class AudioPlayerManagerProviderTest {
         every { configService.config.spotify.enabled } returns false
         every { configService.config.youtube.poToken } returns null
         every { configService.config.youtube.visitorData } returns null
+        every { configService.config.youtube.remoteCipherUrl } returns null
+        every { configService.config.youtube.remoteCipherPassword } returns null
 
         // When
         val actual = audioPlayerManagerProvider.createAudioPlayerManager()

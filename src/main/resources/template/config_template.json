@@ -10,7 +10,9 @@
   "youtube": {
     "oauth2_token": null,
     "po_token": null,
-    "visitor_data": null
+    "visitor_data": null,
+    "remote_cipher_url": null,
+    "remote_cipher_password": null
   },
   "hugging_chat": {
     "enabled": false,
@@ -25,6 +27,7 @@
   "spotify": {
     "enabled": false,
     "client_id": "",
-    "client_secret": ""
+    "client_secret": "",
+    "custom_endpoint": ""
   }
 }

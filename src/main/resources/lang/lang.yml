@@ -48,3 +48,28 @@ player_duration_remaining: %s remaining
 sounds_description: List all local sounds
 sounds_embed_title: Local sounds
 sounds_embed_description: There are %d sounds available
+radio_random_searching: Searching for a random radio station...
+radio_random_error: Could not find a random radio station. Please try again later.
+radio_countrycodes_list: Available country codes: %s
+radio_countrycodes_embed_title: Country Codes
+radio_countrycodes_empty: No country codes available at the moment.
+radio_countrycodes_error: Could not retrieve country codes. Please try again later.
+radio_command_description: Manage radio stations
+radio_list_command_description: Lists available radios
+radio_list_embed_title: Radio List
+radio_list_embed_description: List of radios available
+radio_play_command_description: Play a radio station
+radio_play_input_description: Radio name
+radio_play_found: Radio found, tuning in…
+radio_play_not_found: Radio not found, try again.
+radio_play_required: Radio name is required
+radio_search_command_description: Search radio stations
+radio_search_name_command_description: Search by name
+radio_search_countrycode_command_description: Search by country code
+radio_search_name_input_description: Radio name to search
+radio_search_countrycode_input_description: Country code to search
+radio_random_command_description: Selects a random station
+radio_countrycodes_command_description: Get country codes
+radio_unknown_message: Unknown message
+flowery_tts_custom_name: FloweryTTS - TTS message
+radio_countrycodes_more: "... and %d more country codes. Use /radio search countrycode to explore!"

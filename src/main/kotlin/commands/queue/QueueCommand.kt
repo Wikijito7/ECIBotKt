@@ -10,11 +10,12 @@ import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.message.EmbedBuilder
 import es.wokis.commands.Command
-import es.wokis.commands.CommandsEnum
+import es.wokis.commands.CommandName
 import es.wokis.commands.Component
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.commons.createPaginatedEmbedMessage
 import es.wokis.localization.LocalizationKeys
+import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getDisplayTrackName
@@ -27,7 +28,7 @@ class QueueCommand(
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         commandBuilder.apply {
             input(
-                name = CommandsEnum.QUEUE.commandName,
+                name = CommandName.Queue.commandName,
                 description = localizationService.getString(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION)
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION)
@@ -94,7 +95,7 @@ class QueueCommand(
         )
     }
 
-    private fun getDisplayQueue(queue: List<AudioTrack>): List<String> {
+    private fun getDisplayQueue(queue: List<TrackBO>): List<String> {
         if (queue.isEmpty()) return emptyList()
         var currentString = queue.first().getDisplayTrackName()
         val displayQueue: MutableList<String> = mutableListOf()

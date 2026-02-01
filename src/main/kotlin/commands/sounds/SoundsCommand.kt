@@ -9,7 +9,7 @@ import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.message.EmbedBuilder
 import es.wokis.commands.Command
-import es.wokis.commands.CommandsEnum
+import es.wokis.commands.CommandName
 import es.wokis.commands.Component
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.commons.createPaginatedEmbedMessage
@@ -29,7 +29,7 @@ class SoundsCommand(
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         commandBuilder.apply {
             input(
-                name = CommandsEnum.SOUNDS.commandName,
+                name = CommandName.Sounds.commandName,
                 description = localizationService.getString(LocalizationKeys.SOUNDS_DESCRIPTION)
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SOUNDS_DESCRIPTION)

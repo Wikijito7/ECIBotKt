@@ -2,6 +2,7 @@ package es.wokis.data.error
 
 import es.wokis.data.response.ErrorType
 import es.wokis.data.response.RemoteResponse
+import es.wokis.utils.Log
 import io.ktor.client.plugins.*
 import java.net.ConnectException
 import java.net.SocketTimeoutException
@@ -22,21 +23,24 @@ object ErrorManagementWrapper {
             manageError(exc)
         }
 
-    private fun <T> manageError(exc: Exception): RemoteResponse.Error<T> = RemoteResponse.Error(
-        when (exc) {
-            is RedirectResponseException -> ErrorType.ServerError(exc.response.status.value, exc.message)
+    private fun <T> manageError(exc: Exception): RemoteResponse.Error<T> {
+        Log.error("Error in RemoteResponse: ${exc.javaClass.simpleName}: ${exc.message}", exc)
+        return RemoteResponse.Error(
+            when (exc) {
+                is RedirectResponseException -> ErrorType.ServerError(exc.response.status.value, exc.message)
 
-            is ClientRequestException -> ErrorType.RequestError(exc.response.status.value, exc.message)
+                is ClientRequestException -> ErrorType.RequestError(exc.response.status.value, exc.message)
 
-            is ServerResponseException -> ErrorType.ServerError(exc.response.status.value, exc.message)
+                is ServerResponseException -> ErrorType.ServerError(exc.response.status.value, exc.message)
 
-            is SocketTimeoutException, is UnknownHostException, is ConnectException -> ErrorType.NoConnectionError(
-                "No connection available"
-            )
+                is SocketTimeoutException, is UnknownHostException, is ConnectException -> ErrorType.NoConnectionError(
+                    "No connection available"
+                )
 
-            is IllegalFormatException -> ErrorType.DataParseError("Error parsing data")
+                is IllegalFormatException -> ErrorType.DataParseError("Error parsing data")
 
-            else -> ErrorType.UnknownError(exc, "Unknown error")
-        }
-    )
+                else -> ErrorType.UnknownError(exc, "Unknown error")
+            }
+        )
+    }
 }

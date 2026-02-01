@@ -5,7 +5,7 @@ import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.Command
-import es.wokis.commands.CommandsEnum
+import es.wokis.commands.CommandName
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
@@ -19,7 +19,7 @@ class SkipCommand(
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         commandBuilder.apply {
             input(
-                name = CommandsEnum.SKIP.commandName,
+                name = CommandName.Skip.commandName,
                 description = localizationService.getString(key = LocalizationKeys.SKIP_COMMAND_DESCRIPTION)
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SKIP_COMMAND_DESCRIPTION)

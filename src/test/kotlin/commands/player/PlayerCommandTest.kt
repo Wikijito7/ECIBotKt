@@ -7,14 +7,26 @@ import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteract
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
+import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+
+private fun createMockTrackBO(): TrackBO {
+    val audioTrack = mockk<AudioTrack> {
+        every { info } returns AudioTrackInfo("title", "author", 0L, "", true, "", "", "")
+        every { duration } returns 0L
+        every { position } returns 0L
+    }
+    return TrackBO(audioTrack = audioTrack)
+}
 
 class PlayerCommandTest {
 
@@ -55,11 +67,7 @@ class PlayerCommandTest {
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             every { getQueue() } returns listOf()
-            every { getCurrentPlayingTrack() } returns mockk {
-                every { info } returns mockk()
-                every { duration } returns 0L
-                every { position } returns 0L
-            }
+            every { getCurrentPlayingTrack() } returns createMockTrackBO()
             every { isPaused() } returns false
             justRun { savePlayerMessage(any()) }
         }
@@ -107,11 +115,7 @@ class PlayerCommandTest {
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             every { getQueue() } returns listOf()
-            every { getCurrentPlayingTrack() } returns mockk {
-                every { info } returns mockk()
-                every { duration } returns 0L
-                every { position } returns 0L
-            }
+            every { getCurrentPlayingTrack() } returns createMockTrackBO()
             every { isPaused() } returns false
             justRun { resume() }
         }
@@ -160,11 +164,7 @@ class PlayerCommandTest {
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             every { getQueue() } returns listOf()
-            every { getCurrentPlayingTrack() } returns mockk {
-                every { info } returns mockk()
-                every { duration } returns 0L
-                every { position } returns 0L
-            }
+            every { getCurrentPlayingTrack() } returns createMockTrackBO()
             every { isPaused() } returns false
             justRun { skip() }
         }
@@ -213,11 +213,7 @@ class PlayerCommandTest {
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             every { getQueue() } returns listOf()
-            every { getCurrentPlayingTrack() } returns mockk {
-                every { info } returns mockk()
-                every { duration } returns 0L
-                every { position } returns 0L
-            }
+            every { getCurrentPlayingTrack() } returns createMockTrackBO()
             every { isPaused() } returns false
             justRun { shuffle() }
         }
@@ -266,11 +262,7 @@ class PlayerCommandTest {
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             every { getQueue() } returns listOf()
-            every { getCurrentPlayingTrack() } returns mockk {
-                every { info } returns mockk()
-                every { duration } returns 0L
-                every { position } returns 0L
-            }
+            every { getCurrentPlayingTrack() } returns createMockTrackBO()
             every { isPaused() } returns false
             coJustRun { stop() }
         }
@@ -322,11 +314,7 @@ class PlayerCommandTest {
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             every { getQueue() } returns listOf()
-            every { getCurrentPlayingTrack() } returns mockk {
-                every { info } returns mockk()
-                every { duration } returns 0L
-                every { position } returns 0L
-            }
+            every { getCurrentPlayingTrack() } returns createMockTrackBO()
             every { isPaused() } returns false
             justRun { pause() }
         }

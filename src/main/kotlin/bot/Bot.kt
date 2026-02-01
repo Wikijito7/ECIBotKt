@@ -7,6 +7,7 @@ import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.entity.Message
 import dev.kord.core.event.gateway.ReadyEvent
+import dev.kord.core.event.interaction.AutoCompleteInteractionCreateEvent
 import dev.kord.core.event.interaction.ButtonInteractionCreateEvent
 import dev.kord.core.event.interaction.ChatInputCommandInteractionCreateEvent
 import dev.kord.core.event.message.MessageCreateEvent
@@ -46,8 +47,9 @@ class Bot(
 
     private suspend fun setUpCommands(bot: Kord) {
         bot.createGlobalApplicationCommands {
-            commandHandlerService.onRegisterCommand(this)
+            commandHandlerService.onRegisterSimpleCommand(this)
         }.collect()
+        commandHandlerService.onRegisterGroupCommand(bot)
     }
 
     private fun setUpEvents(bot: Kord) {
@@ -75,6 +77,10 @@ class Bot(
         bot.on<ButtonInteractionCreateEvent> {
             interaction.deferPublicMessageUpdate()
             commandHandlerService.onInteract(interaction)
+        }
+
+        bot.on<AutoCompleteInteractionCreateEvent> {
+            commandHandlerService.onAutocomplete(interaction)
         }
     }
 

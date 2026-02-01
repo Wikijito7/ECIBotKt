@@ -6,21 +6,27 @@ import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
-import es.wokis.commands.CommandsEnum
+import es.wokis.commands.CommandName
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
+import dev.kord.core.Kord
+import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import es.wokis.commands.player.PlayerCommand
+import es.wokis.commands.radio.RadioGroupCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.tts.TTSCommand
+import es.wokis.constants.CUSTOM_COMPONENT_SEPARATOR
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 
 interface CommandHandlerService {
 
-    fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder)
+    fun onRegisterSimpleCommand(commandBuilder: GlobalMultiApplicationCommandBuilder)
+
+    suspend fun onRegisterGroupCommand(kord: Kord)
 
     suspend fun onExecute(
         interaction: ChatInputCommandInteraction,
@@ -28,6 +34,8 @@ interface CommandHandlerService {
     )
 
     suspend fun onInteract(interaction: ButtonInteraction)
+
+    suspend fun onAutocomplete(interaction: AutoCompleteInteraction)
 }
 
 class CommandHandlerServiceImpl(
@@ -38,10 +46,11 @@ class CommandHandlerServiceImpl(
     private val ttsCommand: TTSCommand,
     private val playerCommand: PlayerCommand,
     private val soundsCommand: SoundsCommand,
+    private val radioGroupCommand: RadioGroupCommand,
     private val localizationService: LocalizationService
 ) : CommandHandlerService {
 
-    override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
+    override fun onRegisterSimpleCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         playCommand.onRegisterCommand(commandBuilder)
         queueCommand.onRegisterCommand(commandBuilder)
         skipCommand.onRegisterCommand(commandBuilder)
@@ -51,34 +60,31 @@ class CommandHandlerServiceImpl(
         soundsCommand.onRegisterCommand(commandBuilder)
     }
 
+    override suspend fun onRegisterGroupCommand(kord: Kord) {
+        radioGroupCommand.onRegisterCommand(kord)
+    }
+
     override suspend fun onExecute(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val commandName = interaction.command.rootName
-        when (CommandsEnum.forCommandName(commandName)) {
-            CommandsEnum.PLAY -> playCommand.onExecute(interaction, response)
-
-            CommandsEnum.QUEUE -> queueCommand.onExecute(interaction, response)
-
-            CommandsEnum.SKIP -> skipCommand.onExecute(interaction, response)
-
-            CommandsEnum.SHUFFLE -> shuffleCommand.onExecute(interaction, response)
-
-            CommandsEnum.TTS -> ttsCommand.onExecute(interaction, response)
-
-            CommandsEnum.PLAYER -> playerCommand.onExecute(interaction, response)
-
-            CommandsEnum.SOUNDS -> soundsCommand.onExecute(interaction, response)
-
-            null -> respondUnknownCommand(response, interaction.guildLocale, commandName)
+        when (val commandName = interaction.command.rootName) {
+            CommandName.Play.commandName -> playCommand.onExecute(interaction, response)
+            CommandName.Queue.commandName -> queueCommand.onExecute(interaction, response)
+            CommandName.Skip.commandName -> skipCommand.onExecute(interaction, response)
+            CommandName.Shuffle.commandName -> shuffleCommand.onExecute(interaction, response)
+            CommandName.Tts.commandName -> ttsCommand.onExecute(interaction, response)
+            CommandName.Player.commandName -> playerCommand.onExecute(interaction, response)
+            CommandName.Sounds.commandName -> soundsCommand.onExecute(interaction, response)
+            CommandName.Radio.commandName -> radioGroupCommand.onExecute(interaction, response)
+            else -> respondUnknownCommand(response, interaction.guildLocale, commandName)
         }
     }
 
     override suspend fun onInteract(
         interaction: ButtonInteraction
     ) {
-        val customId = interaction.component.customId ?: return
+        val customId = interaction.component.customId?.split(CUSTOM_COMPONENT_SEPARATOR)?.firstOrNull() ?: return
         when (ComponentsEnum.forCustomId(customId)) {
             ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
 
@@ -87,8 +93,17 @@ class CommandHandlerServiceImpl(
 
             ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
 
+            ComponentsEnum.RADIO_LIST_NEXT, ComponentsEnum.RADIO_LIST_PREVIOUS, ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
+            ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
+            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS, ComponentsEnum.RADIO_COUNTRYCODES_NEXT,
+            ComponentsEnum.RADIO_COUNTRYCODES_PREVIOUS -> radioGroupCommand.onInteract(interaction)
+
             null -> Unit
         }
+    }
+
+    override suspend fun onAutocomplete(interaction: AutoCompleteInteraction) {
+        radioGroupCommand.onAutoComplete(interaction)
     }
 
     private suspend fun respondUnknownCommand(

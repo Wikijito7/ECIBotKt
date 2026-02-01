@@ -8,7 +8,7 @@ import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.interaction.string
-import es.wokis.commands.CommandsEnum
+import es.wokis.commands.CommandName
 import es.wokis.commands.tts.TTSCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
@@ -58,7 +58,7 @@ class TTSCommandTest {
         // Then
         verify(exactly = 1) {
             commandBuilder.input(
-                name = CommandsEnum.TTS.commandName,
+                name = CommandName.Tts.commandName,
                 description = localizationService.getString(key = LocalizationKeys.TTS_COMMAND_DESCRIPTION)
             ) {
                 descriptionLocalizations =
