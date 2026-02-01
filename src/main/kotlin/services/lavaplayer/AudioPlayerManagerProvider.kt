@@ -4,6 +4,7 @@ import com.github.topi314.lavasrc.deezer.DeezerAudioSourceManager
 import com.github.topi314.lavasrc.flowerytts.FloweryTTSSourceManager
 import com.github.topi314.lavasrc.mirror.DefaultMirroringAudioTrackResolver
 import com.github.topi314.lavasrc.spotify.SpotifySourceManager
+import com.github.topi314.lavasrc.tidal.TidalSourceManager
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers
@@ -66,6 +67,16 @@ class AudioPlayerManagerProvider(
                         setPreferAnonymousToken(false)
                     }
                 }
+            )
+        }
+        if (configService.config.tidal.enabled) {
+            this.registerSourceManager(
+                TidalSourceManager(
+                    configService.config.tidal.countryCode,
+                    { this },
+                    DefaultMirroringAudioTrackResolver(null),
+                    configService.config.tidal.token
+                )
             )
         }
         this.registerSourceManager(
