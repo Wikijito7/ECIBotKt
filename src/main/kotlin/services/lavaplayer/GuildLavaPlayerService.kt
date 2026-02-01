@@ -1,3 +1,5 @@
+@file:OptIn(KordVoice::class)
+
 package es.wokis.services.lavaplayer
 
 import com.github.topi314.lavasrc.ExtendedAudioPlaylist
@@ -33,7 +35,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.util.*
 import java.util.concurrent.TimeUnit
-import javax.sound.midi.Track
 import kotlin.concurrent.schedule
 import kotlin.time.Duration
 
@@ -54,7 +55,6 @@ class GuildLavaPlayerService(
     private val localizationService: LocalizationService
 ) : AudioEventAdapter() {
 
-    @OptIn(KordVoice::class)
     private var voiceConnection: VoiceConnection? = null
     private val coroutineScope = createCoroutineScope(TAG, appDispatchers)
     private val queue: MutableList<TrackBO> = mutableListOf()
@@ -69,6 +69,7 @@ class GuildLavaPlayerService(
     )
     private var isRetrying = false
     private var connectingToVoiceChannel: Boolean = false
+    private var isReconnecting: Boolean = false
     private var playerMessage: Message? = null
     private var seekTimerJob: Job? = null
     private val updateSeekChannel = Channel<Unit>(Channel.CONFLATED)
@@ -207,6 +208,7 @@ class GuildLavaPlayerService(
     }
 
     suspend fun handleDisconnectEvent() {
+        if (isReconnecting) return
         isRetrying = false
         queue.clear()
         player.stopTrack()
@@ -383,7 +385,17 @@ class GuildLavaPlayerService(
         }
     }
 
-    @OptIn(KordVoice::class)
+    fun isConnected(): Boolean = voiceConnection != null
+
+    suspend fun reconnect() {
+        if (isReconnecting || !isConnected()) return
+        isReconnecting = true
+        resetVoiceConnection()
+        delay(500)
+        connectToVoiceChannel()
+        isReconnecting = false
+    }
+
     private suspend fun connectToVoiceChannel() {
         if (voiceConnection == null && connectingToVoiceChannel.not()) {
             connectingToVoiceChannel = true
@@ -413,7 +425,6 @@ class GuildLavaPlayerService(
         seekTimerJob = null
     }
 
-    @OptIn(KordVoice::class)
     private suspend fun resetVoiceConnection() {
         voiceConnection?.leave()
         voiceConnection = null

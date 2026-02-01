@@ -1,6 +1,5 @@
 package es.wokis.commands.player
 
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -74,6 +73,7 @@ class PlayerCommand(
             ComponentsEnum.PLAYER_SKIP.customId -> lavaPlayerService?.skip()
             ComponentsEnum.PLAYER_DISCONNECT.customId -> lavaPlayerService?.stop()
             ComponentsEnum.PLAYER_SHUFFLE.customId -> lavaPlayerService?.shuffle()
+            ComponentsEnum.PLAYER_RECONNECT.customId -> lavaPlayerService?.reconnect()
             else -> return
         }
         val currentTrack = lavaPlayerService?.getCurrentPlayingTrack()

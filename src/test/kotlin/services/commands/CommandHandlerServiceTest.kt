@@ -13,6 +13,7 @@ import es.wokis.commands.radio.RadioGroupCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sounds.SoundsCommand
+import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.tts.TTSCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.localization.LocalizationService
@@ -29,6 +30,7 @@ class CommandHandlerServiceTest {
     private val ttsCommand: TTSCommand = mockk()
     private val playerCommand: PlayerCommand = mockk()
     private val soundsCommand: SoundsCommand = mockk()
+    private val reconnectCommand: ReconnectCommand = mockk()
     private val localizationService: LocalizationService = mockk()
     private val radioGroupCommand: RadioGroupCommand = mockk()
 
@@ -41,7 +43,8 @@ class CommandHandlerServiceTest {
         ttsCommand = ttsCommand,
         playerCommand = playerCommand,
         soundsCommand = soundsCommand,
-        radioGroupCommand = radioGroupCommand
+        radioGroupCommand = radioGroupCommand,
+        reconnectCommand = reconnectCommand
     )
 
     @Test
@@ -59,6 +62,7 @@ class CommandHandlerServiceTest {
         justRun { ttsCommand.onRegisterCommand(any()) }
         justRun { playerCommand.onRegisterCommand(any()) }
         justRun { soundsCommand.onRegisterCommand(any()) }
+        justRun { reconnectCommand.onRegisterCommand(any()) }
 
         // When
         commandHandlerService.onRegisterSimpleCommand(commandBuilder)
@@ -72,6 +76,7 @@ class CommandHandlerServiceTest {
             ttsCommand.onRegisterCommand(commandBuilder)
             playerCommand.onRegisterCommand(commandBuilder)
             soundsCommand.onRegisterCommand(commandBuilder)
+            reconnectCommand.onRegisterCommand(commandBuilder)
         }
     }
 
@@ -219,6 +224,27 @@ class CommandHandlerServiceTest {
         // Then
         coVerify(exactly = 1) {
             soundsCommand.onExecute(interaction, response)
+        }
+    }
+
+    @Test
+    fun `Given reconnect command When onExecute is called Then execute ReconnectCommand`() = runTest {
+        // Given
+        val commandName = CommandName.Reconnect.commandName
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { command } returns mockk {
+                every { rootName } returns commandName
+            }
+        }
+        val response: DeferredPublicMessageInteractionResponseBehavior = mockk()
+        coJustRun { reconnectCommand.onExecute(any(), any()) }
+
+        // When
+        commandHandlerService.onExecute(interaction, response)
+
+        // Then
+        coVerify(exactly = 1) {
+            reconnectCommand.onExecute(interaction, response)
         }
     }
 

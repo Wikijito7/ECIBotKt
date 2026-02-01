@@ -42,12 +42,16 @@ player_resume: Resume
 player_pause: Pause
 player_skip: Skip
 player_shuffle: Shuffle
+player_reconnect: Reconnect
 player_disconnect: Disconnect
 player_queue_tracks_remaining: and another %d tracks
 player_duration_remaining: %s remaining
 sounds_description: List all local sounds
 sounds_embed_title: Local sounds
 sounds_embed_description: There are %d sounds available
+reconnect_command_description: Reconnects to the current voice channel
+reconnect_success: Reconnected to the voice channel
+reconnect_not_connected: I'm not connected to any voice channel to reconnect
 radio_random_searching: Searching for a random radio station...
 radio_random_error: Could not find a random radio station. Please try again later.
 radio_countrycodes_list: Available country codes: %s

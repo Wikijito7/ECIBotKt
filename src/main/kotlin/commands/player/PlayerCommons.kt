@@ -1,7 +1,6 @@
 package es.wokis.commands.player
 
 import com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import dev.kord.common.Color
 import dev.kord.common.Locale
 import dev.kord.common.entity.ButtonStyle
@@ -128,6 +127,13 @@ private fun createPlayerComponents(localizationService: LocalizationService, loc
             ) {
                 label = localizationService.getString(key = LocalizationKeys.PLAYER_SHUFFLE, locale = locale)
                 emoji = DiscordPartialEmoji(name = "\uD83D\uDD00")
+            }
+            interactionButton(
+                style = ButtonStyle.Secondary,
+                customId = ComponentsEnum.PLAYER_RECONNECT.customId
+            ) {
+                label = localizationService.getString(key = LocalizationKeys.PLAYER_RECONNECT, locale = locale)
+                emoji = DiscordPartialEmoji(name = "🔄")
             }
             interactionButton(
                 style = ButtonStyle.Danger,

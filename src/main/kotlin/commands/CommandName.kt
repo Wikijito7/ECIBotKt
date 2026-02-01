@@ -8,6 +8,7 @@ sealed class CommandName(val commandName: String) {
     data object Tts : CommandName("tts")
     data object Player : CommandName("player")
     data object Sounds : CommandName("sounds")
+    data object Reconnect : CommandName("reconnect")
     data object Radio : CommandName("radio") {
         data object Play : CommandName("play")
         data object List : CommandName("list")

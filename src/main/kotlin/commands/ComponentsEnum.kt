@@ -8,6 +8,7 @@ enum class ComponentsEnum(val customId: String) {
     PLAYER_SKIP("player_skip"),
     PLAYER_DISCONNECT("player_disconnect"),
     PLAYER_SHUFFLE("player_shuffle"),
+    PLAYER_RECONNECT("player_reconnect"),
     SOUNDS_PREVIOUS("sounds_previous"),
     SOUNDS_NEXT("sounds_next"),
     RADIO_LIST_NEXT("radio_list_next"),

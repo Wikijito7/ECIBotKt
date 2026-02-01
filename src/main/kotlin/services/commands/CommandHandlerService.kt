@@ -14,6 +14,7 @@ import dev.kord.core.Kord
 import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.commands.radio.RadioGroupCommand
+import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sounds.SoundsCommand
@@ -46,6 +47,7 @@ class CommandHandlerServiceImpl(
     private val ttsCommand: TTSCommand,
     private val playerCommand: PlayerCommand,
     private val soundsCommand: SoundsCommand,
+    private val reconnectCommand: ReconnectCommand,
     private val radioGroupCommand: RadioGroupCommand,
     private val localizationService: LocalizationService
 ) : CommandHandlerService {
@@ -58,6 +60,7 @@ class CommandHandlerServiceImpl(
         ttsCommand.onRegisterCommand(commandBuilder)
         playerCommand.onRegisterCommand(commandBuilder)
         soundsCommand.onRegisterCommand(commandBuilder)
+        reconnectCommand.onRegisterCommand(commandBuilder)
     }
 
     override suspend fun onRegisterGroupCommand(kord: Kord) {
@@ -77,6 +80,7 @@ class CommandHandlerServiceImpl(
             CommandName.Player.commandName -> playerCommand.onExecute(interaction, response)
             CommandName.Sounds.commandName -> soundsCommand.onExecute(interaction, response)
             CommandName.Radio.commandName -> radioGroupCommand.onExecute(interaction, response)
+            CommandName.Reconnect.commandName -> reconnectCommand.onExecute(interaction, response)
             else -> respondUnknownCommand(response, interaction.guildLocale, commandName)
         }
     }
@@ -89,7 +93,7 @@ class CommandHandlerServiceImpl(
             ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
 
             ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
-            ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE -> playerCommand.onInteract(interaction)
+            ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> playerCommand.onInteract(interaction)
 
             ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
 
