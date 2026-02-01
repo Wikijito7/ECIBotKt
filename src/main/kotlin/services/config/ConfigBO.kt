@@ -37,6 +37,8 @@ data class DatabaseConfig(
 
 @Serializable
 data class YouTubeConfig(
+    @SerialName("enabled")
+    val enabled: Boolean,
     @SerialName("oauth2_token")
     val oauth2Token: String?,
     @SerialName("po_token")
