@@ -1,5 +1,6 @@
 package es.wokis.commands.player
 
+import dev.kord.common.Locale
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -12,12 +13,15 @@ import es.wokis.commands.CommandName
 import es.wokis.commands.Component
 import es.wokis.commands.ComponentsEnum
 import es.wokis.localization.LocalizationKeys
+import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.player.PlayerChannelService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getGuildName
 import es.wokis.utils.orDefaultLocale
+import services.player.result.PlayerChannelResult
+import kotlin.toString
 
 class PlayerCommand(
     private val localizationService: LocalizationService,
@@ -59,52 +63,74 @@ class PlayerCommand(
             }
 
             if (playerMessageResult.isSuccess) {
-                val result = playerMessageResult.getOrNull()
-                result?.message?.let {
-                    lavaPlayerService.savePlayerMessage(it)
-                }
-                // Show appropriate message based on whether channel was created or already existed
-                if (result?.isNewChannel == true) {
-                    // Newly created channel
-                    response.respond {
-                        content = localizationService.getStringFormat(
-                            LocalizationKeys.PLAYER_CHANNEL_CREATED,
-                            locale,
-                            result.channel.id.toString()
-                        )
-                    }
-                } else {
-                    // Using existing channel
-                    response.respond {
-                        content = localizationService.getStringFormat(
-                            LocalizationKeys.PLAYER_SHOWN_ON_EXISTING_CHANNEL,
-                            locale,
-                            result?.channel?.id?.toString() ?: ""
-                        )
-                    }
-                }
-            } else {
-                val warningMessage = localizationService.getString(
-                    LocalizationKeys.PLAYER_CHANNEL_CREATION_FAILED,
-                    locale
+                onPlayerChannelFoundOrCreatedSuccessfully(
+                    playerMessageResult = playerMessageResult,
+                    lavaPlayerService = lavaPlayerService,
+                    response = response,
+                    locale = locale
                 )
-                response.respond {
-                    content = warningMessage
-                    createPlayerEmbed(
-                        guildName = guildName,
-                        localizationService = localizationService,
-                        locale = locale,
-                        currentTrack = currentTrack,
-                        queue = queue,
-                        isPaused = lavaPlayerService.isPaused()
-                    )
-                }.also {
-                    lavaPlayerService.savePlayerMessage(it.message)
-                }
+            } else {
+                onPlayerChannelSearchFailed(
+                    locale = locale,
+                    response = response,
+                    guildName = guildName,
+                    currentTrack = currentTrack,
+                    queue = queue,
+                    lavaPlayerService = lavaPlayerService
+                )
             }
         } catch (exc: IllegalStateException) {
             response.respond {
                 content = exc.message
+            }
+        }
+    }
+
+    private suspend fun onPlayerChannelSearchFailed(
+        locale: Locale,
+        response: DeferredPublicMessageInteractionResponseBehavior,
+        guildName: String,
+        currentTrack: TrackBO?,
+        queue: List<TrackBO>,
+        lavaPlayerService: GuildLavaPlayerService
+    ) {
+        val warningMessage = localizationService.getString(
+            LocalizationKeys.PLAYER_CHANNEL_CREATION_FAILED,
+            locale
+        )
+        response.respond {
+            content = warningMessage
+            createPlayerEmbed(
+                guildName = guildName,
+                localizationService = localizationService,
+                locale = locale,
+                currentTrack = currentTrack,
+                queue = queue,
+                isPaused = lavaPlayerService.isPaused()
+            )
+        }.also {
+            lavaPlayerService.savePlayerMessage(it.message)
+        }
+    }
+
+    private suspend fun onPlayerChannelFoundOrCreatedSuccessfully(
+        playerMessageResult: Result<PlayerChannelResult>,
+        lavaPlayerService: GuildLavaPlayerService,
+        response: DeferredPublicMessageInteractionResponseBehavior,
+        locale: Locale
+    ) {
+        playerMessageResult.getOrNull()?.let { result ->
+            lavaPlayerService.savePlayerMessage(result.message)
+            response.respond {
+                content = localizationService.getStringFormat(
+                    key = if (result.isNewChannel) {
+                        LocalizationKeys.PLAYER_CHANNEL_CREATED
+                    } else {
+                        LocalizationKeys.PLAYER_SHOWN_ON_EXISTING_CHANNEL
+                    },
+                    locale = locale,
+                    arguments = arrayOf(result.channel.id)
+                )
             }
         }
     }
