@@ -117,7 +117,7 @@ class PlayerChannelService {
         try {
             delete()
         } catch (e: Exception) {
-            Log.error("$TAG: Failed to delete message ${id}: ${e.message}")
+            Log.error("$TAG: Failed to delete message $id: ${e.message}")
         }
     }
 }
