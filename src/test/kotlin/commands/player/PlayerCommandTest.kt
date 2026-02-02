@@ -4,10 +4,8 @@ import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
-import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.TextChannel
-
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
@@ -18,12 +16,12 @@ import es.wokis.commands.player.PlayerCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
-import es.wokis.services.player.PlayerChannelResult
 import es.wokis.services.player.PlayerChannelService
 import es.wokis.services.queue.GuildQueueService
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import services.player.result.PlayerChannelResult
 import kotlin.test.Ignore
 
 private fun createMockTrackBO(): TrackBO {
@@ -48,7 +46,6 @@ class PlayerCommandTest {
     )
 
     @Test
-    @Ignore("Player channel service mocking is complex - test manually")
     fun `Given interaction When onExecute Then respond with player message`() = runTest {
         // Given
         val mockKord: Kord = mockk {
@@ -86,7 +83,11 @@ class PlayerCommandTest {
             every { id } returns Snowflake(123456789)
         }
 
-        val playerChannelResult = PlayerChannelResult(message = mockMessage, channel = mockChannel, isNewChannel = true)
+        val playerChannelResult = PlayerChannelResult(
+            message = mockMessage,
+            channel = mockChannel,
+            isNewChannel = true
+        )
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
         coEvery { playerChannelService.sendPlayerMessage(any(), any()) } returns Result.success(playerChannelResult)
@@ -104,62 +105,6 @@ class PlayerCommandTest {
 
         coVerify(exactly = 1) {
             playerChannelService.sendPlayerMessage(any(), any())
-        }
-    }
-
-    @Test
-    @Ignore("Player channel service mocking is complex - test manually")
-    fun `Given player channel creation fails When onExecute Then fallback to original channel`() = runTest {
-        // Given
-        val mockKord: Kord = mockk {
-            every { resources } returns mockk {
-                every { defaultStrategy } returns EntitySupplyStrategy.rest
-            }
-            every { defaultSupplier } returns mockk()
-            coEvery { getGuild(any()) } returns mockk {
-                every { name } returns "TestGuild"
-            }
-            every { rest } returns mockk {
-                every { interaction } returns mockk(relaxed = true)
-            }
-        }
-        val interaction = mockk<ChatInputCommandInteraction> {
-            every { data } returns mockk {
-                every { guildId.value } returns Snowflake(123)
-            }
-            every { kord } returns mockKord
-            every { guildLocale } returns Locale.BULGARIAN
-        }
-        val response = mockk<DeferredPublicMessageInteractionResponseBehavior> {
-            every { kord } returns mockKord
-            every { applicationId } returns Snowflake(456)
-            every { token } returns "testToken"
-        }
-        val guildLavaPlayerService: GuildLavaPlayerService = mockk {
-            every { getQueue() } returns listOf()
-            every { getCurrentPlayingTrack() } returns createMockTrackBO()
-            every { isPaused() } returns false
-            justRun { savePlayerMessage(any()) }
-        }
-
-        coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
-        coEvery { playerChannelService.sendPlayerMessage(any(), any()) } returns Result.failure(Exception("Channel creation failed"))
-        coEvery { response.respond(any()) } returns mockk(relaxed = true)
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
-
-        // When
-        playerCommand.onExecute(interaction, response)
-
-        // Then
-        verify(exactly = 1) {
-            guildLavaPlayerService.getQueue()
-            guildLavaPlayerService.getCurrentPlayingTrack()
-        }
-
-        coVerify(exactly = 1) {
-            playerChannelService.sendPlayerMessage(any(), any())
-            response.respond(any())
         }
     }
 
