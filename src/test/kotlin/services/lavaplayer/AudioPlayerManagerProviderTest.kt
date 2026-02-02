@@ -27,6 +27,7 @@ class AudioPlayerManagerProviderTest {
         every { configService.config.tidal.enabled } returns true
         every { configService.config.tidal.countryCode } returns "ES"
         every { configService.config.tidal.token } returns "altoke"
+        every { configService.config.youtube.enabled } returns true
         every { configService.config.youtube.poToken } returns null
         every { configService.config.youtube.visitorData } returns null
         every { configService.config.youtube.remoteCipherUrl } returns null

@@ -8,6 +8,7 @@
     "database": "db_database"
   },
   "youtube": {
+    "enabled": false,
     "oauth2_token": null,
     "po_token": null,
     "visitor_data": null,

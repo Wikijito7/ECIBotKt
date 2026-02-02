@@ -42,12 +42,16 @@ player_resume: Reanudar
 player_pause: Pausar
 player_skip: Saltar
 player_shuffle: Reordenar
+player_reconnect: Reconectar
 player_disconnect: Desconectar
 player_queue_tracks_remaining: y otras %d pistas de audio
 player_duration_remaining: %s restante
 sounds_description: Lista todos los sonidos locales
 sounds_embed_title: Sonidos locales
 sounds_embed_description: Hay %d sonidos disponibles
+reconnect_command_description: Se vuelve a conectar al canal de voz actual
+reconnect_success: Se ha vuelto a conectar al canal de voz
+reconnect_not_connected: No estoy conectado a ningún canal de voz para reconectar
 radio_random_searching: Buscando una emisora de radio aleatoria...
 radio_random_error: No se pudo encontrar una emisora de radio aleatoria. Inténtalo de nuevo más tarde.
 radio_countrycodes_list: Códigos de país disponibles: %s

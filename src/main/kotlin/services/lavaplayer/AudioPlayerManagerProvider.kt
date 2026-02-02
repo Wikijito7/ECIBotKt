@@ -3,6 +3,7 @@ package es.wokis.services.lavaplayer
 import com.github.topi314.lavasrc.deezer.DeezerAudioSourceManager
 import com.github.topi314.lavasrc.flowerytts.FloweryTTSSourceManager
 import com.github.topi314.lavasrc.mirror.DefaultMirroringAudioTrackResolver
+import com.github.topi314.lavasrc.mirror.MirroringAudioSourceManager
 import com.github.topi314.lavasrc.spotify.SpotifySourceManager
 import com.github.topi314.lavasrc.tidal.TidalSourceManager
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
@@ -16,7 +17,6 @@ import dev.lavalink.youtube.clients.Web
 import dev.lavalink.youtube.clients.WebWithThumbnail
 import es.wokis.services.config.ConfigService
 import es.wokis.utils.takeIfNotEmpty
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager as DeprecatedYoutubeAudioSourceManager
 
 private const val DEFAULT_TTS_VOICE = "4ba7bd1b-cb5f-5c3f-9e1c-9ee8be2b0bdd"
 
@@ -25,57 +25,70 @@ class AudioPlayerManagerProvider(
 ) {
 
     fun createAudioPlayerManager(): AudioPlayerManager = DefaultAudioPlayerManager().apply {
-        val youtubeOptions: YoutubeSourceOptions = YoutubeSourceOptions()
-            .apply {
-                if (configService.config.youtube.remoteCipherUrl != null) {
-                    setRemoteCipher(configService.config.youtube.remoteCipherUrl, configService.config.youtube.remoteCipherPassword.orEmpty(), null)
+        val config = configService.config
+        val trackResolverProviders = buildList {
+            if (config.deezer.enabled) {
+                add("dzisrc:" + MirroringAudioSourceManager.ISRC_PATTERN)
+                add("dzsearch:" + MirroringAudioSourceManager.QUERY_PATTERN)
+            }
+            if (config.youtube.enabled) {
+                add("ytsearch:\"" + MirroringAudioSourceManager.ISRC_PATTERN + "\"")
+                add("ytsearch:" + MirroringAudioSourceManager.QUERY_PATTERN)
+            }
+        }.toTypedArray()
+        val mirroringAudioTrackResolver = DefaultMirroringAudioTrackResolver(trackResolverProviders)
+        if (config.youtube.enabled) {
+            val youtubeOptions = YoutubeSourceOptions().apply {
+                if (config.youtube.remoteCipherUrl != null) {
+                    setRemoteCipher(
+                        config.youtube.remoteCipherUrl,
+                        config.youtube.remoteCipherPassword.orEmpty(),
+                        null
+                    )
                 }
             }
-        val ytSourceManager = YoutubeAudioSourceManager(youtubeOptions, TvHtml5EmbeddedWithThumbnail(), WebWithThumbnail(), MusicWithThumbnail()).apply {
-            setPlaylistPageCount(Integer.MAX_VALUE)
-            useOauth2(configService.config.youtube.oauth2Token, true)
-            Web.setPoTokenAndVisitorData(
-                configService.config.youtube.poToken,
-                configService.config.youtube.visitorData
+            this.registerSourceManager(
+                YoutubeAudioSourceManager(youtubeOptions, TvHtml5EmbeddedWithThumbnail(), WebWithThumbnail(), MusicWithThumbnail()).apply {
+                    setPlaylistPageCount(Integer.MAX_VALUE)
+                    useOauth2(config.youtube.oauth2Token, true)
+                    Web.setPoTokenAndVisitorData(
+                        config.youtube.poToken,
+                        config.youtube.visitorData
+                    )
+                }
             )
         }
-        this.registerSourceManager(ytSourceManager)
-        if (configService.config.deezer.enabled) {
+        if (config.deezer.enabled) {
             this.registerSourceManager(
                 DeezerAudioSourceManager(
-                    configService.config.deezer.masterDecryptionKey,
-                    configService.config.deezer.arlToken
+                    config.deezer.masterDecryptionKey,
+                    config.deezer.arlToken
                 )
             )
         }
-        if (configService.config.spotify.enabled) {
+        if (config.spotify.enabled) {
             this.registerSourceManager(
                 SpotifySourceManager(
-                    /* clientId = */
-                    configService.config.spotify.clientId,
-                    /* clientSecret = */
-                    configService.config.spotify.clientSecret,
-                    /* countryCode = */
+                    config.spotify.clientId,
+                    config.spotify.clientSecret,
                     null,
-                    /* audioPlayerManager = */
                     this,
-                    /* mirroringAudioTrackResolver = */
-                    DefaultMirroringAudioTrackResolver(null)
+                    mirroringAudioTrackResolver
                 ).apply {
-                    configService.config.spotify.customEndpoint.takeIfNotEmpty()?.let {
+                    config.spotify.customEndpoint.takeIfNotEmpty()?.let {
                         setCustomTokenEndpoint(it)
                         setPreferAnonymousToken(false)
                     }
                 }
             )
         }
-        if (configService.config.tidal.enabled) {
+        if (config.tidal.enabled) {
             this.registerSourceManager(
                 TidalSourceManager(
-                    configService.config.tidal.countryCode,
+                    config.tidal.countryCode,
                     { this },
-                    DefaultMirroringAudioTrackResolver(null),
-                    configService.config.tidal.token
+                    mirroringAudioTrackResolver,
+                    config.tidal.token
                 )
             )
         }
@@ -85,9 +98,5 @@ class AudioPlayerManagerProvider(
             }
         )
         AudioSourceManagers.registerLocalSource(this)
-        AudioSourceManagers.registerRemoteSources(
-            this,
-            DeprecatedYoutubeAudioSourceManager::class.java
-        )
     }
 }

@@ -21,7 +21,6 @@ import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getGuildName
 import es.wokis.utils.orDefaultLocale
 import services.player.result.PlayerChannelResult
-import kotlin.toString
 
 class PlayerCommand(
     private val localizationService: LocalizationService,
@@ -145,6 +144,7 @@ class PlayerCommand(
             ComponentsEnum.PLAYER_SKIP.customId -> lavaPlayerService?.skip()
             ComponentsEnum.PLAYER_DISCONNECT.customId -> lavaPlayerService?.stop()
             ComponentsEnum.PLAYER_SHUFFLE.customId -> lavaPlayerService?.shuffle()
+            ComponentsEnum.PLAYER_RECONNECT.customId -> lavaPlayerService?.reconnect()
             else -> return
         }
         val currentTrack = lavaPlayerService?.getCurrentPlayingTrack()
