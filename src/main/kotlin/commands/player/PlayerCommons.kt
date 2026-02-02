@@ -7,6 +7,7 @@ import dev.kord.common.entity.ButtonStyle
 import dev.kord.common.entity.DiscordPartialEmoji
 import dev.kord.rest.builder.component.ActionRowBuilder
 import dev.kord.rest.builder.component.MessageComponentBuilder
+import dev.kord.rest.builder.message.MessageBuilder
 import dev.kord.rest.builder.message.embed
 import dev.kord.rest.builder.message.create.MessageCreateBuilder
 import dev.kord.rest.builder.message.modify.AbstractMessageModifyBuilder
@@ -20,7 +21,7 @@ import kotlin.time.toDuration
 
 private const val ENABLE_PLAYBACK_POSITION = false
 
-fun AbstractMessageModifyBuilder.createPlayerEmbed(
+fun MessageBuilder.createPlayerEmbed(
     guildName: String,
     localizationService: LocalizationService,
     locale: Locale,
@@ -187,64 +188,4 @@ private fun TrackBO.getDisplayNameAndDuration(localizationService: LocalizationS
 
 private fun Long.toDisplayDuration() = toDuration(DurationUnit.MILLISECONDS).toComponents { hours, minutes, seconds, _ ->
     "%02d:%02d:%02d".format(hours, minutes, seconds)
-}
-
-/**
- * Creates a player embed in a new message.
- * This delegates to the AbstractMessageModifyBuilder version by using a helper that works with both builders.
- */
-fun MessageCreateBuilder.createPlayerEmbed(
-    guildName: String,
-    localizationService: LocalizationService,
-    locale: Locale,
-    currentTrack: TrackBO?,
-    queue: List<TrackBO>,
-    isPaused: Boolean
-) {
-    // MessageCreateBuilder and AbstractMessageModifyBuilder both support embed and components
-    // We'll inline the embed creation logic here to avoid type issues
-    embed {
-        title = localizationService.getStringFormat(
-            key = LocalizationKeys.PLAYER_TITLE,
-            locale = locale,
-            arguments = arrayOf(guildName)
-        )
-        thumbnail {
-            url = currentTrack?.customFavicon ?: currentTrack?.audioTrack?.info?.artworkUrl.orEmpty()
-        }
-        color = Color(0x01B05B)
-        currentTrack?.let {
-            val duration = it.audioTrack.duration.toDisplayDuration()
-            field {
-                name = localizationService.getString(key = LocalizationKeys.PLAYER_CURRENT_TRACK, locale = locale)
-                value = it.getTrackName()
-            }
-            field {
-                name = localizationService.getString(key = LocalizationKeys.PLAYER_TRACK_DURATION, locale = locale)
-                value = duration.takeUnless {
-                    currentTrack.audioTrack.duration == DURATION_MS_UNKNOWN
-                } ?: localizationService.getString(
-                    key = if (currentTrack.audioTrack.info.isStream) LocalizationKeys.PLAYER_TRACK_DURATION_STREAM else LocalizationKeys.PLAYER_TRACK_DURATION_UNKNOWN,
-                    locale = locale
-                )
-            }
-        }
-        if (queue.isNotEmpty()) {
-            field {
-                name = localizationService.getString(key = LocalizationKeys.PLAYER_SERVER_QUEUE, locale = locale)
-                value = queue.getDisplayQueue(localizationService, locale)
-            }
-        } else if (currentTrack == null) {
-            description = localizationService.getString(key = LocalizationKeys.PLAYER_SERVER_QUEUE_EMPTY, locale = locale)
-        }
-    }
-    components = if (queue.isNotEmpty() || currentTrack != null) {
-        createPlayerComponents(
-            localizationService = localizationService,
-            locale = locale,
-            isPaused = isPaused
-        )
-    } else {
-        mutableListOf()
-    }
 }
