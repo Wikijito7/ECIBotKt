@@ -1,11 +1,13 @@
 package commands.sound
 
 import dev.kord.common.Locale
+import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import es.wokis.commands.sound.SoundCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
+import es.wokis.utils.getFolderContent
 import es.wokis.utils.getMemberVoiceChannel
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -13,6 +15,8 @@ import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import mock.mockedKord
 import mock.mockedResponse
@@ -49,6 +53,7 @@ class SoundCommandTest {
     fun tearDown() {
         testAudioFile.delete()
         testAudioDir.delete()
+        unmockkStatic(::getFolderContent)
     }
 
     @Test
@@ -139,6 +144,111 @@ class SoundCommandTest {
         // Then
         coVerify(exactly = 0) {
             guildQueueService.getOrCreateLavaPlayerService(any())
+        }
+    }
+
+    @Test
+    fun `Given non-existent sound name When onExecute is called Then return no matches error`() = runTest {
+        // Given
+        val soundName = "nonexistent"
+        val mockedStrings: Map<String, String> = mapOf("name" to soundName)
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { kord } returns mockedKord
+            every { channel } returns mockedTextChannel
+            every { command } returns mockk {
+                every { strings } returns mockedStrings
+            }
+        }
+
+        coEvery {
+            interaction.getMemberVoiceChannel(mockedKord)
+        } returns mockedVoiceChannel
+
+        val lavaPlayerService = mockk<GuildLavaPlayerService>()
+        coEvery {
+            guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
+        } returns lavaPlayerService
+        every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
+
+        // When
+        soundCommand.onExecute(interaction, mockedResponse)
+
+        // Then
+        coVerify(exactly = 1) {
+            guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
+        }
+        coVerify(exactly = 0) {
+            lavaPlayerService.loadAndPlayMultipleWithCustomName(any(), any())
+        }
+    }
+
+    @Test
+    fun `Given autocomplete with matching input When onAutoComplete is called Then return filtered sounds`() = runTest {
+        // Given
+        mockkStatic(::getFolderContent)
+        val testFile = mockk<File> {
+            every { nameWithoutExtension } returns "manolete"
+        }
+        every { getFolderContent("./audio/") } returns listOf(testFile)
+
+        val interaction = mockk<AutoCompleteInteraction>(relaxed = true) {
+            every { command.strings["name"] } returns "man"
+        }
+
+        // When
+        soundCommand.onAutoComplete(interaction)
+
+        // Then
+        verify(exactly = 1) {
+            getFolderContent("./audio/")
+        }
+    }
+
+    @Test
+    fun `Given autocomplete with empty input When onAutoComplete is called Then return empty list`() = runTest {
+        // Given
+        mockkStatic(::getFolderContent)
+        val interaction = mockk<AutoCompleteInteraction>(relaxed = true) {
+            every { command.strings["name"] } returns ""
+        }
+
+        // When
+        soundCommand.onAutoComplete(interaction)
+
+        // Then
+        verify(exactly = 0) {
+            getFolderContent(any<String>())
+        }
+    }
+
+    @Test
+    fun `Given exception thrown When onExecute is called Then handle exception gracefully`() = runTest {
+        // Given
+        val soundName = "manolete"
+        val mockedStrings: Map<String, String> = mapOf("name" to soundName)
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { kord } returns mockedKord
+            every { channel } returns mockedTextChannel
+            every { command } returns mockk {
+                every { strings } returns mockedStrings
+            }
+        }
+
+        coEvery {
+            interaction.getMemberVoiceChannel(mockedKord)
+        } returns mockedVoiceChannel
+
+        coEvery {
+            guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
+        } throws IllegalStateException("Test exception")
+        every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
+
+        // When
+        soundCommand.onExecute(interaction, mockedResponse)
+
+        // Then
+        coVerify(exactly = 1) {
+            guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
         }
     }
 }
