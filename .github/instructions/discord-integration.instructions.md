@@ -25,18 +25,245 @@ class Bot(
 
 ### Command Registration
 
-Commands are registered globally:
+Adding a new Discord command to ECIBotKt requires registration in **multiple places**. Missing any step will cause the command to not work.
+
+#### Complete Checklist for New Commands
+
+When adding a command like `/sound`, you MUST complete ALL these steps:
+
+**1. Command Name (CommandName.kt)**
+
+Add the command name to the sealed class:
 
 ```kotlin
-// In CommandModule.kt
-kord.createGlobalChatInputCommand(
-    CommandName.Radio.commandName,
-    localizationService.getString(LocalizationKeys.RADIO_COMMAND_DESCRIPTION)
-) {
-    descriptionLocalizations = localizationService.getLocalizations(...)
-    // Register subcommands
+sealed class CommandName(val commandName: String) {
+    data object Play : CommandName("play")
+    data object Sound : CommandName("sound")  // <-- ADD THIS
+    data object Queue : CommandName("queue")
+    // ...
 }
 ```
+
+**2. Localization Keys (LocalizationKeys.kt)**
+
+Add keys for command description and arguments:
+
+```kotlin
+object LocalizationKeys {
+    const val SOUND_COMMAND_DESCRIPTION = "sound_command_description"
+    const val SOUND_COMMAND_INPUT_DESCRIPTION = "sound_command_input_description"
+    // ...
+}
+```
+
+**3. Localization Strings**
+
+Add translations in both language files:
+
+**lang.yml** (English):
+```yaml
+sound_command_description: Plays a local sound by name
+sound_command_input_description: Name of the local sound to play
+```
+
+**lang_es-ES.yml** (Spanish):
+```yaml
+sound_command_description: Reproduce un sonido local por nombre
+sound_command_input_description: Nombre del sonido local a reproducir
+```
+
+**4. Command Implementation**
+
+Create the command class in appropriate package:
+
+```kotlin
+package es.wokis.commands.sound
+
+class SoundCommand(
+    private val guildQueueService: GuildQueueService,
+    private val localizationService: LocalizationService
+) : Command, Autocomplete {  // Implement Autocomplete if needed
+    
+    override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
+        // Register command with Discord
+    }
+    
+    override suspend fun onExecute(interaction, response) {
+        // Handle command execution
+    }
+    
+    override suspend fun onAutoComplete(interaction) {
+        // Handle autocomplete (optional)
+    }
+}
+```
+
+**5. Dependency Injection (CommandModule.kt)**
+
+Register the command with Koin:
+
+```kotlin
+val commandModule = module {
+    factoryOf(::PlayCommand)
+    factoryOf(::SoundCommand)  // <-- ADD THIS
+    factoryOf(::QueueCommand)
+    // ...
+}
+```
+
+**6. CRITICAL: CommandHandlerService (CommandHandlerService.kt)**
+
+**This is the MOST COMMONLY FORGOTTEN step!**
+
+You must add your command in **FOUR places**:
+
+**a) Import the command**
+```kotlin
+import es.wokis.commands.sound.SoundCommand
+```
+
+**b) Add to constructor**
+```kotlin
+class CommandHandlerServiceImpl(
+    private val playCommand: PlayCommand,
+    private val soundCommand: SoundCommand,  // <-- ADD THIS
+    private val queueCommand: QueueCommand,
+    // ...
+) : CommandHandlerService {
+```
+
+**c) Register in `onRegisterSimpleCommand()`**
+```kotlin
+override fun onRegisterSimpleCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
+    playCommand.onRegisterCommand(commandBuilder)
+    soundCommand.onRegisterCommand(commandBuilder)  // <-- ADD THIS
+    queueCommand.onRegisterCommand(commandBuilder)
+    // ...
+}
+```
+
+**d) Handle execution in `onExecute()`**
+```kotlin
+override suspend fun onExecute(interaction, response) {
+    when (val commandName = interaction.command.rootName) {
+        CommandName.Play.commandName -> playCommand.onExecute(interaction, response)
+        CommandName.Sound.commandName -> soundCommand.onExecute(interaction, response)  // <-- ADD THIS
+        CommandName.Queue.commandName -> queueCommand.onExecute(interaction, response)
+        // ...
+    }
+}
+```
+
+**e) Handle autocomplete in `onAutocomplete()` (if applicable)**
+```kotlin
+override suspend fun onAutocomplete(interaction: AutoCompleteInteraction) {
+    when (val commandName = interaction.command.rootName) {
+        CommandName.Sound.commandName -> soundCommand.onAutoComplete(interaction)  // <-- ADD THIS
+        CommandName.Radio.commandName -> radioGroupCommand.onAutoComplete(interaction)
+    }
+}
+```
+
+**7. Update Tests (CommandHandlerServiceTest.kt)**
+
+Add the command to tests:
+
+```kotlin
+class CommandHandlerServiceTest {
+    private val playCommand: PlayCommand = mockk()
+    private val soundCommand: SoundCommand = mockk()  // <-- ADD THIS
+    // ...
+    
+    private val commandHandlerService = CommandHandlerServiceImpl(
+        playCommand = playCommand,
+        soundCommand = soundCommand,  // <-- ADD THIS
+        // ...
+    )
+    
+    @Test
+    fun `When onRegisterSimpleCommand is called Then register all commands`() {
+        // Given
+        justRun { soundCommand.onRegisterCommand(any()) }  // <-- ADD THIS
+        // ...
+        
+        // Then
+        verify(exactly = 1) {
+            soundCommand.onRegisterCommand(commandBuilder)  // <-- ADD THIS
+            // ...
+        }
+    }
+}
+```
+
+**8. Create Command Tests**
+
+Create comprehensive tests in `src/test/kotlin/commands/<command>/`:
+
+```kotlin
+class SoundCommandTest {
+    // Test: Command registration
+    // Test: Command execution
+    // Test: Autocomplete
+    // Test: Error handling
+}
+```
+
+#### Pattern: Separating Command Concerns
+
+When you have similar functionality (like playing audio), consider separating concerns:
+
+**Example: `/play` vs `/sound`**
+
+- **`/play`** - External content (URLs, search, mixes)
+  - YouTube URLs
+  - Spotify links
+  - Search queries ("never gonna give you up")
+  - Mixes and playlists
+
+- **`/sound`** - Local content only
+  - Files from `./audio/` folder
+  - Known sound names
+  - Autocomplete support
+  - Custom display names (no "Unknown Artist")
+
+**Benefits:**
+1. **Better UX**: Autocomplete for local sounds, direct input for URLs
+2. **Clear separation**: `/play` for external, `/sound` for internal
+3. **Easier maintenance**: Different logic for different sources
+4. **Better error handling**: Different messages for "file not found" vs "search failed"
+
+#### Critical Reminders
+
+**Always verify CommandHandlerService has ALL registrations**
+- Missing constructor parameter = compile error
+- Missing `onRegisterSimpleCommand()` = command won't appear in Discord
+- Missing `onExecute()` case = "Unknown command" error
+- Missing `onAutocomplete()` = autocomplete won't work
+
+**Test with real Discord server**
+- Commands may appear in code but not in Discord if registration is incomplete
+- Use Discord's "Refresh Commands" if testing locally
+
+**Follow the pattern**
+- Look at existing commands (PlayCommand, QueueCommand) as examples
+- Copy the structure, change the details
+- Consistency makes it easier for other monkes!
+
+#### Troubleshooting
+
+**Command doesn't appear in Discord**
+- Check `onRegisterSimpleCommand()` has your command
+- Verify CommandName matches command name exactly
+- Check Discord permissions and bot token
+
+**"Unknown command" error**
+- Missing case in `onExecute()` switch statement
+- Check CommandName spelling matches
+
+**Autocomplete doesn't work**
+- Missing `onAutoComplete()` implementation
+- Missing case in `onAutocomplete()`
+- Check `autocomplete = true` in argument definition
 
 ### Slash Commands
 

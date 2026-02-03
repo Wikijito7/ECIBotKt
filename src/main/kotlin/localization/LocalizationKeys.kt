@@ -3,6 +3,8 @@ package es.wokis.localization
 object LocalizationKeys {
     const val PLAY_COMMAND_DESCRIPTION = "play_command_description"
     const val PLAY_COMMAND_INPUT_DESCRIPTION = "play_command_input_description"
+    const val SOUND_COMMAND_DESCRIPTION = "sound_command_description"
+    const val SOUND_COMMAND_INPUT_DESCRIPTION = "sound_command_input_description"
     const val UNKNOWN_COMMAND = "unknown_command"
     const val NOW_PLAYING = "now_playing"
     const val NO_MATCHES = "no_matches"

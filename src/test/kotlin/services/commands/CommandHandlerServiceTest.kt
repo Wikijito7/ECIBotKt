@@ -12,7 +12,9 @@ import es.wokis.commands.player.PlayerCommand
 import es.wokis.commands.radio.RadioGroupCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
+import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import es.wokis.commands.sounds.SoundsCommand
+import es.wokis.commands.sound.SoundCommand
 import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.tts.TTSCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.Test
 class CommandHandlerServiceTest {
 
     private val playCommand: PlayCommand = mockk()
+    private val soundCommand: SoundCommand = mockk()
     private val queueCommand: QueueCommand = mockk()
     private val skipCommand: SkipCommand = mockk()
     private val shuffleCommand: ShuffleCommand = mockk()
@@ -36,6 +39,7 @@ class CommandHandlerServiceTest {
 
     private val commandHandlerService = CommandHandlerServiceImpl(
         playCommand = playCommand,
+        soundCommand = soundCommand,
         localizationService = localizationService,
         queueCommand = queueCommand,
         skipCommand = skipCommand,
@@ -56,6 +60,7 @@ class CommandHandlerServiceTest {
             }
         }
         justRun { playCommand.onRegisterCommand(any()) }
+        justRun { soundCommand.onRegisterCommand(any()) }
         justRun { queueCommand.onRegisterCommand(any()) }
         justRun { skipCommand.onRegisterCommand(any()) }
         justRun { shuffleCommand.onRegisterCommand(any()) }
@@ -70,6 +75,7 @@ class CommandHandlerServiceTest {
         // Then
         verify(exactly = 1) {
             playCommand.onRegisterCommand(commandBuilder)
+            soundCommand.onRegisterCommand(commandBuilder)
             queueCommand.onRegisterCommand(commandBuilder)
             skipCommand.onRegisterCommand(commandBuilder)
             shuffleCommand.onRegisterCommand(commandBuilder)
@@ -325,6 +331,42 @@ class CommandHandlerServiceTest {
         // Then
         coVerify(exactly = 1) {
             soundsCommand.onInteract(interaction)
+        }
+    }
+
+    @Test
+    fun `Given sound autocomplete When onAutocomplete is called Then delegate to soundCommand`() = runTest {
+        // Given
+        val commandName = CommandName.Sound.commandName
+        val interaction = mockk<AutoCompleteInteraction> {
+            every { command.rootName } returns commandName
+        }
+        coJustRun { soundCommand.onAutoComplete(any()) }
+
+        // When
+        commandHandlerService.onAutocomplete(interaction)
+
+        // Then
+        coVerify(exactly = 1) {
+            soundCommand.onAutoComplete(interaction)
+        }
+    }
+
+    @Test
+    fun `Given radio autocomplete When onAutocomplete is called Then delegate to radioGroupCommand`() = runTest {
+        // Given
+        val commandName = CommandName.Radio.commandName
+        val interaction = mockk<AutoCompleteInteraction> {
+            every { command.rootName } returns commandName
+        }
+        coJustRun { radioGroupCommand.onAutoComplete(any()) }
+
+        // When
+        commandHandlerService.onAutocomplete(interaction)
+
+        // Then
+        coVerify(exactly = 1) {
+            radioGroupCommand.onAutoComplete(interaction)
         }
     }
 }

@@ -13,6 +13,7 @@ import es.wokis.commands.radio.subcommands.search.RadioSearchGroupCommand
 import es.wokis.commands.radio.subcommands.search.RadioSearchNameCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
+import es.wokis.commands.sound.SoundCommand
 import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.tts.TTSCommand
@@ -21,6 +22,7 @@ import org.koin.dsl.module
 
 val commandModule = module {
     factoryOf(::PlayCommand)
+    factoryOf(::SoundCommand)
     factoryOf(::QueueCommand)
     factoryOf(::SkipCommand)
     factoryOf(::ShuffleCommand)
