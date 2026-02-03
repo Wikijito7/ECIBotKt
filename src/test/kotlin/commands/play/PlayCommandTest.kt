@@ -65,9 +65,9 @@ class PlayCommandTest {
     }
 
     @Test
-    fun `Given command without url When onExecute is called Then play local file`() = runTest {
-        // Given
-        val mockedStrings: Map<String, String> = mapOf("sounds" to "asd")
+    fun `Given command with non-url input When onExecute is called Then pass input directly to lavaplayer`() = runTest {
+        val input = "some search query"
+        val mockedStrings: Map<String, String> = mapOf("sounds" to input)
         val interaction: ChatInputCommandInteraction = mockk {
             every { kord } returns mockedKord
             every { channel } returns mockedTextChannel
@@ -92,15 +92,13 @@ class PlayCommandTest {
         every { localizationService.getString(any(), any()) } returns ""
         every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
 
-        // When
         playCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             guildQueueService.getOrCreateLavaPlayerService(
                 interaction = interaction
             )
-            lavaPlayerService.loadAndPlayMultiple(listOf("audio/asd.mp3"))
+            lavaPlayerService.loadAndPlayMultiple(listOf("some", "search", "query"))
         }
     }
 

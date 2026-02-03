@@ -10,14 +10,10 @@ import es.wokis.commands.CommandName
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
-import es.wokis.utils.isValidUrl
 import es.wokis.utils.orDefaultLocale
 import es.wokis.utils.takeIfNotEmpty
-import java.net.URI
 
 private const val ARGUMENT_NAME = "sounds"
-private const val AUDIO_FOLDER = "./audio/"
-private const val AUDIO_EXTENSION = ".mp3"
 private const val SOUNDS_SEPARATOR = " "
 
 class PlayCommand(
@@ -62,9 +58,7 @@ class PlayCommand(
             }
 
             val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
-            val sounds = input.split(SOUNDS_SEPARATOR).map { sound ->
-                if (sound.isValidUrl()) sound else URI.create("$AUDIO_FOLDER$sound$AUDIO_EXTENSION").normalize().path
-            }
+            val sounds = input.split(SOUNDS_SEPARATOR)
             guildLavaPlayerService.loadAndPlayMultiple(sounds)
         } catch (exc: IllegalStateException) {
             response.respond {

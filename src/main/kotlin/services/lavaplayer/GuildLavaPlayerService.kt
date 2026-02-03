@@ -131,6 +131,16 @@ class GuildLavaPlayerService(
         }
     }
 
+    fun loadAndPlayMultipleWithCustomName(tracks: List<String>, customName: String) {
+        tracks.forEachIndexed { index, track ->
+            audioPlayerManager.loadItemOrdered(
+                index,
+                track,
+                getAudioLoadResultHandlerWithCustomName(track, customName)
+            )
+        }
+    }
+
     suspend fun loadAndPlayTts(messages: List<String>) {
         messages.mapNotNull {
             audioPlayerManager.loadItemSync(it)?.let { item -> item as? AudioTrack }
@@ -328,6 +338,54 @@ class GuildLavaPlayerService(
             coroutineScope.launch {
                 onLoadFailed(exception)
             }
+        }
+    }
+
+    private fun getAudioLoadResultHandlerWithCustomName(currentLoadTrack: String, customName: String) = object : AudioLoadResultHandler {
+        override fun trackLoaded(track: AudioTrack) {
+            onTrackLoadedWithCustomName(track, customName)
+        }
+
+        override fun playlistLoaded(playlist: AudioPlaylist) {
+            onPlaylistLoaded(playlist)
+        }
+
+        override fun noMatches() {
+            coroutineScope.launch {
+                val locale = voiceChannel.getLocale()
+                textChannel.createMessage(
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.NO_MATCHES,
+                        locale = locale,
+                        arguments = arrayOf(currentLoadTrack)
+                    )
+                )
+            }
+        }
+
+        override fun loadFailed(exception: FriendlyException) {
+            coroutineScope.launch {
+                onLoadFailed(exception)
+            }
+        }
+    }
+
+    private fun onTrackLoadedWithCustomName(track: AudioTrack, customName: String) {
+        coroutineScope.launch {
+            val locale = voiceChannel.getLocale()
+            val currentTrack = TrackBO(
+                customName = customName,
+                audioTrack = track
+            )
+            textChannel.createMessage(
+                localizationService.getStringFormat(
+                    key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
+                    locale = locale,
+                    arguments = arrayOf(currentTrack.getDisplayTrackName())
+                )
+            )
+            connectToVoiceChannel()
+            queue(listOf(currentTrack))
         }
     }
 

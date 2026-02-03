@@ -18,6 +18,7 @@ import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sounds.SoundsCommand
+import es.wokis.commands.sound.SoundCommand
 import es.wokis.commands.tts.TTSCommand
 import es.wokis.constants.CUSTOM_COMPONENT_SEPARATOR
 import es.wokis.localization.LocalizationKeys
@@ -41,6 +42,7 @@ interface CommandHandlerService {
 
 class CommandHandlerServiceImpl(
     private val playCommand: PlayCommand,
+    private val soundCommand: SoundCommand,
     private val queueCommand: QueueCommand,
     private val skipCommand: SkipCommand,
     private val shuffleCommand: ShuffleCommand,
@@ -54,6 +56,7 @@ class CommandHandlerServiceImpl(
 
     override fun onRegisterSimpleCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         playCommand.onRegisterCommand(commandBuilder)
+        soundCommand.onRegisterCommand(commandBuilder)
         queueCommand.onRegisterCommand(commandBuilder)
         skipCommand.onRegisterCommand(commandBuilder)
         shuffleCommand.onRegisterCommand(commandBuilder)
@@ -73,6 +76,7 @@ class CommandHandlerServiceImpl(
     ) {
         when (val commandName = interaction.command.rootName) {
             CommandName.Play.commandName -> playCommand.onExecute(interaction, response)
+            CommandName.Sound.commandName -> soundCommand.onExecute(interaction, response)
             CommandName.Queue.commandName -> queueCommand.onExecute(interaction, response)
             CommandName.Skip.commandName -> skipCommand.onExecute(interaction, response)
             CommandName.Shuffle.commandName -> shuffleCommand.onExecute(interaction, response)
@@ -107,7 +111,10 @@ class CommandHandlerServiceImpl(
     }
 
     override suspend fun onAutocomplete(interaction: AutoCompleteInteraction) {
-        radioGroupCommand.onAutoComplete(interaction)
+        when (val commandName = interaction.command.rootName) {
+            CommandName.Sound.commandName -> soundCommand.onAutoComplete(interaction)
+            CommandName.Radio.commandName -> radioGroupCommand.onAutoComplete(interaction)
+        }
     }
 
     private suspend fun respondUnknownCommand(

@@ -2,6 +2,7 @@ package es.wokis.commands
 
 sealed class CommandName(val commandName: String) {
     data object Play : CommandName("play")
+    data object Sound : CommandName("sound")
     data object Queue : CommandName("queue")
     data object Skip : CommandName("skip")
     data object Shuffle : CommandName("shuffle")
