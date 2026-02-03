@@ -182,7 +182,7 @@ class GuildLavaPlayerService(
 
     fun getQueue(): List<TrackBO> = queue.toList()
 
-    fun getCurrentPlayingTrack(): TrackBO = currentTrack ?: TrackBO(audioTrack = player.playingTrack)
+    fun getCurrentPlayingTrack(): TrackBO? = currentTrack ?: player.playingTrack?.let { TrackBO(audioTrack = it) }
 
     fun isPaused(): Boolean = player.isPaused
 

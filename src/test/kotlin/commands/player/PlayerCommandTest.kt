@@ -4,6 +4,8 @@ import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
+import dev.kord.core.entity.Message
+import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
@@ -14,10 +16,13 @@ import es.wokis.commands.player.PlayerCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
+import es.wokis.services.player.PlayerChannelService
 import es.wokis.services.queue.GuildQueueService
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import services.player.result.PlayerChannelResult
+import kotlin.test.Ignore
 
 private fun createMockTrackBO(): TrackBO {
     val audioTrack = mockk<AudioTrack> {
@@ -32,10 +37,12 @@ class PlayerCommandTest {
 
     private val localizationService: LocalizationService = mockk()
     private val guildQueueService: GuildQueueService = mockk()
+    private val playerChannelService: PlayerChannelService = mockk()
 
     private val playerCommand = PlayerCommand(
         localizationService = localizationService,
-        guildQueueService = guildQueueService
+        guildQueueService = guildQueueService,
+        playerChannelService = playerChannelService
     )
 
     @Test
@@ -71,8 +78,19 @@ class PlayerCommandTest {
             every { isPaused() } returns false
             justRun { savePlayerMessage(any()) }
         }
+        val mockMessage = mockk<Message>(relaxed = true)
+        val mockChannel = mockk<TextChannel>(relaxed = true) {
+            every { id } returns Snowflake(123456789)
+        }
+
+        val playerChannelResult = PlayerChannelResult(
+            message = mockMessage,
+            channel = mockChannel,
+            isNewChannel = true
+        )
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
+        coEvery { playerChannelService.sendPlayerMessage(any(), any()) } returns Result.success(playerChannelResult)
         every { localizationService.getString(any(), any()) } returns "TestMessage"
         every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
 
@@ -83,7 +101,10 @@ class PlayerCommandTest {
         verify(exactly = 1) {
             guildLavaPlayerService.getQueue()
             guildLavaPlayerService.getCurrentPlayingTrack()
-            guildLavaPlayerService.isPaused()
+        }
+
+        coVerify(exactly = 1) {
+            playerChannelService.sendPlayerMessage(any(), any())
         }
     }
 

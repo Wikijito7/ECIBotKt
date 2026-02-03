@@ -9,6 +9,7 @@ import es.wokis.services.localization.LocalizationService
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.processor.MessageProcessorService
 import es.wokis.services.queue.GuildQueueService
+import es.wokis.services.player.PlayerChannelService
 import es.wokis.services.radio.RadioService
 import es.wokis.services.tts.TTSService
 import org.koin.core.module.dsl.bind
@@ -25,6 +26,7 @@ val servicesModule = module {
     singleOf(::LocalizationService)
     singleOf(::TTSService)
     singleOf(::RadioService)
+    factoryOf(::PlayerChannelService)
 
     single<AppDispatchers> { AppDispatchersImpl() }
 }

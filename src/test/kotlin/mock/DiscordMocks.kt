@@ -6,10 +6,13 @@ import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
+import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.core.supplier.EntitySupplyStrategy
+import dev.kord.rest.builder.message.create.UserMessageCreateBuilder
 import dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.every
 import io.mockk.mockk
 
@@ -28,6 +31,11 @@ val mockUser = mockk<DiscordUser> {
     every { banner } returns null
     every { accentColor } returns null
     every { avatarDecoration } returns mockk()
+}
+
+val mockedMessage = mockk<Message> {
+    every { id } returns Snowflake(100)
+    coJustRun { delete() }
 }
 
 val mockedDiscordMessage = mockk<DiscordMessage> {
@@ -83,6 +91,7 @@ val mockedKord: Kord = mockk {
                 createAutoCompleteInteractionResponse(any(), any(), any())
             } returns mockk()
         }
+        every { channel } returns mockk(relaxed = true)
     }
     every { defaultSupplier } returns mockk()
 }

@@ -7,7 +7,9 @@ import dev.kord.common.entity.ButtonStyle
 import dev.kord.common.entity.DiscordPartialEmoji
 import dev.kord.rest.builder.component.ActionRowBuilder
 import dev.kord.rest.builder.component.MessageComponentBuilder
+import dev.kord.rest.builder.message.MessageBuilder
 import dev.kord.rest.builder.message.embed
+import dev.kord.rest.builder.message.create.MessageCreateBuilder
 import dev.kord.rest.builder.message.modify.AbstractMessageModifyBuilder
 import es.wokis.commands.ComponentsEnum
 import es.wokis.localization.LocalizationKeys
@@ -19,7 +21,7 @@ import kotlin.time.toDuration
 
 private const val ENABLE_PLAYBACK_POSITION = false
 
-fun AbstractMessageModifyBuilder.createPlayerEmbed(
+fun MessageBuilder.createPlayerEmbed(
     guildName: String,
     localizationService: LocalizationService,
     locale: Locale,
