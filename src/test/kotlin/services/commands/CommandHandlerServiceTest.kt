@@ -13,6 +13,7 @@ import es.wokis.commands.radio.RadioGroupCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import dev.kord.core.entity.interaction.AutoCompleteInteraction
+import es.wokis.commands.next.NextCommand
 import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.sound.SoundCommand
 import es.wokis.commands.reconnect.ReconnectCommand
@@ -34,6 +35,7 @@ class CommandHandlerServiceTest {
     private val playerCommand: PlayerCommand = mockk()
     private val soundsCommand: SoundsCommand = mockk()
     private val reconnectCommand: ReconnectCommand = mockk()
+    private val nextCommand: NextCommand = mockk()
     private val localizationService: LocalizationService = mockk()
     private val radioGroupCommand: RadioGroupCommand = mockk()
 
@@ -48,7 +50,8 @@ class CommandHandlerServiceTest {
         playerCommand = playerCommand,
         soundsCommand = soundsCommand,
         radioGroupCommand = radioGroupCommand,
-        reconnectCommand = reconnectCommand
+        reconnectCommand = reconnectCommand,
+        nextCommand = nextCommand
     )
 
     @Test
@@ -68,6 +71,7 @@ class CommandHandlerServiceTest {
         justRun { playerCommand.onRegisterCommand(any()) }
         justRun { soundsCommand.onRegisterCommand(any()) }
         justRun { reconnectCommand.onRegisterCommand(any()) }
+        justRun { nextCommand.onRegisterCommand(any()) }
 
         // When
         commandHandlerService.onRegisterSimpleCommand(commandBuilder)
@@ -83,6 +87,7 @@ class CommandHandlerServiceTest {
             playerCommand.onRegisterCommand(commandBuilder)
             soundsCommand.onRegisterCommand(commandBuilder)
             reconnectCommand.onRegisterCommand(commandBuilder)
+            nextCommand.onRegisterCommand(commandBuilder)
         }
     }
 
@@ -251,6 +256,27 @@ class CommandHandlerServiceTest {
         // Then
         coVerify(exactly = 1) {
             reconnectCommand.onExecute(interaction, response)
+        }
+    }
+
+    @Test
+    fun `Given next command When onExecute is called Then execute NextCommand`() = runTest {
+        // Given
+        val commandName = CommandName.Next.commandName
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { command } returns mockk {
+                every { rootName } returns commandName
+            }
+        }
+        val response: DeferredPublicMessageInteractionResponseBehavior = mockk()
+        coJustRun { nextCommand.onExecute(any(), any()) }
+
+        // When
+        commandHandlerService.onExecute(interaction, response)
+
+        // Then
+        coVerify(exactly = 1) {
+            nextCommand.onExecute(interaction, response)
         }
     }
 

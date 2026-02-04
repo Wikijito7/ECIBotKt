@@ -96,9 +96,11 @@ class SoundCommand(
         val input = interaction.command.strings[ARGUMENT_NAME].orEmpty()
         input.takeIfNotEmpty()?.let {
             val sounds = getFolderContent(AUDIO_FOLDER)
+                .asSequence()
                 .filter { file ->
                     file.nameWithoutExtension.contains(input, ignoreCase = true)
                 }
+                .sorted()
                 .take(25)
                 .map { file ->
                     Choice.StringChoice(
@@ -107,6 +109,7 @@ class SoundCommand(
                         value = file.nameWithoutExtension.take(100)
                     )
                 }
+                .toList()
             interaction.suggest(sounds)
         } ?: interaction.suggest(emptyList())
     }

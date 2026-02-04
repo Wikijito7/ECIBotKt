@@ -1,11 +1,12 @@
-package commands.play
+package commands.next
 
 import dev.kord.common.Locale
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
-import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.CommandName
+import es.wokis.commands.next.NextCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
+import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getMemberVoiceChannel
@@ -13,61 +14,23 @@ import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import mock.*
 import org.junit.jupiter.api.Test
-import kotlin.test.Ignore
 
-class PlayCommandTest {
+class NextCommandTest {
 
     private val guildQueueService: GuildQueueService = mockk()
     private val localizationService: LocalizationService = mockk()
 
-    private val playCommand = PlayCommand(
+    private val nextCommand = NextCommand(
         guildQueueService = guildQueueService,
         localizationService = localizationService
     )
 
-    /*
-        Verification failed: call 2 of 2: List(child of #2#3).add(any())) was not called
-        java.lang.AssertionError: Verification failed: call 2 of 2: List(child of #2#3).add(any())) was not called
-            at io.mockk.impl.recording.states.VerifyingState.failIfNotPassed(VerifyingState.kt:63)
-            at io.mockk.impl.recording.states.VerifyingState.recordingDone(VerifyingState.kt:42)
-            at io.mockk.impl.recording.CommonCallRecorder.done(CommonCallRecorder.kt:47)
-            at io.mockk.impl.eval.RecordedBlockEvaluator.record(RecordedBlockEvaluator.kt:63)
-            at io.mockk.impl.eval.VerifyBlockEvaluator.verify(VerifyBlockEvaluator.kt:30)
-            at io.mockk.MockKDsl.internalVerify(API.kt:120)
-            at io.mockk.MockKKt.verify(MockK.kt:218)
-            at io.mockk.MockKKt.verify$default(MockK.kt:209)
-            at commands.test.TestCommandTest.Given command When onRegisterCommand is called Then register test command(TestCommandTest.kt:32)
-            at java.base/java.lang.reflect.Method.invoke(Method.java:569)
-            at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
-            at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
-     */
     @Test
-    @Ignore("Mockk fails")
-    fun `Given command When onRegisterCommand is called Then register test command`() {
+    fun `Given command with monochrome url When onExecute is called Then transform and load as next`() = runTest {
         // Given
-        val commandBuilder: GlobalMultiApplicationCommandBuilder = mockk {
-            every { commands } returns mockk {
-                every { add(any()) } returns true
-            }
-        }
-
-        // When
-        playCommand.onRegisterCommand(commandBuilder)
-
-        // Then
-        verify(exactly = 1) {
-            commandBuilder.input(name = CommandName.Play.commandName, description = "test test") {
-                string(name = "pepe", description = "popopo") {
-                    required = true
-                }
-            }
-        }
-    }
-
-    @Test
-    fun `Given command with non-url input When onExecute is called Then pass input directly to lavaplayer`() = runTest {
-        val input = "some search query"
-        val mockedStrings: Map<String, String> = mapOf("content" to input)
+        val url = "https://monochrome.samidy.com/track/97034820"
+        val expectedTransformedUrl = "https://tidal.com/track/97034820"
+        val mockedStrings: Map<String, String> = mapOf("track" to url)
         val interaction: ChatInputCommandInteraction = mockk {
             every { kord } returns mockedKord
             every { channel } returns mockedTextChannel
@@ -76,46 +39,8 @@ class PlayCommandTest {
             }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
-            justRun { loadAndPlayMultiple(any()) }
-        }
-
-        coEvery {
-            interaction.getMemberVoiceChannel(mockedKord)
-        } returns mockedVoiceChannel
-
-        coEvery {
-            guildQueueService.getOrCreateLavaPlayerService(
-                interaction = interaction
-            )
-        } returns lavaPlayerService
-        every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
-        every { localizationService.getString(any(), any()) } returns ""
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
-
-        playCommand.onExecute(interaction, mockedResponse)
-
-        coVerify(exactly = 1) {
-            guildQueueService.getOrCreateLavaPlayerService(
-                interaction = interaction
-            )
-            lavaPlayerService.loadAndPlayMultiple(listOf("some", "search", "query"))
-        }
-    }
-
-    @Test
-    fun `Given command with url When onExecute is called Then play url`() = runTest {
-        // Given
-        val url = "https://something.like/this"
-        val mockedStrings: Map<String, String> = mapOf("content" to url)
-        val interaction: ChatInputCommandInteraction = mockk {
-            every { kord } returns mockedKord
-            every { channel } returns mockedTextChannel
-            every { command } returns mockk {
-                every { strings } returns mockedStrings
-            }
-        }
-        val lavaPlayerService = mockk<GuildLavaPlayerService> {
-            justRun { loadAndPlayMultiple(any()) }
+            justRun { loadAndPlayNext(any()) }
+            every { isQueueEmpty() } returns false
         }
 
         coEvery {
@@ -132,22 +57,22 @@ class PlayCommandTest {
         every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
 
         // When
-        playCommand.onExecute(interaction, mockedResponse)
+        nextCommand.onExecute(interaction, mockedResponse)
 
         // Then
         coVerify(exactly = 1) {
             guildQueueService.getOrCreateLavaPlayerService(
                 interaction = interaction
             )
-            lavaPlayerService.loadAndPlayMultiple(listOf(url))
+            lavaPlayerService.loadAndPlayNext(expectedTransformedUrl)
         }
     }
 
     @Test
-    fun `Given command with empty url When onExecute is called Then play url`() = runTest {
+    fun `Given command with regular url When onExecute is called Then load as next without transformation`() = runTest {
         // Given
-        val url = ""
-        val mockedStrings: Map<String, String> = mapOf("content" to url)
+        val url = "https://youtube.com/watch?v=123"
+        val mockedStrings: Map<String, String> = mapOf("track" to url)
         val interaction: ChatInputCommandInteraction = mockk {
             every { kord } returns mockedKord
             every { channel } returns mockedTextChannel
@@ -156,7 +81,8 @@ class PlayCommandTest {
             }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
-            justRun { loadAndPlayMultiple(any()) }
+            justRun { loadAndPlayNext(any()) }
+            every { isQueueEmpty() } returns false
         }
 
         coEvery {
@@ -173,19 +99,156 @@ class PlayCommandTest {
         every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
 
         // When
-        playCommand.onExecute(interaction, mockedResponse)
+        nextCommand.onExecute(interaction, mockedResponse)
 
         // Then
+        coVerify(exactly = 1) {
+            guildQueueService.getOrCreateLavaPlayerService(
+                interaction = interaction
+            )
+            lavaPlayerService.loadAndPlayNext(url)
+        }
+    }
+
+    @Test
+    fun `Given command with search term and matching track When onExecute is called Then move track to next`() = runTest {
+        // Given
+        val searchTerm = "test song"
+        val mockedStrings: Map<String, String> = mapOf("track" to searchTerm)
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { kord } returns mockedKord
+            every { channel } returns mockedTextChannel
+            every { command } returns mockk {
+                every { strings } returns mockedStrings
+            }
+        }
+        val mockTrack: TrackBO = mockk(relaxed = true)
+        val lavaPlayerService = mockk<GuildLavaPlayerService> {
+            every { isQueueEmpty() } returns false
+            every { moveTrackToNext(searchTerm) } returns mockTrack
+        }
+
+        coEvery {
+            interaction.getMemberVoiceChannel(mockedKord)
+        } returns mockedVoiceChannel
+
+        coEvery {
+            guildQueueService.getOrCreateLavaPlayerService(
+                interaction = interaction
+            )
+        } returns lavaPlayerService
+        every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
+        every { localizationService.getString(any(), any()) } returns ""
+        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+
+        // When
+        nextCommand.onExecute(interaction, mockedResponse)
+
+        // Then
+        coVerify(exactly = 1) {
+            guildQueueService.getOrCreateLavaPlayerService(
+                interaction = interaction
+            )
+            lavaPlayerService.isQueueEmpty()
+            lavaPlayerService.moveTrackToNext(searchTerm)
+        }
         coVerify(exactly = 0) {
-            guildQueueService.getOrCreateLavaPlayerService(
-                interaction = interaction
-            )
-            lavaPlayerService.loadAndPlayMultiple(any())
+            lavaPlayerService.loadAndPlayNext(any())
         }
     }
 
     @Test
-    fun `Given command without url When onExecute is called Then play url`() = runTest {
+    fun `Given command with search term and no matching track When onExecute is called Then warn user and try lavaplayer`() = runTest {
+        // Given
+        val searchTerm = "nonexistent song"
+        val mockedStrings: Map<String, String> = mapOf("track" to searchTerm)
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { kord } returns mockedKord
+            every { channel } returns mockedTextChannel
+            every { command } returns mockk {
+                every { strings } returns mockedStrings
+            }
+        }
+        val lavaPlayerService = mockk<GuildLavaPlayerService> {
+            every { isQueueEmpty() } returns false
+            every { moveTrackToNext(searchTerm) } returns null
+            justRun { loadAndPlayNext(any()) }
+        }
+
+        coEvery {
+            interaction.getMemberVoiceChannel(mockedKord)
+        } returns mockedVoiceChannel
+
+        coEvery {
+            guildQueueService.getOrCreateLavaPlayerService(
+                interaction = interaction
+            )
+        } returns lavaPlayerService
+        every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
+        every { localizationService.getString(any(), any()) } returns ""
+        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+
+        // When
+        nextCommand.onExecute(interaction, mockedResponse)
+
+        // Then
+        coVerify(exactly = 1) {
+            guildQueueService.getOrCreateLavaPlayerService(
+                interaction = interaction
+            )
+            lavaPlayerService.isQueueEmpty()
+            lavaPlayerService.moveTrackToNext(searchTerm)
+            lavaPlayerService.loadAndPlayNext(searchTerm)
+        }
+    }
+
+    @Test
+    fun `Given command with search term and empty queue When onExecute is called Then show empty queue message`() = runTest {
+        // Given
+        val searchTerm = "test song"
+        val mockedStrings: Map<String, String> = mapOf("track" to searchTerm)
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { kord } returns mockedKord
+            every { channel } returns mockedTextChannel
+            every { command } returns mockk {
+                every { strings } returns mockedStrings
+            }
+        }
+        val lavaPlayerService = mockk<GuildLavaPlayerService> {
+            every { isQueueEmpty() } returns true
+        }
+
+        coEvery {
+            interaction.getMemberVoiceChannel(mockedKord)
+        } returns mockedVoiceChannel
+
+        coEvery {
+            guildQueueService.getOrCreateLavaPlayerService(
+                interaction = interaction
+            )
+        } returns lavaPlayerService
+        every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
+        every { localizationService.getString(any(), any()) } returns ""
+        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+
+        // When
+        nextCommand.onExecute(interaction, mockedResponse)
+
+        // Then
+        coVerify(exactly = 1) {
+            guildQueueService.getOrCreateLavaPlayerService(
+                interaction = interaction
+            )
+            lavaPlayerService.isQueueEmpty()
+        }
+        coVerify(exactly = 0) {
+            lavaPlayerService.moveTrackToNext(any())
+            lavaPlayerService.loadAndPlayNext(any())
+        }
+    }
+
+    @Test
+    fun `Given command without input When onExecute is called Then show error message`() = runTest {
         // Given
         val mockedStrings: Map<String, String> = emptyMap()
         val interaction: ChatInputCommandInteraction = mockk {
@@ -195,32 +258,17 @@ class PlayCommandTest {
                 every { strings } returns mockedStrings
             }
         }
-        val lavaPlayerService = mockk<GuildLavaPlayerService> {
-            justRun { loadAndPlayMultiple(any()) }
-        }
 
-        coEvery {
-            interaction.getMemberVoiceChannel(mockedKord)
-        } returns mockedVoiceChannel
-
-        coEvery {
-            guildQueueService.getOrCreateLavaPlayerService(
-                interaction = interaction
-            )
-        } returns lavaPlayerService
         every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
         every { localizationService.getString(any(), any()) } returns ""
         every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
 
         // When
-        playCommand.onExecute(interaction, mockedResponse)
+        nextCommand.onExecute(interaction, mockedResponse)
 
         // Then
         coVerify(exactly = 0) {
-            guildQueueService.getOrCreateLavaPlayerService(
-                interaction = interaction
-            )
-            lavaPlayerService.loadAndPlayMultiple(any())
+            guildQueueService.getOrCreateLavaPlayerService(any())
         }
     }
 }

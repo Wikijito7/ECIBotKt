@@ -12,8 +12,9 @@ import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.orDefaultLocale
 import es.wokis.utils.takeIfNotEmpty
+import es.wokis.utils.transformUrl
 
-private const val ARGUMENT_NAME = "sounds"
+private const val ARGUMENT_NAME = "content"
 private const val SOUNDS_SEPARATOR = " "
 
 class PlayCommand(
@@ -58,7 +59,7 @@ class PlayCommand(
             }
 
             val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
-            val sounds = input.split(SOUNDS_SEPARATOR)
+            val sounds = input.split(SOUNDS_SEPARATOR).map { it.transformUrl() }
             guildLavaPlayerService.loadAndPlayMultiple(sounds)
         } catch (exc: IllegalStateException) {
             response.respond {

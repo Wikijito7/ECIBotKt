@@ -13,7 +13,7 @@ import es.wokis.utils.getGuildLocale
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 
-private const val FIXED_UP_TWITTER_URL = "https://fixupx.com/status/"
+private const val FIXED_UP_TWITTER_URL = "https://girlcockx.com/"
 private const val FIXED_UP_INSTAGRAM_URL = "https://ddinstagram.com"
 private const val FIXED_UP_REDDIT_URL = "https://rxddit.com"
 private const val FIXED_UP_TIKTOK_URL = "vxtiktok.com/"
@@ -34,10 +34,10 @@ class MessageProcessorService(
 ) {
     private val coroutineScope = createCoroutineScope(TAG, appDispatchers)
     private val twitterLinks = listOf(
-        "https://x.com/status/",
-        "https://www.x.com/status/",
-        "https://twitter.com/status/",
-        "https://www.twitter.com/status/"
+        "https://x.com/",
+        "https://www.x.com/",
+        "https://twitter.com/",
+        "https://www.twitter.com/"
     )
     private val instagramStartLinks = listOf(
         "https://instagram.com",
@@ -105,14 +105,18 @@ class MessageProcessorService(
         }
     }
 
-    private fun shouldBeProcessed(content: String): Boolean = linksToProcess.any { content.contains(it) }
+    private fun shouldBeProcessed(content: String): Boolean {
+        // For Twitter/X links, only process if they contain /status/
+        if (twitterLinks.any { content.contains(it) }) {
+            return content.contains("/status/")
+        }
+        return linksToProcess.any { content.contains(it) }
+    }
 
     private fun getProcessedMessage(author: String?, locale: Locale, content: String): String = when {
-        twitterLinks.any { content.contains(it) } -> getGenericProcessedMessage(
+        twitterLinks.any { content.contains(it) } -> getTwitterProcessedMessage(
             author = author,
             content = content,
-            links = twitterLinks,
-            fixedUpUrl = FIXED_UP_TWITTER_URL,
             locale = locale
         )
 
@@ -160,6 +164,18 @@ class MessageProcessorService(
         content: String,
         locale: Locale
     ): String = getFixedUpMessage(author, content.replace("tiktok.com/", FIXED_UP_TIKTOK_URL), locale)
+
+    private fun getTwitterProcessedMessage(
+        author: String?,
+        content: String,
+        locale: Locale
+    ): String {
+        // Replace twitter/x domains with girlcockx.com
+        // Note: Query parameters are kept as girlcockx.com requires them for embeds
+        val fixedMessage = content.replace(twitterLinks.asRegex(), FIXED_UP_TWITTER_URL)
+
+        return getFixedUpMessage(author, fixedMessage, locale)
+    }
 
     private fun getFixedUpMessage(author: String?, fixedMessage: String, locale: Locale) =
         localizationService.getStringFormat(

@@ -210,6 +210,31 @@ class GuildLavaPlayerService(
         player.stopTrack()
     }
 
+    fun loadAndPlayNext(url: String) {
+        audioPlayerManager.loadItem(
+            url,
+            getAudioLoadResultHandlerNext(url)
+        )
+    }
+
+    fun moveTrackToNext(searchTerm: String): TrackBO? {
+        val normalizedSearchTerm = searchTerm.lowercase()
+        val trackIndex = queue.indexOfFirst { trackBO ->
+            trackBO.getDisplayTrackName().lowercase().contains(normalizedSearchTerm)
+        }
+
+        return if (trackIndex != -1) {
+            val track = queue.removeAt(trackIndex)
+            queue.add(0, track)
+            updateSeekChannel.trySend(Unit)
+            track
+        } else {
+            null
+        }
+    }
+
+    fun isQueueEmpty(): Boolean = queue.isEmpty()
+
     suspend fun stop() {
         handleDisconnectEvent()
     }
@@ -442,6 +467,104 @@ class GuildLavaPlayerService(
             connectToVoiceChannel()
             queue(listOf(currentTrack))
         }
+    }
+
+    private fun getAudioLoadResultHandlerNext(currentLoadTrack: String) = object : AudioLoadResultHandler {
+        override fun trackLoaded(track: AudioTrack) {
+            onTrackLoadedNext(track)
+        }
+
+        override fun playlistLoaded(playlist: AudioPlaylist) {
+            onPlaylistLoadedNext(playlist)
+        }
+
+        override fun noMatches() {
+            coroutineScope.launch {
+                val locale = voiceChannel.getLocale()
+                textChannel.createMessage(
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.NO_MATCHES,
+                        locale = locale,
+                        arguments = arrayOf(currentLoadTrack)
+                    )
+                )
+            }
+        }
+
+        override fun loadFailed(exception: FriendlyException) {
+            coroutineScope.launch {
+                onLoadFailed(exception)
+            }
+        }
+    }
+
+    private fun onTrackLoadedNext(track: AudioTrack) {
+        coroutineScope.launch {
+            val locale = voiceChannel.getLocale()
+            val trackToQueue = TrackBO(audioTrack = track)
+            val isCurrentlyPlaying = player.playingTrack != null
+            textChannel.createMessage(
+                if (track.info.uri.isValidUrl()) {
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.NEXT_ADDED_TO_QUEUE_WITH_LINK,
+                        locale = locale,
+                        arguments = arrayOf(trackToQueue.getDisplayTrackName(), track.info.uri)
+                    )
+                } else {
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.NEXT_ADDED_TO_QUEUE,
+                        locale = locale,
+                        arguments = arrayOf(trackToQueue.getDisplayTrackName())
+                    )
+                }
+            )
+            connectToVoiceChannel()
+            queueNext(listOf(trackToQueue))
+            if (!isCurrentlyPlaying) {
+                nextTrack()
+            }
+        }
+    }
+
+    private fun onPlaylistLoadedNext(playlist: AudioPlaylist) {
+        coroutineScope.launch {
+            val locale = voiceChannel.getLocale()
+            val isCurrentlyPlaying = player.playingTrack != null
+            val message = textChannel.createMessage(
+                localizationService.getStringFormat(
+                    key = LocalizationKeys.FOUND_TRACK_LIST,
+                    locale = locale,
+                    arguments = arrayOf(playlist.name, playlist.tracks.size)
+                )
+            )
+            connectToVoiceChannel()
+            queueNext(playlist.tracks.map { TrackBO(audioTrack = it) })
+            if (!isCurrentlyPlaying) {
+                nextTrack()
+            }
+            val playlistUrl = (playlist as? ExtendedAudioPlaylist)?.url
+            message.edit {
+                content = if (playlistUrl?.isValidUrl() == true) {
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE_WITH_LINK,
+                        locale = locale,
+                        arguments = arrayOf(playlist.name, playlistUrl, playlist.tracks.size)
+                    )
+                } else {
+                    localizationService.getStringFormat(
+                        key = LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE,
+                        locale = locale,
+                        arguments = arrayOf(playlist.name, playlist.tracks.size)
+                    )
+                }
+            }
+        }
+    }
+
+    private fun queueNext(tracks: List<TrackBO>) {
+        resetLeaveTimer()
+        queue.addAll(0, tracks)
+        updateSeekChannel.trySend(Unit)
     }
 
     fun isConnected(): Boolean = voiceConnection != null
