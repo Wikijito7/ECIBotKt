@@ -39,7 +39,7 @@ class NextCommandTest {
             }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
-            justRun { loadAndPlayNext(any()) }
+            justRun { loadAndPlay(any(), any()) }
             every { isQueueEmpty() } returns false
         }
 
@@ -64,7 +64,7 @@ class NextCommandTest {
             guildQueueService.getOrCreateLavaPlayerService(
                 interaction = interaction
             )
-            lavaPlayerService.loadAndPlayNext(expectedTransformedUrl)
+            lavaPlayerService.loadAndPlay(expectedTransformedUrl, addToFront = true)
         }
     }
 
@@ -81,7 +81,7 @@ class NextCommandTest {
             }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
-            justRun { loadAndPlayNext(any()) }
+            justRun { loadAndPlay(any(), any()) }
             every { isQueueEmpty() } returns false
         }
 
@@ -106,7 +106,7 @@ class NextCommandTest {
             guildQueueService.getOrCreateLavaPlayerService(
                 interaction = interaction
             )
-            lavaPlayerService.loadAndPlayNext(url)
+            lavaPlayerService.loadAndPlay(url, addToFront = true)
         }
     }
 
@@ -153,7 +153,7 @@ class NextCommandTest {
             lavaPlayerService.moveTrackToNext(searchTerm)
         }
         coVerify(exactly = 0) {
-            lavaPlayerService.loadAndPlayNext(any())
+            lavaPlayerService.loadAndPlay(any(), any())
         }
     }
 
@@ -172,7 +172,7 @@ class NextCommandTest {
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
             every { isQueueEmpty() } returns false
             every { moveTrackToNext(searchTerm) } returns null
-            justRun { loadAndPlayNext(any()) }
+            justRun { loadAndPlay(any(), any()) }
         }
 
         coEvery {
@@ -198,7 +198,7 @@ class NextCommandTest {
             )
             lavaPlayerService.isQueueEmpty()
             lavaPlayerService.moveTrackToNext(searchTerm)
-            lavaPlayerService.loadAndPlayNext(searchTerm)
+            lavaPlayerService.loadAndPlay(searchTerm, addToFront = true)
         }
     }
 
@@ -243,7 +243,7 @@ class NextCommandTest {
         }
         coVerify(exactly = 0) {
             lavaPlayerService.moveTrackToNext(any())
-            lavaPlayerService.loadAndPlayNext(any())
+            lavaPlayerService.loadAndPlay(any(), any())
         }
     }
 

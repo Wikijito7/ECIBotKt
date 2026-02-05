@@ -64,7 +64,7 @@ class NextCommand(
                 response.respond {
                     content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
                 }
-                guildLavaPlayerService.loadAndPlayNext(transformedUrl)
+                guildLavaPlayerService.loadAndPlay(transformedUrl, addToFront = true)
             } else {
                 // Search case: find track in queue and move to next position
                 if (guildLavaPlayerService.isQueueEmpty()) {
@@ -97,7 +97,7 @@ class NextCommand(
                             arguments = arrayOf(input)
                         )
                     }
-                    guildLavaPlayerService.loadAndPlayNext(input)
+                    guildLavaPlayerService.loadAndPlay(input, addToFront = true)
                 }
             }
         } catch (exc: IllegalStateException) {
