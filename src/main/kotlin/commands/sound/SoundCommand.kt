@@ -95,10 +95,25 @@ class SoundCommand(
     override suspend fun onAutoComplete(interaction: AutoCompleteInteraction) {
         val input = interaction.command.strings[ARGUMENT_NAME].orEmpty()
         input.takeIfNotEmpty()?.let {
-            val sounds = getFolderContent(AUDIO_FOLDER)
+            val allFiles = getFolderContent(AUDIO_FOLDER)
+
+            // First: sounds that start with input (sorted alphabetically)
+            val startsWithMatches = allFiles
                 .filter { file ->
+                    file.nameWithoutExtension.startsWith(input, ignoreCase = true)
+                }
+                .sortedBy { it.nameWithoutExtension.lowercase() }
+
+            // Then: sounds that contain input but don't start with it (sorted alphabetically)
+            val containsMatches = allFiles
+                .filter { file ->
+                    !file.nameWithoutExtension.startsWith(input, ignoreCase = true) &&
                     file.nameWithoutExtension.contains(input, ignoreCase = true)
                 }
+                .sortedBy { it.nameWithoutExtension.lowercase() }
+
+            // Combine: startsWith first, then contains, up to 25 total
+            val sounds = (startsWithMatches + containsMatches)
                 .take(25)
                 .map { file ->
                     Choice.StringChoice(
@@ -107,6 +122,7 @@ class SoundCommand(
                         value = file.nameWithoutExtension.take(100)
                     )
                 }
+                .toList()
             interaction.suggest(sounds)
         } ?: interaction.suggest(emptyList())
     }

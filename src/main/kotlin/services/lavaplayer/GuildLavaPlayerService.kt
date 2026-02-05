@@ -114,10 +114,10 @@ class GuildLavaPlayerService(
         }
     }
 
-    fun loadAndPlay(url: String) {
+    fun loadAndPlay(url: String, addToFront: Boolean = false) {
         audioPlayerManager.loadItem(
             url,
-            getAudioLoadResultHandler(url)
+            getAudioLoadResultHandler(url, addToFront)
         )
     }
 
@@ -210,6 +210,35 @@ class GuildLavaPlayerService(
         player.stopTrack()
     }
 
+    fun moveTrackToNext(searchTerm: String): TrackBO? {
+        val normalizedSearchTerm = searchTerm.lowercase()
+
+        // First, try to find an exact match
+        val exactMatchIndex = queue.indexOfFirst { trackBO ->
+            trackBO.getDisplayTrackName().lowercase() == normalizedSearchTerm
+        }
+
+        // If no exact match, try to find a track that contains the search term
+        val trackIndex = if (exactMatchIndex != -1) {
+            exactMatchIndex
+        } else {
+            queue.indexOfFirst { trackBO ->
+                trackBO.getDisplayTrackName().lowercase().contains(normalizedSearchTerm)
+            }
+        }
+
+        return if (trackIndex != -1) {
+            val track = queue.removeAt(trackIndex)
+            queue.add(0, track)
+            updateSeekChannel.trySend(Unit)
+            track
+        } else {
+            null
+        }
+    }
+
+    fun isQueueEmpty(): Boolean = queue.isEmpty()
+
     suspend fun stop() {
         handleDisconnectEvent()
     }
@@ -293,9 +322,13 @@ class GuildLavaPlayerService(
     }
 
 
-    private fun queue(tracks: List<TrackBO>) {
+    private fun queue(tracks: List<TrackBO>, addToFront: Boolean = false) {
         resetLeaveTimer()
-        queue.addAll(tracks)
+        if (addToFront) {
+            queue.addAll(0, tracks)
+        } else {
+            queue.addAll(tracks)
+        }
         if (player.playingTrack == null) {
             nextTrack()
         }
@@ -312,13 +345,13 @@ class GuildLavaPlayerService(
         )
     }
 
-    private fun getAudioLoadResultHandler(currentLoadTrack: String) = object : AudioLoadResultHandler {
+    private fun getAudioLoadResultHandler(currentLoadTrack: String, addToFront: Boolean = false) = object : AudioLoadResultHandler {
         override fun trackLoaded(track: AudioTrack) {
-            onTrackLoaded(track)
+            onTrackLoaded(track, addToFront)
         }
 
         override fun playlistLoaded(playlist: AudioPlaylist) {
-            onPlaylistLoaded(playlist)
+            onPlaylistLoaded(playlist, addToFront)
         }
 
         override fun noMatches() {
@@ -389,9 +422,10 @@ class GuildLavaPlayerService(
         }
     }
 
-    private fun onPlaylistLoaded(playlist: AudioPlaylist) {
+    private fun onPlaylistLoaded(playlist: AudioPlaylist, addToFront: Boolean = false) {
         coroutineScope.launch {
             val locale = voiceChannel.getLocale()
+            val isCurrentlyPlaying = player.playingTrack != null
             val message = textChannel.createMessage(
                 localizationService.getStringFormat(
                     key = LocalizationKeys.FOUND_TRACK_LIST,
@@ -400,18 +434,21 @@ class GuildLavaPlayerService(
                 )
             )
             connectToVoiceChannel()
-            queue(playlist.tracks.map { TrackBO(audioTrack = it) })
+            queue(playlist.tracks.map { TrackBO(audioTrack = it) }, addToFront)
+            if (addToFront && !isCurrentlyPlaying) {
+                nextTrack()
+            }
             val playlistUrl = (playlist as? ExtendedAudioPlaylist)?.url
             message.edit {
                 content = if (playlistUrl?.isValidUrl() == true) {
                     localizationService.getStringFormat(
-                        key = LocalizationKeys.ADDED_SONGS_TO_QUEUE_WITH_LINK,
+                        key = if (addToFront) LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_SONGS_TO_QUEUE_WITH_LINK,
                         locale = locale,
                         arguments = arrayOf(playlist.name, playlistUrl, playlist.tracks.size)
                     )
                 } else {
                     localizationService.getStringFormat(
-                        key = LocalizationKeys.ADDED_SONGS_TO_QUEUE,
+                        key = if (addToFront) LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE else LocalizationKeys.ADDED_SONGS_TO_QUEUE,
                         locale = locale,
                         arguments = arrayOf(playlist.name, playlist.tracks.size)
                     )
@@ -420,27 +457,31 @@ class GuildLavaPlayerService(
         }
     }
 
-    private fun onTrackLoaded(track: AudioTrack) {
+    private fun onTrackLoaded(track: AudioTrack, addToFront: Boolean = false) {
         coroutineScope.launch {
             val locale = voiceChannel.getLocale()
             val currentTrack = TrackBO(audioTrack = track)
+            val isCurrentlyPlaying = player.playingTrack != null
             textChannel.createMessage(
                 if (track.info.uri.isValidUrl()) {
                     localizationService.getStringFormat(
-                        key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
+                        key = if (addToFront) LocalizationKeys.NEXT_ADDED_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
                         locale = locale,
                         arguments = arrayOf(currentTrack.getDisplayTrackName(), track.info.uri)
                     )
                 } else {
                     localizationService.getStringFormat(
-                        key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
+                        key = if (addToFront) LocalizationKeys.NEXT_ADDED_TO_QUEUE else LocalizationKeys.ADDED_TRACK_TO_QUEUE,
                         locale = locale,
                         arguments = arrayOf(currentTrack.getDisplayTrackName())
                     )
                 }
             )
             connectToVoiceChannel()
-            queue(listOf(currentTrack))
+            queue(listOf(currentTrack), addToFront)
+            if (addToFront && !isCurrentlyPlaying) {
+                nextTrack()
+            }
         }
     }
 

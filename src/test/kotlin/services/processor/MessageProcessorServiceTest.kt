@@ -44,7 +44,7 @@ class MessageProcessorServiceTest {
                 }
             }
         }
-        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://fixupx.com/status/blablabla"
+        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://girlcockx.com/status/blablabla"
 
         coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
@@ -64,6 +64,146 @@ class MessageProcessorServiceTest {
     fun `Given message with regular twitter url When processMessage is called Then don't process message`() {
         // Given
         val originalMessage = "https://twitter.com/blablabla"
+        val authorId = Snowflake(123123)
+        val authorMention = "manolete"
+        val message: Message = mockk {
+            every { content } returns originalMessage
+            every { author?.id } returns authorId
+            every { author?.mention } returns authorMention
+        }
+
+        coJustRun { message.delete() }
+        coJustRun { message.channel.createMessage(any()) }
+
+        // When
+        messageProcessor.processMessage(message)
+
+        // Then
+        coVerify(exactly = 0) {
+            message.delete()
+            message.channel.createMessage(any())
+        }
+    }
+
+    @Test
+    fun `Given message with real twitter status url format When processMessage is called Then process message`() {
+        // Given
+        val originalMessage = "https://twitter.com/elonmusk/status/12345"
+        val authorId = Snowflake(123123)
+        val authorMention = "manolete"
+        val message: Message = mockk {
+            every { content } returns originalMessage
+            every { author?.id } returns authorId
+            every { author?.mention } returns authorMention
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    every { preferredLocale } returns Locale.ENGLISH_UNITED_STATES
+                }
+            }
+        }
+        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://girlcockx.com/elonmusk/status/12345"
+
+        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
+        coJustRun { message.delete() }
+        coJustRun { message.channel.createMessage(any()) }
+
+        // When
+        messageProcessor.processMessage(message)
+
+        // Then
+        coVerify(exactly = 1) {
+            message.delete()
+            message.channel.createMessage(editedMessage)
+        }
+    }
+
+    @Test
+    fun `Given message with xcom status url When processMessage is called Then process message`() {
+        // Given
+        val originalMessage = "https://x.com/elonmusk/status/12345"
+        val authorId = Snowflake(123123)
+        val authorMention = "manolete"
+        val message: Message = mockk {
+            every { content } returns originalMessage
+            every { author?.id } returns authorId
+            every { author?.mention } returns authorMention
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    every { preferredLocale } returns Locale.ENGLISH_UNITED_STATES
+                }
+            }
+        }
+        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://girlcockx.com/elonmusk/status/12345"
+
+        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
+        coJustRun { message.delete() }
+        coJustRun { message.channel.createMessage(any()) }
+
+        // When
+        messageProcessor.processMessage(message)
+
+        // Then
+        coVerify(exactly = 1) {
+            message.delete()
+            message.channel.createMessage(editedMessage)
+        }
+    }
+
+    @Test
+    fun `Given message with twitter status url with query params When processMessage is called Then keep query params`() {
+        // Given
+        val originalMessage = "https://twitter.com/elonmusk/status/12345?t=abc123&s=19"
+        val authorId = Snowflake(123123)
+        val authorMention = "manolete"
+        val message: Message = mockk {
+            every { content } returns originalMessage
+            every { author?.id } returns authorId
+            every { author?.mention } returns authorMention
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockk {
+                every { resources } returns mockk {
+                    every { defaultStrategy } returns EntitySupplyStrategy.rest
+                }
+                coEvery { getGuildOrNull(any()) } returns mockk {
+                    every { preferredLocale } returns Locale.ENGLISH_UNITED_STATES
+                }
+            }
+        }
+        // Note: Query parameters are kept for girlcockx.com as they are required for embeds
+        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://girlcockx.com/elonmusk/status/12345?t=abc123&s=19"
+
+        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
+        coJustRun { message.delete() }
+        coJustRun { message.channel.createMessage(any()) }
+
+        // When
+        messageProcessor.processMessage(message)
+
+        // Then
+        coVerify(exactly = 1) {
+            message.delete()
+            message.channel.createMessage(editedMessage)
+        }
+    }
+
+    @Test
+    fun `Given message with xcom profile url When processMessage is called Then don't process message`() {
+        // Given
+        val originalMessage = "https://x.com/elonmusk"
         val authorId = Snowflake(123123)
         val authorMention = "manolete"
         val message: Message = mockk {
