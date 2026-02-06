@@ -176,17 +176,17 @@ class ErrorHandlerService(
         }
 
         val guildInfo = if (interaction.data.guildId.value != null) "Guild(${interaction.data.guildId.value})" else "DM"
-        
+
         return buildString {
             appendLine("**BOT ERROR** \uD83D\uDC80")
             appendLine()
             appendLine("**$interactionType:** ${commandName ?: "Unknown"}")
-            
+
             // Add Custom ID for button interactions
             if (interaction is ButtonInteraction) {
                 appendLine("**Custom ID:** ${interaction.component.customId ?: "N/A"}")
             }
-            
+
             appendLine("**User:** ${interaction.user.username} (`${interaction.user.id}`)")
             appendLine("**Guild:** $guildInfo")
             appendLine("**Time:** $timestamp")

@@ -24,21 +24,21 @@ class KokoroAudioTrack(
 
     override fun process(localExecutor: LocalAudioTrackExecutor) {
         if (baseUrl.isEmpty()) throw IllegalStateException("Base URL not set for KokoroAudioTrack")
-        
+
         sourceManager.getHttpInterface().use { httpInterface ->
             val post = HttpPost(URI.create("$baseUrl/v1/audio/speech").normalize()).apply {
                 entity = StringEntity(getBody(), ContentType.APPLICATION_JSON)
             }
-            
+
             httpInterface.execute(post).use { response ->
                 val contentLength = response.getFirstHeader("Content-Length")?.value?.toLongOrNull()
                 val stream = PostAudioStream(response, contentLength)
-                
+
                 processDelegate(Mp3AudioTrack(trackInfo, stream), localExecutor)
             }
         }
     }
-  
+
     override fun makeShallowClone(): AudioTrack = KokoroAudioTrack(trackInfo, sourceManager).apply {
         baseUrl = this@KokoroAudioTrack.baseUrl
         rawText = this@KokoroAudioTrack.rawText
@@ -46,7 +46,7 @@ class KokoroAudioTrack(
         speed = this@KokoroAudioTrack.speed
         langCode = this@KokoroAudioTrack.langCode
     }
-  
+
     override fun getSourceManager(): AudioSourceManager = sourceManager
 
     private fun getBody(): String {
@@ -57,7 +57,7 @@ class KokoroAudioTrack(
             .replace("\n", "\\n")
             .replace("\r", "\\r")
             .replace("\t", "\\t")
-        
+
         return """
             {
                 "input": "$escapedText",

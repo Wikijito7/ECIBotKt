@@ -153,17 +153,19 @@ class CommandHandlerServiceImpl(
         }
     }
 
-    private fun getCommandNameFromComponent(customId: String): String? {
-        return when (ComponentsEnum.forCustomId(customId)) {
-            ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> CommandName.Queue.commandName
-            ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
-            ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> CommandName.Player.commandName
-            ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> CommandName.Sounds.commandName
-            ComponentsEnum.RADIO_LIST_NEXT, ComponentsEnum.RADIO_LIST_PREVIOUS, ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
-            ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
-            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS, ComponentsEnum.RADIO_COUNTRYCODES_NEXT,
-            ComponentsEnum.RADIO_COUNTRYCODES_PREVIOUS -> CommandName.Radio.commandName
-            null -> null
-        }
+    private fun getCommandNameFromComponent(customId: String): String? = when (ComponentsEnum.forCustomId(customId)) {
+        ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> CommandName.Queue.commandName
+
+        ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
+        ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> CommandName.Player.commandName
+
+        ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> CommandName.Sounds.commandName
+
+        ComponentsEnum.RADIO_LIST_NEXT, ComponentsEnum.RADIO_LIST_PREVIOUS, ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
+        ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
+        ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS, ComponentsEnum.RADIO_COUNTRYCODES_NEXT,
+        ComponentsEnum.RADIO_COUNTRYCODES_PREVIOUS -> CommandName.Radio.commandName
+
+        null -> null
     }
 }

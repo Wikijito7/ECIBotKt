@@ -37,9 +37,9 @@ class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
         // Long text can take 30+ seconds to generate
         configureRequests { config ->
             RequestConfig.copy(config)
-                .setConnectTimeout(30000)      // 30 seconds to establish connection
-                .setSocketTimeout(120000)      // 2 minutes for data transfer (long TTS generation)
-                .setConnectionRequestTimeout(30000)  // 30 seconds to get connection from pool
+                .setConnectTimeout(30000) // 30 seconds to establish connection
+                .setSocketTimeout(120000) // 2 minutes for data transfer (long TTS generation)
+                .setConnectionRequestTimeout(30000) // 30 seconds to get connection from pool
                 .build()
         }
     }
@@ -74,7 +74,7 @@ class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
 
     private fun String?.parseQueryParam(param: String): String? {
         if (this == null) return null
-        val regex = "(^|&)${param}=([^&]*)".toRegex()
+        val regex = "(^|&)$param=([^&]*)".toRegex()
         val match = regex.find(this)
         return match?.groupValues?.get(2)?.let { URLDecoder.decode(it, UTF_8) }
     }
@@ -109,14 +109,22 @@ class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
         }
 
         return AudioTrackInfo(
-            /* title = */ title,
-            /* author = */ "Kokoro",
-            /* length = */ Long.MAX_VALUE,
-            /* identifier = */ reference.identifier,
-            /* isStream = */ true,
-            /* uri = */ reference.identifier,
-            /* artworkUrl = */ null,
-            /* isrc = */ null
+            /* title = */
+            title,
+            /* author = */
+            "Kokoro",
+            /* length = */
+            Long.MAX_VALUE,
+            /* identifier = */
+            reference.identifier,
+            /* isStream = */
+            true,
+            /* uri = */
+            reference.identifier,
+            /* artworkUrl = */
+            null,
+            /* isrc = */
+            null
         )
     }
 }

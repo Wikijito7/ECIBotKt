@@ -201,13 +201,11 @@ sealed class BotException(
  * Factory function to convert ErrorType to appropriate APIException.
  * This is placed in the same package to access the sealed class constructors.
  */
-fun ErrorType.toException(): BotException.APIException {
-    return when (this) {
-        is ErrorType.NoConnectionError -> BotException.APIException.NetworkConnectionException(this)
-        is ErrorType.ServerError -> BotException.APIException.ServerErrorException(this)
-        is ErrorType.RequestError -> BotException.APIException.RequestErrorException(this)
-        is ErrorType.DataParseError -> BotException.APIException.DataParseException(this)
-        is ErrorType.UnknownError -> BotException.APIException.GenericAPIException(this)
-        is ErrorType.CustomError -> BotException.APIException.GenericAPIException(this)
-    }
+fun ErrorType.toException(): BotException.APIException = when (this) {
+    is ErrorType.NoConnectionError -> BotException.APIException.NetworkConnectionException(this)
+    is ErrorType.ServerError -> BotException.APIException.ServerErrorException(this)
+    is ErrorType.RequestError -> BotException.APIException.RequestErrorException(this)
+    is ErrorType.DataParseError -> BotException.APIException.DataParseException(this)
+    is ErrorType.UnknownError -> BotException.APIException.GenericAPIException(this)
+    is ErrorType.CustomError -> BotException.APIException.GenericAPIException(this)
 }

@@ -86,9 +86,7 @@ class PostAudioStream(
         }
     }
 
-    override fun getPosition(): Long {
-        return internalPosition
-    }
+    override fun getPosition(): Long = internalPosition
 
     /**
      * Hard seeking is NOT supported for POST streams.
@@ -106,7 +104,7 @@ class PostAudioStream(
         }
         throw IOException(
             "Seeking is not supported for TTS audio streams. " +
-                    "Current position: $internalPosition, requested: $position"
+                "Current position: $internalPosition, requested: $position"
         )
     }
 
@@ -115,9 +113,7 @@ class PostAudioStream(
         return false
     }
 
-    override fun getTrackInfoProviders(): List<AudioTrackInfoProvider?> {
-        return emptyList()
-    }
+    override fun getTrackInfoProviders(): List<AudioTrackInfoProvider?> = emptyList()
 
     private fun checkNotClosed() {
         if (closed) {

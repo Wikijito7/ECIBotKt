@@ -106,9 +106,11 @@ class AudioPlayerManagerProvider(
         // This one should be the last registered as it is used as a fallback for unknown sources,
         // and we want to make sure that all the other sources are tried first
         AudioSourceManagers.registerRemoteSources(
-            /* playerManager = */ this,
+            /* playerManager = */
+            this,
             // Exclude deprecated YoutubeAudioSourceManager to avoid conflicts with the new one
-            /* ...excludedSources = */ DeprecatedYoutubeAudioSourceManager::class.java
+            /* ...excludedSources = */
+            DeprecatedYoutubeAudioSourceManager::class.java
         )
     }
 }
