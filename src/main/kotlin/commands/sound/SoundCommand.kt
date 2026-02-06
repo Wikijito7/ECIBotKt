@@ -52,44 +52,38 @@ class SoundCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        try {
-            val locale = interaction.guildLocale.orDefaultLocale()
-            val soundName: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
-                ?: response.respond {
-                    content = localizationService.getStringFormat(
-                        key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
-                        locale = locale,
-                        arguments = arrayOf(ARGUMENT_NAME)
-                    )
-                }.let { return }
+        val locale = interaction.guildLocale.orDefaultLocale()
+        val soundName: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
+            ?: response.respond {
+                content = localizationService.getStringFormat(
+                    key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
+                    locale = locale,
+                    arguments = arrayOf(ARGUMENT_NAME)
+                )
+            }.let { return }
 
-            response.respond {
-                content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
-            }
-
-            val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
-            val soundFilePath = "$AUDIO_FOLDER$soundName$AUDIO_EXTENSION"
-            val file = File(soundFilePath)
-
-            if (!file.exists()) {
-                response.respond {
-                    content = localizationService.getStringFormat(
-                        key = LocalizationKeys.NO_MATCHES,
-                        locale = locale,
-                        arguments = arrayOf(soundName)
-                    )
-                }.let { return }
-            }
-
-            guildLavaPlayerService.loadAndPlayMultipleWithCustomName(
-                listOf(soundFilePath),
-                soundName
-            )
-        } catch (exc: IllegalStateException) {
-            response.respond {
-                content = exc.message
-            }
+        response.respond {
+            content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
         }
+
+        val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
+        val soundFilePath = "$AUDIO_FOLDER$soundName$AUDIO_EXTENSION"
+        val file = File(soundFilePath)
+
+        if (!file.exists()) {
+            response.respond {
+                content = localizationService.getStringFormat(
+                    key = LocalizationKeys.NO_MATCHES,
+                    locale = locale,
+                    arguments = arrayOf(soundName)
+                )
+            }.let { return }
+        }
+
+        guildLavaPlayerService.loadAndPlayMultipleWithCustomName(
+            listOf(soundFilePath),
+            soundName
+        )
     }
 
     override suspend fun onAutoComplete(interaction: AutoCompleteInteraction) {

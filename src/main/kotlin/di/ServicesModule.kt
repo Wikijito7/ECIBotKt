@@ -5,6 +5,7 @@ import es.wokis.dispatchers.AppDispatchersImpl
 import es.wokis.services.commands.CommandHandlerService
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.config.ConfigService
+import es.wokis.services.error.ErrorHandlerService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.processor.MessageProcessorService
@@ -27,6 +28,7 @@ val servicesModule = module {
     singleOf(::TTSService)
     singleOf(::RadioService)
     factoryOf(::PlayerChannelService)
+    factoryOf(::ErrorHandlerService)
 
     single<AppDispatchers> { AppDispatchersImpl() }
 }

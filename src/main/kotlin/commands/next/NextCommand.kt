@@ -45,64 +45,58 @@ class NextCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        try {
-            val locale = interaction.guildLocale.orDefaultLocale()
-            val input: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
-                ?: response.respond {
-                    content = localizationService.getStringFormat(
-                        key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
-                        locale = locale,
-                        arguments = arrayOf(ARGUMENT_NAME)
-                    )
-                }.let { return }
+        val locale = interaction.guildLocale.orDefaultLocale()
+        val input: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
+            ?: response.respond {
+                content = localizationService.getStringFormat(
+                    key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
+                    locale = locale,
+                    arguments = arrayOf(ARGUMENT_NAME)
+                )
+            }.let { return }
 
-            val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
+        val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
 
-            if (input.isValidUrl()) {
-                // URL case: transform monochrome URLs and load as next
-                val transformedUrl = input.transformUrl()
-                response.respond {
-                    content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
-                }
-                guildLavaPlayerService.loadAndPlay(transformedUrl, addToFront = true)
-            } else {
-                // Search case: find track in queue and move to next position
-                if (guildLavaPlayerService.isQueueEmpty()) {
-                    response.respond {
-                        content = localizationService.getString(
-                            LocalizationKeys.NEXT_EMPTY_QUEUE,
-                            locale
-                        )
-                    }
-                    return
-                }
-
-                val movedTrack = guildLavaPlayerService.moveTrackToNext(input)
-
-                if (movedTrack != null) {
-                    response.respond {
-                        content = localizationService.getStringFormat(
-                            key = LocalizationKeys.NEXT_TRACK_MOVED,
-                            locale = locale,
-                            arguments = arrayOf(movedTrack.getDisplayTrackName())
-                        )
-                    }
-                } else {
-                    // Track not found in queue, warn user and try lavaplayer anyway
-                    // This handles special commands like dzrec:1090538082
-                    response.respond {
-                        content = localizationService.getStringFormat(
-                            key = LocalizationKeys.NEXT_TRACK_NOT_IN_QUEUE_TRYING_SEARCH,
-                            locale = locale,
-                            arguments = arrayOf(input)
-                        )
-                    }
-                    guildLavaPlayerService.loadAndPlay(input, addToFront = true)
-                }
-            }
-        } catch (exc: IllegalStateException) {
+        if (input.isValidUrl()) {
+            // URL case: transform monochrome URLs and load as next
+            val transformedUrl = input.transformUrl()
             response.respond {
-                content = exc.message
+                content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
+            }
+            guildLavaPlayerService.loadAndPlay(transformedUrl, addToFront = true)
+        } else {
+            // Search case: find track in queue and move to next position
+            if (guildLavaPlayerService.isQueueEmpty()) {
+                response.respond {
+                    content = localizationService.getString(
+                        LocalizationKeys.NEXT_EMPTY_QUEUE,
+                        locale
+                    )
+                }
+                return
+            }
+
+            val movedTrack = guildLavaPlayerService.moveTrackToNext(input)
+
+            if (movedTrack != null) {
+                response.respond {
+                    content = localizationService.getStringFormat(
+                        key = LocalizationKeys.NEXT_TRACK_MOVED,
+                        locale = locale,
+                        arguments = arrayOf(movedTrack.getDisplayTrackName())
+                    )
+                }
+            } else {
+                // Track not found in queue, warn user and try lavaplayer anyway
+                // This handles special commands like dzrec:1090538082
+                response.respond {
+                    content = localizationService.getStringFormat(
+                        key = LocalizationKeys.NEXT_TRACK_NOT_IN_QUEUE_TRYING_SEARCH,
+                        locale = locale,
+                        arguments = arrayOf(input)
+                    )
+                }
+                guildLavaPlayerService.loadAndPlay(input, addToFront = true)
             }
         }
     }

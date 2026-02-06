@@ -54,9 +54,8 @@ sounds_embed_description: Hay %d sonidos disponibles
 reconnect_command_description: Se vuelve a conectar al canal de voz actual
 reconnect_success: Se ha vuelto a conectar al canal de voz
 reconnect_not_connected: No estoy conectado a ningún canal de voz para reconectar
-radio_random_searching: Buscando una emisora de radio aleatoria...
+radio_random_searching: Buscando una emisora de radio aleatoria…
 radio_random_error: No se pudo encontrar una emisora de radio aleatoria. Inténtalo de nuevo más tarde.
-radio_countrycodes_list: Códigos de país disponibles: %s
 radio_countrycodes_embed_title: Códigos de País
 radio_countrycodes_empty: No hay códigos de país disponibles en este momento.
 radio_countrycodes_error: No se pudieron obtener los códigos de país. Inténtalo de nuevo más tarde.
@@ -66,7 +65,7 @@ radio_list_embed_title: Lista de Radios
 radio_list_embed_description: Lista de radios disponibles
 radio_play_command_description: Reproducir una emisora de radio
 radio_play_input_description: Nombre de la emisora
-radio_play_found: Emisora encontrada, sintonizando...
+radio_play_found: Emisora encontrada, sintonizando…
 radio_play_not_found: Emisora no encontrada, inténtalo de nuevo.
 radio_play_required: El nombre de la emisora es obligatorio
 radio_search_command_description: Buscar emisoras de radio
@@ -91,4 +90,14 @@ next_track_moved: Movido %s a la siguiente posición en la cola
 next_track_not_found: No se encontró ninguna pista que coincida con "%s" en la cola
 next_empty_queue: La cola está vacía, no se pueden buscar pistas
 next_track_already_next: Esta pista ya es la siguiente en la cola
-next_track_not_in_queue_trying_search: Pista "%s" no encontrada en la cola. Intentando buscar y añadirla...
+next_track_not_in_queue_trying_search: Pista "%s" no encontrada en la cola. Intentando buscar y añadirla…
+error_empty_queue: La cola está vacía
+error_audio_playback: Error en la reproducción de audio
+error_sound_not_found: Sonido no encontrado
+error_track_not_found: Pista no encontrada
+error_not_in_same_voice_channel: Necesitas estar en el mismo canal de voz que el bot
+error_no_voice_connection: No conectado al canal de voz
+error_no_track_playing: No hay ninguna pista reproduciéndose
+error_api_unexpected: Ocurrió un error al comunicarse con servicios externos. Por favor, inténtalo de nuevo más tarde.
+error_unexpected: Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde.
+error_unexpected_with_debug: Ocurrió un error inesperado: %s

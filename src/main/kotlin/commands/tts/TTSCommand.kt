@@ -43,28 +43,22 @@ class TTSCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        try {
-            val locale = interaction.guildLocale.orDefaultLocale()
-            val message: String = interaction.getArgument(TTS_ARGUMENT_NAME)
-                ?: response.respond {
-                    content = localizationService.getStringFormat(
-                        key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
-                        locale = locale,
-                        arguments = arrayOf(TTS_ARGUMENT_NAME)
-                    )
-                }.let { return }
-            val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
-            response.respond {
-                content = localizationService.getString(
-                    key = LocalizationKeys.TTS_COMMAND_RESPONSE,
-                    locale = locale
+        val locale = interaction.guildLocale.orDefaultLocale()
+        val message: String = interaction.getArgument(TTS_ARGUMENT_NAME)
+            ?: response.respond {
+                content = localizationService.getStringFormat(
+                    key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
+                    locale = locale,
+                    arguments = arrayOf(TTS_ARGUMENT_NAME)
                 )
-            }
-            ttsService.loadAndPlayMessage(guildLavaPlayerService, message)
-        } catch (exc: IllegalStateException) {
-            response.respond {
-                content = exc.message
-            }
+            }.let { return }
+        val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
+        response.respond {
+            content = localizationService.getString(
+                key = LocalizationKeys.TTS_COMMAND_RESPONSE,
+                locale = locale
+            )
         }
+        ttsService.loadAndPlayMessage(guildLavaPlayerService, message)
     }
 }

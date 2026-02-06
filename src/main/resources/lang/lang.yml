@@ -54,9 +54,8 @@ sounds_embed_description: There are %d sounds available
 reconnect_command_description: Reconnects to the current voice channel
 reconnect_success: Reconnected to the voice channel
 reconnect_not_connected: I'm not connected to any voice channel to reconnect
-radio_random_searching: Searching for a random radio station...
+radio_random_searching: Searching for a random radio station…
 radio_random_error: Could not find a random radio station. Please try again later.
-radio_countrycodes_list: Available country codes: %s
 radio_countrycodes_embed_title: Country Codes
 radio_countrycodes_empty: No country codes available at the moment.
 radio_countrycodes_error: Could not retrieve country codes. Please try again later.
@@ -78,7 +77,6 @@ radio_random_command_description: Selects a random station
 radio_countrycodes_command_description: Get country codes
 radio_unknown_message: Unknown message
 flowery_tts_custom_name: FloweryTTS - TTS message
-radio_countrycodes_more: "... and %d more country codes. Use /radio search countrycode to explore!"
 player_channel_created: Created <#%s> channel for music controls
 player_channel_creation_failed: Could not create player channel. Showing player here instead.
 player_shown_on_existing_channel: Created player on <#%s>
@@ -92,4 +90,14 @@ next_track_moved: Moved %s to the next position in queue
 next_track_not_found: No track found matching "%s" in the queue
 next_empty_queue: The queue is empty, cannot search for tracks
 next_track_already_next: This track is already the next track
-next_track_not_in_queue_trying_search: Track "%s" not found in queue. Trying to search and add it...
+next_track_not_in_queue_trying_search: Track "%s" not found in queue. Trying to search and add it…
+error_empty_queue: Queue is empty
+error_audio_playback: Audio playback failed
+error_sound_not_found: Sound not found
+error_track_not_found: Track not found
+error_not_in_same_voice_channel: You need to be in the same voice channel as the bot
+error_no_voice_connection: Not connected to voice channel
+error_no_track_playing: No track is currently playing
+error_api_unexpected: An error occurred while communicating with external services. Please try again later.
+error_unexpected: An unexpected error occurred. Please try again later.
+error_unexpected_with_debug: An unexpected error occurred: %s

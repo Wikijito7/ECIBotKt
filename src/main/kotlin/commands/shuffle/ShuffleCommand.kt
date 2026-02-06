@@ -31,20 +31,14 @@ class ShuffleCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        try {
-            val locale = interaction.guildLocale.orDefaultLocale()
-            val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
-            guildLavaPlayerService.shuffle()
-            response.respond {
-                content = localizationService.getString(
-                    key = LocalizationKeys.SHUFFLE_COMMAND_RESPONSE,
-                    locale = locale
-                )
-            }
-        } catch (exc: IllegalStateException) {
-            response.respond {
-                content = exc.message
-            }
+        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
+        guildLavaPlayerService.shuffle()
+        response.respond {
+            content = localizationService.getString(
+                key = LocalizationKeys.SHUFFLE_COMMAND_RESPONSE,
+                locale = locale
+            )
         }
     }
 }

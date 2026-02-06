@@ -23,6 +23,7 @@ import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.tts.TTSCommand
 import es.wokis.constants.CUSTOM_COMPONENT_SEPARATOR
 import es.wokis.localization.LocalizationKeys
+import es.wokis.services.error.ErrorHandlerService
 import es.wokis.services.localization.LocalizationService
 
 interface CommandHandlerService {
@@ -53,7 +54,8 @@ class CommandHandlerServiceImpl(
     private val reconnectCommand: ReconnectCommand,
     private val nextCommand: NextCommand,
     private val radioGroupCommand: RadioGroupCommand,
-    private val localizationService: LocalizationService
+    private val localizationService: LocalizationService,
+    private val errorHandlerService: ErrorHandlerService
 ) : CommandHandlerService {
 
     override fun onRegisterSimpleCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
@@ -77,19 +79,24 @@ class CommandHandlerServiceImpl(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        when (val commandName = interaction.command.rootName) {
-            CommandName.Play.commandName -> playCommand.onExecute(interaction, response)
-            CommandName.Sound.commandName -> soundCommand.onExecute(interaction, response)
-            CommandName.Queue.commandName -> queueCommand.onExecute(interaction, response)
-            CommandName.Skip.commandName -> skipCommand.onExecute(interaction, response)
-            CommandName.Shuffle.commandName -> shuffleCommand.onExecute(interaction, response)
-            CommandName.Tts.commandName -> ttsCommand.onExecute(interaction, response)
-            CommandName.Player.commandName -> playerCommand.onExecute(interaction, response)
-            CommandName.Sounds.commandName -> soundsCommand.onExecute(interaction, response)
-            CommandName.Radio.commandName -> radioGroupCommand.onExecute(interaction, response)
-            CommandName.Reconnect.commandName -> reconnectCommand.onExecute(interaction, response)
-            CommandName.Next.commandName -> nextCommand.onExecute(interaction, response)
-            else -> respondUnknownCommand(response, interaction.guildLocale, commandName)
+        val commandName = interaction.command.rootName
+        try {
+            when (commandName) {
+                CommandName.Play.commandName -> playCommand.onExecute(interaction, response)
+                CommandName.Sound.commandName -> soundCommand.onExecute(interaction, response)
+                CommandName.Queue.commandName -> queueCommand.onExecute(interaction, response)
+                CommandName.Skip.commandName -> skipCommand.onExecute(interaction, response)
+                CommandName.Shuffle.commandName -> shuffleCommand.onExecute(interaction, response)
+                CommandName.Tts.commandName -> ttsCommand.onExecute(interaction, response)
+                CommandName.Player.commandName -> playerCommand.onExecute(interaction, response)
+                CommandName.Sounds.commandName -> soundsCommand.onExecute(interaction, response)
+                CommandName.Radio.commandName -> radioGroupCommand.onExecute(interaction, response)
+                CommandName.Reconnect.commandName -> reconnectCommand.onExecute(interaction, response)
+                CommandName.Next.commandName -> nextCommand.onExecute(interaction, response)
+                else -> respondUnknownCommand(response, interaction.guildLocale, commandName)
+            }
+        } catch (exception: Throwable) {
+            errorHandlerService.handleCommandError(exception, interaction, response, commandName)
         }
     }
 
@@ -97,27 +104,38 @@ class CommandHandlerServiceImpl(
         interaction: ButtonInteraction
     ) {
         val customId = interaction.component.customId?.split(CUSTOM_COMPONENT_SEPARATOR)?.firstOrNull() ?: return
-        when (ComponentsEnum.forCustomId(customId)) {
-            ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
+        val commandName = getCommandNameFromComponent(customId)
 
-            ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
-            ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> playerCommand.onInteract(interaction)
+        try {
+            when (ComponentsEnum.forCustomId(customId)) {
+                ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
 
-            ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
+                ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
+                ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> playerCommand.onInteract(interaction)
 
-            ComponentsEnum.RADIO_LIST_NEXT, ComponentsEnum.RADIO_LIST_PREVIOUS, ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
-            ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
-            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS, ComponentsEnum.RADIO_COUNTRYCODES_NEXT,
-            ComponentsEnum.RADIO_COUNTRYCODES_PREVIOUS -> radioGroupCommand.onInteract(interaction)
+                ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
 
-            null -> Unit
+                ComponentsEnum.RADIO_LIST_NEXT, ComponentsEnum.RADIO_LIST_PREVIOUS, ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
+                ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
+                ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS, ComponentsEnum.RADIO_COUNTRYCODES_NEXT,
+                ComponentsEnum.RADIO_COUNTRYCODES_PREVIOUS -> radioGroupCommand.onInteract(interaction)
+
+                null -> Unit
+            }
+        } catch (exception: Throwable) {
+            errorHandlerService.handleInteractionError(exception, interaction, commandName)
         }
     }
 
     override suspend fun onAutocomplete(interaction: AutoCompleteInteraction) {
-        when (val commandName = interaction.command.rootName) {
-            CommandName.Sound.commandName -> soundCommand.onAutoComplete(interaction)
-            CommandName.Radio.commandName -> radioGroupCommand.onAutoComplete(interaction)
+        val commandName = interaction.command.rootName
+        try {
+            when (commandName) {
+                CommandName.Sound.commandName -> soundCommand.onAutoComplete(interaction)
+                CommandName.Radio.commandName -> radioGroupCommand.onAutoComplete(interaction)
+            }
+        } catch (exception: Throwable) {
+            errorHandlerService.handleAutocompleteError(exception, interaction, commandName)
         }
     }
 
@@ -132,6 +150,20 @@ class CommandHandlerServiceImpl(
                 locale = locale ?: Locale.ENGLISH_UNITED_STATES,
                 arguments = arrayOf(commandName)
             )
+        }
+    }
+
+    private fun getCommandNameFromComponent(customId: String): String? {
+        return when (ComponentsEnum.forCustomId(customId)) {
+            ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> CommandName.Queue.commandName
+            ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
+            ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> CommandName.Player.commandName
+            ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> CommandName.Sounds.commandName
+            ComponentsEnum.RADIO_LIST_NEXT, ComponentsEnum.RADIO_LIST_PREVIOUS, ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
+            ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
+            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS, ComponentsEnum.RADIO_COUNTRYCODES_NEXT,
+            ComponentsEnum.RADIO_COUNTRYCODES_PREVIOUS -> CommandName.Radio.commandName
+            null -> null
         }
     }
 }

@@ -1,7 +1,6 @@
 package es.wokis.services.lavaplayer
 
 import com.github.topi314.lavasrc.deezer.DeezerAudioSourceManager
-import com.github.topi314.lavasrc.flowerytts.FloweryTTSSourceManager
 import com.github.topi314.lavasrc.mirror.DefaultMirroringAudioTrackResolver
 import com.github.topi314.lavasrc.mirror.MirroringAudioSourceManager
 import com.github.topi314.lavasrc.spotify.SpotifySourceManager
@@ -17,8 +16,8 @@ import dev.lavalink.youtube.clients.Web
 import dev.lavalink.youtube.clients.WebWithThumbnail
 import es.wokis.services.config.ConfigService
 import es.wokis.utils.takeIfNotEmpty
-
-private const val DEFAULT_TTS_VOICE = "4ba7bd1b-cb5f-5c3f-9e1c-9ee8be2b0bdd"
+import services.lavaplayer.manager.KokoroSourceManager
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager as DeprecatedYoutubeAudioSourceManager
 
 class AudioPlayerManagerProvider(
     private val configService: ConfigService
@@ -92,11 +91,24 @@ class AudioPlayerManagerProvider(
                 )
             )
         }
-        this.registerSourceManager(
-            FloweryTTSSourceManager(DEFAULT_TTS_VOICE).apply {
-                setSpeed(1.1f)
-            }
-        )
+        // Only register Kokoro TTS if base URL is configured
+        config.kokoro.baseUrl.takeIfNotEmpty()?.let { kokoroBaseUrl ->
+            this.registerSourceManager(
+                KokoroSourceManager().apply {
+                    baseUrl = kokoroBaseUrl
+                    defaultVoice = config.kokoro.defaultVoice
+                    defaultSpeed = config.kokoro.defaultSpeed
+                    defaultLangCode = config.kokoro.defaultLangCode
+                }
+            )
+        }
         AudioSourceManagers.registerLocalSource(this)
+        // This one should be the last registered as it is used as a fallback for unknown sources,
+        // and we want to make sure that all the other sources are tried first
+        AudioSourceManagers.registerRemoteSources(
+            /* playerManager = */ this,
+            // Exclude deprecated YoutubeAudioSourceManager to avoid conflicts with the new one
+            /* ...excludedSources = */ DeprecatedYoutubeAudioSourceManager::class.java
+        )
     }
 }
