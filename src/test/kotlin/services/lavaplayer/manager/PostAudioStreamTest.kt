@@ -24,78 +24,70 @@ import kotlin.test.assertTrue
 
 class PostAudioStreamTest {
 
-    private fun createHeaderIterator(): HeaderIterator {
-        return object : HeaderIterator {
-            override fun hasNext() = false
-            override fun next() = throw NoSuchElementException()
-            override fun nextHeader() = throw NoSuchElementException()
-            override fun remove() = throw UnsupportedOperationException()
-        }
+    private fun createHeaderIterator(): HeaderIterator = object : HeaderIterator {
+        override fun hasNext() = false
+        override fun next() = throw NoSuchElementException()
+        override fun nextHeader() = throw NoSuchElementException()
+        override fun remove() = throw UnsupportedOperationException()
     }
 
-    private fun createResponse(entity: HttpEntity): CloseableHttpResponse {
-        return object : CloseableHttpResponse {
-            private var closed = false
-            
-            override fun close() { closed = true }
-            override fun getStatusLine(): StatusLine? = null
-            override fun setStatusLine(statusLine: StatusLine?) {}
-            override fun setStatusLine(ver: ProtocolVersion?, code: Int) {}
-            override fun setStatusLine(ver: ProtocolVersion?, code: Int, reason: String?) {}
-            override fun setReasonPhrase(reason: String?) {}
-            override fun getEntity(): HttpEntity = entity
-            override fun setEntity(entity: HttpEntity?) {}
-            override fun getLocale(): Locale? = null
-            override fun setLocale(loc: Locale?) {}
-            override fun getProtocolVersion(): ProtocolVersion? = null
-            override fun containsHeader(name: String?): Boolean = false
-            override fun getHeaders(name: String?): Array<Header> = emptyArray()
-            override fun getFirstHeader(name: String?): Header? = null
-            override fun getLastHeader(name: String?): Header? = null
-            override fun getAllHeaders(): Array<Header> = emptyArray()
-            override fun addHeader(header: Header?) {}
-            override fun addHeader(name: String?, value: String?) {}
-            override fun setHeader(header: Header?) {}
-            override fun setHeader(name: String?, value: String?) {}
-            override fun setHeaders(headers: Array<out Header>?) {}
-            override fun removeHeader(header: Header?) {}
-            override fun removeHeaders(name: String?) {}
-            override fun headerIterator(): HeaderIterator = createHeaderIterator()
-            override fun headerIterator(name: String?): HeaderIterator = createHeaderIterator()
-            override fun getParams(): HttpParams? = null
-            override fun setParams(params: HttpParams?) {}
-            override fun setStatusCode(code: Int) {}
-        }
+    private fun createResponse(entity: HttpEntity): CloseableHttpResponse = object : CloseableHttpResponse {
+        private var closed = false
+
+        override fun close() { closed = true }
+        override fun getStatusLine(): StatusLine? = null
+        override fun setStatusLine(statusLine: StatusLine?) {}
+        override fun setStatusLine(ver: ProtocolVersion?, code: Int) {}
+        override fun setStatusLine(ver: ProtocolVersion?, code: Int, reason: String?) {}
+        override fun setReasonPhrase(reason: String?) {}
+        override fun getEntity(): HttpEntity = entity
+        override fun setEntity(entity: HttpEntity?) {}
+        override fun getLocale(): Locale? = null
+        override fun setLocale(loc: Locale?) {}
+        override fun getProtocolVersion(): ProtocolVersion? = null
+        override fun containsHeader(name: String?): Boolean = false
+        override fun getHeaders(name: String?): Array<Header> = emptyArray()
+        override fun getFirstHeader(name: String?): Header? = null
+        override fun getLastHeader(name: String?): Header? = null
+        override fun getAllHeaders(): Array<Header> = emptyArray()
+        override fun addHeader(header: Header?) {}
+        override fun addHeader(name: String?, value: String?) {}
+        override fun setHeader(header: Header?) {}
+        override fun setHeader(name: String?, value: String?) {}
+        override fun setHeaders(headers: Array<out Header>?) {}
+        override fun removeHeader(header: Header?) {}
+        override fun removeHeaders(name: String?) {}
+        override fun headerIterator(): HeaderIterator = createHeaderIterator()
+        override fun headerIterator(name: String?): HeaderIterator = createHeaderIterator()
+        override fun getParams(): HttpParams? = null
+        override fun setParams(params: HttpParams?) {}
+        override fun setStatusCode(code: Int) {}
     }
 
-    private fun createEntity(testData: ByteArray): HttpEntity {
-        return object : HttpEntity {
-            override fun isRepeatable() = false
-            override fun isChunked() = false
-            override fun getContentLength() = testData.size.toLong()
-            override fun getContentType() = null
-            override fun getContentEncoding() = null
-            override fun getContent() = ByteArrayInputStream(testData)
-            override fun writeTo(out: OutputStream?) {}
-            override fun isStreaming() = true
-            @Deprecated("Deprecated in Java")
-            override fun consumeContent() {}
-        }
+    private fun createEntity(testData: ByteArray): HttpEntity = object : HttpEntity {
+        override fun isRepeatable() = false
+        override fun isChunked() = false
+        override fun getContentLength() = testData.size.toLong()
+        override fun getContentType() = null
+        override fun getContentEncoding() = null
+        override fun getContent() = ByteArrayInputStream(testData)
+        override fun writeTo(out: OutputStream?) {}
+        override fun isStreaming() = true
+        @Deprecated("Deprecated in Java")
+        override fun consumeContent() {}
     }
 
-    private fun createEntityWithCustomStream(stream: InputStream): HttpEntity {
-        return object : HttpEntity {
-            override fun isRepeatable() = false
-            override fun isChunked() = false
-            override fun getContentLength() = 100L
-            override fun getContentType() = null
-            override fun getContentEncoding() = null
-            override fun getContent() = stream
-            override fun writeTo(out: OutputStream?) {}
-            override fun isStreaming() = true
-            @Deprecated("Deprecated in Java")
-            override fun consumeContent() {}
-        }
+    private fun createEntityWithCustomStream(stream: InputStream): HttpEntity = object : HttpEntity {
+        override fun isRepeatable() = false
+        override fun isChunked() = false
+        override fun getContentLength() = 100L
+        override fun getContentType() = null
+        override fun getContentEncoding() = null
+        override fun getContent() = stream
+        override fun writeTo(out: OutputStream?) {}
+        override fun isStreaming() = true
+        @Deprecated("Deprecated in Java")
+        override fun consumeContent() {}
     }
 
     @Test
@@ -385,10 +377,10 @@ class PostAudioStreamTest {
         }
         val stream = PostAudioStream(response, 100L)
 
-        // When/Then - should not throw
+        // When/Then
         stream.close()
 
-        // Then - verify response was still closed
+        // Then
         assertTrue(responseClosed)
     }
 
@@ -444,13 +436,13 @@ class PostAudioStreamTest {
 
         // When/Then
         assertEquals(0, stream.position)
-        
+
         stream.read()
         assertEquals(1, stream.position)
         
         stream.read(ByteArray(5), 0, 5)
         assertEquals(6, stream.position)
-        
+
         stream.skip(5)
         assertEquals(11, stream.position)
     }
