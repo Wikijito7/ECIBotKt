@@ -1,6 +1,8 @@
 package es.wokis.services.localization
 
 import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
+import es.wokis.domain.locale.GetGuildLocaleUseCase
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -11,18 +13,40 @@ import kotlin.io.path.nameWithoutExtension
 private const val LANG_PATH = "/lang"
 private val LANG_RESOURCE = {}::class.java.getResource(LANG_PATH)
 
-class LocalizationService {
+class LocalizationService(
+    private val getGuildLocaleUseCase: GetGuildLocaleUseCase
+) {
 
     private val localizedStrings: Map<String, List<LocalizedString>> = loadLanguages()
 
     fun getLocalizations(key: String): MutableMap<Locale, String> = localizedStrings[key]?.associate { it.locale to it.value }?.toMutableMap()
         ?: throw NoLocalizationFoundException(key)
 
-    fun getString(key: String, locale: Locale = Locale.ENGLISH_UNITED_STATES): String =
-        localizedStrings[key]?.find { it.locale == locale }?.value ?: getDefaultString(key)
+    suspend fun getString(
+        key: String,
+        guildId: Snowflake? = null,
+        discordLocale: Locale? = null
+    ): String {
+        val effectiveLocale = resolveLocale(guildId, discordLocale)
+        return localizedStrings[key]?.find { it.locale == effectiveLocale }?.value ?: getDefaultString(key)
+    }
 
-    fun getStringFormat(key: String, locale: Locale = Locale.ENGLISH_UNITED_STATES, vararg arguments: Any) =
-        getString(key, locale).format(*arguments)
+    suspend fun getStringFormat(
+        key: String,
+        guildId: Snowflake? = null,
+        discordLocale: Locale? = null,
+        vararg arguments: Any
+    ): String {
+        return getString(key, guildId, discordLocale).format(*arguments)
+    }
+
+    private suspend fun resolveLocale(guildId: Snowflake?, discordLocale: Locale?): Locale {
+        return if (guildId != null) {
+            getGuildLocaleUseCase(guildId) ?: discordLocale ?: Locale.ENGLISH_UNITED_STATES
+        } else {
+            discordLocale ?: Locale.ENGLISH_UNITED_STATES
+        }
+    }
 
     private fun getDefaultString(key: String): String =
         localizedStrings[key]?.find { it.locale == Locale.ENGLISH_UNITED_STATES }?.value

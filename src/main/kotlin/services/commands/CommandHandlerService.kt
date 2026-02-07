@@ -17,6 +17,7 @@ import es.wokis.commands.radio.RadioGroupCommand
 import es.wokis.commands.next.NextCommand
 import es.wokis.commands.disconnect.DisconnectCommand
 import es.wokis.commands.reconnect.ReconnectCommand
+import es.wokis.commands.locale.LocaleCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sound.SoundCommand
@@ -55,6 +56,7 @@ class CommandHandlerServiceImpl(
     private val reconnectCommand: ReconnectCommand,
     private val nextCommand: NextCommand,
     private val disconnectCommand: DisconnectCommand,
+    private val localeCommand: LocaleCommand,
     private val radioGroupCommand: RadioGroupCommand,
     private val localizationService: LocalizationService,
     private val errorHandlerService: ErrorHandlerService
@@ -72,6 +74,7 @@ class CommandHandlerServiceImpl(
         reconnectCommand.onRegisterCommand(commandBuilder)
         nextCommand.onRegisterCommand(commandBuilder)
         disconnectCommand.onRegisterCommand(commandBuilder)
+        localeCommand.onRegisterCommand(commandBuilder)
     }
 
     override suspend fun onRegisterGroupCommand(kord: Kord) {
@@ -97,6 +100,7 @@ class CommandHandlerServiceImpl(
                 CommandName.Reconnect.commandName -> reconnectCommand.onExecute(interaction, response)
                 CommandName.Next.commandName -> nextCommand.onExecute(interaction, response)
                 CommandName.Disconnect.commandName -> disconnectCommand.onExecute(interaction, response)
+                CommandName.Locale.commandName -> localeCommand.onExecute(interaction, response)
                 else -> respondUnknownCommand(response, interaction.guildLocale, commandName)
             }
         } catch (exception: Throwable) {
@@ -137,6 +141,7 @@ class CommandHandlerServiceImpl(
             when (commandName) {
                 CommandName.Sound.commandName -> soundCommand.onAutoComplete(interaction)
                 CommandName.Radio.commandName -> radioGroupCommand.onAutoComplete(interaction)
+                CommandName.Locale.commandName -> localeCommand.onAutoComplete(interaction)
             }
         } catch (exception: Throwable) {
             errorHandlerService.handleAutocompleteError(exception, interaction, commandName)

@@ -19,10 +19,19 @@ import es.wokis.commands.next.NextCommand
 import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.disconnect.DisconnectCommand
 import es.wokis.commands.tts.TTSCommand
+import es.wokis.commands.locale.LocaleCommand
+import es.wokis.domain.locale.GetGuildLocaleUseCase
+import es.wokis.domain.locale.SetGuildLocaleUseCase
+import es.wokis.repositories.locale.LocalJsonLocaleRepository
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val commandModule = module {
+    // Locale Repository and Use Cases
+    singleOf(::LocalJsonLocaleRepository)
+    factoryOf(::GetGuildLocaleUseCase)
+    factoryOf(::SetGuildLocaleUseCase)
     factoryOf(::PlayCommand)
     factoryOf(::SoundCommand)
     factoryOf(::QueueCommand)
@@ -42,4 +51,5 @@ val commandModule = module {
     factoryOf(::RadioSearchCountryCodeCommand)
     factoryOf(::RadioRandomCommand)
     factoryOf(::RadioCountryCodesCommand)
+    factoryOf(::LocaleCommand)
 }

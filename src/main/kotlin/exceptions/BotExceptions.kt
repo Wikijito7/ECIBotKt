@@ -1,6 +1,7 @@
 package es.wokis.exceptions
 
 import es.wokis.data.response.ErrorType
+import es.wokis.localization.LocalizationKeys
 
 /**
  * Sealed base class for all bot-related exceptions.
@@ -26,7 +27,7 @@ sealed class BotException(
          * Thrown when user is not connected to a voice channel
          */
         class NotInVoiceChannelException(
-            localizationKey: String = "error_not_in_voice_channel",
+            localizationKey: String = LocalizationKeys.ERROR_NO_VOICE_CHANNEL,
             vararg args: Any
         ) : UserException(localizationKey, *args)
 
@@ -34,7 +35,7 @@ sealed class BotException(
          * Thrown when command is executed outside a guild (server)
          */
         class NotInGuildException(
-            localizationKey: String = "error_not_in_guild",
+            localizationKey: String = LocalizationKeys.ERROR_NO_GUILD,
             vararg args: Any
         ) : UserException(localizationKey, *args)
 
@@ -42,7 +43,7 @@ sealed class BotException(
          * Thrown when required content/argument is not provided
          */
         class NoContentProvidedException(
-            localizationKey: String = "error_no_content_provided",
+            localizationKey: String = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
             vararg args: Any
         ) : UserException(localizationKey, *args)
 
@@ -50,7 +51,7 @@ sealed class BotException(
          * Thrown when user is not in a text channel
          */
         class NotInTextChannelException(
-            localizationKey: String = "error_not_in_text_channel",
+            localizationKey: String = LocalizationKeys.ERROR_NO_TEXT_CHANNEL,
             vararg args: Any
         ) : UserException(localizationKey, *args)
 
@@ -58,7 +59,7 @@ sealed class BotException(
          * Thrown when queue is empty and an operation requires items in queue
          */
         class EmptyQueueException(
-            localizationKey: String = "error_empty_queue",
+            localizationKey: String = LocalizationKeys.ERROR_EMPTY_QUEUE,
             vararg args: Any
         ) : UserException(localizationKey, *args)
 
@@ -66,7 +67,7 @@ sealed class BotException(
          * Thrown when audio playback fails
          */
         class AudioPlaybackException(
-            localizationKey: String = "error_audio_playback",
+            localizationKey: String = LocalizationKeys.ERROR_AUDIO_PLAYBACK,
             vararg args: Any
         ) : UserException(localizationKey, *args)
 
@@ -74,7 +75,7 @@ sealed class BotException(
          * Thrown when a sound file is not found
          */
         class SoundNotFoundException(
-            localizationKey: String = "error_sound_not_found",
+            localizationKey: String = LocalizationKeys.ERROR_SOUND_NOT_FOUND,
             vararg args: Any
         ) : UserException(localizationKey, *args)
 
@@ -82,7 +83,7 @@ sealed class BotException(
          * Thrown when track is not found in queue
          */
         class TrackNotFoundException(
-            localizationKey: String = "error_track_not_found",
+            localizationKey: String = LocalizationKeys.ERROR_TRACK_NOT_FOUND,
             vararg args: Any
         ) : UserException(localizationKey, *args)
 
@@ -90,7 +91,7 @@ sealed class BotException(
          * Thrown when user is not connected to same voice channel as bot
          */
         class NotInSameVoiceChannelException(
-            localizationKey: String = "error_not_in_same_voice_channel",
+            localizationKey: String = LocalizationKeys.ERROR_NOT_IN_SAME_VOICE_CHANNEL,
             vararg args: Any
         ) : UserException(localizationKey, *args)
 
@@ -98,7 +99,7 @@ sealed class BotException(
          * Thrown when there is no voice connection established
          */
         class NoVoiceConnectionException(
-            localizationKey: String = "error_no_voice_connection",
+            localizationKey: String = LocalizationKeys.ERROR_NO_VOICE_CONNECTION,
             vararg args: Any
         ) : UserException(localizationKey, *args)
 
@@ -106,7 +107,7 @@ sealed class BotException(
          * Thrown when trying to skip but no track is playing
          */
         class NoTrackPlayingException(
-            localizationKey: String = "error_no_track_playing",
+            localizationKey: String = LocalizationKeys.ERROR_NO_TRACK_PLAYING,
             vararg args: Any
         ) : UserException(localizationKey, *args)
     }
