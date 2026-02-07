@@ -13,6 +13,7 @@ import es.wokis.services.queue.GuildQueueService
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class ShuffleCommandTest {
     private val guildQueueService: GuildQueueService = mockk()
@@ -64,7 +65,7 @@ class ShuffleCommandTest {
     }
 
     @Test
-    fun `Given invalid interaction When onExecute is called Then don't execute shuffle command`() = runTest {
+    fun `Given invalid interaction When onExecute is called Then throw exception`() = runTest {
         // Given
         val mockKord: Kord = mockk {
             every { resources } returns mockk {
@@ -87,17 +88,17 @@ class ShuffleCommandTest {
             every { applicationId } returns Snowflake(456)
             every { token } returns "testToken"
         }
-
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             justRun { shuffle() }
         }
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } throws IllegalStateException()
         every { localizationService.getString(any(), any()) } returns "TestMessage"
 
-        // When
-        shuffleCommand.onExecute(interaction, response)
+        // When/Then
+        assertThrows<IllegalStateException> {
+            shuffleCommand.onExecute(interaction, response)
+        }
 
-        // Then
         verify(exactly = 0) {
             guildLavaPlayerService.shuffle()
         }

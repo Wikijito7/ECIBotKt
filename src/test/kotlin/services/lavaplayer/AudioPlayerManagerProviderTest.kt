@@ -32,6 +32,10 @@ class AudioPlayerManagerProviderTest {
         every { configService.config.youtube.visitorData } returns null
         every { configService.config.youtube.remoteCipherUrl } returns null
         every { configService.config.youtube.remoteCipherPassword } returns null
+        every { configService.config.kokoro.baseUrl } returns ""
+        every { configService.config.kokoro.defaultVoice } returns ""
+        every { configService.config.kokoro.defaultSpeed } returns 1.0f
+        every { configService.config.kokoro.defaultLangCode } returns ""
 
         // When
         val actual = audioPlayerManagerProvider.createAudioPlayerManager()

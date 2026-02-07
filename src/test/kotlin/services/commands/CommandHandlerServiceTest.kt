@@ -19,6 +19,7 @@ import es.wokis.commands.sound.SoundCommand
 import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.tts.TTSCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
+import es.wokis.services.error.ErrorHandlerService
 import es.wokis.services.localization.LocalizationService
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
@@ -38,6 +39,7 @@ class CommandHandlerServiceTest {
     private val nextCommand: NextCommand = mockk()
     private val localizationService: LocalizationService = mockk()
     private val radioGroupCommand: RadioGroupCommand = mockk()
+    private val errorHandlerService: ErrorHandlerService = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
         playCommand = playCommand,
@@ -51,7 +53,8 @@ class CommandHandlerServiceTest {
         soundsCommand = soundsCommand,
         radioGroupCommand = radioGroupCommand,
         reconnectCommand = reconnectCommand,
-        nextCommand = nextCommand
+        nextCommand = nextCommand,
+        errorHandlerService = errorHandlerService
     )
 
     @Test

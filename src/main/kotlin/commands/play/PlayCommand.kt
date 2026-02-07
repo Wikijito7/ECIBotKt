@@ -44,27 +44,21 @@ class PlayCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        try {
-            val locale = interaction.guildLocale.orDefaultLocale()
-            val input: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
-                ?: response.respond {
-                    content = localizationService.getStringFormat(
-                        key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
-                        locale = locale,
-                        arguments = arrayOf(ARGUMENT_NAME)
-                    )
-                }.let { return }
-            response.respond {
-                content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
-            }
-
-            val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
-            val sounds = input.split(SOUNDS_SEPARATOR).map { it.transformUrl() }
-            guildLavaPlayerService.loadAndPlayMultiple(sounds)
-        } catch (exc: IllegalStateException) {
-            response.respond {
-                content = exc.message
-            }
+        val locale = interaction.guildLocale.orDefaultLocale()
+        val input: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
+            ?: response.respond {
+                content = localizationService.getStringFormat(
+                    key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
+                    locale = locale,
+                    arguments = arrayOf(ARGUMENT_NAME)
+                )
+            }.let { return }
+        response.respond {
+            content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
         }
+
+        val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
+        val sounds = input.split(SOUNDS_SEPARATOR).map { it.transformUrl() }
+        guildLavaPlayerService.loadAndPlayMultiple(sounds)
     }
 }

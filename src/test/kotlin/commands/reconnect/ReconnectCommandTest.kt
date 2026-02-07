@@ -13,6 +13,7 @@ import es.wokis.services.queue.GuildQueueService
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class ReconnectCommandTest {
     private val guildQueueService: GuildQueueService = mockk()
@@ -106,7 +107,7 @@ class ReconnectCommandTest {
     }
 
     @Test
-    fun `Given bot connected but reconnect throws exception When onExecute is called Then respond with exception message`() = runTest {
+    fun `Given bot connected but reconnect throws exception When onExecute is called Then throw exception`() = runTest {
         // Given
         val mockKord: Kord = mockk {
             every { resources } returns mockk {
@@ -136,10 +137,11 @@ class ReconnectCommandTest {
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
 
-        // When
-        reconnectCommand.onExecute(interaction, response)
+        // When/Then - exception is thrown (handled by CommandHandlerService)
+        assertThrows<IllegalStateException> {
+            reconnectCommand.onExecute(interaction, response)
+        }
 
-        // Then
         coVerify(exactly = 1) {
             guildLavaPlayerService.reconnect()
         }

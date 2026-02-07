@@ -41,37 +41,31 @@ class SoundsCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        try {
-            val locale = interaction.guildLocale.orDefaultLocale()
-            val sounds: List<File> = getSoundFilesSorted()
-            val displaySounds = getDisplaySounds(sounds).sorted()
-            val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, locale = locale)
-            val description = localizationService.getStringFormat(
-                key = LocalizationKeys.SOUNDS_EMBED_DESCRIPTION,
+        val locale = interaction.guildLocale.orDefaultLocale()
+        val sounds: List<File> = getSoundFilesSorted()
+        val displaySounds = getDisplaySounds(sounds).sorted()
+        val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, locale = locale)
+        val description = localizationService.getStringFormat(
+            key = LocalizationKeys.SOUNDS_EMBED_DESCRIPTION,
+            locale = locale,
+            arguments = arrayOf(sounds.size)
+        )
+        val columns = 3
+        val currentPageContent = displaySounds.chunked(columns).firstOrNull()
+        val pageCount = displaySounds.size / columns
+        response.respond {
+            createPaginatedEmbedMessage(
                 locale = locale,
-                arguments = arrayOf(sounds.size)
+                localizationService = localizationService,
+                title = title,
+                description = description,
+                currentPage = 1,
+                columns = columns,
+                currentPageContent = currentPageContent,
+                pageCount = pageCount,
+                previousButtonCustomId = ComponentsEnum.SOUNDS_PREVIOUS.customId,
+                nextButtonCustomId = ComponentsEnum.SOUNDS_NEXT.customId
             )
-            val columns = 3
-            val currentPageContent = displaySounds.chunked(columns).firstOrNull()
-            val pageCount = displaySounds.size / columns
-            response.respond {
-                createPaginatedEmbedMessage(
-                    locale = locale,
-                    localizationService = localizationService,
-                    title = title,
-                    description = description,
-                    currentPage = 1,
-                    columns = columns,
-                    currentPageContent = currentPageContent,
-                    pageCount = pageCount,
-                    previousButtonCustomId = ComponentsEnum.SOUNDS_PREVIOUS.customId,
-                    nextButtonCustomId = ComponentsEnum.SOUNDS_NEXT.customId
-                )
-            }
-        } catch (exc: IllegalStateException) {
-            response.respond {
-                content = exc.message
-            }
         }
     }
 

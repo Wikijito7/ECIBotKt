@@ -13,6 +13,7 @@ import es.wokis.services.queue.GuildQueueService
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class SkipCommandTest {
 
@@ -65,7 +66,7 @@ class SkipCommandTest {
     }
 
     @Test
-    fun `Given invalid interaction When onExecute is called Then don't execute skip command`() = runTest {
+    fun `Given invalid interaction When onExecute is called Then throw exception`() = runTest {
         // Given
         val mockKord: Kord = mockk {
             every { resources } returns mockk {
@@ -95,10 +96,12 @@ class SkipCommandTest {
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } throws IllegalStateException()
         every { localizationService.getString(any(), any()) } returns "TestMessage"
 
-        // When
-        skipCommand.onExecute(interaction, response)
+        // When/Then - exception is thrown (handled by CommandHandlerService)
+        assertThrows<IllegalStateException> {
+            skipCommand.onExecute(interaction, response)
+        }
 
-        // Then
+        // Then - skip should not be called because exception is thrown before
         verify(exactly = 0) {
             guildLavaPlayerService.skip()
         }

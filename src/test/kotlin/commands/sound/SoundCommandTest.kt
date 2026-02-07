@@ -25,6 +25,7 @@ import mock.mockedVoiceChannel
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.io.File
 
 class SoundCommandTest {
@@ -222,7 +223,7 @@ class SoundCommandTest {
     }
 
     @Test
-    fun `Given exception thrown When onExecute is called Then handle exception gracefully`() = runTest {
+    fun `Given exception thrown When onExecute is called Then throw exception`() = runTest {
         // Given
         val soundName = "manolete"
         val mockedStrings: Map<String, String> = mapOf("name" to soundName)
@@ -243,8 +244,10 @@ class SoundCommandTest {
         } throws IllegalStateException("Test exception")
         every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
 
-        // When
-        soundCommand.onExecute(interaction, mockedResponse)
+        // When/Then - exception is thrown (handled by CommandHandlerService)
+        assertThrows<IllegalStateException> {
+            soundCommand.onExecute(interaction, mockedResponse)
+        }
 
         // Then
         coVerify(exactly = 1) {

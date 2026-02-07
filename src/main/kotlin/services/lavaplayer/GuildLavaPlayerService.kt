@@ -141,26 +141,21 @@ class GuildLavaPlayerService(
         }
     }
 
-    suspend fun loadAndPlayTts(messages: List<String>) {
-        messages.mapNotNull {
-            audioPlayerManager.loadItemSync(it)?.let { item -> item as? AudioTrack }
-        }.map {
-            TrackBO(
-                customName = localizationService.getString(LocalizationKeys.FLOWERY_TTS_CUSTOM_NAME, voiceChannel.getLocale()),
-                audioTrack = it
-            )
-        }.let { ttsQueue ->
+    suspend fun loadAndPlayTts(message: String) {
+        audioPlayerManager.loadItemSync(message)?.let { item -> item as? AudioTrack }?.let {
+            TrackBO(audioTrack = it)
+        }?.let { tts ->
             val locale = voiceChannel.getLocale()
             connectToVoiceChannel()
             textChannel.createMessage(
                 localizationService.getStringFormat(
-                    key = LocalizationKeys.ADDED_SONGS_TO_QUEUE,
+                    key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
                     locale = locale,
-                    arguments = arrayOf(ttsQueue.size)
+                    arguments = arrayOf(tts.audioTrack.info.title)
                 )
             )
             queue(
-                tracks = ttsQueue
+                tracks = listOf(tts)
             )
         }
     }

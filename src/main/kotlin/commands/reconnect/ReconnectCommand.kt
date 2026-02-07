@@ -38,15 +38,9 @@ class ReconnectCommand(
             return
         }
 
-        try {
-            lavaPlayerService.reconnect()
-            response.respond {
-                content = localizationService.getString(LocalizationKeys.RECONNECT_SUCCESS, locale)
-            }
-        } catch (exc: IllegalStateException) {
-            response.respond {
-                content = exc.message
-            }
+        lavaPlayerService.reconnect()
+        response.respond {
+            content = localizationService.getString(LocalizationKeys.RECONNECT_SUCCESS, locale)
         }
     }
 }

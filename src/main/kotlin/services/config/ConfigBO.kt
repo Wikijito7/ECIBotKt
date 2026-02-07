@@ -20,7 +20,9 @@ data class Config(
     @SerialName("spotify")
     val spotify: SpotifyConfig,
     @SerialName("tidal")
-    val tidal: TidalConfig
+    val tidal: TidalConfig,
+    @SerialName("kokoro")
+    val kokoro: KokoroConfig
 )
 
 @Serializable
@@ -91,4 +93,16 @@ data class TidalConfig(
     val countryCode: String,
     @SerialName("token")
     val token: String
+)
+
+@Serializable
+data class KokoroConfig(
+    @SerialName("base_url")
+    val baseUrl: String,
+    @SerialName("default_voice")
+    val defaultVoice: String,
+    @SerialName("default_speed")
+    val defaultSpeed: Float,
+    @SerialName("default_lang_code")
+    val defaultLangCode: String
 )

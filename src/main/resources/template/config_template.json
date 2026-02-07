@@ -35,5 +35,11 @@
     "enabled": false,
     "country_code": "ES",
     "token": ""
+  },
+  "kokoro": {
+    "base_url": "",
+    "default_voice": "",
+    "default_speed": 1.0,
+    "default_lang_code": ""
   }
 }
