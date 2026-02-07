@@ -14,6 +14,7 @@ import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import es.wokis.commands.next.NextCommand
+import es.wokis.commands.disconnect.DisconnectCommand
 import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.sound.SoundCommand
 import es.wokis.commands.reconnect.ReconnectCommand
@@ -37,6 +38,7 @@ class CommandHandlerServiceTest {
     private val soundsCommand: SoundsCommand = mockk()
     private val reconnectCommand: ReconnectCommand = mockk()
     private val nextCommand: NextCommand = mockk()
+    private val disconnectCommand: DisconnectCommand = mockk()
     private val localizationService: LocalizationService = mockk()
     private val radioGroupCommand: RadioGroupCommand = mockk()
     private val errorHandlerService: ErrorHandlerService = mockk()
@@ -54,6 +56,7 @@ class CommandHandlerServiceTest {
         radioGroupCommand = radioGroupCommand,
         reconnectCommand = reconnectCommand,
         nextCommand = nextCommand,
+        disconnectCommand = disconnectCommand,
         errorHandlerService = errorHandlerService
     )
 
@@ -75,6 +78,7 @@ class CommandHandlerServiceTest {
         justRun { soundsCommand.onRegisterCommand(any()) }
         justRun { reconnectCommand.onRegisterCommand(any()) }
         justRun { nextCommand.onRegisterCommand(any()) }
+        justRun { disconnectCommand.onRegisterCommand(any()) }
 
         // When
         commandHandlerService.onRegisterSimpleCommand(commandBuilder)
@@ -91,6 +95,7 @@ class CommandHandlerServiceTest {
             soundsCommand.onRegisterCommand(commandBuilder)
             reconnectCommand.onRegisterCommand(commandBuilder)
             nextCommand.onRegisterCommand(commandBuilder)
+            disconnectCommand.onRegisterCommand(commandBuilder)
         }
     }
 
@@ -280,6 +285,27 @@ class CommandHandlerServiceTest {
         // Then
         coVerify(exactly = 1) {
             nextCommand.onExecute(interaction, response)
+        }
+    }
+
+    @Test
+    fun `Given disconnect command When onExecute is called Then execute DisconnectCommand`() = runTest {
+        // Given
+        val commandName = CommandName.Disconnect.commandName
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { command } returns mockk {
+                every { rootName } returns commandName
+            }
+        }
+        val response: DeferredPublicMessageInteractionResponseBehavior = mockk()
+        coJustRun { disconnectCommand.onExecute(any(), any()) }
+
+        // When
+        commandHandlerService.onExecute(interaction, response)
+
+        // Then
+        coVerify(exactly = 1) {
+            disconnectCommand.onExecute(interaction, response)
         }
     }
 
