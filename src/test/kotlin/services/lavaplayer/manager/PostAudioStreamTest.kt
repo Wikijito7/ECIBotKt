@@ -34,7 +34,9 @@ class PostAudioStreamTest {
     private fun createResponse(entity: HttpEntity): CloseableHttpResponse = object : CloseableHttpResponse {
         private var closed = false
 
-        override fun close() { closed = true }
+        override fun close() {
+            closed = true
+        }
         override fun getStatusLine(): StatusLine? = null
         override fun setStatusLine(statusLine: StatusLine?) {}
         override fun setStatusLine(ver: ProtocolVersion?, code: Int) {}
@@ -73,6 +75,7 @@ class PostAudioStreamTest {
         override fun getContent() = ByteArrayInputStream(testData)
         override fun writeTo(out: OutputStream?) {}
         override fun isStreaming() = true
+
         @Deprecated("Deprecated in Java")
         override fun consumeContent() {}
     }
@@ -86,6 +89,7 @@ class PostAudioStreamTest {
         override fun getContent() = stream
         override fun writeTo(out: OutputStream?) {}
         override fun isStreaming() = true
+
         @Deprecated("Deprecated in Java")
         override fun consumeContent() {}
     }
@@ -194,14 +198,16 @@ class PostAudioStreamTest {
         var contentClosed = false
         val testData = "Hello".toByteArray()
         val customStream = object : ByteArrayInputStream(testData) {
-            override fun close() { 
+            override fun close() {
                 contentClosed = true
                 super.close()
             }
         }
         var responseClosed = false
         val response = object : CloseableHttpResponse {
-            override fun close() { responseClosed = true }
+            override fun close() {
+                responseClosed = true
+            }
             override fun getStatusLine(): StatusLine? = null
             override fun setStatusLine(statusLine: StatusLine?) {}
             override fun setStatusLine(ver: ProtocolVersion?, code: Int) {}
@@ -343,10 +349,13 @@ class PostAudioStreamTest {
         var responseClosed = false
         val customStream = object : InputStream() {
             override fun read() = -1
-            override fun close() { throw IOException("Content close failed") }
+
+            override fun close() = throw IOException("Content close failed")
         }
         val response = object : CloseableHttpResponse {
-            override fun close() { responseClosed = true }
+            override fun close() {
+                responseClosed = true
+            }
             override fun getStatusLine(): StatusLine? = null
             override fun setStatusLine(statusLine: StatusLine?) {}
             override fun setStatusLine(ver: ProtocolVersion?, code: Int) {}
@@ -389,10 +398,11 @@ class PostAudioStreamTest {
         // Given
         val customStream = object : InputStream() {
             override fun read() = -1
+
             override fun close() {}
         }
         val response = object : CloseableHttpResponse {
-            override fun close() { throw IOException("Response close failed") }
+            override fun close() = throw IOException("Response close failed")
             override fun getStatusLine(): StatusLine? = null
             override fun setStatusLine(statusLine: StatusLine?) {}
             override fun setStatusLine(ver: ProtocolVersion?, code: Int) {}
@@ -439,7 +449,7 @@ class PostAudioStreamTest {
 
         stream.read()
         assertEquals(1, stream.position)
-        
+
         stream.read(ByteArray(5), 0, 5)
         assertEquals(6, stream.position)
 
