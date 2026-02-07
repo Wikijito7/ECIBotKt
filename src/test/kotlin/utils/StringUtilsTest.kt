@@ -1,8 +1,8 @@
 package utils
 
-import es.wokis.utils.toMarkdownLinkEmojiAware
 import es.wokis.utils.isValidUrl
 import es.wokis.utils.takeIfNotEmpty
+import es.wokis.utils.toMarkdownLinkEmojiAware
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
