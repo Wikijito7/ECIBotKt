@@ -91,6 +91,8 @@ next_track_not_found: No track found matching "%s" in the queue
 next_empty_queue: The queue is empty, cannot search for tracks
 next_track_already_next: This track is already the next track
 next_track_not_in_queue_trying_search: Track "%s" not found in queue. Trying to search and add it…
+disconnect_command_description: Disconnects the bot and clears the queue
+disconnect_command_response: Disconnected from voice channel and cleared the queue
 error_empty_queue: Queue is empty
 error_audio_playback: Audio playback failed
 error_sound_not_found: Sound not found

@@ -15,6 +15,7 @@ import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.commands.radio.RadioGroupCommand
 import es.wokis.commands.next.NextCommand
+import es.wokis.commands.disconnect.DisconnectCommand
 import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
@@ -53,6 +54,7 @@ class CommandHandlerServiceImpl(
     private val soundsCommand: SoundsCommand,
     private val reconnectCommand: ReconnectCommand,
     private val nextCommand: NextCommand,
+    private val disconnectCommand: DisconnectCommand,
     private val radioGroupCommand: RadioGroupCommand,
     private val localizationService: LocalizationService,
     private val errorHandlerService: ErrorHandlerService
@@ -69,6 +71,7 @@ class CommandHandlerServiceImpl(
         soundsCommand.onRegisterCommand(commandBuilder)
         reconnectCommand.onRegisterCommand(commandBuilder)
         nextCommand.onRegisterCommand(commandBuilder)
+        disconnectCommand.onRegisterCommand(commandBuilder)
     }
 
     override suspend fun onRegisterGroupCommand(kord: Kord) {
@@ -93,6 +96,7 @@ class CommandHandlerServiceImpl(
                 CommandName.Radio.commandName -> radioGroupCommand.onExecute(interaction, response)
                 CommandName.Reconnect.commandName -> reconnectCommand.onExecute(interaction, response)
                 CommandName.Next.commandName -> nextCommand.onExecute(interaction, response)
+                CommandName.Disconnect.commandName -> disconnectCommand.onExecute(interaction, response)
                 else -> respondUnknownCommand(response, interaction.guildLocale, commandName)
             }
         } catch (exception: Throwable) {

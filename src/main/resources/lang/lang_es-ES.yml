@@ -91,6 +91,8 @@ next_track_not_found: No se encontró ninguna pista que coincida con "%s" en la 
 next_empty_queue: La cola está vacía, no se pueden buscar pistas
 next_track_already_next: Esta pista ya es la siguiente en la cola
 next_track_not_in_queue_trying_search: Pista "%s" no encontrada en la cola. Intentando buscar y añadirla…
+disconnect_command_description: Desconecta el bot y limpia la cola
+disconnect_command_response: Desconectado del canal de voz y cola limpiada
 error_empty_queue: La cola está vacía
 error_audio_playback: Error en la reproducción de audio
 error_sound_not_found: Sonido no encontrado

@@ -94,6 +94,8 @@ object LocalizationKeys {
     const val NEXT_EMPTY_QUEUE = "next_empty_queue"
     const val NEXT_TRACK_ALREADY_NEXT = "next_track_already_next"
     const val NEXT_TRACK_NOT_IN_QUEUE_TRYING_SEARCH = "next_track_not_in_queue_trying_search"
+    const val DISCONNECT_COMMAND_DESCRIPTION = "disconnect_command_description"
+    const val DISCONNECT_COMMAND_RESPONSE = "disconnect_command_response"
     const val ERROR_EMPTY_QUEUE = "error_empty_queue"
     const val ERROR_AUDIO_PLAYBACK = "error_audio_playback"
     const val ERROR_SOUND_NOT_FOUND = "error_sound_not_found"
