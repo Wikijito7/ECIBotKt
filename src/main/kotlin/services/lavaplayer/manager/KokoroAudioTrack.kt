@@ -11,6 +11,8 @@ import org.apache.http.entity.ContentType
 import org.apache.http.entity.StringEntity
 import java.net.URI
 
+private const val KOKORO_SPEECH_ENDPOINT = "/v1/audio/speech"
+
 class KokoroAudioTrack(
     trackInfo: AudioTrackInfo,
     private val sourceManager: KokoroSourceManager
@@ -26,7 +28,7 @@ class KokoroAudioTrack(
         if (baseUrl.isEmpty()) throw IllegalStateException("Base URL not set for KokoroAudioTrack")
 
         sourceManager.getHttpInterface().use { httpInterface ->
-            val post = HttpPost(URI.create("$baseUrl/v1/audio/speech").normalize()).apply {
+            val post = HttpPost(URI.create("$baseUrl$KOKORO_SPEECH_ENDPOINT").normalize()).apply {
                 entity = StringEntity(getBody(), ContentType.APPLICATION_JSON)
             }
 

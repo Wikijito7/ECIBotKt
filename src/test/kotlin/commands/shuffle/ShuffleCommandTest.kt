@@ -94,12 +94,11 @@ class ShuffleCommandTest {
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } throws IllegalStateException()
         every { localizationService.getString(any(), any()) } returns "TestMessage"
 
-        // When/Then - exception is thrown (handled by CommandHandlerService)
+        // When/Then
         assertThrows<IllegalStateException> {
             shuffleCommand.onExecute(interaction, response)
         }
 
-        // Then - shuffle should not be called because exception is thrown before
         verify(exactly = 0) {
             guildLavaPlayerService.shuffle()
         }

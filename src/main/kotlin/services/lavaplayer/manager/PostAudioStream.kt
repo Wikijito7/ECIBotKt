@@ -9,6 +9,9 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.io.InputStream
 
+private val log: Logger = LoggerFactory.getLogger(PostAudioStream::class.java)
+private const val MAX_SKIP_DISTANCE = 512L * 1024L
+
 /**
  * Simple wrapper for HTTP POST response streams.
  *
@@ -119,10 +122,5 @@ class PostAudioStream(
         if (closed) {
             throw IOException("Stream is closed")
         }
-    }
-
-    companion object {
-        private val log: Logger = LoggerFactory.getLogger(PostAudioStream::class.java)
-        private const val MAX_SKIP_DISTANCE = 512L * 1024L
     }
 }

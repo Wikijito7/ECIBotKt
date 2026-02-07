@@ -20,6 +20,17 @@ import java.time.format.DateTimeFormatter
 private const val MAX_DISCORD_MESSAGE_LENGTH = 2000
 private const val STACK_TRACE_MAX_LENGTH = 1900
 private const val ERROR_HEADER_LENGTH = 100
+private const val TIMESTAMP_PATTERN = "yyyy-MM-dd HH:mm:ss"
+private const val TRUNCATED_SUFFIX = "\n… (truncated)"
+
+/**
+ * Enum representing different types of interactions that can generate errors.
+ */
+enum class InteractionType(val displayName: String) {
+    COMMAND("Command"),
+    BUTTON("Button"),
+    AUTOCOMPLETE("Autocomplete")
+}
 
 /**
  * Service responsible for centralized error handling across the bot.
@@ -49,7 +60,7 @@ class ErrorHandlerService(
         response: DeferredPublicMessageInteractionResponseBehavior,
         commandName: String? = null
     ) {
-        handleError(exception, interaction, commandName, "Command") {
+        handleError(exception, interaction, commandName, InteractionType.COMMAND) {
             respondToUser(exception, interaction, response)
         }
     }
@@ -66,7 +77,7 @@ class ErrorHandlerService(
         interaction: ButtonInteraction,
         commandName: String? = null
     ) {
-        handleError(exception, interaction, commandName, "Button") {
+        handleError(exception, interaction, commandName, InteractionType.BUTTON) {
             // Button interactions can't be ephemeral after defer, so we just log
             // The user will see a generic error from Discord
         }
@@ -85,7 +96,7 @@ class ErrorHandlerService(
         interaction: AutoCompleteInteraction,
         commandName: String? = null
     ) {
-        handleError(exception, interaction, commandName, "Autocomplete") {
+        handleError(exception, interaction, commandName, InteractionType.AUTOCOMPLETE) {
             // Return empty suggestions on error
             interaction.suggest(emptyList())
         }
@@ -98,7 +109,7 @@ class ErrorHandlerService(
         exception: Throwable,
         interaction: Interaction,
         commandName: String?,
-        interactionType: String,
+        interactionType: InteractionType,
         onUserResponse: suspend () -> Unit
     ) {
         // Always log to console
@@ -120,10 +131,10 @@ class ErrorHandlerService(
         exception: Throwable,
         interaction: Interaction,
         commandName: String?,
-        interactionType: String
+        interactionType: InteractionType
     ) {
         val guildInfo = if (interaction.data.guildId.value != null) "Guild(${interaction.data.guildId.value})" else "DM"
-        val context = "$interactionType Error: ${commandName ?: "Unknown"} | User: ${interaction.user.username} (${interaction.user.id}) | Guild: $guildInfo"
+        val context = "${interactionType.displayName} Error: ${commandName ?: "Unknown"} | User: ${interaction.user.username} (${interaction.user.id}) | Guild: $guildInfo"
         Log.error(context, exception)
     }
 
@@ -135,7 +146,7 @@ class ErrorHandlerService(
         exception: Throwable,
         interaction: Interaction,
         commandName: String?,
-        interactionType: String
+        interactionType: InteractionType
     ) {
         try {
             val channel = interaction.channel
@@ -143,7 +154,7 @@ class ErrorHandlerService(
 
             // Truncate if necessary
             val truncatedMessage = if (errorMessage.length > MAX_DISCORD_MESSAGE_LENGTH) {
-                errorMessage.take(MAX_DISCORD_MESSAGE_LENGTH - 3) + "..."
+                errorMessage.take(MAX_DISCORD_MESSAGE_LENGTH - 3) + "…"
             } else {
                 errorMessage
             }
@@ -161,16 +172,16 @@ class ErrorHandlerService(
         exception: Throwable,
         interaction: Interaction,
         commandName: String?,
-        interactionType: String
+        interactionType: InteractionType
     ): String {
         val timestamp = DateTimeFormatter
-            .ofPattern("yyyy-MM-dd HH:mm:ss")
+            .ofPattern(TIMESTAMP_PATTERN)
             .withZone(ZoneId.systemDefault())
             .format(Instant.now())
 
         val stackTrace = exception.stackTraceToString()
         val truncatedStackTrace = if (stackTrace.length > STACK_TRACE_MAX_LENGTH) {
-            stackTrace.take(STACK_TRACE_MAX_LENGTH) + "\n... (truncated)"
+            stackTrace.take(STACK_TRACE_MAX_LENGTH) + TRUNCATED_SUFFIX
         } else {
             stackTrace
         }
@@ -180,7 +191,7 @@ class ErrorHandlerService(
         return buildString {
             appendLine("**BOT ERROR** \uD83D\uDC80")
             appendLine()
-            appendLine("**$interactionType:** ${commandName ?: "Unknown"}")
+            appendLine("**${interactionType.displayName}:** ${commandName ?: "Unknown"}")
 
             // Add Custom ID for button interactions
             if (interaction is ButtonInteraction) {

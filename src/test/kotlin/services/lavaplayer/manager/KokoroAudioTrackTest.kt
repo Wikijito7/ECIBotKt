@@ -2,8 +2,10 @@ package services.lavaplayer.manager
 
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -134,5 +136,30 @@ class KokoroAudioTrackTest {
         assertEquals(Long.MAX_VALUE, track.info.length)
         assertEquals("kokoro://?text=Hello", track.info.identifier)
         assertTrue(track.info.isStream)
+    }
+
+    @Test
+    fun `When process with empty baseUrl Then throw IllegalStateException`() {
+        // Given
+        val trackInfo = AudioTrackInfo(
+            "TTS Message: Hello",
+            "Kokoro",
+            Long.MAX_VALUE,
+            "kokoro://?text=Hello",
+            true,
+            "kokoro://?text=Hello",
+            null,
+            null
+        )
+        val sourceManager = mockk<KokoroSourceManager>()
+        val track = KokoroAudioTrack(trackInfo, sourceManager)
+        // baseUrl is empty by default
+
+        // When/Then
+        assertFailsWith<IllegalStateException> {
+            runTest {
+                track.process(mockk())
+            }
+        }
     }
 }

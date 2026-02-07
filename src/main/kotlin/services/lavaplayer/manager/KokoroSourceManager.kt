@@ -19,6 +19,9 @@ import java.util.function.Consumer
 import java.util.function.Function
 import kotlin.text.Charsets.UTF_8
 
+private const val DEFAULT_VOICE = "em_santa"
+private const val DEFAULT_LANG_CODE = "e"
+
 class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
     private val httpInterfaceManager: HttpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager()
 
@@ -26,11 +29,6 @@ class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
     var defaultVoice: String = ""
     var defaultSpeed: Float = 1.0f
     var defaultLangCode: String = ""
-
-    companion object {
-        private const val DEFAULT_VOICE = "em_santa"
-        private const val DEFAULT_LANG_CODE = "e"
-    }
 
     init {
         // Configure extended timeouts for TTS generation
@@ -109,22 +107,12 @@ class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
         }
 
         return AudioTrackInfo(
-            /* title = */
             title,
-            /* author = */
             "Kokoro",
-            /* length = */
             Long.MAX_VALUE,
-            /* identifier = */
             reference.identifier,
-            /* isStream = */
             true,
-            /* uri = */
-            reference.identifier,
-            /* artworkUrl = */
-            null,
-            /* isrc = */
-            null
+            reference.identifier
         )
     }
 }
