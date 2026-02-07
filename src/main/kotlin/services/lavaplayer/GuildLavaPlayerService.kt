@@ -30,7 +30,7 @@ import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
 import es.wokis.utils.getDisplayTrackName
 import es.wokis.utils.getLocale
-import es.wokis.utils.toMarkdownLinkEmojiAware
+import es.wokis.utils.toSanitizedMarkdownLink
 import es.wokis.utils.isValidUrl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -179,7 +179,7 @@ class GuildLavaPlayerService(
                 localizationService.getStringFormat(
                     key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
                     locale = locale,
-                    arguments = arrayOf(radioName.toMarkdownLinkEmojiAware(radioUrl))
+                    arguments = arrayOf(radioName.toSanitizedMarkdownLink(radioUrl))
                 )
             )
             queue(listOf(it))
@@ -440,7 +440,7 @@ class GuildLavaPlayerService(
                     localizationService.getStringFormat(
                         key = if (addToFront) LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_SONGS_TO_QUEUE_WITH_LINK,
                         locale = locale,
-                        arguments = arrayOf(playlist.name.toMarkdownLinkEmojiAware(playlistUrl), playlist.tracks.size)
+                        arguments = arrayOf(playlist.name.toSanitizedMarkdownLink(playlistUrl), playlist.tracks.size)
                     )
                 } else {
                     localizationService.getStringFormat(
@@ -463,7 +463,7 @@ class GuildLavaPlayerService(
                     localizationService.getStringFormat(
                         key = if (addToFront) LocalizationKeys.NEXT_ADDED_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
                         locale = locale,
-                        arguments = arrayOf(currentTrack.getDisplayTrackName().toMarkdownLinkEmojiAware(track.info.uri))
+                        arguments = arrayOf(currentTrack.getDisplayTrackName().toSanitizedMarkdownLink(track.info.uri))
                     )
                 } else {
                     localizationService.getStringFormat(
