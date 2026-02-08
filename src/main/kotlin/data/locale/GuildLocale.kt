@@ -5,18 +5,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Data class representing a guild's custom locale preference.
- * Stored in JSON format for persistence.
- */
-@Serializable
-data class GuildLocale(
-    @SerialName("guild_id")
-    val guildId: String,
-    @SerialName("locale")
-    val locale: String
-)
-
-/**
  * Container for all guild locale mappings.
  * Used for JSON serialization/deserialization.
  */
@@ -25,11 +13,6 @@ data class GuildLocalesContainer(
     @SerialName("guild_locales")
     val guildLocales: MutableMap<String, String> = mutableMapOf()
 )
-
-/**
- * Extension function to convert a GuildLocale to a Discord Locale object.
- */
-fun GuildLocale.toLocale(): Locale = Locale.fromString(locale)
 
 /**
  * Map of Discord locale codes to Locale objects.
