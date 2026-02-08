@@ -6,9 +6,9 @@ unknown_command: Comando desconocido o sin registrar, nombre del comando %s
 now_playing: 🎶 Reproduciendo %s en %s
 no_matches: No se han encontrado resultados para %s
 added_track_to_queue: Añadido %s a la cola
-added_track_to_queue_with_link: Añadido [%s](%s) a la cola
+added_track_to_queue_with_link: Añadido %s a la cola
 added_songs_to_queue: Añadido %s (%d canciones) a la cola
-added_songs_to_queue_with_link: Añadido [%s](%s) (%d canciones) a la cola
+added_songs_to_queue_with_link: Añadido %s (%d canciones) a la cola
 found_track_list: Encontrada la lista de reproducción %s con %d canciones
 load_failed: Error al cargar, %s
 message_processor_invalid_link: He recibido un enlace incorrecto. El original era %s
@@ -83,9 +83,9 @@ player_shown_on_existing_channel: Reproductor creado en <#%s>
 next_command_description: Añade una pista a la siguiente posición en la cola
 next_command_input_description: URL de la pista para añadir a continuación o término de búsqueda para mover una pista existente
 next_added_to_queue: Añadido %s a la siguiente posición en la cola
-next_added_to_queue_with_link: Añadido [%s](%s) a la siguiente posición en la cola
+next_added_to_queue_with_link: Añadido %s a la siguiente posición en la cola
 next_added_songs_to_queue: Añadido %s (%d pistas) a la siguiente posición en la cola
-next_added_songs_to_queue_with_link: Añadido [%s](%s) (%d pistas) a la siguiente posición en la cola
+next_added_songs_to_queue_with_link: Añadido %s (%d pistas) a la siguiente posición en la cola
 next_track_moved: Movido %s a la siguiente posición en la cola
 next_track_not_found: No se encontró ninguna pista que coincida con "%s" en la cola
 next_empty_queue: La cola está vacía, no se pueden buscar pistas

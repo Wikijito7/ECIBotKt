@@ -6,9 +6,9 @@ unknown_command: Unknown or unregistered command, command name %s
 now_playing: 🎶 Playing %s in %s
 no_matches: No matches found for %s
 added_track_to_queue: Added %s to the queue
-added_track_to_queue_with_link: Added [%s](%s) to the queue
+added_track_to_queue_with_link: Added %s to the queue
 added_songs_to_queue: Added %s (%d tracks) to the queue
-added_songs_to_queue_with_link: Added [%s](%s) (%d tracks) to the queue
+added_songs_to_queue_with_link: Added %s (%d tracks) to the queue
 found_track_list: Found track list %s with %d tracks
 load_failed: Load failed, %s
 message_processor_invalid_link: I've received an invalid link. The original one was %s
@@ -83,9 +83,9 @@ player_shown_on_existing_channel: Created player on <#%s>
 next_command_description: Adds a track to the next position in the queue
 next_command_input_description: Track URL to add next or search term to move existing track
 next_added_to_queue: Added %s to the next position in queue
-next_added_to_queue_with_link: Added [%s](%s) to the next position in queue
+next_added_to_queue_with_link: Added %s to the next position in queue
 next_added_songs_to_queue: Added %s (%d tracks) to the next position in queue
-next_added_songs_to_queue_with_link: Added [%s](%s) (%d tracks) to the next position in queue
+next_added_songs_to_queue_with_link: Added %s (%d tracks) to the next position in queue
 next_track_moved: Moved %s to the next position in queue
 next_track_not_found: No track found matching "%s" in the queue
 next_empty_queue: The queue is empty, cannot search for tracks

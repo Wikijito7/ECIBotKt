@@ -30,6 +30,7 @@ import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
 import es.wokis.utils.getDisplayTrackName
 import es.wokis.utils.getLocale
+import es.wokis.utils.toSanitizedMarkdownLink
 import es.wokis.utils.isValidUrl
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -182,7 +183,7 @@ class GuildLavaPlayerService(
                     key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
                     guildId = guildId,
                     discordLocale = discordLocale,
-                    arguments = arrayOf(radioName, radioUrl)
+                    arguments = arrayOf(radioName.toSanitizedMarkdownLink(radioUrl))
                 )
             )
             queue(listOf(it))
@@ -449,7 +450,7 @@ class GuildLavaPlayerService(
                         key = if (addToFront) LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_SONGS_TO_QUEUE_WITH_LINK,
                         guildId = guildId,
                         discordLocale = discordLocale,
-                        arguments = arrayOf(playlist.name, playlistUrl, playlist.tracks.size)
+                        arguments = arrayOf(playlist.name.toSanitizedMarkdownLink(playlistUrl), playlist.tracks.size)
                     )
                 } else {
                     localizationService.getStringFormat(
@@ -474,7 +475,7 @@ class GuildLavaPlayerService(
                         key = if (addToFront) LocalizationKeys.NEXT_ADDED_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
                         guildId = guildId,
                         discordLocale = discordLocale,
-                        arguments = arrayOf(currentTrack.getDisplayTrackName(), track.info.uri)
+                        arguments = arrayOf(currentTrack.getDisplayTrackName().toSanitizedMarkdownLink(track.info.uri))
                     )
                 } else {
                     localizationService.getStringFormat(
