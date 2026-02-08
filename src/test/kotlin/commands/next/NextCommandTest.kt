@@ -37,6 +37,9 @@ class NextCommandTest {
             every { command } returns mockk {
                 every { strings } returns mockedStrings
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
             justRun { loadAndPlay(any(), any()) }
@@ -53,8 +56,8 @@ class NextCommandTest {
             )
         } returns lavaPlayerService
         every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
-        every { localizationService.getString(any(), any()) } returns ""
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+        coEvery { localizationService.getString(any(), any(), any()) } returns ""
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns ""
 
         // When
         nextCommand.onExecute(interaction, mockedResponse)
@@ -79,6 +82,9 @@ class NextCommandTest {
             every { command } returns mockk {
                 every { strings } returns mockedStrings
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
             justRun { loadAndPlay(any(), any()) }
@@ -95,8 +101,8 @@ class NextCommandTest {
             )
         } returns lavaPlayerService
         every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
-        every { localizationService.getString(any(), any()) } returns ""
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+        coEvery { localizationService.getString(any(), any(), any()) } returns ""
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns ""
 
         // When
         nextCommand.onExecute(interaction, mockedResponse)
@@ -121,6 +127,9 @@ class NextCommandTest {
             every { command } returns mockk {
                 every { strings } returns mockedStrings
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val mockTrack: TrackBO = mockk(relaxed = true)
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
@@ -138,8 +147,8 @@ class NextCommandTest {
             )
         } returns lavaPlayerService
         every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
-        every { localizationService.getString(any(), any()) } returns ""
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+        coEvery { localizationService.getString(any(), any(), any()) } returns ""
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns ""
 
         // When
         nextCommand.onExecute(interaction, mockedResponse)
@@ -168,6 +177,9 @@ class NextCommandTest {
             every { command } returns mockk {
                 every { strings } returns mockedStrings
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
             every { isQueueEmpty() } returns false
@@ -185,8 +197,8 @@ class NextCommandTest {
             )
         } returns lavaPlayerService
         every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
-        every { localizationService.getString(any(), any()) } returns ""
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+        coEvery { localizationService.getString(any(), any(), any()) } returns ""
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns ""
 
         // When
         nextCommand.onExecute(interaction, mockedResponse)
@@ -213,6 +225,9 @@ class NextCommandTest {
             every { command } returns mockk {
                 every { strings } returns mockedStrings
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
             every { isQueueEmpty() } returns true
@@ -228,8 +243,8 @@ class NextCommandTest {
             )
         } returns lavaPlayerService
         every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
-        every { localizationService.getString(any(), any()) } returns ""
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+        coEvery { localizationService.getString(any(), any(), any()) } returns ""
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns ""
 
         // When
         nextCommand.onExecute(interaction, mockedResponse)
@@ -257,11 +272,14 @@ class NextCommandTest {
             every { command } returns mockk {
                 every { strings } returns mockedStrings
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
-        every { localizationService.getString(any(), any()) } returns ""
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+        coEvery { localizationService.getString(any(), any(), any()) } returns ""
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns ""
 
         // When
         nextCommand.onExecute(interaction, mockedResponse)

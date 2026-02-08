@@ -4,6 +4,7 @@ import dev.kord.common.Color
 import dev.kord.common.Locale
 import dev.kord.common.entity.ButtonStyle
 import dev.kord.common.entity.DiscordPartialEmoji
+import dev.kord.common.entity.Snowflake
 import dev.kord.rest.builder.component.ActionRowBuilder
 import dev.kord.rest.builder.component.MessageComponentBuilder
 import dev.kord.rest.builder.message.embed
@@ -13,8 +14,9 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.takeIfNotEmpty
 
-fun AbstractMessageModifyBuilder.createPaginatedEmbedMessage(
-    locale: Locale,
+suspend fun AbstractMessageModifyBuilder.createPaginatedEmbedMessage(
+    guildId: Snowflake?,
+    discordLocale: Locale?,
     localizationService: LocalizationService,
     title: String,
     description: String?,
@@ -26,7 +28,8 @@ fun AbstractMessageModifyBuilder.createPaginatedEmbedMessage(
     nextButtonCustomId: String
 ) {
     createEmbed(
-        locale = locale,
+        guildId = guildId,
+        discordLocale = discordLocale,
         localizationService = localizationService,
         embedTitle = title,
         embedDescription = description,
@@ -37,7 +40,8 @@ fun AbstractMessageModifyBuilder.createPaginatedEmbedMessage(
     )
     if (pageCount > 1) {
         components = getMessageComponentBuilders(
-            locale = locale,
+            guildId = guildId,
+            discordLocale = discordLocale,
             localizationService = localizationService,
             previousButtonCustomId = previousButtonCustomId,
             nextButtonCustomId = nextButtonCustomId,
@@ -47,8 +51,9 @@ fun AbstractMessageModifyBuilder.createPaginatedEmbedMessage(
     }
 }
 
-private fun AbstractMessageModifyBuilder.createEmbed(
-    locale: Locale,
+private suspend fun AbstractMessageModifyBuilder.createEmbed(
+    guildId: Snowflake?,
+    discordLocale: Locale?,
     localizationService: LocalizationService,
     embedTitle: String,
     embedDescription: String?,
@@ -77,7 +82,8 @@ private fun AbstractMessageModifyBuilder.createEmbed(
             footer {
                 text = localizationService.getStringFormat(
                     key = LocalizationKeys.PAGINATED_EMBED_FOOTER,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(currentPage, pageCount)
                 )
             }
@@ -85,8 +91,9 @@ private fun AbstractMessageModifyBuilder.createEmbed(
     }
 }
 
-private fun getMessageComponentBuilders(
-    locale: Locale,
+private suspend fun getMessageComponentBuilders(
+    guildId: Snowflake?,
+    discordLocale: Locale?,
     localizationService: LocalizationService,
     previousButtonCustomId: String,
     nextButtonCustomId: String,
@@ -98,7 +105,7 @@ private fun getMessageComponentBuilders(
             style = ButtonStyle.Secondary,
             customId = previousButtonCustomId
         ) {
-            label = localizationService.getString(LocalizationKeys.PAGINATED_EMBED_PREVIOUS_BUTTON_LABEL, locale)
+            label = localizationService.getString(LocalizationKeys.PAGINATED_EMBED_PREVIOUS_BUTTON_LABEL, guildId, discordLocale)
             emoji = DiscordPartialEmoji(name = "⬅")
             disabled = disablePrevious
         }
@@ -106,7 +113,7 @@ private fun getMessageComponentBuilders(
             style = ButtonStyle.Secondary,
             customId = nextButtonCustomId
         ) {
-            label = localizationService.getString(LocalizationKeys.PAGINATED_EMBED_NEXT_BUTTON_LABEL, locale)
+            label = localizationService.getString(LocalizationKeys.PAGINATED_EMBED_NEXT_BUTTON_LABEL, guildId, discordLocale)
             emoji = DiscordPartialEmoji(name = "➡")
             disabled = disableNext
         }

@@ -26,18 +26,18 @@ class RadioSearchGroupCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            group(CommandName.Radio.Search.commandName, localizationService.getString(LocalizationKeys.RADIO_SEARCH_COMMAND_DESCRIPTION)) {
+            group(CommandName.Radio.Search.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_COMMAND_DESCRIPTION).values.first()) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_COMMAND_DESCRIPTION)
-                subCommand(CommandName.Radio.Search.Name.commandName, localizationService.getString(LocalizationKeys.RADIO_SEARCH_NAME_COMMAND_DESCRIPTION)) {
+                subCommand(CommandName.Radio.Search.Name.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_NAME_COMMAND_DESCRIPTION).values.first()) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_NAME_COMMAND_DESCRIPTION)
-                    string("name", localizationService.getString(LocalizationKeys.RADIO_SEARCH_NAME_INPUT_DESCRIPTION)) {
+                    string("name", localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_NAME_INPUT_DESCRIPTION).values.first()) {
                         descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_NAME_INPUT_DESCRIPTION)
                         required = true
                     }
                 }
-                subCommand(CommandName.Radio.Search.CountryCode.commandName, localizationService.getString(LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_COMMAND_DESCRIPTION)) {
+                subCommand(CommandName.Radio.Search.CountryCode.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_COMMAND_DESCRIPTION).values.first()) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_COMMAND_DESCRIPTION)
-                    string("countrycode", localizationService.getString(LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_INPUT_DESCRIPTION)) {
+                    string("countrycode", localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_INPUT_DESCRIPTION).values.first()) {
                         descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_INPUT_DESCRIPTION)
                         required = true
                         autocomplete = true

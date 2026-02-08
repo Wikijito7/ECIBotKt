@@ -4,6 +4,7 @@ import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import es.wokis.repositories.locale.LocalJsonLocaleRepository
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -21,9 +22,12 @@ class LocalJsonLocaleRepositoryTest {
     fun setup() {
         // Clean up any existing data file to ensure isolated tests
         dataFile.delete()
-        
+
         // Create repository - it will create the file automatically
-        repository = LocalJsonLocaleRepository()
+        repository = LocalJsonLocaleRepository(Json {
+            prettyPrint = true
+            ignoreUnknownKeys = true
+        })
     }
 
     @AfterEach
@@ -101,7 +105,10 @@ class LocalJsonLocaleRepositoryTest {
         repository.setGuildLocale(guildId, locale)
 
         // When
-        val newRepository = LocalJsonLocaleRepository()
+        val newRepository = LocalJsonLocaleRepository(Json {
+            prettyPrint = true
+            ignoreUnknownKeys = true
+        })
         val result = newRepository.getGuildLocale(guildId)
 
         // Then

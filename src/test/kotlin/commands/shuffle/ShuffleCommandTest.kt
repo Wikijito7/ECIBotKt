@@ -53,7 +53,7 @@ class ShuffleCommandTest {
         }
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
 
         // When
         shuffleCommand.onExecute(interaction, response)
@@ -92,7 +92,7 @@ class ShuffleCommandTest {
             justRun { shuffle() }
         }
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } throws IllegalStateException()
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
 
         // When/Then
         assertThrows<IllegalStateException> {

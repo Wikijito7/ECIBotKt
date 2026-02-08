@@ -16,6 +16,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.coEvery as coEvery
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
@@ -61,8 +62,8 @@ class QueueCommandTest {
         }
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Format"
 
         // When
         queueCommand.onExecute(interaction, response)
@@ -104,8 +105,8 @@ class QueueCommandTest {
         }
 
         coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Format"
 
         // When
         queueCommand.onInteract(interaction)

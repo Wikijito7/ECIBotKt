@@ -1,5 +1,7 @@
 package es.wokis.commands.radio
 
+import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -12,7 +14,6 @@ import es.wokis.data.radio.RadioDTO
 import es.wokis.data.radio.RadioPageDTO
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
-import es.wokis.utils.orDefaultLocale
 import es.wokis.utils.takeAtMost
 
 private const val RADIO_LIST_COLUMNS = 3
@@ -31,15 +32,17 @@ suspend fun onExecuteRadioListCommand(
     nextButtonCustomId: String,
     localizationService: LocalizationService
 ) {
-    val locale = interaction.locale.orDefaultLocale()
+    val guildId = interaction.data.guildId.value
+    val discordLocale = interaction.guildLocale
     val radioPageContent = currentRadioPage?.radios?.chunked(RADIO_LIST_COLUMNS)
     val maxPages = currentRadioPage?.maxPage ?: 1
     response.respond {
         createPaginatedEmbedMessage(
-            locale = locale,
+            guildId = guildId,
+            discordLocale = discordLocale,
             localizationService = localizationService,
-            title = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_TITLE, locale),
-            description = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_DESCRIPTION, locale),
+            title = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_TITLE, guildId, discordLocale),
+            description = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_DESCRIPTION, guildId, discordLocale),
             currentPage = 1,
             currentPageContent = radioPageContent,
             columns = RADIO_LIST_COLUMNS,
@@ -57,7 +60,8 @@ suspend fun onInteractRadioListCommand(
     nextButtonCustomId: String,
     block: suspend (Int) -> RadioPageDTO?
 ) {
-    val locale = interaction.locale.orDefaultLocale()
+    val guildId = interaction.data.guildId.value
+    val discordLocale = interaction.guildLocale
     val customId = (interaction as? ButtonInteraction)?.component?.customId
     val updatePageBy = if (customId == nextButtonCustomId) 1 else -1
     val footerSplit = interaction.message.embeds.firstOrNull()
@@ -69,10 +73,11 @@ suspend fun onInteractRadioListCommand(
     val radioPageContent = newRadioPage?.radios?.chunked(RADIO_LIST_COLUMNS)
     interaction.message.edit {
         createPaginatedEmbedMessage(
-            locale = locale,
+            guildId = guildId,
+            discordLocale = discordLocale,
             localizationService = localizationService,
-            title = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_TITLE, locale),
-            description = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_DESCRIPTION, locale),
+            title = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_TITLE, guildId, discordLocale),
+            description = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_DESCRIPTION, guildId, discordLocale),
             currentPage = currentPage,
             currentPageContent = radioPageContent,
             columns = RADIO_LIST_COLUMNS,

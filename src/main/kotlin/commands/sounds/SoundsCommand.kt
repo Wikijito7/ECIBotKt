@@ -17,7 +17,6 @@ import es.wokis.constants.BLANK_SPACE
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.getFolderContent
-import es.wokis.utils.orDefaultLocale
 import java.io.File
 
 private const val SOUNDS_PATH = "./audio"
@@ -30,7 +29,7 @@ class SoundsCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Sounds.commandName,
-                description = localizationService.getString(LocalizationKeys.SOUNDS_DESCRIPTION)
+                description = localizationService.getLocalizations(LocalizationKeys.SOUNDS_DESCRIPTION).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SOUNDS_DESCRIPTION)
             }
@@ -41,13 +40,15 @@ class SoundsCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val sounds: List<File> = getSoundFilesSorted()
         val displaySounds = getDisplaySounds(sounds).sorted()
-        val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, locale = locale)
+        val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, guildId = guildId, discordLocale = discordLocale)
         val description = localizationService.getStringFormat(
             key = LocalizationKeys.SOUNDS_EMBED_DESCRIPTION,
-            locale = locale,
+            guildId = guildId,
+            discordLocale = discordLocale,
             arguments = arrayOf(sounds.size)
         )
         val columns = 3
@@ -55,7 +56,8 @@ class SoundsCommand(
         val pageCount = displaySounds.size / columns
         response.respond {
             createPaginatedEmbedMessage(
-                locale = locale,
+                guildId = guildId,
+                discordLocale = discordLocale,
                 localizationService = localizationService,
                 title = title,
                 description = description,
@@ -70,6 +72,8 @@ class SoundsCommand(
     }
 
     override suspend fun onInteract(interaction: ComponentInteraction) {
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val interactionCustomId = (interaction as? ButtonInteraction)?.component?.customId
         val updatePageBy = if (interactionCustomId == ComponentsEnum.QUEUE_PREVIOUS.customId) -1 else 1
         val sounds: List<File> = getSoundFilesSorted()
@@ -82,6 +86,8 @@ class SoundsCommand(
         val displaySoundsPage = displayQueue.chunked(columns).getOrNull(currentPage - 1)
         updateQueueMessage(
             interaction = interaction,
+            guildId = guildId,
+            discordLocale = discordLocale,
             currentPage = currentPage,
             soundsCount = sounds.size,
             displaySoundsPage = displaySoundsPage,
@@ -116,22 +122,25 @@ class SoundsCommand(
 
     private suspend fun updateQueueMessage(
         interaction: ComponentInteraction,
+        guildId: dev.kord.common.entity.Snowflake?,
+        discordLocale: dev.kord.common.Locale?,
         currentPage: Int,
         soundsCount: Int,
         displaySoundsPage: List<String>?,
         pageCount: Int,
         columns: Int
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
-        val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, locale = locale)
+        val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, guildId = guildId, discordLocale = discordLocale)
         val description = localizationService.getStringFormat(
             key = LocalizationKeys.SOUNDS_EMBED_DESCRIPTION,
-            locale = locale,
+            guildId = guildId,
+            discordLocale = discordLocale,
             arguments = arrayOf(soundsCount)
         )
         interaction.message.edit {
             createPaginatedEmbedMessage(
-                locale = locale,
+                guildId = guildId,
+                discordLocale = discordLocale,
                 localizationService = localizationService,
                 title = title,
                 description = description,

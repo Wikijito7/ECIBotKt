@@ -12,7 +12,6 @@ import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.services.tts.TTSService
 import es.wokis.utils.getArgument
-import es.wokis.utils.orDefaultLocale
 
 private const val TTS_ARGUMENT_NAME = "message"
 
@@ -25,14 +24,14 @@ class TTSCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Tts.commandName,
-                description = localizationService.getString(key = LocalizationKeys.TTS_COMMAND_DESCRIPTION)
+                description = localizationService.getLocalizations(LocalizationKeys.TTS_COMMAND_DESCRIPTION).values.first()
             ) {
-                descriptionLocalizations = localizationService.getLocalizations(key = LocalizationKeys.TTS_COMMAND_DESCRIPTION)
+                descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.TTS_COMMAND_DESCRIPTION)
                 string(
                     name = TTS_ARGUMENT_NAME,
-                    description = localizationService.getString(key = LocalizationKeys.TTS_COMMAND_INPUT_DESCRIPTION)
+                    description = localizationService.getLocalizations(LocalizationKeys.TTS_COMMAND_INPUT_DESCRIPTION).values.first()
                 ) {
-                    descriptionLocalizations = localizationService.getLocalizations(key = LocalizationKeys.TTS_COMMAND_INPUT_DESCRIPTION)
+                    descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.TTS_COMMAND_INPUT_DESCRIPTION)
                     required = true
                 }
             }
@@ -43,12 +42,14 @@ class TTSCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val message: String = interaction.getArgument(TTS_ARGUMENT_NAME)
             ?: response.respond {
                 content = localizationService.getStringFormat(
                     key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(TTS_ARGUMENT_NAME)
                 )
             }.let { return }
@@ -56,7 +57,8 @@ class TTSCommand(
         response.respond {
             content = localizationService.getString(
                 key = LocalizationKeys.TTS_COMMAND_RESPONSE,
-                locale = locale
+                guildId = guildId,
+                discordLocale = discordLocale
             )
         }
         ttsService.loadAndPlayMessage(guildLavaPlayerService, message)

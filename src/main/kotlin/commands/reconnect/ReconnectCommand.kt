@@ -9,7 +9,6 @@ import es.wokis.commands.CommandName
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
-import es.wokis.utils.orDefaultLocale
 
 class ReconnectCommand(
     private val guildQueueService: GuildQueueService,
@@ -18,7 +17,7 @@ class ReconnectCommand(
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         commandBuilder.input(
             name = CommandName.Reconnect.commandName,
-            description = localizationService.getString(LocalizationKeys.RECONNECT_COMMAND_DESCRIPTION)
+            description = localizationService.getLocalizations(LocalizationKeys.RECONNECT_COMMAND_DESCRIPTION).values.first()
         ) {
             descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RECONNECT_COMMAND_DESCRIPTION)
         }
@@ -28,19 +27,20 @@ class ReconnectCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val lavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
 
         if (!lavaPlayerService.isConnected()) {
             response.respond {
-                content = localizationService.getString(LocalizationKeys.RECONNECT_NOT_CONNECTED, locale)
+                content = localizationService.getString(LocalizationKeys.RECONNECT_NOT_CONNECTED, guildId, discordLocale)
             }
             return
         }
 
         lavaPlayerService.reconnect()
         response.respond {
-            content = localizationService.getString(LocalizationKeys.RECONNECT_SUCCESS, locale)
+            content = localizationService.getString(LocalizationKeys.RECONNECT_SUCCESS, guildId, discordLocale)
         }
     }
 }

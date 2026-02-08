@@ -101,7 +101,7 @@ class CommandHandlerServiceImpl(
                 CommandName.Next.commandName -> nextCommand.onExecute(interaction, response)
                 CommandName.Disconnect.commandName -> disconnectCommand.onExecute(interaction, response)
                 CommandName.Locale.commandName -> localeCommand.onExecute(interaction, response)
-                else -> respondUnknownCommand(response, interaction.guildLocale, commandName)
+                else -> respondUnknownCommand(response, interaction.data.guildId.value, interaction.guildLocale, commandName)
             }
         } catch (exception: Throwable) {
             errorHandlerService.handleCommandError(exception, interaction, response, commandName)
@@ -150,13 +150,15 @@ class CommandHandlerServiceImpl(
 
     private suspend fun respondUnknownCommand(
         response: DeferredPublicMessageInteractionResponseBehavior,
-        locale: Locale?,
+        guildId: dev.kord.common.entity.Snowflake?,
+        discordLocale: dev.kord.common.Locale?,
         commandName: String
     ) {
         response.respond {
             content = localizationService.getStringFormat(
                 key = LocalizationKeys.UNKNOWN_COMMAND,
-                locale = locale ?: Locale.ENGLISH_UNITED_STATES,
+                guildId = guildId,
+                discordLocale = discordLocale,
                 arguments = arrayOf(commandName)
             )
         }

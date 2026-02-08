@@ -53,7 +53,9 @@ class GuildLavaPlayerService(
     private val textChannel: MessageChannel,
     private val voiceChannel: BaseVoiceChannelBehavior,
     private val audioPlayerManager: AudioPlayerManager,
-    private val localizationService: LocalizationService
+    private val localizationService: LocalizationService,
+    val guildId: dev.kord.common.entity.Snowflake,
+    var discordLocale: dev.kord.common.Locale? = null
 ) : AudioEventAdapter() {
 
     private var voiceConnection: VoiceConnection? = null
@@ -106,11 +108,11 @@ class GuildLavaPlayerService(
     override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
         if (isRetrying) return
         coroutineScope.launch {
-            val locale = voiceChannel.getLocale()
+            discordLocale = voiceChannel.getLocale()
             val voiceChannelName = voiceChannel.asChannel().name
             playerMessage?.let {
                 updateSeekChannel.send(Unit)
-            } ?: sendNowPlayingMessage(locale, voiceChannelName)
+            } ?: sendNowPlayingMessage(discordLocale, voiceChannelName)
         }
     }
 
@@ -145,12 +147,13 @@ class GuildLavaPlayerService(
         audioPlayerManager.loadItemSync(message)?.let { item -> item as? AudioTrack }?.let {
             TrackBO(audioTrack = it)
         }?.let { tts ->
-            val locale = voiceChannel.getLocale()
+            discordLocale = voiceChannel.getLocale()
             connectToVoiceChannel()
             textChannel.createMessage(
                 localizationService.getStringFormat(
                     key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(tts.audioTrack.info.title)
                 )
             )
@@ -173,11 +176,12 @@ class GuildLavaPlayerService(
             )
         }?.let {
             connectToVoiceChannel()
-            val locale = voiceChannel.getLocale()
+            discordLocale = voiceChannel.getLocale()
             textChannel.createMessage(
                 localizationService.getStringFormat(
                     key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(radioName, radioUrl)
                 )
             )
@@ -304,13 +308,14 @@ class GuildLavaPlayerService(
         }
     }
     private suspend fun sendNowPlayingMessage(
-        locale: Locale,
+        discordLocale: Locale?,
         voiceChannelName: String
     ) {
         textChannel.createMessage(
             localizationService.getStringFormat(
                 key = LocalizationKeys.NOW_PLAYING,
-                locale = locale,
+                guildId = guildId,
+                discordLocale = discordLocale,
                 arguments = arrayOf(currentTrack?.getDisplayTrackName().orEmpty(), voiceChannelName)
             )
         )
@@ -351,11 +356,12 @@ class GuildLavaPlayerService(
 
         override fun noMatches() {
             coroutineScope.launch {
-                val locale = voiceChannel.getLocale()
+                discordLocale = voiceChannel.getLocale()
                 textChannel.createMessage(
                     localizationService.getStringFormat(
                         key = LocalizationKeys.NO_MATCHES,
-                        locale = locale,
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         arguments = arrayOf(currentLoadTrack)
                     )
                 )
@@ -380,11 +386,12 @@ class GuildLavaPlayerService(
 
         override fun noMatches() {
             coroutineScope.launch {
-                val locale = voiceChannel.getLocale()
+                discordLocale = voiceChannel.getLocale()
                 textChannel.createMessage(
                     localizationService.getStringFormat(
                         key = LocalizationKeys.NO_MATCHES,
-                        locale = locale,
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         arguments = arrayOf(currentLoadTrack)
                     )
                 )
@@ -400,7 +407,7 @@ class GuildLavaPlayerService(
 
     private fun onTrackLoadedWithCustomName(track: AudioTrack, customName: String) {
         coroutineScope.launch {
-            val locale = voiceChannel.getLocale()
+            discordLocale = voiceChannel.getLocale()
             val currentTrack = TrackBO(
                 customName = customName,
                 audioTrack = track
@@ -408,7 +415,8 @@ class GuildLavaPlayerService(
             textChannel.createMessage(
                 localizationService.getStringFormat(
                     key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(currentTrack.getDisplayTrackName())
                 )
             )
@@ -419,12 +427,13 @@ class GuildLavaPlayerService(
 
     private fun onPlaylistLoaded(playlist: AudioPlaylist, addToFront: Boolean = false) {
         coroutineScope.launch {
-            val locale = voiceChannel.getLocale()
+            discordLocale = voiceChannel.getLocale()
             val isCurrentlyPlaying = player.playingTrack != null
             val message = textChannel.createMessage(
                 localizationService.getStringFormat(
                     key = LocalizationKeys.FOUND_TRACK_LIST,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(playlist.name, playlist.tracks.size)
                 )
             )
@@ -438,13 +447,15 @@ class GuildLavaPlayerService(
                 content = if (playlistUrl?.isValidUrl() == true) {
                     localizationService.getStringFormat(
                         key = if (addToFront) LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_SONGS_TO_QUEUE_WITH_LINK,
-                        locale = locale,
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         arguments = arrayOf(playlist.name, playlistUrl, playlist.tracks.size)
                     )
                 } else {
                     localizationService.getStringFormat(
                         key = if (addToFront) LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE else LocalizationKeys.ADDED_SONGS_TO_QUEUE,
-                        locale = locale,
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         arguments = arrayOf(playlist.name, playlist.tracks.size)
                     )
                 }
@@ -454,20 +465,22 @@ class GuildLavaPlayerService(
 
     private fun onTrackLoaded(track: AudioTrack, addToFront: Boolean = false) {
         coroutineScope.launch {
-            val locale = voiceChannel.getLocale()
+            discordLocale = voiceChannel.getLocale()
             val currentTrack = TrackBO(audioTrack = track)
             val isCurrentlyPlaying = player.playingTrack != null
             textChannel.createMessage(
                 if (track.info.uri.isValidUrl()) {
                     localizationService.getStringFormat(
                         key = if (addToFront) LocalizationKeys.NEXT_ADDED_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
-                        locale = locale,
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         arguments = arrayOf(currentTrack.getDisplayTrackName(), track.info.uri)
                     )
                 } else {
                     localizationService.getStringFormat(
                         key = if (addToFront) LocalizationKeys.NEXT_ADDED_TO_QUEUE else LocalizationKeys.ADDED_TRACK_TO_QUEUE,
-                        locale = locale,
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         arguments = arrayOf(currentTrack.getDisplayTrackName())
                     )
                 }
@@ -505,11 +518,12 @@ class GuildLavaPlayerService(
 
     private suspend fun onLoadFailed(exception: FriendlyException) {
         Log.error("GuildLavaPlayerService onLoadFailed", exception)
-        val locale = voiceChannel.getLocale()
+        discordLocale = voiceChannel.getLocale()
         textChannel.createMessage(
             localizationService.getStringFormat(
                 key = LocalizationKeys.LOAD_FAILED,
-                locale = locale,
+                guildId = guildId,
+                discordLocale = discordLocale,
                 arguments = arrayOf(exception.message ?: UNKNOWN_ERROR)
             )
         )
@@ -531,9 +545,10 @@ class GuildLavaPlayerService(
             try {
                 it.edit {
                     createPlayerEmbed(
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         guildName = guildName,
                         localizationService = localizationService,
-                        locale = voiceChannel.getLocale(),
                         currentTrack = currentTrack,
                         queue = queue,
                         isPaused = player.isPaused

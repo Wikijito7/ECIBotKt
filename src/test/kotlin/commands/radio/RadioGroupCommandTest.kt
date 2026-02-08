@@ -1,5 +1,6 @@
 package commands.radio
 
+import dev.kord.common.Locale
 import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
@@ -14,6 +15,7 @@ import es.wokis.commands.radio.subcommands.play.RadioPlayCommand
 import es.wokis.commands.radio.subcommands.random.RadioRandomCommand
 import es.wokis.commands.radio.subcommands.search.RadioSearchGroupCommand
 import es.wokis.services.localization.LocalizationService
+import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
@@ -44,8 +46,8 @@ class RadioGroupCommandTest {
         coJustRun { onExecute(any(), any()) }
     }
     private val localizationService: LocalizationService = mockk {
-        every { getString(any(), any()) } returns "Unknown command"
-        every { getString(any()) } returns "Description"
+        coEvery { getString(any(), any(), any()) } returns "Unknown command"
+        coEvery { getString(any(), any(), any()) } returns "Description"
         every { getLocalizations(any()) } returns mutableMapOf()
     }
 
@@ -66,6 +68,10 @@ class RadioGroupCommandTest {
             every { command } returns mockk<SubCommand> {
                 every { name } returns commandName
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
+            every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
         }
 
         // When
@@ -85,6 +91,10 @@ class RadioGroupCommandTest {
             every { command } returns mockk<SubCommand> {
                 every { name } returns commandName
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
+            every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
         }
 
         // When
@@ -104,6 +114,10 @@ class RadioGroupCommandTest {
             every { command } returns mockk<GroupCommand> {
                 every { groupName } returns commandName
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
+            every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
         }
 
         // When
@@ -123,6 +137,10 @@ class RadioGroupCommandTest {
             every { command } returns mockk<SubCommand> {
                 every { name } returns commandName
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
+            every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
         }
 
         // When
@@ -142,6 +160,10 @@ class RadioGroupCommandTest {
             every { command } returns mockk<SubCommand> {
                 every { name } returns commandName
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
+            every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
         }
 
         // When
@@ -160,6 +182,10 @@ class RadioGroupCommandTest {
             every { command } returns mockk<SubCommand> {
                 every { name } returns "unknown"
             }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
+            every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
         }
 
         // When

@@ -47,7 +47,10 @@ class RadioPlayCommandTest {
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
-            every { command.strings["radio"] } returns radioName
+            every { command.strings["radio"] } returns null
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
             coJustRun { playRadio(any(), any(), any()) }
@@ -61,8 +64,8 @@ class RadioPlayCommandTest {
             radioService.findRadio(radioName)
         } returns radio
 
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Searching..."
-        every { localizationService.getString(any(), any()) } returns "Radio found!"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Searching..."
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Radio found!"
 
         // When
         radioPlayCommand.onExecute(interaction, mockedResponse)
@@ -87,6 +90,9 @@ class RadioPlayCommandTest {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
             every { command.strings["radio"] } returns radioName
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService>()
 
@@ -98,8 +104,8 @@ class RadioPlayCommandTest {
             radioService.findRadio(radioName)
         } returns null
 
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Searching..."
-        every { localizationService.getString(any(), any()) } returns "Radio not found"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Searching..."
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Radio not found"
 
         // When
         radioPlayCommand.onExecute(interaction, mockedResponse)
@@ -116,7 +122,10 @@ class RadioPlayCommandTest {
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
-            every { command.strings["radio"] } returns null
+            every { command.strings["radio"] } returns ""
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService>()
 
@@ -124,7 +133,7 @@ class RadioPlayCommandTest {
             guildQueueService.getOrCreateLavaPlayerService(interaction)
         } returns lavaPlayerService
 
-        every { localizationService.getString(any(), any()) } returns "Radio name is required"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Radio name is required"
 
         // When
         radioPlayCommand.onExecute(interaction, mockedResponse)

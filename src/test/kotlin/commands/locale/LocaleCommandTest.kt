@@ -9,7 +9,6 @@ import dev.kord.core.supplier.EntitySupplyStrategy
 import es.wokis.commands.locale.LocaleCommand
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.SetGuildLocaleUseCase
-import es.wokis.services.localization.GuildLocalizationService
 import es.wokis.services.localization.LocalizationService
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
@@ -18,14 +17,10 @@ import org.junit.jupiter.api.Test
 class LocaleCommandTest {
 
     private val localizationService: LocalizationService = mockk()
-    private val guildLocalizationService: GuildLocalizationService = mockk()
-    private val getGuildLocaleUseCase: GetGuildLocaleUseCase = mockk()
     private val setGuildLocaleUseCase: SetGuildLocaleUseCase = mockk()
 
     private val localeCommand = LocaleCommand(
         localizationService = localizationService,
-        guildLocalizationService = guildLocalizationService,
-        getGuildLocaleUseCase = getGuildLocaleUseCase,
         setGuildLocaleUseCase = setGuildLocaleUseCase
     )
 
@@ -59,7 +54,7 @@ class LocaleCommandTest {
         }
 
         coJustRun { setGuildLocaleUseCase(any(), any()) }
-        coEvery { guildLocalizationService.getStringFormat(any(), any(), any(), any()) } returns "Locale set to es-ES"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), any()) } returns "Locale set to es-ES"
 
         // When
         localeCommand.onExecute(interaction, response)
@@ -100,7 +95,7 @@ class LocaleCommandTest {
         }
 
         coJustRun { setGuildLocaleUseCase.removeLocale(any()) }
-        coEvery { guildLocalizationService.getString(any(), any(), any()) } returns "Locale reset"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Locale reset"
 
         // When
         localeCommand.onExecute(interaction, response)
@@ -140,7 +135,7 @@ class LocaleCommandTest {
             every { token } returns "testToken"
         }
 
-        coEvery { guildLocalizationService.getString(any(), any(), any()) } returns "Invalid locale"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Invalid locale"
 
         // When
         localeCommand.onExecute(interaction, response)
@@ -179,7 +174,7 @@ class LocaleCommandTest {
             every { token } returns "testToken"
         }
 
-        coEvery { guildLocalizationService.getString(any(), any(), any()) } returns "No guild"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "No guild"
 
         // When
         localeCommand.onExecute(interaction, response)
@@ -219,7 +214,7 @@ class LocaleCommandTest {
             every { token } returns "testToken"
         }
 
-        coEvery { guildLocalizationService.getStringFormat(any(), any(), any(), any()) } returns "No content provided"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), any()) } returns "No content provided"
 
         // When
         localeCommand.onExecute(interaction, response)

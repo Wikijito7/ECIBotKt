@@ -54,7 +54,7 @@ class SkipCommandTest {
         }
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
 
         // When
         skipCommand.onExecute(interaction, response)
@@ -94,7 +94,7 @@ class SkipCommandTest {
             justRun { skip() }
         }
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } throws IllegalStateException()
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
 
         // When/Then - exception is thrown (handled by CommandHandlerService)
         assertThrows<IllegalStateException> {

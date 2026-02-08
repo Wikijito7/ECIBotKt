@@ -22,7 +22,7 @@ class RadioListCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Radio.List.commandName, localizationService.getString(LocalizationKeys.RADIO_LIST_COMMAND_DESCRIPTION)) {
+            subCommand(CommandName.Radio.List.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_LIST_COMMAND_DESCRIPTION).values.first()) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_LIST_COMMAND_DESCRIPTION)
             }
         }

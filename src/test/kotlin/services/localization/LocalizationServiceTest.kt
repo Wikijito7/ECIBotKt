@@ -1,18 +1,24 @@
 package services.localization
 
 import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
+import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.localization.NoLocalizationFoundException
+import io.mockk.coEvery
+import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class LocalizationServiceTest {
 
-    private val localizationService = LocalizationService()
+    private val getGuildLocaleUseCase: GetGuildLocaleUseCase = mockk()
+    private val localizationService = LocalizationService(getGuildLocaleUseCase)
 
     @Test
-    fun `Given key When getString is called Then return default string`() {
+    fun `Given key When getString is called Then return default string`() = runTest {
         // Given
         val key = "test_command_description"
         val expected = "test in junit tests"
@@ -25,26 +31,41 @@ class LocalizationServiceTest {
     }
 
     @Test
-    fun `Given key When getString is called with locale Then return localized string`() {
+    fun `Given key When getString is called with discordLocale Then return localized string`() = runTest {
         // Given
         val key = "test_command_description"
         val expected = "ke dise iyo"
 
         // When
-        val actual = localizationService.getString(key, Locale.SPANISH_SPAIN)
+        val actual = localizationService.getString(key, discordLocale = Locale.SPANISH_SPAIN)
 
         // Then
         assertEquals(expected, actual)
     }
 
     @Test
-    fun `Given key When getString is called with locale without translation Then return default string`() {
+    fun `Given key When getString is called with guildId that has custom locale Then return localized string`() = runTest {
+        // Given
+        val key = "test_command_description"
+        val guildId = Snowflake(123)
+        val expected = "ke dise iyo"
+        coEvery { getGuildLocaleUseCase(guildId) } returns Locale.SPANISH_SPAIN
+
+        // When
+        val actual = localizationService.getString(key, guildId = guildId)
+
+        // Then
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `Given key When getString is called with discordLocale without translation Then return default string`() = runTest {
         // Given
         val key = "test_command_description"
         val expected = "test in junit tests"
 
         // When
-        val actual = localizationService.getString(key, Locale.FRENCH)
+        val actual = localizationService.getString(key, discordLocale = Locale.FRENCH)
 
         // Then
         assertEquals(expected, actual)
@@ -63,7 +84,7 @@ class LocalizationServiceTest {
     }
 
     @Test
-    fun `Given invalid key When getString is called Then throw exception`() {
+    fun `Given invalid key When getString is called Then throw exception`() = runTest {
         // Given
         val key = "totally_unknown_key"
 
@@ -77,13 +98,13 @@ class LocalizationServiceTest {
     }
 
     @Test
-    fun `Given invalid key When getString is called with a locale Then throw exception`() {
+    fun `Given invalid key When getString is called with a discordLocale Then throw exception`() = runTest {
         // Given
         val key = "totally_unknown_key"
 
         try {
             // When
-            localizationService.getString(key, Locale.BULGARIAN)
+            localizationService.getString(key, discordLocale = Locale.BULGARIAN)
         } catch (exception: Exception) {
             // Then
             assertTrue(exception is NoLocalizationFoundException)
@@ -105,7 +126,7 @@ class LocalizationServiceTest {
     }
 
     @Test
-    fun `Given key When getStringFormat is called Then return formated string`() {
+    fun `Given key When getStringFormat is called Then return formated string`() = runTest {
         // Given
         val key = "test_args_string"
         val result = "this string has arguments, yay!"
@@ -118,26 +139,41 @@ class LocalizationServiceTest {
     }
 
     @Test
-    fun `Given key When getStringFormat is called with a known locale Then return formated string`() {
+    fun `Given key When getStringFormat is called with a known discordLocale Then return formated string`() = runTest {
         // Given
         val key = "test_args_string"
         val result = "esta string tiene argumentos, yay!"
 
         // When
-        val actual = localizationService.getStringFormat(key, Locale.SPANISH_SPAIN, arguments = arrayOf("yay!"))
+        val actual = localizationService.getStringFormat(key, discordLocale = Locale.SPANISH_SPAIN, arguments = arrayOf("yay!"))
 
         // Then
         assertEquals(result, actual)
     }
 
     @Test
-    fun `Given key When getStringFormat is called with a unregistered locale Then return formated string`() {
+    fun `Given key When getStringFormat is called with a guildId that has custom locale Then return formated string`() = runTest {
+        // Given
+        val key = "test_args_string"
+        val guildId = Snowflake(123)
+        val result = "esta string tiene argumentos, yay!"
+        coEvery { getGuildLocaleUseCase(guildId) } returns Locale.SPANISH_SPAIN
+
+        // When
+        val actual = localizationService.getStringFormat(key, guildId = guildId, arguments = arrayOf("yay!"))
+
+        // Then
+        assertEquals(result, actual)
+    }
+
+    @Test
+    fun `Given key When getStringFormat is called with a unregistered discordLocale Then return formated string`() = runTest {
         // Given
         val key = "test_args_string"
         val result = "this string has arguments, yay!"
 
         // When
-        val actual = localizationService.getStringFormat(key, Locale.FRENCH, arguments = arrayOf("yay!"))
+        val actual = localizationService.getStringFormat(key, discordLocale = Locale.FRENCH, arguments = arrayOf("yay!"))
 
         // Then
         assertEquals(result, actual)

@@ -1,6 +1,5 @@
 package es.wokis.services.processor
 
-import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.ReactionEmoji
@@ -9,7 +8,6 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.asRegex
 import es.wokis.utils.createCoroutineScope
-import es.wokis.utils.getGuildLocale
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 
@@ -97,8 +95,8 @@ class MessageProcessorService(
     fun processMessage(message: Message) {
         if (shouldBeProcessed(message.content)) {
             coroutineScope.launch {
-                val locale = message.getGuildLocale()
-                val processedMessage = getProcessedMessage(message.author?.mention, locale, message.content)
+                val guildId = message.data.guildId.value
+                val processedMessage = getProcessedMessage(message.author?.mention, guildId, message.content)
                 message.delete()
                 message.channel.createMessage(processedMessage)
             }
@@ -113,11 +111,11 @@ class MessageProcessorService(
         return linksToProcess.any { content.contains(it) }
     }
 
-    private fun getProcessedMessage(author: String?, locale: Locale, content: String): String = when {
+    private suspend fun getProcessedMessage(author: String?, guildId: Snowflake?, content: String): String = when {
         twitterLinks.any { content.contains(it) } -> getTwitterProcessedMessage(
             author = author,
             content = content,
-            locale = locale
+            guildId = guildId
         )
 
         instagramLinks.any { content.contains(it) } -> getGenericProcessedMessage(
@@ -125,7 +123,7 @@ class MessageProcessorService(
             content = content,
             links = instagramStartLinks,
             fixedUpUrl = FIXED_UP_INSTAGRAM_URL,
-            locale = locale
+            guildId = guildId
         )
 
         redditLinks.any { content.contains(it) } -> getGenericProcessedMessage(
@@ -133,54 +131,56 @@ class MessageProcessorService(
             content = content,
             links = redditLinks,
             fixedUpUrl = FIXED_UP_REDDIT_URL,
-            locale = locale
+            guildId = guildId
         )
 
         tiktokLinks.any { content.contains(it) } -> getTikTokProcessedMessage(
             author = author,
             content = content,
-            locale = locale
+            guildId = guildId
         )
 
         else -> localizationService.getStringFormat(
             key = LocalizationKeys.MESSAGE_PROCESSOR_INVALID_LINK,
-            locale = locale
+            guildId = guildId,
+            discordLocale = null
         )
     }
 
-    private fun getGenericProcessedMessage(
+    private suspend fun getGenericProcessedMessage(
         author: String?,
         content: String,
         links: List<String>,
         fixedUpUrl: String,
-        locale: Locale
+        guildId: Snowflake?
     ): String {
         val fixedMessage = content.replace(links.asRegex(), fixedUpUrl)
-        return getFixedUpMessage(author, fixedMessage, locale)
+        return getFixedUpMessage(author, fixedMessage, guildId)
     }
 
-    private fun getTikTokProcessedMessage(
+    private suspend fun getTikTokProcessedMessage(
         author: String?,
         content: String,
-        locale: Locale
-    ): String = getFixedUpMessage(author, content.replace("tiktok.com/", FIXED_UP_TIKTOK_URL), locale)
+        guildId: Snowflake?
+    ): String = getFixedUpMessage(author, content.replace("tiktok.com/", FIXED_UP_TIKTOK_URL), guildId)
 
-    private fun getTwitterProcessedMessage(
+    private suspend fun getTwitterProcessedMessage(
         author: String?,
         content: String,
-        locale: Locale
+        guildId: Snowflake?
     ): String {
         // Replace twitter/x domains with girlcockx.com
         // Note: Query parameters are kept as girlcockx.com requires them for embeds
         val fixedMessage = content.replace(twitterLinks.asRegex(), FIXED_UP_TWITTER_URL)
 
-        return getFixedUpMessage(author, fixedMessage, locale)
+        return getFixedUpMessage(author, fixedMessage, guildId)
     }
 
-    private fun getFixedUpMessage(author: String?, fixedMessage: String, locale: Locale) =
+    private suspend fun getFixedUpMessage(author: String?, fixedMessage: String, guildId: Snowflake?) =
         localizationService.getStringFormat(
             key = LocalizationKeys.FIXED_UP_LINK,
-            locale = locale,
+            guildId = guildId,
+            discordLocale = null,
             arguments = arrayOf(author.orEmpty(), fixedMessage)
         )
 }
