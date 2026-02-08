@@ -23,11 +23,13 @@ class LocalJsonLocaleRepositoryTest {
         // Clean up any existing data file to ensure isolated tests
         dataFile.delete()
 
-        // Create repository - it will create the file automatically
-        repository = LocalJsonLocaleRepository(Json {
-            prettyPrint = true
-            ignoreUnknownKeys = true
-        })
+        // Create repository
+        repository = LocalJsonLocaleRepository(
+            Json {
+                prettyPrint = true
+                ignoreUnknownKeys = true
+            }
+        )
     }
 
     @AfterEach
@@ -105,10 +107,12 @@ class LocalJsonLocaleRepositoryTest {
         repository.setGuildLocale(guildId, locale)
 
         // When
-        val newRepository = LocalJsonLocaleRepository(Json {
-            prettyPrint = true
-            ignoreUnknownKeys = true
-        })
+        val newRepository = LocalJsonLocaleRepository(
+            Json {
+                prettyPrint = true
+                ignoreUnknownKeys = true
+            }
+        )
         val result = newRepository.getGuildLocale(guildId)
 
         // Then

@@ -20,7 +20,6 @@ class GetGuildLocaleUseCase(
      * @param guildId The guild's unique identifier
      * @return The custom locale if set, null otherwise
      */
-    suspend operator fun invoke(guildId: Snowflake): Locale? {
-        return localeRepository.getGuildLocale(guildId)
-    }
+    suspend operator fun invoke(guildId: Snowflake): Locale? =
+        localeRepository.getGuildLocale(guildId)
 }

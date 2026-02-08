@@ -9,7 +9,6 @@ import es.wokis.utils.getOrCreateFile
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.encodeToString
 import java.io.File
 
 private const val DATA_PATH = "./data/"

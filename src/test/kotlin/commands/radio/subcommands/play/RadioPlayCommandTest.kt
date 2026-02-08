@@ -47,7 +47,7 @@ class RadioPlayCommandTest {
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
-            every { command.strings["radio"] } returns null
+            every { command.strings["radio"] } returns radioName
             every { data } returns mockk {
                 every { guildId.value } returns null
             }
@@ -122,7 +122,7 @@ class RadioPlayCommandTest {
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
-            every { command.strings["radio"] } returns ""
+            every { command.strings["radio"] } returns null
             every { data } returns mockk {
                 every { guildId.value } returns null
             }
@@ -134,6 +134,8 @@ class RadioPlayCommandTest {
         } returns lavaPlayerService
 
         coEvery { localizationService.getString(any(), any(), any()) } returns "Radio name is required"
+        coEvery { localizationService.getStringFormat(any(), any(), any()) } returns "Radio name is required"
+        coEvery { radioService.findRadio(any()) } returns null
 
         // When
         radioPlayCommand.onExecute(interaction, mockedResponse)

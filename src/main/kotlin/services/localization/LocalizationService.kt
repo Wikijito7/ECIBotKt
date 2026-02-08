@@ -36,16 +36,12 @@ class LocalizationService(
         guildId: Snowflake? = null,
         discordLocale: Locale? = null,
         vararg arguments: Any
-    ): String {
-        return getString(key, guildId, discordLocale).format(*arguments)
-    }
+    ): String = getString(key, guildId, discordLocale).format(*arguments)
 
-    private suspend fun resolveLocale(guildId: Snowflake?, discordLocale: Locale?): Locale {
-        return if (guildId != null) {
-            getGuildLocaleUseCase(guildId) ?: discordLocale ?: Locale.ENGLISH_UNITED_STATES
-        } else {
-            discordLocale ?: Locale.ENGLISH_UNITED_STATES
-        }
+    private suspend fun resolveLocale(guildId: Snowflake?, discordLocale: Locale?): Locale = if (guildId != null) {
+        getGuildLocaleUseCase(guildId) ?: discordLocale ?: Locale.ENGLISH_UNITED_STATES
+    } else {
+        discordLocale ?: Locale.ENGLISH_UNITED_STATES
     }
 
     private fun getDefaultString(key: String): String =
