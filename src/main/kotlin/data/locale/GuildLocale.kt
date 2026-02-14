@@ -18,43 +18,9 @@ data class GuildLocalesContainer(
  * Map of Discord locale codes to Locale objects.
  * Source: https://discord.com/developers/docs/reference#locales
  */
-val DISCORD_LOCALE_MAP = mapOf(
-    "da" to Locale.DANISH,
-    "de" to Locale.GERMAN,
-    "en-GB" to Locale.ENGLISH_GREAT_BRITAIN,
-    "en-US" to Locale.ENGLISH_UNITED_STATES,
-    "es-ES" to Locale.SPANISH_SPAIN,
-    "fr" to Locale.FRENCH,
-    "hr" to Locale.CROATIAN,
-    "it" to Locale.ITALIAN,
-    "lt" to Locale.LITHUANIAN,
-    "hu" to Locale.HUNGARIAN,
-    "nl" to Locale.DUTCH,
-    "no" to Locale.NORWEGIAN,
-    "pl" to Locale.POLISH,
-    "pt-BR" to Locale.PORTUGUESE_BRAZIL,
-    "ro" to Locale.ROMANIAN,
-    "fi" to Locale.FINNISH,
-    "sv-SE" to Locale.SWEDISH,
-    "vi" to Locale.VIETNAMESE,
-    "tr" to Locale.TURKISH,
-    "cs" to Locale.CZECH,
-    "el" to Locale.GREEK,
-    "bg" to Locale.BULGARIAN,
-    "ru" to Locale.RUSSIAN,
-    "uk" to Locale.UKRAINIAN,
-    "hi" to Locale.HINDI,
-    "th" to Locale.THAI,
-    "zh-CN" to Locale.CHINESE_CHINA,
-    "ja" to Locale.JAPANESE,
-    "zh-TW" to Locale.CHINESE_TAIWAN,
-    "ko" to Locale.KOREAN
-)
-
-/**
- * List of all Discord-supported locales for the autocomplete feature.
- */
-val DISCORD_SUPPORTED_LOCALES = DISCORD_LOCALE_MAP.values.toList()
+val DISCORD_LOCALE_MAP = Locale.ALL.associateBy {
+    listOfNotNull(it.language, it.country).joinToString("-")
+}
 
 /**
  * Reverse map to convert Locale back to its Discord locale code.

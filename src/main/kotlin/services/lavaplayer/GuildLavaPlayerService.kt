@@ -13,6 +13,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import dev.kord.common.Locale
 import dev.kord.common.annotation.KordVoice
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.behavior.channel.connect
 import dev.kord.core.behavior.edit
@@ -55,8 +56,8 @@ class GuildLavaPlayerService(
     private val voiceChannel: BaseVoiceChannelBehavior,
     private val audioPlayerManager: AudioPlayerManager,
     private val localizationService: LocalizationService,
-    val guildId: dev.kord.common.entity.Snowflake,
-    var discordLocale: dev.kord.common.Locale? = null
+    val guildId: Snowflake,
+    var discordLocale: Locale? = null
 ) : AudioEventAdapter() {
 
     private var voiceConnection: VoiceConnection? = null

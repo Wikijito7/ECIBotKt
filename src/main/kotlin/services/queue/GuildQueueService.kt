@@ -1,5 +1,6 @@
 package es.wokis.services.queue
 
+import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
@@ -39,7 +40,7 @@ class GuildQueueService(
         guildId: Snowflake,
         textChannel: MessageChannel,
         voiceChannel: BaseVoiceChannelBehavior,
-        discordLocale: dev.kord.common.Locale? = null
+        discordLocale: Locale? = null
     ): GuildLavaPlayerService = guildQueues[guildId]?.apply {
         this.discordLocale = discordLocale
     } ?: createLavaPlayer(
@@ -55,7 +56,7 @@ class GuildQueueService(
         guild: Snowflake,
         textChannel: MessageChannel,
         voiceChannel: BaseVoiceChannelBehavior,
-        discordLocale: dev.kord.common.Locale? = null
+        discordLocale: Locale? = null
     ): GuildLavaPlayerService = GuildLavaPlayerService(
         appDispatchers = appDispatchers,
         textChannel = textChannel,

@@ -17,6 +17,7 @@ import es.wokis.commands.CommandName
 import es.wokis.data.locale.DISCORD_LOCALE_MAP
 import es.wokis.data.locale.RESET_LOCALE_VALUE
 import es.wokis.domain.locale.SetGuildLocaleUseCase
+import es.wokis.exceptions.BotException
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 
@@ -55,28 +56,13 @@ class LocaleCommand(
         val discordLocale = interaction.guildLocale
 
         if (guildId == null) {
-            response.respond {
-                content = localizationService.getString(
-                    key = LocalizationKeys.ERROR_NO_GUILD,
-                    guildId = null,
-                    discordLocale = discordLocale
-                )
-            }
-            return
+            throw BotException.UserException.NotInGuildException()
         }
 
         val localeInput = interaction.command.strings[ARGUMENT_LOCALE]
 
         if (localeInput.isNullOrEmpty()) {
-            response.respond {
-                content = localizationService.getStringFormat(
-                    key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
-                    guildId = guildId,
-                    discordLocale = discordLocale,
-                    arguments = arrayOf(ARGUMENT_LOCALE)
-                )
-            }
-            return
+            throw BotException.UserException.NoContentProvidedException()
         }
 
         if (localeInput.equals(RESET_LOCALE_VALUE, ignoreCase = true)) {

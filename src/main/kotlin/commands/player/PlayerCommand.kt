@@ -7,6 +7,8 @@ import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
+import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
@@ -88,8 +90,8 @@ class PlayerCommand(
     }
 
     private suspend fun onPlayerChannelSearchFailed(
-        guildId: dev.kord.common.entity.Snowflake?,
-        discordLocale: dev.kord.common.Locale?,
+        guildId: Snowflake?,
+        discordLocale: Locale?,
         response: DeferredPublicMessageInteractionResponseBehavior,
         guildName: String,
         currentTrack: TrackBO?,
@@ -121,8 +123,8 @@ class PlayerCommand(
         playerMessageResult: Result<PlayerChannelResult>,
         lavaPlayerService: GuildLavaPlayerService,
         response: DeferredPublicMessageInteractionResponseBehavior,
-        guildId: dev.kord.common.entity.Snowflake?,
-        discordLocale: dev.kord.common.Locale?
+        guildId: Snowflake?,
+        discordLocale: Locale?
     ) {
         playerMessageResult.getOrNull()?.let { result ->
             lavaPlayerService.savePlayerMessage(result.message)

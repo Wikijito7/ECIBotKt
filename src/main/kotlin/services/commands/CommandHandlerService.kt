@@ -1,6 +1,7 @@
 package es.wokis.services.commands
 
 import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.interaction.ButtonInteraction
@@ -150,8 +151,8 @@ class CommandHandlerServiceImpl(
 
     private suspend fun respondUnknownCommand(
         response: DeferredPublicMessageInteractionResponseBehavior,
-        guildId: dev.kord.common.entity.Snowflake?,
-        discordLocale: dev.kord.common.Locale?,
+        guildId: Snowflake?,
+        discordLocale: Locale?,
         commandName: String
     ) {
         response.respond {

@@ -9,6 +9,8 @@ import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.message.EmbedBuilder
+import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
@@ -123,8 +125,8 @@ class QueueCommand(
 
     private suspend fun updateQueueMessage(
         interaction: ComponentInteraction,
-        guildId: dev.kord.common.entity.Snowflake,
-        discordLocale: dev.kord.common.Locale?,
+        guildId: Snowflake,
+        discordLocale: Locale?,
         currentPage: Int,
         queueLength: Int,
         guildName: String,
