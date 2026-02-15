@@ -106,4 +106,9 @@ object LocalizationKeys {
     const val ERROR_API_UNEXPECTED = "error_api_unexpected"
     const val ERROR_UNEXPECTED = "error_unexpected"
     const val ERROR_UNEXPECTED_WITH_DEBUG = "error_unexpected_with_debug"
+    const val LOCALE_COMMAND_DESCRIPTION = "locale_command_description"
+    const val LOCALE_COMMAND_INPUT_DESCRIPTION = "locale_command_input_description"
+    const val LOCALE_COMMAND_SUCCESS = "locale_command_success"
+    const val LOCALE_COMMAND_RESET_SUCCESS = "locale_command_reset_success"
+    const val LOCALE_COMMAND_INVALID_LOCALE = "locale_command_invalid_locale"
 }

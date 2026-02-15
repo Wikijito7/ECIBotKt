@@ -3,6 +3,7 @@ package exceptions
 import es.wokis.data.response.ErrorType
 import es.wokis.exceptions.BotException
 import es.wokis.exceptions.toException
+import es.wokis.localization.LocalizationKeys
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -18,8 +19,8 @@ class BotExceptionsTest {
         val exception = BotException.UserException.NotInVoiceChannelException()
 
         // Then
-        assertEquals("error_not_in_voice_channel", exception.localizationKey)
-        assertTrue(exception.message?.contains("error_not_in_voice_channel") == true)
+        assertEquals(LocalizationKeys.ERROR_NO_VOICE_CHANNEL, exception.localizationKey)
+        assertTrue(exception.message?.contains(LocalizationKeys.ERROR_NO_VOICE_CHANNEL) == true)
     }
 
     @Test
@@ -38,7 +39,7 @@ class BotExceptionsTest {
         val exception = BotException.UserException.NotInGuildException()
 
         // Then
-        assertEquals("error_not_in_guild", exception.localizationKey)
+        assertEquals(LocalizationKeys.ERROR_NO_GUILD, exception.localizationKey)
     }
 
     @Test
@@ -47,7 +48,7 @@ class BotExceptionsTest {
         val exception = BotException.UserException.NoContentProvidedException()
 
         // Then
-        assertEquals("error_no_content_provided", exception.localizationKey)
+        assertEquals(LocalizationKeys.ERROR_NO_CONTENT_PROVIDED, exception.localizationKey)
     }
 
     @Test
@@ -56,7 +57,7 @@ class BotExceptionsTest {
         val exception = BotException.UserException.NotInTextChannelException()
 
         // Then
-        assertEquals("error_not_in_text_channel", exception.localizationKey)
+        assertEquals(LocalizationKeys.ERROR_NO_TEXT_CHANNEL, exception.localizationKey)
     }
 
     @Test
@@ -65,7 +66,7 @@ class BotExceptionsTest {
         val exception = BotException.UserException.EmptyQueueException()
 
         // Then
-        assertEquals("error_empty_queue", exception.localizationKey)
+        assertEquals(LocalizationKeys.ERROR_EMPTY_QUEUE, exception.localizationKey)
     }
 
     @Test
@@ -74,7 +75,7 @@ class BotExceptionsTest {
         val exception = BotException.UserException.AudioPlaybackException()
 
         // Then
-        assertEquals("error_audio_playback", exception.localizationKey)
+        assertEquals(LocalizationKeys.ERROR_AUDIO_PLAYBACK, exception.localizationKey)
     }
 
     @Test
@@ -83,7 +84,7 @@ class BotExceptionsTest {
         val exception = BotException.UserException.SoundNotFoundException()
 
         // Then
-        assertEquals("error_sound_not_found", exception.localizationKey)
+        assertEquals(LocalizationKeys.ERROR_SOUND_NOT_FOUND, exception.localizationKey)
     }
 
     @Test
@@ -92,7 +93,7 @@ class BotExceptionsTest {
         val exception = BotException.UserException.TrackNotFoundException()
 
         // Then
-        assertEquals("error_track_not_found", exception.localizationKey)
+        assertEquals(LocalizationKeys.ERROR_TRACK_NOT_FOUND, exception.localizationKey)
     }
 
     @Test
@@ -101,7 +102,7 @@ class BotExceptionsTest {
         val exception = BotException.UserException.NotInSameVoiceChannelException()
 
         // Then
-        assertEquals("error_not_in_same_voice_channel", exception.localizationKey)
+        assertEquals(LocalizationKeys.ERROR_NOT_IN_SAME_VOICE_CHANNEL, exception.localizationKey)
     }
 
     @Test
@@ -110,7 +111,7 @@ class BotExceptionsTest {
         val exception = BotException.UserException.NoVoiceConnectionException()
 
         // Then
-        assertEquals("error_no_voice_connection", exception.localizationKey)
+        assertEquals(LocalizationKeys.ERROR_NO_VOICE_CONNECTION, exception.localizationKey)
     }
 
     @Test
@@ -119,7 +120,7 @@ class BotExceptionsTest {
         val exception = BotException.UserException.NoTrackPlayingException()
 
         // Then
-        assertEquals("error_no_track_playing", exception.localizationKey)
+        assertEquals(LocalizationKeys.ERROR_NO_TRACK_PLAYING, exception.localizationKey)
     }
 
     @Test

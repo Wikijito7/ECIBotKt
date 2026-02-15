@@ -18,6 +18,6 @@ suspend fun main() {
 
 fun initKoin() {
     startKoin {
-        modules(botModule, servicesModule, commandModule, remoteModule, domainModule)
+        modules(botModule, repositoryModule, servicesModule, commandModule, remoteModule, domainModule)
     }
 }

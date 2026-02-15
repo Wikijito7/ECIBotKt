@@ -38,7 +38,7 @@ class PlayerChannelService {
      */
     suspend fun sendPlayerMessage(
         interaction: ApplicationCommandInteraction,
-        buildMessage: MessageCreateBuilder.() -> Unit
+        buildMessage: suspend MessageCreateBuilder.() -> Unit
     ): Result<PlayerChannelResult> {
         return try {
             val guildId = interaction.data.guildId.value

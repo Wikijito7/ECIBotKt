@@ -44,6 +44,9 @@ class RadioRandomCommandTest {
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
             coJustRun { playRadio(any(), any(), any()) }
@@ -57,7 +60,7 @@ class RadioRandomCommandTest {
             radioService.getRandomRadio()
         } returns RemoteResponse.Success(radio)
 
-        every { localizationService.getString(any(), any()) } returns "Searching..."
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Searching..."
 
         // When
         radioRandomCommand.onExecute(interaction, mockedResponse)
@@ -80,6 +83,9 @@ class RadioRandomCommandTest {
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService>()
 
@@ -91,7 +97,7 @@ class RadioRandomCommandTest {
             radioService.getRandomRadio()
         } returns RemoteResponse.Error(ErrorType.UnknownError(Exception("API Error"), "API Error"))
 
-        every { localizationService.getString(any(), any()) } returns "Error"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Error"
 
         // When
         radioRandomCommand.onExecute(interaction, mockedResponse)

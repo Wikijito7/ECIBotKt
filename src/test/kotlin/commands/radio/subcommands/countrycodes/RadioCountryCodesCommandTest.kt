@@ -34,14 +34,17 @@ class RadioCountryCodesCommandTest {
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         coEvery {
             radioService.getCountryCodes()
         } returns RemoteResponse.Success(countryCodes)
 
-        every { localizationService.getString(any(), any()) } returns "Available Country Codes"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Page 1 of 1"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Available Country Codes"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Page 1 of 1"
 
         // When
         radioCountryCodesCommand.onExecute(interaction, mockedResponse)
@@ -58,14 +61,17 @@ class RadioCountryCodesCommandTest {
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         coEvery {
             radioService.getCountryCodes()
         } returns RemoteResponse.Success(RadioCountryCodeDTO(countryCodes = emptyList()))
 
-        every { localizationService.getString(any(), any()) } returns "No country codes available"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Available country codes: "
+        coEvery { localizationService.getString(any(), any(), any()) } returns "No country codes available"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Available country codes: "
 
         // When
         radioCountryCodesCommand.onExecute(interaction, mockedResponse)
@@ -82,13 +88,16 @@ class RadioCountryCodesCommandTest {
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         coEvery {
             radioService.getCountryCodes()
         } returns RemoteResponse.Error(ErrorType.UnknownError(Exception("API Error"), "API Error"))
 
-        every { localizationService.getString(any(), any()) } returns "Error retrieving country codes"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Error retrieving country codes"
 
         // When
         radioCountryCodesCommand.onExecute(interaction, mockedResponse)

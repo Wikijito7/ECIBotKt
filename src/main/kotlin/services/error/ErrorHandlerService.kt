@@ -12,7 +12,6 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.config.ConfigService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.Log
-import es.wokis.utils.orDefaultLocale
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -189,7 +188,7 @@ class ErrorHandlerService(
         val guildInfo = if (interaction.data.guildId.value != null) "Guild(${interaction.data.guildId.value})" else "DM"
 
         return buildString {
-            appendLine("**BOT ERROR** \uD83D\uDC80")
+            appendLine("**BOT ERROR** 💀")
             appendLine()
             appendLine("**${interactionType.displayName}:** ${commandName ?: "Unknown"}")
 
@@ -224,14 +223,16 @@ class ErrorHandlerService(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
 
         val message = when (exception) {
             is BotException.UserException -> {
                 // User errors have localization keys
                 localizationService.getStringFormat(
                     key = exception.localizationKey,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = exception.args
                 )
             }
@@ -240,7 +241,8 @@ class ErrorHandlerService(
                 // API errors - use generic API error message
                 localizationService.getString(
                     key = LocalizationKeys.ERROR_API_UNEXPECTED,
-                    locale = locale
+                    guildId = guildId,
+                    discordLocale = discordLocale
                 )
             }
 
@@ -249,13 +251,15 @@ class ErrorHandlerService(
                 if (configService.config.debug) {
                     localizationService.getStringFormat(
                         key = LocalizationKeys.ERROR_UNEXPECTED_WITH_DEBUG,
-                        locale = locale,
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         arguments = arrayOf(exception.originalException?.message ?: exception.message ?: "Unknown")
                     )
                 } else {
                     localizationService.getString(
                         key = LocalizationKeys.ERROR_UNEXPECTED,
-                        locale = locale
+                        guildId = guildId,
+                        discordLocale = discordLocale
                     )
                 }
             }
@@ -265,13 +269,15 @@ class ErrorHandlerService(
                 if (configService.config.debug) {
                     localizationService.getStringFormat(
                         key = LocalizationKeys.ERROR_UNEXPECTED_WITH_DEBUG,
-                        locale = locale,
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         arguments = arrayOf(exception.message ?: "Unknown")
                     )
                 } else {
                     localizationService.getString(
                         key = LocalizationKeys.ERROR_UNEXPECTED,
-                        locale = locale
+                        guildId = guildId,
+                        discordLocale = discordLocale
                     )
                 }
             }

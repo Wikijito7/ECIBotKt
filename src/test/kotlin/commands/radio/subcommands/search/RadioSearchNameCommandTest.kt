@@ -51,14 +51,17 @@ class RadioSearchNameCommandTest {
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
             every { locale } returns Locale.ENGLISH_UNITED_STATES
             every { command.strings["name"] } returns searchName
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         coEvery {
             radioService.searchRadioByNamePaged(searchName, 1)
         } returns RemoteResponse.Success(radioPage)
 
-        every { localizationService.getString(any(), any()) } returns "Radio Search Results"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Page 1 of 3"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Radio Search Results"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Page 1 of 3"
         every { localizationService.getLocalizations(any()) } returns mutableMapOf()
 
         // When
@@ -78,6 +81,9 @@ class RadioSearchNameCommandTest {
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
             every { locale } returns Locale.ENGLISH_UNITED_STATES
             every { command.strings["name"] } returns ""
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val emptyPage = RadioPageDTO(
             currentPage = 1,
@@ -89,8 +95,8 @@ class RadioSearchNameCommandTest {
             radioService.searchRadioByNamePaged("", 1)
         } returns RemoteResponse.Success(emptyPage)
 
-        every { localizationService.getString(any(), any()) } returns "No radios found"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Page 1 of 1"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "No radios found"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Page 1 of 1"
         every { localizationService.getLocalizations(any()) } returns mutableMapOf()
 
         // When

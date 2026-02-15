@@ -9,6 +9,8 @@ import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.message.EmbedBuilder
+import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
@@ -19,7 +21,6 @@ import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getDisplayTrackName
-import es.wokis.utils.orDefaultLocale
 
 class QueueCommand(
     private val guildQueueService: GuildQueueService,
@@ -29,7 +30,7 @@ class QueueCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Queue.commandName,
-                description = localizationService.getString(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION)
+                description = localizationService.getLocalizations(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION)
             }
@@ -41,24 +42,27 @@ class QueueCommand(
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
         try {
-            val locale = interaction.guildLocale.orDefaultLocale()
+            val guildId = interaction.data.guildId.value
+            val discordLocale = interaction.guildLocale
             val guildQueue = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
             // This should never be null, if so it would throw an expected exception on getOrCreateLavaPlayerService
-            val guildId = interaction.data.guildId.value ?: return
-            val guildName = interaction.kord.getGuild(guildId).name
+            val resolvedGuildId = guildId ?: return
+            val guildName = interaction.kord.getGuild(resolvedGuildId).name
             val queue = guildQueue.getQueue().toList()
             val displayQueue = getDisplayQueue(queue)
             val description = localizationService.getStringFormat(
                 key = LocalizationKeys.QUEUE_EMBED_DESCRIPTION,
-                locale = locale,
+                guildId = guildId,
+                discordLocale = discordLocale,
                 arguments = arrayOf(queue.size, guildName)
             )
             val currentPageContent = displayQueue.takeIf { it.isNotEmpty() }?.get(0)?.let { listOf(it) }
             response.respond {
                 createPaginatedEmbedMessage(
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     localizationService = localizationService,
-                    title = localizationService.getString(LocalizationKeys.QUEUE_EMBED_TITLE, locale),
+                    title = localizationService.getString(LocalizationKeys.QUEUE_EMBED_TITLE, guildId, discordLocale),
                     description = description,
                     currentPage = 1,
                     currentPageContent = currentPageContent,
@@ -77,6 +81,7 @@ class QueueCommand(
 
     override suspend fun onInteract(interaction: ComponentInteraction) {
         val guildId = interaction.data.guildId.value ?: return
+        val discordLocale = interaction.guildLocale
         val interactionCustomId = (interaction as? ButtonInteraction)?.component?.customId
         val updatePageBy = if (interactionCustomId == ComponentsEnum.QUEUE_PREVIOUS.customId) -1 else 1
         val guildName = interaction.kord.getGuild(guildId).name
@@ -87,6 +92,8 @@ class QueueCommand(
             ?.takeUnless { it > displayQueue.size } ?: 1
         updateQueueMessage(
             interaction = interaction,
+            guildId = guildId,
+            discordLocale = discordLocale,
             currentPage = currentPage,
             queueLength = guildQueue.size,
             guildName = guildName,
@@ -118,24 +125,27 @@ class QueueCommand(
 
     private suspend fun updateQueueMessage(
         interaction: ComponentInteraction,
+        guildId: Snowflake,
+        discordLocale: Locale?,
         currentPage: Int,
         queueLength: Int,
         guildName: String,
         displayQueuePage: String?,
         queuePageLength: Int
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
         val description = localizationService.getStringFormat(
             key = LocalizationKeys.QUEUE_EMBED_DESCRIPTION,
-            locale = locale,
+            guildId = guildId,
+            discordLocale = discordLocale,
             arguments = arrayOf(queueLength, guildName)
         )
         val currentPageContent = displayQueuePage?.let { listOf(it) }
         interaction.message.edit {
             createPaginatedEmbedMessage(
-                locale = locale,
+                guildId = guildId,
+                discordLocale = discordLocale,
                 localizationService = localizationService,
-                title = localizationService.getString(LocalizationKeys.QUEUE_EMBED_TITLE, locale),
+                title = localizationService.getString(LocalizationKeys.QUEUE_EMBED_TITLE, guildId, discordLocale),
                 description = description,
                 currentPage = currentPage,
                 columns = 1,

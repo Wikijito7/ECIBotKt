@@ -1,5 +1,6 @@
 package es.wokis.services.queue
 
+import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
@@ -30,18 +31,23 @@ class GuildQueueService(
         return getOrCreateLavaPlayerService(
             guildId = guildId,
             textChannel = textChannel,
-            voiceChannel = voiceChannel
+            voiceChannel = voiceChannel,
+            discordLocale = interaction.guildLocale
         )
     }
 
     fun getOrCreateLavaPlayerService(
         guildId: Snowflake,
         textChannel: MessageChannel,
-        voiceChannel: BaseVoiceChannelBehavior
-    ): GuildLavaPlayerService = guildQueues[guildId] ?: createLavaPlayer(
+        voiceChannel: BaseVoiceChannelBehavior,
+        discordLocale: Locale? = null
+    ): GuildLavaPlayerService = guildQueues[guildId]?.apply {
+        this.discordLocale = discordLocale
+    } ?: createLavaPlayer(
         guild = guildId,
         textChannel = textChannel,
-        voiceChannel = voiceChannel
+        voiceChannel = voiceChannel,
+        discordLocale = discordLocale
     )
 
     fun getLavaPlayerService(guildId: Snowflake): GuildLavaPlayerService? = guildQueues[guildId]
@@ -49,13 +55,16 @@ class GuildQueueService(
     private fun createLavaPlayer(
         guild: Snowflake,
         textChannel: MessageChannel,
-        voiceChannel: BaseVoiceChannelBehavior
+        voiceChannel: BaseVoiceChannelBehavior,
+        discordLocale: Locale? = null
     ): GuildLavaPlayerService = GuildLavaPlayerService(
         appDispatchers = appDispatchers,
         textChannel = textChannel,
         voiceChannel = voiceChannel,
         audioPlayerManager = audioPlayerManagerProvider.createAudioPlayerManager(),
-        localizationService = localizationService
+        localizationService = localizationService,
+        guildId = guild,
+        discordLocale = discordLocale
     ).also {
         guildQueues[guild] = it
     }

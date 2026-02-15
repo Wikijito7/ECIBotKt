@@ -1,6 +1,7 @@
 package es.wokis.services.commands
 
 import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.interaction.ButtonInteraction
@@ -17,6 +18,7 @@ import es.wokis.commands.radio.RadioGroupCommand
 import es.wokis.commands.next.NextCommand
 import es.wokis.commands.disconnect.DisconnectCommand
 import es.wokis.commands.reconnect.ReconnectCommand
+import es.wokis.commands.locale.LocaleCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sound.SoundCommand
@@ -55,6 +57,7 @@ class CommandHandlerServiceImpl(
     private val reconnectCommand: ReconnectCommand,
     private val nextCommand: NextCommand,
     private val disconnectCommand: DisconnectCommand,
+    private val localeCommand: LocaleCommand,
     private val radioGroupCommand: RadioGroupCommand,
     private val localizationService: LocalizationService,
     private val errorHandlerService: ErrorHandlerService
@@ -72,6 +75,7 @@ class CommandHandlerServiceImpl(
         reconnectCommand.onRegisterCommand(commandBuilder)
         nextCommand.onRegisterCommand(commandBuilder)
         disconnectCommand.onRegisterCommand(commandBuilder)
+        localeCommand.onRegisterCommand(commandBuilder)
     }
 
     override suspend fun onRegisterGroupCommand(kord: Kord) {
@@ -97,7 +101,8 @@ class CommandHandlerServiceImpl(
                 CommandName.Reconnect.commandName -> reconnectCommand.onExecute(interaction, response)
                 CommandName.Next.commandName -> nextCommand.onExecute(interaction, response)
                 CommandName.Disconnect.commandName -> disconnectCommand.onExecute(interaction, response)
-                else -> respondUnknownCommand(response, interaction.guildLocale, commandName)
+                CommandName.Locale.commandName -> localeCommand.onExecute(interaction, response)
+                else -> respondUnknownCommand(response, interaction.data.guildId.value, interaction.guildLocale, commandName)
             }
         } catch (exception: Throwable) {
             errorHandlerService.handleCommandError(exception, interaction, response, commandName)
@@ -137,6 +142,7 @@ class CommandHandlerServiceImpl(
             when (commandName) {
                 CommandName.Sound.commandName -> soundCommand.onAutoComplete(interaction)
                 CommandName.Radio.commandName -> radioGroupCommand.onAutoComplete(interaction)
+                CommandName.Locale.commandName -> localeCommand.onAutoComplete(interaction)
             }
         } catch (exception: Throwable) {
             errorHandlerService.handleAutocompleteError(exception, interaction, commandName)
@@ -145,13 +151,15 @@ class CommandHandlerServiceImpl(
 
     private suspend fun respondUnknownCommand(
         response: DeferredPublicMessageInteractionResponseBehavior,
-        locale: Locale?,
+        guildId: Snowflake?,
+        discordLocale: Locale?,
         commandName: String
     ) {
         response.respond {
             content = localizationService.getStringFormat(
                 key = LocalizationKeys.UNKNOWN_COMMAND,
-                locale = locale ?: Locale.ENGLISH_UNITED_STATES,
+                guildId = guildId,
+                discordLocale = discordLocale,
                 arguments = arrayOf(commandName)
             )
         }

@@ -103,3 +103,8 @@ error_no_track_playing: No hay ninguna pista reproduciéndose
 error_api_unexpected: Ocurrió un error al comunicarse con servicios externos. Por favor, inténtalo de nuevo más tarde.
 error_unexpected: Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde.
 error_unexpected_with_debug: Ocurrió un error inesperado: %s
+locale_command_description: Establecer el idioma preferido para este servidor
+locale_command_input_description: Idioma a establecer (usa el autocompletado para ver las opciones disponibles)
+locale_command_success: El idioma del servidor se ha establecido a %s
+locale_command_reset_success: El idioma del servidor se ha restablecido al valor predeterminado de Discord
+locale_command_invalid_locale: Idioma proporcionado no válido. Por favor, usa las opciones de autocompletado.

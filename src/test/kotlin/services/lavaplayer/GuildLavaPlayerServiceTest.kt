@@ -1,6 +1,7 @@
 package services.lavaplayer
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
@@ -27,7 +28,8 @@ class GuildLavaPlayerServiceTest {
         textChannel = textChannel,
         voiceChannel = voiceChannel,
         audioPlayerManager = audioPlayerManager,
-        localizationService = localizationService
+        localizationService = localizationService,
+        guildId = Snowflake(123)
     )
 
     @Ignore("Cannot test atm")

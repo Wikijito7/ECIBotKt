@@ -12,6 +12,7 @@ sealed class CommandName(val commandName: String) {
     data object Reconnect : CommandName("reconnect")
     data object Next : CommandName("next")
     data object Disconnect : CommandName("disconnect")
+    data object Locale : CommandName("locale")
     data object Radio : CommandName("radio") {
         data object Play : CommandName("play")
         data object List : CommandName("list")

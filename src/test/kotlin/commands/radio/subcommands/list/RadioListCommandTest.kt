@@ -55,14 +55,17 @@ class RadioListCommandTest {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
             every { locale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         coEvery {
             radioService.getRadioList(1)
         } returns RemoteResponse.Success(radioPage)
 
-        every { localizationService.getString(any(), any()) } returns "Radio List"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Page 1 of 5"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Radio List"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Page 1 of 5"
         every { localizationService.getLocalizations(any()) } returns mutableMapOf()
 
         // When
@@ -86,14 +89,17 @@ class RadioListCommandTest {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
             every { locale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         coEvery {
             radioService.getRadioList(1)
         } returns RemoteResponse.Success(emptyPage)
 
-        every { localizationService.getString(any(), any()) } returns "No radios available"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Page 1 of 1"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "No radios available"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Page 1 of 1"
         every { localizationService.getLocalizations(any()) } returns mutableMapOf()
 
         // When

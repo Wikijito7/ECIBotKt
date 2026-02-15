@@ -62,8 +62,8 @@ class SoundsCommandTest {
             every { token } returns "testToken"
         }
 
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Format"
 
         // When
         soundsCommand.onExecute(interaction, response)
@@ -103,8 +103,8 @@ class SoundsCommandTest {
                 every { message } returns mockk(relaxed = true)
             }
 
-            every { localizationService.getString(any(), any()) } returns "TestMessage"
-            every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+            coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+            coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Format"
 
             // When
             soundsCommand.onInteract(interaction)
@@ -145,8 +145,8 @@ class SoundsCommandTest {
                 every { message } returns mockk(relaxed = true)
             }
 
-            every { localizationService.getString(any(), any()) } returns "TestMessage"
-            every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+            coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+            coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Format"
 
             // When
             soundsCommand.onInteract(interaction)
