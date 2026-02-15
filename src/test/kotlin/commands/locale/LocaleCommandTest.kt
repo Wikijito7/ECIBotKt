@@ -9,10 +9,12 @@ import dev.kord.core.supplier.EntitySupplyStrategy
 import es.wokis.commands.locale.LocaleCommand
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.SetGuildLocaleUseCase
+import es.wokis.exceptions.BotException
 import es.wokis.services.localization.LocalizationService
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class LocaleCommandTest {
 
@@ -177,7 +179,9 @@ class LocaleCommandTest {
         coEvery { localizationService.getString(any(), any(), any()) } returns "No guild"
 
         // When
-        localeCommand.onExecute(interaction, response)
+        assertThrows<BotException.UserException.NotInGuildException> {
+            localeCommand.onExecute(interaction, response)
+        }
 
         // Then
         coVerify(exactly = 0) {
@@ -217,7 +221,9 @@ class LocaleCommandTest {
         coEvery { localizationService.getStringFormat(any(), any(), any(), any()) } returns "No content provided"
 
         // When
-        localeCommand.onExecute(interaction, response)
+        assertThrows<BotException.UserException.NoContentProvidedException> {
+            localeCommand.onExecute(interaction, response)
+        }
 
         // Then
         coVerify(exactly = 0) {
