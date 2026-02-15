@@ -91,8 +91,8 @@ class PlayerCommandTest {
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
         coEvery { playerChannelService.sendPlayerMessage(any(), any()) } returns Result.success(playerChannelResult)
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Format"
 
         // When
         playerCommand.onExecute(interaction, response)
@@ -142,8 +142,8 @@ class PlayerCommandTest {
         }
 
         coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Format"
 
         // When
         playerCommand.onInteract(interaction)
@@ -191,8 +191,8 @@ class PlayerCommandTest {
         }
 
         coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Format"
 
         // When
         playerCommand.onInteract(interaction)
@@ -240,8 +240,8 @@ class PlayerCommandTest {
         }
 
         coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Format"
 
         // When
         playerCommand.onInteract(interaction)
@@ -289,8 +289,8 @@ class PlayerCommandTest {
         }
 
         coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Format"
 
         // When
         playerCommand.onInteract(interaction)
@@ -341,8 +341,8 @@ class PlayerCommandTest {
         }
 
         coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Format"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Format"
 
         // When
         playerCommand.onInteract(interaction)

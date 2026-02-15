@@ -54,14 +54,17 @@ class RadioSearchCountryCodeCommandTest {
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
             every { locale } returns Locale.ENGLISH_UNITED_STATES
             every { command.strings["countrycode"] } returns countryCode
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         coEvery {
             radioService.searchRadioByCountryCodePaged(countryCode, 1)
         } returns RemoteResponse.Success(radioPage)
 
-        every { localizationService.getString(any(), any()) } returns "Radio List"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Page 1 of 5"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "Radio List"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Page 1 of 5"
         every { localizationService.getLocalizations(any()) } returns mutableMapOf()
 
         // When
@@ -81,6 +84,9 @@ class RadioSearchCountryCodeCommandTest {
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
             every { locale } returns Locale.ENGLISH_UNITED_STATES
             every { command.strings["countrycode"] } returns ""
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
         val emptyPage = RadioPageDTO(
             currentPage = 1,
@@ -92,8 +98,8 @@ class RadioSearchCountryCodeCommandTest {
             radioService.searchRadioByCountryCodePaged("", 1)
         } returns RemoteResponse.Success(emptyPage)
 
-        every { localizationService.getString(any(), any()) } returns "No radios found"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns "Page 1 of 1"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "No radios found"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Page 1 of 1"
         every { localizationService.getLocalizations(any()) } returns mutableMapOf()
 
         // When

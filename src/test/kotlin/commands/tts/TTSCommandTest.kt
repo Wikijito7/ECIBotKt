@@ -46,10 +46,10 @@ class TTSCommandTest {
 
     @Test
     @Ignore("Mockk fails")
-    fun `Given tts command When onRegisterCommand is called Then command is registered`() {
+    fun `Given tts command When onRegisterCommand is called Then command is registered`() = runTest {
         // Given
         val commandBuilder = mockk<GlobalMultiApplicationCommandBuilder>(relaxed = true)
-        every { localizationService.getString(any()) } returns ""
+        coEvery { localizationService.getString(any(), any(), any()) } returns ""
         every { localizationService.getLocalizations(any()) } returns mutableMapOf()
 
         // When
@@ -59,16 +59,14 @@ class TTSCommandTest {
         verify(exactly = 1) {
             commandBuilder.input(
                 name = CommandName.Tts.commandName,
-                description = localizationService.getString(key = LocalizationKeys.TTS_COMMAND_DESCRIPTION)
+                description = ""
             ) {
-                descriptionLocalizations =
-                    localizationService.getLocalizations(key = LocalizationKeys.TTS_COMMAND_DESCRIPTION)
+                descriptionLocalizations = mutableMapOf()
                 string(
                     name = TTS_ARGUMENT_NAME,
-                    description = localizationService.getString(key = LocalizationKeys.TTS_COMMAND_INPUT_DESCRIPTION)
+                    description = ""
                 ) {
-                    descriptionLocalizations =
-                        localizationService.getLocalizations(key = LocalizationKeys.TTS_COMMAND_INPUT_DESCRIPTION)
+                    descriptionLocalizations = mutableMapOf()
                     required = true
                 }
             }
@@ -106,7 +104,7 @@ class TTSCommandTest {
         val guildLavaPlayerService: GuildLavaPlayerService = mockk()
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
         coJustRun { ttsService.loadAndPlayMessage(any(), any()) }
 
         // When
@@ -149,8 +147,8 @@ class TTSCommandTest {
         val guildLavaPlayerService: GuildLavaPlayerService = mockk()
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns ""
         coJustRun { ttsService.loadAndPlayMessage(any(), any()) }
 
         // When
@@ -192,8 +190,8 @@ class TTSCommandTest {
         }
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } throws IllegalStateException()
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
-        every { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns ""
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns ""
         coJustRun { ttsService.loadAndPlayMessage(any(), any()) }
 
         // When

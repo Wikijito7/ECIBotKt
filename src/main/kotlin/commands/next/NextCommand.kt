@@ -12,7 +12,6 @@ import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getDisplayTrackName
 import es.wokis.utils.isValidUrl
-import es.wokis.utils.orDefaultLocale
 import es.wokis.utils.takeIfNotEmpty
 import es.wokis.utils.transformUrl
 
@@ -27,12 +26,12 @@ class NextCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Next.commandName,
-                description = localizationService.getString(LocalizationKeys.NEXT_COMMAND_DESCRIPTION)
+                description = localizationService.getLocalizations(LocalizationKeys.NEXT_COMMAND_DESCRIPTION).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.NEXT_COMMAND_DESCRIPTION)
                 string(
                     name = ARGUMENT_NAME,
-                    description = localizationService.getString(LocalizationKeys.NEXT_COMMAND_INPUT_DESCRIPTION)
+                    description = localizationService.getLocalizations(LocalizationKeys.NEXT_COMMAND_INPUT_DESCRIPTION).values.first()
                 ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.NEXT_COMMAND_INPUT_DESCRIPTION)
                     required = true
@@ -45,12 +44,14 @@ class NextCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val input: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
             ?: response.respond {
                 content = localizationService.getStringFormat(
                     key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(ARGUMENT_NAME)
                 )
             }.let { return }
@@ -61,7 +62,7 @@ class NextCommand(
             // URL case: transform monochrome URLs and load as next
             val transformedUrl = input.transformUrl()
             response.respond {
-                content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
+                content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, guildId, discordLocale)
             }
             guildLavaPlayerService.loadAndPlay(transformedUrl, addToFront = true)
         } else {
@@ -70,7 +71,8 @@ class NextCommand(
                 response.respond {
                     content = localizationService.getString(
                         LocalizationKeys.NEXT_EMPTY_QUEUE,
-                        locale
+                        guildId,
+                        discordLocale
                     )
                 }
                 return
@@ -82,7 +84,8 @@ class NextCommand(
                 response.respond {
                     content = localizationService.getStringFormat(
                         key = LocalizationKeys.NEXT_TRACK_MOVED,
-                        locale = locale,
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         arguments = arrayOf(movedTrack.getDisplayTrackName())
                     )
                 }
@@ -92,7 +95,8 @@ class NextCommand(
                 response.respond {
                     content = localizationService.getStringFormat(
                         key = LocalizationKeys.NEXT_TRACK_NOT_IN_QUEUE_TRYING_SEARCH,
-                        locale = locale,
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         arguments = arrayOf(input)
                     )
                 }

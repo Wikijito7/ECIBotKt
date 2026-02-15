@@ -54,7 +54,7 @@ class ReconnectCommandTest {
         }
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "NotConnectedMessage"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "NotConnectedMessage"
 
         // When
         reconnectCommand.onExecute(interaction, response)
@@ -95,7 +95,7 @@ class ReconnectCommandTest {
         }
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
-        every { localizationService.getString(any(), any()) } returns "ReconnectSuccess"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "ReconnectSuccess"
 
         // When
         reconnectCommand.onExecute(interaction, response)

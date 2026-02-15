@@ -33,7 +33,7 @@ class RadioGroupCommand(
 ) : GroupCommand, Component, Autocomplete {
 
     override suspend fun onRegisterCommand(kord: Kord) {
-        kord.createGlobalChatInputCommand(CommandName.Radio.commandName, localizationService.getString(LocalizationKeys.RADIO_COMMAND_DESCRIPTION)) {
+        kord.createGlobalChatInputCommand(CommandName.Radio.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_COMMAND_DESCRIPTION).values.first()) {
             descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_COMMAND_DESCRIPTION)
             radioPlayCommand.onRegisterCommand(this)
             radioListCommand.onRegisterCommand(this)
@@ -47,6 +47,8 @@ class RadioGroupCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val commandName = (interaction.command as? KordSubCommand)?.name ?: (interaction.command as? KordGroupCommand)?.groupName
         commandName?.let {
             when (commandName) {
@@ -57,7 +59,7 @@ class RadioGroupCommand(
                 CommandName.Radio.Random.commandName -> radioRandomCommand.onExecute(interaction, response)
             }
         } ?: response.respond {
-            content = localizationService.getString(LocalizationKeys.RADIO_UNKNOWN_MESSAGE)
+            content = localizationService.getString(LocalizationKeys.RADIO_UNKNOWN_MESSAGE, guildId, discordLocale)
         }
     }
 

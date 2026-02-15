@@ -118,3 +118,8 @@ config_get_display: "%s: %s"
 config_invalid_section: Sección inválida. Secciones válidas: database, youtube, deezer, spotify, tidal, kokoro
 config_invalid_key: Clave inválida para la sección seleccionada
 config_cannot_modify_token: No puedes modificar este valor
+locale_command_description: Establecer el idioma preferido para este servidor
+locale_command_input_description: Idioma a establecer (usa el autocompletado para ver las opciones disponibles)
+locale_command_success: El idioma del servidor se ha establecido a %s
+locale_command_reset_success: El idioma del servidor se ha restablecido al valor predeterminado de Discord
+locale_command_invalid_locale: Idioma proporcionado no válido. Por favor, usa las opciones de autocompletado.

@@ -13,7 +13,6 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.services.radio.RadioService
-import es.wokis.utils.orDefaultLocale
 
 class RadioRandomCommand(
     private val radioService: RadioService,
@@ -23,7 +22,7 @@ class RadioRandomCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Radio.Random.commandName, localizationService.getString(LocalizationKeys.RADIO_RANDOM_COMMAND_DESCRIPTION)) {
+            subCommand(CommandName.Radio.Random.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_RANDOM_COMMAND_DESCRIPTION).values.first()) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_RANDOM_COMMAND_DESCRIPTION)
             }
         }
@@ -33,13 +32,15 @@ class RadioRandomCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
 
         response.respond {
             content = localizationService.getString(
                 key = LocalizationKeys.RADIO_RANDOM_SEARCHING,
-                locale = locale
+                guildId = guildId,
+                discordLocale = discordLocale
             )
         }
 
@@ -54,7 +55,8 @@ class RadioRandomCommand(
                 } ?: response.respond {
                     content = localizationService.getString(
                         key = LocalizationKeys.RADIO_RANDOM_ERROR,
-                        locale = locale
+                        guildId = guildId,
+                        discordLocale = discordLocale
                     )
                 }
             }
@@ -63,7 +65,8 @@ class RadioRandomCommand(
                 response.respond {
                     content = localizationService.getString(
                         key = LocalizationKeys.RADIO_RANDOM_ERROR,
-                        locale = locale
+                        guildId = guildId,
+                        discordLocale = discordLocale
                     )
                 }
             }

@@ -20,6 +20,7 @@ import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.sound.SoundCommand
 import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.tts.TTSCommand
+import es.wokis.commands.locale.LocaleCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.error.ErrorHandlerService
 import es.wokis.services.localization.LocalizationService
@@ -40,6 +41,7 @@ class CommandHandlerServiceTest {
     private val reconnectCommand: ReconnectCommand = mockk()
     private val nextCommand: NextCommand = mockk()
     private val disconnectCommand: DisconnectCommand = mockk()
+    private val localeCommand: LocaleCommand = mockk()
     private val localizationService: LocalizationService = mockk()
     private val radioGroupCommand: RadioGroupCommand = mockk()
     private val configGroupCommand: ConfigGroupCommand = mockk()
@@ -60,6 +62,7 @@ class CommandHandlerServiceTest {
         reconnectCommand = reconnectCommand,
         nextCommand = nextCommand,
         disconnectCommand = disconnectCommand,
+        localeCommand = localeCommand,
         errorHandlerService = errorHandlerService
     )
 
@@ -82,6 +85,7 @@ class CommandHandlerServiceTest {
         justRun { reconnectCommand.onRegisterCommand(any()) }
         justRun { nextCommand.onRegisterCommand(any()) }
         justRun { disconnectCommand.onRegisterCommand(any()) }
+        justRun { localeCommand.onRegisterCommand(any()) }
 
         // When
         commandHandlerService.onRegisterSimpleCommand(commandBuilder)
@@ -99,6 +103,7 @@ class CommandHandlerServiceTest {
             reconnectCommand.onRegisterCommand(commandBuilder)
             nextCommand.onRegisterCommand(commandBuilder)
             disconnectCommand.onRegisterCommand(commandBuilder)
+            localeCommand.onRegisterCommand(commandBuilder)
         }
     }
 
@@ -313,6 +318,27 @@ class CommandHandlerServiceTest {
     }
 
     @Test
+    fun `Given locale command When onExecute is called Then execute LocaleCommand`() = runTest {
+        // Given
+        val commandName = CommandName.Locale.commandName
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { command } returns mockk {
+                every { rootName } returns commandName
+            }
+        }
+        val response: DeferredPublicMessageInteractionResponseBehavior = mockk()
+        coJustRun { localeCommand.onExecute(any(), any()) }
+
+        // When
+        commandHandlerService.onExecute(interaction, response)
+
+        // Then
+        coVerify(exactly = 1) {
+            localeCommand.onExecute(interaction, response)
+        }
+    }
+
+    @Test
     fun `Given queue previous interaction When onInteract is called Then execute QueueCommand onInteract`() = runTest {
         // Given
         val componentId = ComponentsEnum.QUEUE_PREVIOUS.customId
@@ -425,6 +451,24 @@ class CommandHandlerServiceTest {
         // Then
         coVerify(exactly = 1) {
             radioGroupCommand.onAutoComplete(interaction)
+        }
+    }
+
+    @Test
+    fun `Given locale autocomplete When onAutocomplete is called Then delegate to localeCommand`() = runTest {
+        // Given
+        val commandName = CommandName.Locale.commandName
+        val interaction = mockk<AutoCompleteInteraction> {
+            every { command.rootName } returns commandName
+        }
+        coJustRun { localeCommand.onAutoComplete(any()) }
+
+        // When
+        commandHandlerService.onAutocomplete(interaction)
+
+        // Then
+        coVerify(exactly = 1) {
+            localeCommand.onAutoComplete(interaction)
         }
     }
 }

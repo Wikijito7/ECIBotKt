@@ -46,7 +46,7 @@ class MessageProcessorServiceTest {
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://girlcockx.com/status/blablabla"
 
-        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 
@@ -109,7 +109,7 @@ class MessageProcessorServiceTest {
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://girlcockx.com/elonmusk/status/12345"
 
-        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 
@@ -147,7 +147,7 @@ class MessageProcessorServiceTest {
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://girlcockx.com/elonmusk/status/12345"
 
-        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 
@@ -186,7 +186,7 @@ class MessageProcessorServiceTest {
         // Note: Query parameters are kept for girlcockx.com as they are required for embeds
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://girlcockx.com/elonmusk/status/12345?t=abc123&s=19"
 
-        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 
@@ -249,7 +249,7 @@ class MessageProcessorServiceTest {
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://rxddit.com/blablabla"
 
-        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 
@@ -287,7 +287,7 @@ class MessageProcessorServiceTest {
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://ddinstagram.com/p/blablabla"
 
-        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 
@@ -350,7 +350,7 @@ class MessageProcessorServiceTest {
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://vxtiktok.com/blablabla"
 
-        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 
@@ -388,7 +388,7 @@ class MessageProcessorServiceTest {
         }
         val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://vm.vxtiktok.com/blablabla"
 
-        coEvery { localizationService.getStringFormat(any(), any(), *anyVararg()) } returns editedMessage
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }
         coJustRun { message.channel.createMessage(any()) }
 

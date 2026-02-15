@@ -5,12 +5,11 @@ import dev.kord.common.Color
 import dev.kord.common.Locale
 import dev.kord.common.entity.ButtonStyle
 import dev.kord.common.entity.DiscordPartialEmoji
+import dev.kord.common.entity.Snowflake
 import dev.kord.rest.builder.component.ActionRowBuilder
 import dev.kord.rest.builder.component.MessageComponentBuilder
 import dev.kord.rest.builder.message.MessageBuilder
 import dev.kord.rest.builder.message.embed
-import dev.kord.rest.builder.message.create.MessageCreateBuilder
-import dev.kord.rest.builder.message.modify.AbstractMessageModifyBuilder
 import es.wokis.commands.ComponentsEnum
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.lavaplayer.model.TrackBO
@@ -21,10 +20,11 @@ import kotlin.time.toDuration
 
 private const val ENABLE_PLAYBACK_POSITION = false
 
-fun MessageBuilder.createPlayerEmbed(
+suspend fun MessageBuilder.createPlayerEmbed(
+    guildId: Snowflake?,
+    discordLocale: Locale?,
     guildName: String,
     localizationService: LocalizationService,
-    locale: Locale,
     currentTrack: TrackBO?,
     queue: List<TrackBO>,
     isPaused: Boolean
@@ -32,7 +32,8 @@ fun MessageBuilder.createPlayerEmbed(
     embed {
         title = localizationService.getStringFormat(
             key = LocalizationKeys.PLAYER_TITLE,
-            locale = locale,
+            guildId = guildId,
+            discordLocale = discordLocale,
             arguments = arrayOf(guildName)
         )
         thumbnail {
@@ -43,39 +44,41 @@ fun MessageBuilder.createPlayerEmbed(
             val duration = it.audioTrack.duration.toDisplayDuration()
             val currentSeek = it.audioTrack.position.toDisplayDuration()
             field {
-                name = localizationService.getString(key = LocalizationKeys.PLAYER_CURRENT_TRACK, locale = locale)
+                name = localizationService.getString(key = LocalizationKeys.PLAYER_CURRENT_TRACK, guildId = guildId, discordLocale = discordLocale)
                 value = it.getTrackName()
             }
             if (ENABLE_PLAYBACK_POSITION) {
                 // TODO: Take a look in the future to solve discord update request error or delete it
                 field {
-                    name = localizationService.getString(key = LocalizationKeys.PLAYER_PLAYBACK_POSITION, locale = locale)
+                    name = localizationService.getString(key = LocalizationKeys.PLAYER_PLAYBACK_POSITION, guildId = guildId, discordLocale = discordLocale)
                     value = "`$currentSeek ${generatePlayerPosition(it.audioTrack.position, it.audioTrack.duration)} $duration`"
                 }
             }
             field {
-                name = localizationService.getString(key = LocalizationKeys.PLAYER_TRACK_DURATION, locale = locale)
+                name = localizationService.getString(key = LocalizationKeys.PLAYER_TRACK_DURATION, guildId = guildId, discordLocale = discordLocale)
                 value = duration.takeUnless {
                     currentTrack.audioTrack.duration == DURATION_MS_UNKNOWN
                 } ?: localizationService.getString(
                     key = if (currentTrack.audioTrack.info.isStream) LocalizationKeys.PLAYER_TRACK_DURATION_STREAM else LocalizationKeys.PLAYER_TRACK_DURATION_UNKNOWN,
-                    locale = locale
+                    guildId = guildId,
+                    discordLocale = discordLocale
                 )
             }
         }
         if (queue.isNotEmpty()) {
             field {
-                name = localizationService.getString(key = LocalizationKeys.PLAYER_SERVER_QUEUE, locale = locale)
-                value = queue.getDisplayQueue(localizationService, locale)
+                name = localizationService.getString(key = LocalizationKeys.PLAYER_SERVER_QUEUE, guildId = guildId, discordLocale = discordLocale)
+                value = queue.getDisplayQueue(localizationService, guildId, discordLocale)
             }
         } else if (currentTrack == null) {
-            description = localizationService.getString(key = LocalizationKeys.PLAYER_SERVER_QUEUE_EMPTY, locale = locale)
+            description = localizationService.getString(key = LocalizationKeys.PLAYER_SERVER_QUEUE_EMPTY, guildId = guildId, discordLocale = discordLocale)
         }
     }
     components = if (queue.isNotEmpty() || currentTrack != null) {
         createPlayerComponents(
             localizationService = localizationService,
-            locale = locale,
+            guildId = guildId,
+            discordLocale = discordLocale,
             isPaused = isPaused
         )
     } else {
@@ -96,7 +99,7 @@ private fun generatePlayerPosition(currentSeek: Long, maxDuration: Long): String
     return playerString
 }
 
-private fun createPlayerComponents(localizationService: LocalizationService, locale: Locale, isPaused: Boolean): MutableList<MessageComponentBuilder> =
+private suspend fun createPlayerComponents(localizationService: LocalizationService, guildId: Snowflake?, discordLocale: Locale?, isPaused: Boolean): MutableList<MessageComponentBuilder> =
     mutableListOf(
         ActionRowBuilder().apply {
             if (isPaused) {
@@ -104,7 +107,7 @@ private fun createPlayerComponents(localizationService: LocalizationService, loc
                     style = ButtonStyle.Secondary,
                     customId = ComponentsEnum.PLAYER_RESUME.customId
                 ) {
-                    label = localizationService.getString(key = LocalizationKeys.PLAYER_RESUME, locale = locale)
+                    label = localizationService.getString(key = LocalizationKeys.PLAYER_RESUME, guildId = guildId, discordLocale = discordLocale)
                     emoji = DiscordPartialEmoji(name = "▶️")
                 }
             } else {
@@ -112,7 +115,7 @@ private fun createPlayerComponents(localizationService: LocalizationService, loc
                     style = ButtonStyle.Secondary,
                     customId = ComponentsEnum.PLAYER_PAUSE.customId
                 ) {
-                    label = localizationService.getString(key = LocalizationKeys.PLAYER_PAUSE, locale = locale)
+                    label = localizationService.getString(key = LocalizationKeys.PLAYER_PAUSE, guildId = guildId, discordLocale = discordLocale)
                     emoji = DiscordPartialEmoji(name = "⏸")
                 }
             }
@@ -120,47 +123,48 @@ private fun createPlayerComponents(localizationService: LocalizationService, loc
                 style = ButtonStyle.Secondary,
                 customId = ComponentsEnum.PLAYER_SKIP.customId
             ) {
-                label = localizationService.getString(key = LocalizationKeys.PLAYER_SKIP, locale = locale)
+                label = localizationService.getString(key = LocalizationKeys.PLAYER_SKIP, guildId = guildId, discordLocale = discordLocale)
                 emoji = DiscordPartialEmoji(name = "⏭")
             }
             interactionButton(
                 style = ButtonStyle.Secondary,
                 customId = ComponentsEnum.PLAYER_SHUFFLE.customId
             ) {
-                label = localizationService.getString(key = LocalizationKeys.PLAYER_SHUFFLE, locale = locale)
+                label = localizationService.getString(key = LocalizationKeys.PLAYER_SHUFFLE, guildId = guildId, discordLocale = discordLocale)
                 emoji = DiscordPartialEmoji(name = "\uD83D\uDD00")
             }
             interactionButton(
                 style = ButtonStyle.Secondary,
                 customId = ComponentsEnum.PLAYER_RECONNECT.customId
             ) {
-                label = localizationService.getString(key = LocalizationKeys.PLAYER_RECONNECT, locale = locale)
+                label = localizationService.getString(key = LocalizationKeys.PLAYER_RECONNECT, guildId = guildId, discordLocale = discordLocale)
                 emoji = DiscordPartialEmoji(name = "🔄")
             }
             interactionButton(
                 style = ButtonStyle.Danger,
                 customId = ComponentsEnum.PLAYER_DISCONNECT.customId
             ) {
-                label = localizationService.getString(key = LocalizationKeys.PLAYER_DISCONNECT, locale = locale)
+                label = localizationService.getString(key = LocalizationKeys.PLAYER_DISCONNECT, guildId = guildId, discordLocale = discordLocale)
             }
         }
     )
 
-private fun List<TrackBO>.getDisplayQueue(localizationService: LocalizationService, locale: Locale): String {
+private suspend fun List<TrackBO>.getDisplayQueue(localizationService: LocalizationService, guildId: Snowflake?, discordLocale: Locale?): String {
     val firstTrack = getOrNull(0)
     val secondTrack = getOrNull(1)
     val thirdTrack = getOrNull(2)
     val queueRemaining = (size - 3).takeIf { it > 0 }
     val duration = filterNot { it.audioTrack.info.isStream || it.audioTrack.duration == DURATION_MS_UNKNOWN }.sumOf { it.audioTrack.duration }.toDisplayDuration()
-    return firstTrack?.getDisplayNameAndDuration(localizationService, locale)
-        ?.plus(secondTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, locale)}" }.orEmpty())
-        ?.plus(thirdTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, locale)}" }.orEmpty())
+    return firstTrack?.getDisplayNameAndDuration(localizationService, guildId, discordLocale)
+        ?.plus(secondTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, guildId, discordLocale)}" }.orEmpty())
+        ?.plus(thirdTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, guildId, discordLocale)}" }.orEmpty())
         ?.plus(
             queueRemaining?.let {
                 "\n".plus(
                     localizationService.getStringFormat(
                         key = LocalizationKeys.PLAYER_QUEUE_TRACKS_REMAINING,
-                        locale = locale,
+                        guildId = guildId,
+                        discordLocale = discordLocale,
                         arguments = arrayOf(it)
                     )
                 )
@@ -170,18 +174,19 @@ private fun List<TrackBO>.getDisplayQueue(localizationService: LocalizationServi
             "\n".plus(
                 localizationService.getStringFormat(
                     key = LocalizationKeys.PLAYER_DURATION_REMAINING,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(duration)
                 )
             )
         ).orEmpty()
 }
 
-private fun TrackBO.getDisplayNameAndDuration(localizationService: LocalizationService, locale: Locale): String {
+private suspend fun TrackBO.getDisplayNameAndDuration(localizationService: LocalizationService, guildId: Snowflake?, discordLocale: Locale?): String {
     val displayDuration = if (audioTrack.duration != DURATION_MS_UNKNOWN) {
         audioTrack.duration.toDisplayDuration()
     } else {
-        localizationService.getString(LocalizationKeys.PLAYER_TRACK_DURATION_STREAM, locale)
+        localizationService.getString(LocalizationKeys.PLAYER_TRACK_DURATION_STREAM, guildId, discordLocale)
     }
     return "${getDisplayTrackName()} ($displayDuration)"
 }

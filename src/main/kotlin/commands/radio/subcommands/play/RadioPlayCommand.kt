@@ -19,7 +19,6 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.services.radio.RadioService
-import es.wokis.utils.orDefaultLocale
 import es.wokis.utils.takeAtMost
 import es.wokis.utils.takeIfNotEmpty
 
@@ -33,9 +32,9 @@ class RadioPlayCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Radio.Play.commandName, localizationService.getString(LocalizationKeys.RADIO_PLAY_COMMAND_DESCRIPTION)) {
+            subCommand(CommandName.Radio.Play.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_COMMAND_DESCRIPTION).values.first()) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_COMMAND_DESCRIPTION)
-                string(RADIO_INPUT_NAME, localizationService.getString(LocalizationKeys.RADIO_PLAY_INPUT_DESCRIPTION)) {
+                string(RADIO_INPUT_NAME, localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_INPUT_DESCRIPTION).values.first()) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_INPUT_DESCRIPTION)
                     required = true
                     autocomplete = true
@@ -48,22 +47,23 @@ class RadioPlayCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val radioName = interaction.command.strings[RADIO_INPUT_NAME]
         val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
         radioName?.let {
-            val locale = interaction.guildLocale.orDefaultLocale()
             val originalResponse = response.respond {
                 content = localizationService.getStringFormat(
                     key = LocalizationKeys.SEARCHING_SONG,
-                    locale = locale
+                    guildId = guildId,
+                    discordLocale = discordLocale
                 )
             }
             radioService.findRadio(radioName).let { radio ->
-                val responseLocale = interaction.guildLocale.orDefaultLocale()
                 originalResponse.edit {
                     content = radio?.let {
-                        localizationService.getString(LocalizationKeys.RADIO_PLAY_FOUND, responseLocale)
-                    } ?: localizationService.getString(LocalizationKeys.RADIO_PLAY_NOT_FOUND, responseLocale)
+                        localizationService.getString(LocalizationKeys.RADIO_PLAY_FOUND, guildId, discordLocale)
+                    } ?: localizationService.getString(LocalizationKeys.RADIO_PLAY_NOT_FOUND, guildId, discordLocale)
                 }
                 radio?.let {
                     guildLavaPlayerService.playRadio(
@@ -74,8 +74,7 @@ class RadioPlayCommand(
                 }
             }
         } ?: response.respond {
-            val errorLocale = interaction.guildLocale.orDefaultLocale()
-            content = localizationService.getString(LocalizationKeys.RADIO_PLAY_REQUIRED, errorLocale)
+            content = localizationService.getString(LocalizationKeys.RADIO_PLAY_REQUIRED, guildId, discordLocale)
         }
     }
 

@@ -9,7 +9,6 @@ import es.wokis.commands.CommandName
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
-import es.wokis.utils.orDefaultLocale
 
 class ShuffleCommand(
     private val guildQueueService: GuildQueueService,
@@ -20,7 +19,7 @@ class ShuffleCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Shuffle.commandName,
-                description = localizationService.getString(key = LocalizationKeys.SHUFFLE_COMMAND_DESCRIPTION)
+                description = localizationService.getLocalizations(LocalizationKeys.SHUFFLE_COMMAND_DESCRIPTION).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SHUFFLE_COMMAND_DESCRIPTION)
             }
@@ -31,13 +30,15 @@ class ShuffleCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
         guildLavaPlayerService.shuffle()
         response.respond {
             content = localizationService.getString(
                 key = LocalizationKeys.SHUFFLE_COMMAND_RESPONSE,
-                locale = locale
+                guildId = guildId,
+                discordLocale = discordLocale
             )
         }
     }

@@ -10,7 +10,6 @@ import es.wokis.commands.CommandName
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
-import es.wokis.utils.orDefaultLocale
 import es.wokis.utils.takeIfNotEmpty
 import es.wokis.utils.transformUrl
 
@@ -26,12 +25,12 @@ class PlayCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Play.commandName,
-                description = localizationService.getString(LocalizationKeys.PLAY_COMMAND_DESCRIPTION)
+                description = localizationService.getLocalizations(LocalizationKeys.PLAY_COMMAND_DESCRIPTION).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.PLAY_COMMAND_DESCRIPTION)
                 string(
                     name = ARGUMENT_NAME,
-                    description = localizationService.getString(LocalizationKeys.PLAY_COMMAND_INPUT_DESCRIPTION)
+                    description = localizationService.getLocalizations(LocalizationKeys.PLAY_COMMAND_INPUT_DESCRIPTION).values.first()
                 ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.PLAY_COMMAND_INPUT_DESCRIPTION)
                     required = true
@@ -44,17 +43,23 @@ class PlayCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val input: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
             ?: response.respond {
                 content = localizationService.getStringFormat(
                     key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(ARGUMENT_NAME)
                 )
             }.let { return }
         response.respond {
-            content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
+            content = localizationService.getString(
+                LocalizationKeys.SEARCHING_SONG,
+                guildId = guildId,
+                discordLocale = discordLocale
+            )
         }
 
         val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)

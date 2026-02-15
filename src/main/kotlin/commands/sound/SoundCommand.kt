@@ -16,7 +16,6 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getFolderContent
-import es.wokis.utils.orDefaultLocale
 import es.wokis.utils.takeIfNotEmpty
 import java.io.File
 
@@ -33,12 +32,12 @@ class SoundCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Sound.commandName,
-                description = localizationService.getString(LocalizationKeys.SOUND_COMMAND_DESCRIPTION)
+                description = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_DESCRIPTION).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_DESCRIPTION)
                 string(
                     name = ARGUMENT_NAME,
-                    description = localizationService.getString(LocalizationKeys.SOUND_COMMAND_INPUT_DESCRIPTION)
+                    description = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_INPUT_DESCRIPTION).values.first()
                 ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_INPUT_DESCRIPTION)
                     required = true
@@ -52,18 +51,24 @@ class SoundCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val soundName: String = interaction.command.strings[ARGUMENT_NAME]?.takeIfNotEmpty()
             ?: response.respond {
                 content = localizationService.getStringFormat(
                     key = LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(ARGUMENT_NAME)
                 )
             }.let { return }
 
         response.respond {
-            content = localizationService.getString(LocalizationKeys.SEARCHING_SONG, locale)
+            content = localizationService.getString(
+                LocalizationKeys.SEARCHING_SONG,
+                guildId = guildId,
+                discordLocale = discordLocale
+            )
         }
 
         val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
@@ -74,7 +79,8 @@ class SoundCommand(
             response.respond {
                 content = localizationService.getStringFormat(
                     key = LocalizationKeys.NO_MATCHES,
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(soundName)
                 )
             }.let { return }

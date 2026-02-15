@@ -23,6 +23,7 @@ import es.wokis.commands.next.NextCommand
 import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.disconnect.DisconnectCommand
 import es.wokis.commands.tts.TTSCommand
+import es.wokis.commands.locale.LocaleCommand
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 
@@ -50,4 +51,5 @@ val commandModule = module {
     factoryOf(::ConfigReloadCommand)
     factoryOf(::ConfigSetCommand)
     factoryOf(::ConfigGetCommand)
+    factoryOf(::LocaleCommand)
 }

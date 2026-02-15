@@ -10,6 +10,7 @@ import es.wokis.commands.radio.subcommands.search.RadioSearchGroupCommand
 import es.wokis.commands.radio.subcommands.search.RadioSearchNameCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
+import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
@@ -30,7 +31,7 @@ class RadioSearchGroupCommandTest {
         coJustRun { onAutoComplete(any()) }
     }
     private val localizationService: LocalizationService = mockk {
-        every { getString(any(), any()) } returns "Description"
+        coEvery { getString(any(), any(), any()) } returns "Description"
         every { getLocalizations(any()) } returns mutableMapOf()
     }
 

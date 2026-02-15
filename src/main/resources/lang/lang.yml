@@ -103,6 +103,11 @@ error_no_track_playing: No track is currently playing
 error_api_unexpected: An error occurred while communicating with external services. Please try again later.
 error_unexpected: An unexpected error occurred. Please try again later.
 error_unexpected_with_debug: An unexpected error occurred: %s
+locale_command_description: Set the preferred locale for this guild
+locale_command_input_description: Locale to set (use autocomplete to see available options)
+locale_command_success: Guild locale has been set to %s
+locale_command_reset_success: Guild locale has been reset to Discord's default
+locale_command_invalid_locale: Invalid locale provided. Please use the autocomplete options.
 config_command_description: Manage bot configuration
 config_reload_command_description: Reload configuration from file
 config_reload_success: Configuration reloaded successfully

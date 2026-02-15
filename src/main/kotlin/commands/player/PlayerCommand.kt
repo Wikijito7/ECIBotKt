@@ -1,6 +1,5 @@
 package es.wokis.commands.player
 
-import dev.kord.common.Locale
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -8,6 +7,8 @@ import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
+import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
@@ -19,7 +20,6 @@ import es.wokis.services.localization.LocalizationService
 import es.wokis.services.player.PlayerChannelService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.getGuildName
-import es.wokis.utils.orDefaultLocale
 import services.player.result.PlayerChannelResult
 
 class PlayerCommand(
@@ -32,7 +32,7 @@ class PlayerCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Player.commandName,
-                description = localizationService.getString(key = LocalizationKeys.PLAYER_COMMAND_DESCRIPTION)
+                description = localizationService.getLocalizations(LocalizationKeys.PLAYER_COMMAND_DESCRIPTION).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.PLAYER_COMMAND_DESCRIPTION)
             }
@@ -47,14 +47,16 @@ class PlayerCommand(
             val lavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
             val currentTrack = lavaPlayerService.getCurrentPlayingTrack()
             val queue: List<TrackBO> = lavaPlayerService.getQueue()
-            val locale = interaction.guildLocale.orDefaultLocale()
+            val guildId = interaction.data.guildId.value
+            val discordLocale = interaction.guildLocale
             val guildName = interaction.getGuildName()
 
             val playerMessageResult = playerChannelService.sendPlayerMessage(interaction) {
                 createPlayerEmbed(
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     guildName = guildName,
                     localizationService = localizationService,
-                    locale = locale,
                     currentTrack = currentTrack,
                     queue = queue,
                     isPaused = lavaPlayerService.isPaused()
@@ -66,11 +68,13 @@ class PlayerCommand(
                     playerMessageResult = playerMessageResult,
                     lavaPlayerService = lavaPlayerService,
                     response = response,
-                    locale = locale
+                    guildId = guildId,
+                    discordLocale = discordLocale
                 )
             } else {
                 onPlayerChannelSearchFailed(
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     response = response,
                     guildName = guildName,
                     currentTrack = currentTrack,
@@ -86,7 +90,8 @@ class PlayerCommand(
     }
 
     private suspend fun onPlayerChannelSearchFailed(
-        locale: Locale,
+        guildId: Snowflake?,
+        discordLocale: Locale?,
         response: DeferredPublicMessageInteractionResponseBehavior,
         guildName: String,
         currentTrack: TrackBO?,
@@ -95,14 +100,16 @@ class PlayerCommand(
     ) {
         val warningMessage = localizationService.getString(
             LocalizationKeys.PLAYER_CHANNEL_CREATION_FAILED,
-            locale
+            guildId,
+            discordLocale
         )
         response.respond {
             content = warningMessage
             createPlayerEmbed(
+                guildId = guildId,
+                discordLocale = discordLocale,
                 guildName = guildName,
                 localizationService = localizationService,
-                locale = locale,
                 currentTrack = currentTrack,
                 queue = queue,
                 isPaused = lavaPlayerService.isPaused()
@@ -116,7 +123,8 @@ class PlayerCommand(
         playerMessageResult: Result<PlayerChannelResult>,
         lavaPlayerService: GuildLavaPlayerService,
         response: DeferredPublicMessageInteractionResponseBehavior,
-        locale: Locale
+        guildId: Snowflake?,
+        discordLocale: Locale?
     ) {
         playerMessageResult.getOrNull()?.let { result ->
             lavaPlayerService.savePlayerMessage(result.message)
@@ -127,7 +135,8 @@ class PlayerCommand(
                     } else {
                         LocalizationKeys.PLAYER_SHOWN_ON_EXISTING_CHANNEL
                     },
-                    locale = locale,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
                     arguments = arrayOf(result.channel.id)
                 )
             }
@@ -149,14 +158,16 @@ class PlayerCommand(
         }
         val currentTrack = lavaPlayerService?.getCurrentPlayingTrack()
         val queue: List<TrackBO> = lavaPlayerService?.getQueue().orEmpty()
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val guildName = interaction.getGuildName()
 
         interaction.message.edit {
             createPlayerEmbed(
+                guildId = guildId,
+                discordLocale = discordLocale,
                 guildName = guildName,
                 localizationService = localizationService,
-                locale = locale,
                 currentTrack = currentTrack,
                 queue = queue,
                 isPaused = lavaPlayerService?.isPaused() == true

@@ -241,7 +241,7 @@ class GuildQueueServiceTest {
         every { audioPlayerManager.createPlayer() } returns mockk {
             justRun { addListener(any<AudioEventListener>()) }
         }
-        every { localizationService.getString(any(), any()) } returns "No voice channel found"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "No voice channel found"
 
         // When/Then
         assertThrows<BotException.UserException.NotInVoiceChannelException> {
@@ -279,7 +279,7 @@ class GuildQueueServiceTest {
                 every { guildId.value } returns mockGuildId
             }
         }
-        every { localizationService.getString(any(), any()) } returns "No text channel found"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "No text channel found"
 
         // When/Then
         assertThrows<BotException.UserException.NotInTextChannelException> {
@@ -302,7 +302,7 @@ class GuildQueueServiceTest {
                 every { guildId.value } returns mockGuildId // No guild
             }
         }
-        every { localizationService.getString(any(), any()) } returns "No voice channel found"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "No voice channel found"
 
         // When/Then - When guild is null, getMemberVoiceChannel returns null, so NotInVoiceChannelException is thrown
         assertThrows<BotException.UserException.NotInVoiceChannelException> {

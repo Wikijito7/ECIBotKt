@@ -15,7 +15,6 @@ import es.wokis.data.response.RemoteResponse
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.radio.RadioService
-import es.wokis.utils.orDefaultLocale
 
 private const val MAX_FIELD_LENGTH = 1000 // Stay under 1024 limit
 private const val MAX_FIELDS = 25 // Discord embed limit
@@ -76,7 +75,7 @@ class RadioCountryCodesCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Radio.CountryCodes.commandName, localizationService.getString(LocalizationKeys.RADIO_COUNTRYCODES_COMMAND_DESCRIPTION)) {
+            subCommand(CommandName.Radio.CountryCodes.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_COUNTRYCODES_COMMAND_DESCRIPTION).values.first()) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_COUNTRYCODES_COMMAND_DESCRIPTION)
             }
         }
@@ -86,7 +85,8 @@ class RadioCountryCodesCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
 
         when (val result = radioService.getCountryCodes()) {
             is RemoteResponse.Success -> {
@@ -96,7 +96,8 @@ class RadioCountryCodesCommand(
                     response.respond {
                         content = localizationService.getString(
                             key = LocalizationKeys.RADIO_COUNTRYCODES_EMPTY,
-                            locale = locale
+                            guildId = guildId,
+                            discordLocale = discordLocale
                         )
                     }
                     return
@@ -108,7 +109,8 @@ class RadioCountryCodesCommand(
                     embed {
                         title = localizationService.getString(
                             key = LocalizationKeys.RADIO_COUNTRYCODES_EMBED_TITLE,
-                            locale = locale
+                            guildId = guildId,
+                            discordLocale = discordLocale
                         )
                         color = Color(0x01B05B)
 
@@ -127,7 +129,8 @@ class RadioCountryCodesCommand(
                 response.respond {
                     content = localizationService.getString(
                         key = LocalizationKeys.RADIO_COUNTRYCODES_ERROR,
-                        locale = locale
+                        guildId = guildId,
+                        discordLocale = discordLocale
                     )
                 }
             }

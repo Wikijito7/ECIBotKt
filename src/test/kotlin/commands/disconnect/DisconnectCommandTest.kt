@@ -53,7 +53,7 @@ class DisconnectCommandTest {
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
         coJustRun { guildLavaPlayerService.stop() }
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
 
         // When
         disconnectCommand.onExecute(interaction, response)
@@ -92,7 +92,7 @@ class DisconnectCommandTest {
         val guildLavaPlayerService: GuildLavaPlayerService = mockk()
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } throws IllegalStateException()
         coJustRun { guildLavaPlayerService.stop() }
-        every { localizationService.getString(any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
 
         // When/Then - exception is thrown (handled by CommandHandlerService)
         assertThrows<IllegalStateException> {
