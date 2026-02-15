@@ -103,3 +103,18 @@ error_no_track_playing: No track is currently playing
 error_api_unexpected: An error occurred while communicating with external services. Please try again later.
 error_unexpected: An unexpected error occurred. Please try again later.
 error_unexpected_with_debug: An unexpected error occurred: %s
+config_command_description: Manage bot configuration
+config_reload_command_description: Reload configuration from file
+config_reload_success: Configuration reloaded successfully
+config_set_command_description: Set a configuration value
+config_set_section_description: Configuration section
+config_set_key_description: Configuration key
+config_set_value_description: New value
+config_set_success: Config %s updated to: %s
+config_get_command_description: Get configuration section
+config_get_section_description: Configuration section to display
+config_get_success: Configuration section retrieved
+config_get_display: "%s: %s"
+config_invalid_section: Invalid section. Valid sections: database, youtube, deezer, spotify, tidal, kokoro
+config_invalid_key: Invalid key for the selected section
+config_cannot_modify_token: You cannot modify this value

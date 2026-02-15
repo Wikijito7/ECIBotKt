@@ -1,5 +1,9 @@
 package es.wokis.di
 
+import es.wokis.commands.config.ConfigGroupCommand
+import es.wokis.commands.config.ConfigGetCommand
+import es.wokis.commands.config.ConfigReloadCommand
+import es.wokis.commands.config.ConfigSetCommand
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
 import es.wokis.commands.player.PlayerCommand
@@ -42,4 +46,8 @@ val commandModule = module {
     factoryOf(::RadioSearchCountryCodeCommand)
     factoryOf(::RadioRandomCommand)
     factoryOf(::RadioCountryCodesCommand)
+    factoryOf(::ConfigGroupCommand)
+    factoryOf(::ConfigReloadCommand)
+    factoryOf(::ConfigSetCommand)
+    factoryOf(::ConfigGetCommand)
 }

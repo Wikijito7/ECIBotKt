@@ -4,6 +4,7 @@ import es.wokis.dispatchers.AppDispatchers
 import es.wokis.dispatchers.AppDispatchersImpl
 import es.wokis.services.commands.CommandHandlerService
 import es.wokis.services.commands.CommandHandlerServiceImpl
+import es.wokis.services.config.ConfigMigrationService
 import es.wokis.services.config.ConfigService
 import es.wokis.services.error.ErrorHandlerService
 import es.wokis.services.localization.LocalizationService
@@ -19,6 +20,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val servicesModule = module {
+    singleOf(::ConfigMigrationService)
     singleOf(::ConfigService)
     factoryOf(::MessageProcessorService)
     factoryOf(::AudioPlayerManagerProvider)

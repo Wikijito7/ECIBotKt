@@ -15,11 +15,6 @@
     "remote_cipher_url": null,
     "remote_cipher_password": null
   },
-  "hugging_chat": {
-    "enabled": false,
-    "user": "hugging_chat_user",
-    "password": "hugging_chat_password"
-  },
   "deezer": {
     "enabled": false,
     "master_decryption_key": "",
@@ -37,9 +32,10 @@
     "token": ""
   },
   "kokoro": {
+    "enabled": false,
     "base_url": "",
-    "default_voice": "",
+    "default_voice": "am_santa",
     "default_speed": 1.0,
-    "default_lang_code": ""
+    "default_lang_code": "en"
   }
 }

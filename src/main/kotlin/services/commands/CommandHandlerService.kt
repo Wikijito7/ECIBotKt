@@ -8,6 +8,7 @@ import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.CommandName
 import es.wokis.commands.ComponentsEnum
+import es.wokis.commands.config.ConfigGroupCommand
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
 import dev.kord.core.Kord
@@ -56,6 +57,7 @@ class CommandHandlerServiceImpl(
     private val nextCommand: NextCommand,
     private val disconnectCommand: DisconnectCommand,
     private val radioGroupCommand: RadioGroupCommand,
+    private val configGroupCommand: ConfigGroupCommand,
     private val localizationService: LocalizationService,
     private val errorHandlerService: ErrorHandlerService
 ) : CommandHandlerService {
@@ -76,6 +78,7 @@ class CommandHandlerServiceImpl(
 
     override suspend fun onRegisterGroupCommand(kord: Kord) {
         radioGroupCommand.onRegisterCommand(kord)
+        configGroupCommand.onRegisterCommand(kord)
     }
 
     override suspend fun onExecute(
@@ -94,6 +97,7 @@ class CommandHandlerServiceImpl(
                 CommandName.Player.commandName -> playerCommand.onExecute(interaction, response)
                 CommandName.Sounds.commandName -> soundsCommand.onExecute(interaction, response)
                 CommandName.Radio.commandName -> radioGroupCommand.onExecute(interaction, response)
+                CommandName.Config.commandName -> configGroupCommand.onExecute(interaction, response)
                 CommandName.Reconnect.commandName -> reconnectCommand.onExecute(interaction, response)
                 CommandName.Next.commandName -> nextCommand.onExecute(interaction, response)
                 CommandName.Disconnect.commandName -> disconnectCommand.onExecute(interaction, response)
@@ -137,6 +141,7 @@ class CommandHandlerServiceImpl(
             when (commandName) {
                 CommandName.Sound.commandName -> soundCommand.onAutoComplete(interaction)
                 CommandName.Radio.commandName -> radioGroupCommand.onAutoComplete(interaction)
+                CommandName.Config.commandName -> configGroupCommand.onAutoComplete(interaction)
             }
         } catch (exception: Throwable) {
             errorHandlerService.handleAutocompleteError(exception, interaction, commandName)

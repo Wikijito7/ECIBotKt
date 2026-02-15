@@ -6,6 +6,7 @@ import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.CommandName
 import es.wokis.commands.ComponentsEnum
+import es.wokis.commands.config.ConfigGroupCommand
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
 import es.wokis.commands.player.PlayerCommand
@@ -41,6 +42,7 @@ class CommandHandlerServiceTest {
     private val disconnectCommand: DisconnectCommand = mockk()
     private val localizationService: LocalizationService = mockk()
     private val radioGroupCommand: RadioGroupCommand = mockk()
+    private val configGroupCommand: ConfigGroupCommand = mockk()
     private val errorHandlerService: ErrorHandlerService = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
@@ -54,6 +56,7 @@ class CommandHandlerServiceTest {
         playerCommand = playerCommand,
         soundsCommand = soundsCommand,
         radioGroupCommand = radioGroupCommand,
+        configGroupCommand = configGroupCommand,
         reconnectCommand = reconnectCommand,
         nextCommand = nextCommand,
         disconnectCommand = disconnectCommand,

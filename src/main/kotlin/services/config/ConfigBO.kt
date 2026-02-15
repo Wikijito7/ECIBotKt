@@ -13,8 +13,6 @@ data class Config(
     val database: DatabaseConfig,
     @SerialName("youtube")
     val youtube: YouTubeConfig,
-    @SerialName("hugging_chat")
-    val huggingChat: HuggingChatConfig,
     @SerialName("deezer")
     val deezer: DeezerConfig,
     @SerialName("spotify")
@@ -54,16 +52,6 @@ data class YouTubeConfig(
 )
 
 @Serializable
-data class HuggingChatConfig(
-    @SerialName("enabled")
-    val enabled: Boolean,
-    @SerialName("user")
-    val user: String,
-    @SerialName("password")
-    val password: String
-)
-
-@Serializable
 data class DeezerConfig(
     @SerialName("enabled")
     val enabled: Boolean,
@@ -97,6 +85,8 @@ data class TidalConfig(
 
 @Serializable
 data class KokoroConfig(
+    @SerialName("enabled")
+    val enabled: Boolean,
     @SerialName("base_url")
     val baseUrl: String,
     @SerialName("default_voice")
