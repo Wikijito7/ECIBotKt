@@ -22,7 +22,11 @@ data class Config(
     @SerialName("tidal")
     val tidal: TidalConfig,
     @SerialName("kokoro")
-    val kokoro: KokoroConfig
+    val kokoro: KokoroConfig,
+    @SerialName("whisper")
+    val whisper: WhisperConfig,
+    @SerialName("ollama")
+    val ollama: OllamaConfig
 )
 
 @Serializable
@@ -105,4 +109,22 @@ data class KokoroConfig(
     val defaultSpeed: Float,
     @SerialName("default_lang_code")
     val defaultLangCode: String
+)
+
+@Serializable
+data class WhisperConfig(
+    @SerialName("enabled")
+    val enabled: Boolean,
+    @SerialName("base_url")
+    val baseUrl: String
+)
+
+@Serializable
+data class OllamaConfig(
+    @SerialName("enabled")
+    val enabled: Boolean,
+    @SerialName("base_url")
+    val baseUrl: String,
+    @SerialName("model")
+    val model: String
 )

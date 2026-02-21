@@ -239,10 +239,11 @@ class ErrorHandlerService(
 
             is BotException.APIException -> {
                 // API errors - use generic API error message
-                localizationService.getString(
+                localizationService.getStringFormat(
                     key = LocalizationKeys.ERROR_API_UNEXPECTED,
                     guildId = guildId,
-                    discordLocale = discordLocale
+                    discordLocale = discordLocale,
+                    arguments = arrayOf(exception.stackTraceToString())
                 )
             }
 

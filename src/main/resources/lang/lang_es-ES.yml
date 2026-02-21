@@ -108,3 +108,14 @@ locale_command_input_description: Idioma a establecer (usa el autocompletado par
 locale_command_success: El idioma del servidor se ha establecido a %s
 locale_command_reset_success: El idioma del servidor se ha restablecido al valor predeterminado de Discord
 locale_command_invalid_locale: Idioma proporcionado no válido. Por favor, usa las opciones de autocompletado.
+assistant_command_description: Activa el asistente de IA para escuchar y responder
+assistant_listening: Escuchando tu pregunta...
+assistant_processing: Procesando tu solicitud...
+assistant_no_audio: No se grabó ningún audio. Por favor, inténtalo de nuevo.
+assistant_transcription_error: Error al transcribir el audio. Por favor, inténtalo de nuevo.
+assistant_ollama_error: Error al generar la respuesta. Por favor, inténtalo de nuevo.
+assistant_user_message: Tú dijiste - %s
+assistant_bot_message: Asistente - %s
+assistant_error: Ocurrió un error: %s
+assistant_already_active: El asistente ya está activo
+assistant_bot_in_voice: El bot ya está conectado a un canal de voz. Por favor, desconecta primero.

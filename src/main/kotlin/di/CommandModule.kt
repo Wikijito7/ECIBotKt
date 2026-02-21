@@ -1,5 +1,6 @@
 package es.wokis.di
 
+import es.wokis.commands.assistant.AssistantCommand
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
 import es.wokis.commands.player.PlayerCommand
@@ -44,4 +45,5 @@ val commandModule = module {
     factoryOf(::RadioRandomCommand)
     factoryOf(::RadioCountryCodesCommand)
     factoryOf(::LocaleCommand)
+    factoryOf(::AssistantCommand)
 }

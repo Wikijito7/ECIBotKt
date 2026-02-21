@@ -41,5 +41,14 @@
     "default_voice": "",
     "default_speed": 1.0,
     "default_lang_code": ""
+  },
+  "whisper": {
+    "enabled": false,
+    "base_url": ""
+  },
+  "ollama": {
+    "enabled": false,
+    "base_url": "",
+    "model": "llama3"
   }
 }

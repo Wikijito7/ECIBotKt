@@ -80,6 +80,18 @@ class GuildLavaPlayerService(
     private val updateSeekChannel = Channel<Unit>(Channel.CONFLATED)
     private var frameTimeOut = 20L
     private var currentTrack: TrackBO? = null
+    private var preventAutoDisconnect = false
+
+    fun setVoiceConnection(connection: VoiceConnection) {
+        voiceConnection = connection
+    }
+
+    fun setPreventAutoDisconnect(prevent: Boolean) {
+        preventAutoDisconnect = prevent
+        if (prevent) {
+            resetLeaveTimer()
+        }
+    }
 
     init {
         coroutineScope.launch {
@@ -109,6 +121,7 @@ class GuildLavaPlayerService(
 
     override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
         if (isRetrying) return
+        preventAutoDisconnect = false
         coroutineScope.launch {
             discordLocale = voiceChannel.getLocale()
             val voiceChannelName = voiceChannel.asChannel().name
@@ -283,6 +296,8 @@ class GuildLavaPlayerService(
     }
 
     private fun setUpTimer() {
+        if (preventAutoDisconnect) return
+        
         leaveTimer = Timer().apply {
             schedule(LEAVE_DELAY) {
                 if (queue.isNotEmpty()) return@schedule
@@ -539,6 +554,14 @@ class GuildLavaPlayerService(
     private suspend fun resetVoiceConnection() {
         voiceConnection?.leave()
         voiceConnection = null
+    }
+
+    suspend fun undeafen() {
+        try {
+            voiceConnection?.move(voiceChannel.id, false, false)
+        } catch (e: Exception) {
+            Log.warning("Could not undeafen: ${e.message}")
+        }
     }
 
     private suspend fun updatePlayerEmbed() {

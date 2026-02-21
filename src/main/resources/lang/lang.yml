@@ -108,3 +108,14 @@ locale_command_input_description: Locale to set (use autocomplete to see availab
 locale_command_success: Guild locale has been set to %s
 locale_command_reset_success: Guild locale has been reset to Discord's default
 locale_command_invalid_locale: Invalid locale provided. Please use the autocomplete options.
+assistant_command_description: Activates the AI assistant to listen and respond
+assistant_listening: Listening for your question...
+assistant_processing: Processing your request...
+assistant_no_audio: No audio was recorded. Please try again.
+assistant_transcription_error: Error transcribing audio. Please try again.
+assistant_ollama_error: Error generating response. Please try again.
+assistant_user_message: You said - %s
+assistant_bot_message: Assistant - %s
+assistant_error: An error occurred: %s
+assistant_already_active: Assistant is already active
+assistant_bot_in_voice: Bot is already connected to a voice channel. Please disconnect first.

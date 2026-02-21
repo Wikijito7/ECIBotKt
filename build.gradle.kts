@@ -21,6 +21,7 @@ repositories {
     mavenLocal()
     maven(url = "https://maven.lavalink.dev/releases")
     maven(url = "https://maven.topi.wtf/releases")
+    maven(url = "https://maven.maxhenkel.de/repository/public")
     mavenCentral()
     maven(url = "https://jitpack.io")
 }
@@ -69,6 +70,9 @@ dependencies {
     implementation(libs.lavaplayer)
     implementation(libs.lavaplayer.youtube)
     implementation(libs.lavaplayer.lavasrc)
+
+    // Opus decoder for voice transcription
+    implementation(libs.opus4j)
 
     // Tests
     testImplementation(libs.kotlin.test)

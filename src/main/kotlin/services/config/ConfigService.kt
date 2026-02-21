@@ -29,4 +29,10 @@ fun Config.validate() {
     if (deezer.enabled && deezer.masterDecryptionKey.isEmpty()) {
         throw EmptyDeezerMasterDecryptionKeyException()
     }
+    if (whisper.enabled && whisper.baseUrl.isEmpty()) {
+        throw IllegalArgumentException("Whisper is enabled but base_url is empty")
+    }
+    if (ollama.enabled && ollama.baseUrl.isEmpty()) {
+        throw IllegalArgumentException("Ollama is enabled but base_url is empty")
+    }
 }

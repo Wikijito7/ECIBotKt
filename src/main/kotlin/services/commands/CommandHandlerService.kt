@@ -24,6 +24,7 @@ import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sound.SoundCommand
 import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.tts.TTSCommand
+import es.wokis.commands.assistant.AssistantCommand
 import es.wokis.constants.CUSTOM_COMPONENT_SEPARATOR
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.error.ErrorHandlerService
@@ -59,6 +60,7 @@ class CommandHandlerServiceImpl(
     private val disconnectCommand: DisconnectCommand,
     private val localeCommand: LocaleCommand,
     private val radioGroupCommand: RadioGroupCommand,
+    private val assistantCommand: AssistantCommand,
     private val localizationService: LocalizationService,
     private val errorHandlerService: ErrorHandlerService
 ) : CommandHandlerService {
@@ -76,6 +78,7 @@ class CommandHandlerServiceImpl(
         nextCommand.onRegisterCommand(commandBuilder)
         disconnectCommand.onRegisterCommand(commandBuilder)
         localeCommand.onRegisterCommand(commandBuilder)
+        assistantCommand.onRegisterCommand(commandBuilder)
     }
 
     override suspend fun onRegisterGroupCommand(kord: Kord) {
@@ -102,6 +105,7 @@ class CommandHandlerServiceImpl(
                 CommandName.Next.commandName -> nextCommand.onExecute(interaction, response)
                 CommandName.Disconnect.commandName -> disconnectCommand.onExecute(interaction, response)
                 CommandName.Locale.commandName -> localeCommand.onExecute(interaction, response)
+                CommandName.Assistant.commandName -> assistantCommand.onExecute(interaction, response)
                 else -> respondUnknownCommand(response, interaction.data.guildId.value, interaction.guildLocale, commandName)
             }
         } catch (exception: Throwable) {

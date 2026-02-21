@@ -2,6 +2,9 @@ package es.wokis.di
 
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.dispatchers.AppDispatchersImpl
+import es.wokis.services.assistant.AssistantServiceFactory
+import es.wokis.services.assistant.OllamaService
+import es.wokis.services.assistant.WhisperService
 import es.wokis.services.commands.CommandHandlerService
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.config.ConfigService
@@ -16,6 +19,7 @@ import es.wokis.services.tts.TTSService
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val servicesModule = module {
@@ -29,6 +33,9 @@ val servicesModule = module {
     singleOf(::RadioService)
     factoryOf(::PlayerChannelService)
     factoryOf(::ErrorHandlerService)
+    factory { WhisperService(get(named("whisperHttpClient")), get()) }
+    factoryOf(::OllamaService)
+    factoryOf(::AssistantServiceFactory)
 
     single<AppDispatchers> { AppDispatchersImpl() }
 }
