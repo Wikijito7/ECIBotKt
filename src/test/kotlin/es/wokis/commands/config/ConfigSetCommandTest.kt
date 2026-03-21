@@ -2,14 +2,12 @@ package es.wokis.commands.config
 
 import dev.kord.common.Locale
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
-import es.wokis.commands.config.ConfigSetCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.config.ConfigService
 import es.wokis.services.localization.LocalizationService
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
-import io.mockk.justRun
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import mock.mockedKord

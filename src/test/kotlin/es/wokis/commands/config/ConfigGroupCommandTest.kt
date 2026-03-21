@@ -5,10 +5,6 @@ import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.SubCommand
 import es.wokis.commands.CommandName
-import es.wokis.commands.config.ConfigGroupCommand
-import es.wokis.commands.config.ConfigGetCommand
-import es.wokis.commands.config.ConfigReloadCommand
-import es.wokis.commands.config.ConfigSetCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import io.mockk.coEvery
