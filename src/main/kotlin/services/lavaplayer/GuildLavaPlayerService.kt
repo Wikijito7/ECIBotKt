@@ -31,8 +31,8 @@ import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
 import es.wokis.utils.getDisplayTrackName
 import es.wokis.utils.getLocale
-import es.wokis.utils.toSanitizedMarkdownLink
 import es.wokis.utils.isValidUrl
+import es.wokis.utils.toSanitizedMarkdownLink
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import java.util.*
@@ -49,6 +49,7 @@ private const val MAX_BACK_OFF_RETRIES = 5
 private const val UNKNOWN_ERROR = "Unknown error"
 private const val SEEK_UPDATE_DELAY = 3000L
 private const val RECONNECT_DELAY = 500L
+private const val FRAME_TIMEOUT_MS = 20L
 
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
@@ -78,12 +79,12 @@ class GuildLavaPlayerService(
     private var playerMessage: Message? = null
     private var seekTimerJob: Job? = null
     private val updateSeekChannel = Channel<Unit>(Channel.CONFLATED)
-    private var frameTimeOut = 20L
+    private var frameTimeOut = FRAME_TIMEOUT_MS
     private var currentTrack: TrackBO? = null
 
     init {
         coroutineScope.launch {
-            for (event in updateSeekChannel) {
+            for (_ in updateSeekChannel) {
                 updatePlayerEmbed()
             }
         }
@@ -165,8 +166,7 @@ class GuildLavaPlayerService(
         }
     }
 
-    fun searchAndPlay(searchTerm: String) {
-        // TODO: Implement on next steps
+    fun searchAndPlay(@Suppress("UNUSED_PARAMETER") searchTerm: String) {
     }
 
     suspend fun playRadio(radioName: String, radioUrl: String, customFavicon: String) {
@@ -198,7 +198,7 @@ class GuildLavaPlayerService(
     fun isPaused(): Boolean = player.isPaused
 
     fun resume() {
-        frameTimeOut = 20L
+        frameTimeOut = FRAME_TIMEOUT_MS
         player.isPaused = false
     }
 
@@ -298,7 +298,6 @@ class GuildLavaPlayerService(
         leaveTimer = null
     }
 
-    // TODO: Take a look in the future to solve discord update request error or delete it
     private fun startSeekUpdateTimer() {
         if (playerMessage == null) return
         resetSeekTimerJob()
@@ -322,7 +321,6 @@ class GuildLavaPlayerService(
             )
         )
     }
-
 
     private fun queue(tracks: List<TrackBO>, addToFront: Boolean = false) {
         resetLeaveTimer()
@@ -543,7 +541,11 @@ class GuildLavaPlayerService(
 
     private suspend fun updatePlayerEmbed() {
         playerMessage?.let {
-            val guildName = textChannel.data.guildId.value?.let { guildId -> textChannel.kord.getGuild(guildId) }?.name.orEmpty()
+            val guildName = textChannel.data.guildId.value?.let { guildId ->
+                textChannel.kord.getGuild(
+                    guildId
+                )
+            }?.name.orEmpty()
             try {
                 it.edit {
                     createPlayerEmbed(

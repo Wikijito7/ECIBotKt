@@ -1,25 +1,25 @@
 package es.wokis.services.commands
 
+import commands.play.PlayCommand
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
+import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
+import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.CommandName
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.config.ConfigGroupCommand
-import es.wokis.commands.queue.QueueCommand
-import commands.play.PlayCommand
-import dev.kord.core.Kord
-import dev.kord.core.entity.interaction.AutoCompleteInteraction
-import es.wokis.commands.player.PlayerCommand
-import es.wokis.commands.radio.RadioGroupCommand
-import es.wokis.commands.next.NextCommand
 import es.wokis.commands.disconnect.DisconnectCommand
-import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.locale.LocaleCommand
+import es.wokis.commands.next.NextCommand
+import es.wokis.commands.player.PlayerCommand
+import es.wokis.commands.queue.QueueCommand
+import es.wokis.commands.radio.RadioGroupCommand
+import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sound.SoundCommand
@@ -106,7 +106,12 @@ class CommandHandlerServiceImpl(
                 CommandName.Next.commandName -> nextCommand.onExecute(interaction, response)
                 CommandName.Disconnect.commandName -> disconnectCommand.onExecute(interaction, response)
                 CommandName.Locale.commandName -> localeCommand.onExecute(interaction, response)
-                else -> respondUnknownCommand(response, interaction.data.guildId.value, interaction.guildLocale, commandName)
+                else -> respondUnknownCommand(
+                    response,
+                    interaction.data.guildId.value,
+                    interaction.guildLocale,
+                    commandName
+                )
             }
         } catch (exception: Throwable) {
             errorHandlerService.handleCommandError(exception, interaction, response, commandName)
@@ -124,7 +129,9 @@ class CommandHandlerServiceImpl(
                 ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
 
                 ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
-                ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> playerCommand.onInteract(interaction)
+                ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> playerCommand.onInteract(
+                    interaction
+                )
 
                 ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
 

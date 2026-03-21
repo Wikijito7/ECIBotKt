@@ -1,6 +1,5 @@
 package es.wokis.utils
 
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import es.wokis.services.lavaplayer.model.TrackBO
 
 fun TrackBO.getDisplayTrackName(): String = when {

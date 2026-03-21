@@ -47,7 +47,12 @@ class AudioPlayerManagerProvider(
                 }
             }
             this.registerSourceManager(
-                YoutubeAudioSourceManager(youtubeOptions, TvHtml5EmbeddedWithThumbnail(), WebWithThumbnail(), MusicWithThumbnail()).apply {
+                YoutubeAudioSourceManager(
+                    youtubeOptions,
+                    TvHtml5EmbeddedWithThumbnail(),
+                    WebWithThumbnail(),
+                    MusicWithThumbnail()
+                ).apply {
                     setPlaylistPageCount(Integer.MAX_VALUE)
                     useOauth2(config.youtube.oauth2Token, true)
                     Web.setPoTokenAndVisitorData(

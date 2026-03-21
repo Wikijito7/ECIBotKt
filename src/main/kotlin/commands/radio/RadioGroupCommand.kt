@@ -33,7 +33,10 @@ class RadioGroupCommand(
 ) : GroupCommand, Component, Autocomplete {
 
     override suspend fun onRegisterCommand(kord: Kord) {
-        kord.createGlobalChatInputCommand(CommandName.Radio.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_COMMAND_DESCRIPTION).values.first()) {
+        kord.createGlobalChatInputCommand(
+            CommandName.Radio.commandName,
+            localizationService.getLocalizations(LocalizationKeys.RADIO_COMMAND_DESCRIPTION).values.first()
+        ) {
             descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_COMMAND_DESCRIPTION)
             radioPlayCommand.onRegisterCommand(this)
             radioListCommand.onRegisterCommand(this)
@@ -64,12 +67,20 @@ class RadioGroupCommand(
     }
 
     override suspend fun onInteract(interaction: ComponentInteraction) {
-        val customId = (interaction as? ButtonInteraction)?.component?.customId?.split(CUSTOM_COMPONENT_SEPARATOR)?.firstOrNull()
+        val customId = (interaction as? ButtonInteraction)?.component?.customId?.split(
+            CUSTOM_COMPONENT_SEPARATOR
+        )?.firstOrNull()
 
         when (customId) {
-            ComponentsEnum.RADIO_LIST_NEXT.customId, ComponentsEnum.RADIO_LIST_PREVIOUS.customId -> radioListCommand.onInteract(interaction)
-            ComponentsEnum.RADIO_SEARCH_NAME_NEXT.customId, ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS.customId -> radioSearchGroupCommand.onInteract(interaction)
-            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT.customId, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS.customId -> radioSearchGroupCommand.onInteract(interaction)
+            ComponentsEnum.RADIO_LIST_NEXT.customId, ComponentsEnum.RADIO_LIST_PREVIOUS.customId -> radioListCommand.onInteract(
+                interaction
+            )
+            ComponentsEnum.RADIO_SEARCH_NAME_NEXT.customId, ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS.customId -> radioSearchGroupCommand.onInteract(
+                interaction
+            )
+            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT.customId, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS.customId -> radioSearchGroupCommand.onInteract(
+                interaction
+            )
         }
     }
 

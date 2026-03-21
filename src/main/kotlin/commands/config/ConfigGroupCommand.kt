@@ -5,13 +5,13 @@ import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteract
 import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
-import dev.kord.core.entity.interaction.SubCommand as KordSubCommand
 import es.wokis.commands.Autocomplete
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
 import es.wokis.commands.GroupCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
+import dev.kord.core.entity.interaction.SubCommand as KordSubCommand
 
 class ConfigGroupCommand(
     private val configReloadCommand: ConfigReloadCommand,
@@ -21,7 +21,10 @@ class ConfigGroupCommand(
 ) : GroupCommand, Component, Autocomplete {
 
     override suspend fun onRegisterCommand(kord: Kord) {
-        kord.createGlobalChatInputCommand(CommandName.Config.commandName, localizationService.getString(LocalizationKeys.CONFIG_COMMAND_DESCRIPTION)) {
+        kord.createGlobalChatInputCommand(
+            CommandName.Config.commandName,
+            localizationService.getString(LocalizationKeys.CONFIG_COMMAND_DESCRIPTION)
+        ) {
             descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.CONFIG_COMMAND_DESCRIPTION)
             configReloadCommand.onRegisterCommand(this)
             configSetCommand.onRegisterCommand(this)
@@ -47,8 +50,7 @@ class ConfigGroupCommand(
         }
     }
 
-    override suspend fun onInteract(interaction: dev.kord.core.entity.interaction.ComponentInteraction) {
-    }
+    override suspend fun onInteract(interaction: dev.kord.core.entity.interaction.ComponentInteraction) = Unit
 
     override suspend fun onAutoComplete(interaction: AutoCompleteInteraction) {
         val subCommandName = (interaction.command as? KordSubCommand)?.name

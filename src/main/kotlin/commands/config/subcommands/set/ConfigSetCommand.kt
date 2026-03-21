@@ -12,10 +12,10 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.config.ConfigService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.Log
-import java.io.File
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import java.io.File
 
 private const val ARGUMENT_SECTION = "section"
 private const val ARGUMENT_KEY = "key"
@@ -38,9 +38,15 @@ class ConfigSetCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Config.Set.commandName, localizationService.getString(LocalizationKeys.CONFIG_SET_COMMAND_DESCRIPTION)) {
+            subCommand(
+                CommandName.Config.Set.commandName,
+                localizationService.getString(LocalizationKeys.CONFIG_SET_COMMAND_DESCRIPTION)
+            ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.CONFIG_SET_COMMAND_DESCRIPTION)
-                string(ARGUMENT_SECTION, localizationService.getString(LocalizationKeys.CONFIG_SET_SECTION_DESCRIPTION)) {
+                string(
+                    ARGUMENT_SECTION,
+                    localizationService.getString(LocalizationKeys.CONFIG_SET_SECTION_DESCRIPTION)
+                ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.CONFIG_SET_SECTION_DESCRIPTION)
                     required = true
                 }
@@ -56,6 +62,7 @@ class ConfigSetCommand(
         }
     }
 
+    @Suppress("ReturnCount")
     override suspend fun onExecute(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
@@ -118,8 +125,7 @@ class ConfigSetCommand(
         val configFile = File(CONFIG_PATH)
         val json = Json { prettyPrint = true }
         val configJson = json.parseToJsonElement(configFile.readText()) as JsonObject
-        val sectionJson = configJson[section] as? JsonObject
-            ?: throw IllegalStateException("Section $section not found in config")
+        val sectionJson = checkNotNull(configJson[section] as? JsonObject) { "Section $section not found in config" }
 
         val updatedSectionJson = JsonObject(
             sectionJson.toMutableMap().apply {
@@ -139,9 +145,11 @@ class ConfigSetCommand(
             }
         )
 
-        configFile.writeText(json.encodeToString(
-            JsonObject.serializer(),
-            updatedConfigJson
-        ))
+        configFile.writeText(
+            json.encodeToString(
+                JsonObject.serializer(),
+                updatedConfigJson
+            )
+        )
     }
 }

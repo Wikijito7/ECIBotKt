@@ -14,6 +14,8 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.takeIfNotEmpty
 
+private const val PAGINATED_EMBED_COLOR = 0x01B05B
+
 suspend fun AbstractMessageModifyBuilder.createPaginatedEmbedMessage(
     guildId: Snowflake?,
     discordLocale: Locale?,
@@ -67,7 +69,7 @@ private suspend fun AbstractMessageModifyBuilder.createEmbed(
         embedDescription?.let {
             description = it
         }
-        color = Color(0x01B05B)
+        color = Color(PAGINATED_EMBED_COLOR)
         if (currentPageContent.isNullOrEmpty().not()) {
             for (column in (0 until columns)) {
                 val displayMessage = currentPageContent?.getOrNull(column)?.takeIfNotEmpty() ?: BLANK_SPACE

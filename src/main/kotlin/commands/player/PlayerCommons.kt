@@ -19,6 +19,9 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 private const val ENABLE_PLAYBACK_POSITION = false
+private const val PLAYER_EMBED_COLOR = 0x01B05B
+private const val PLAYBACK_BAR_LENGTH = 9
+private const val QUEUE_DISPLAY_LIMIT = 3
 
 suspend fun MessageBuilder.createPlayerEmbed(
     guildId: Snowflake?,
@@ -39,7 +42,7 @@ suspend fun MessageBuilder.createPlayerEmbed(
         thumbnail {
             url = currentTrack?.customFavicon ?: currentTrack?.audioTrack?.info?.artworkUrl.orEmpty()
         }
-        color = Color(0x01B05B)
+        color = Color(PLAYER_EMBED_COLOR)
         currentTrack?.let {
             val duration = it.audioTrack.duration.toDisplayDuration()
             val currentSeek = it.audioTrack.position.toDisplayDuration()
@@ -48,7 +51,6 @@ suspend fun MessageBuilder.createPlayerEmbed(
                 value = it.getTrackName()
             }
             if (ENABLE_PLAYBACK_POSITION) {
-                // TODO: Take a look in the future to solve discord update request error or delete it
                 field {
                     name = localizationService.getString(key = LocalizationKeys.PLAYER_PLAYBACK_POSITION, guildId = guildId, discordLocale = discordLocale)
                     value = "`$currentSeek ${generatePlayerPosition(it.audioTrack.position, it.audioTrack.duration)} $duration`"
@@ -92,8 +94,8 @@ private fun TrackBO.getTrackName() = customName?.let {
 
 private fun generatePlayerPosition(currentSeek: Long, maxDuration: Long): String {
     val safeMaxDuration = maxDuration.takeUnless { it == 0L } ?: 1
-    val position = ((currentSeek / 1000f) / (safeMaxDuration / 1000f) * 9).toInt() + 1
-    val playerString = "─────────".split("").toMutableList().apply {
+    val position = ((currentSeek / 1000f) / (safeMaxDuration / 1000f) * PLAYBACK_BAR_LENGTH).toInt() + 1
+    val playerString = "─".repeat(PLAYBACK_BAR_LENGTH).split("").toMutableList().apply {
         add(position, "●")
     }.joinToString(separator = "")
     return playerString
@@ -153,11 +155,29 @@ private suspend fun List<TrackBO>.getDisplayQueue(localizationService: Localizat
     val firstTrack = getOrNull(0)
     val secondTrack = getOrNull(1)
     val thirdTrack = getOrNull(2)
-    val queueRemaining = (size - 3).takeIf { it > 0 }
-    val duration = filterNot { it.audioTrack.info.isStream || it.audioTrack.duration == DURATION_MS_UNKNOWN }.sumOf { it.audioTrack.duration }.toDisplayDuration()
+    val queueRemaining = (size - QUEUE_DISPLAY_LIMIT).takeIf { it > 0 }
+    val duration = filterNot {
+        it.audioTrack.info.isStream || it.audioTrack.duration == DURATION_MS_UNKNOWN
+    }.sumOf { it.audioTrack.duration }.toDisplayDuration()
     return firstTrack?.getDisplayNameAndDuration(localizationService, guildId, discordLocale)
-        ?.plus(secondTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, guildId, discordLocale)}" }.orEmpty())
-        ?.plus(thirdTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, guildId, discordLocale)}" }.orEmpty())
+        ?.plus(
+            secondTrack?.let {
+                "\n${it.getDisplayNameAndDuration(
+                    localizationService,
+                    guildId,
+                    discordLocale
+                )}"
+            }.orEmpty()
+        )
+        ?.plus(
+            thirdTrack?.let {
+                "\n${it.getDisplayNameAndDuration(
+                    localizationService,
+                    guildId,
+                    discordLocale
+                )}"
+            }.orEmpty()
+        )
         ?.plus(
             queueRemaining?.let {
                 "\n".plus(
@@ -191,6 +211,8 @@ private suspend fun TrackBO.getDisplayNameAndDuration(localizationService: Local
     return "${getDisplayTrackName()} ($displayDuration)"
 }
 
-private fun Long.toDisplayDuration() = toDuration(DurationUnit.MILLISECONDS).toComponents { hours, minutes, seconds, _ ->
+private fun Long.toDisplayDuration() = toDuration(
+    DurationUnit.MILLISECONDS
+).toComponents { hours, minutes, seconds, _ ->
     "%02d:%02d:%02d".format(hours, minutes, seconds)
 }

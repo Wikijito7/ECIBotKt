@@ -10,7 +10,6 @@ import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.CommandName
 import es.wokis.commands.tts.TTSCommand
-import es.wokis.localization.LocalizationKeys
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService

@@ -39,7 +39,6 @@ class ConfigService(
     fun reload(): Config {
         return loadFromFile()
     }
-
 }
 
 fun Config.validate() {

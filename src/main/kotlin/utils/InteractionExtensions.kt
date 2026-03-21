@@ -22,4 +22,3 @@ fun ChatInputCommandInteraction.getArgument(
 @Throws(IllegalArgumentException::class)
 suspend fun Interaction.getGuildName(): String =
     data.guildId.value?.let { kord.getGuild(it) }?.name ?: throw IllegalArgumentException("guild id is null")
-

@@ -19,7 +19,10 @@ class ConfigReloadCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Config.Reload.commandName, localizationService.getString(LocalizationKeys.CONFIG_RELOAD_COMMAND_DESCRIPTION)) {
+            subCommand(
+                CommandName.Config.Reload.commandName,
+                localizationService.getString(LocalizationKeys.CONFIG_RELOAD_COMMAND_DESCRIPTION)
+            ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.CONFIG_RELOAD_COMMAND_DESCRIPTION)
             }
         }

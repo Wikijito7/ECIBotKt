@@ -18,6 +18,7 @@ import es.wokis.services.config.ConfigService
 import es.wokis.services.localization.LocalizationService
 
 private const val ARGUMENT_SECTION = "section"
+private const val AUTOCOMPLETE_SUGGESTION_LIMIT = 25
 
 class ConfigGetCommand(
     private val configService: ConfigService,
@@ -28,9 +29,15 @@ class ConfigGetCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Config.Get.commandName, localizationService.getString(LocalizationKeys.CONFIG_GET_COMMAND_DESCRIPTION)) {
+            subCommand(
+                CommandName.Config.Get.commandName,
+                localizationService.getString(LocalizationKeys.CONFIG_GET_COMMAND_DESCRIPTION)
+            ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.CONFIG_GET_SECTION_DESCRIPTION)
-                string(ARGUMENT_SECTION, localizationService.getString(LocalizationKeys.CONFIG_GET_SECTION_DESCRIPTION)) {
+                string(
+                    ARGUMENT_SECTION,
+                    localizationService.getString(LocalizationKeys.CONFIG_GET_SECTION_DESCRIPTION)
+                ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.CONFIG_GET_SECTION_DESCRIPTION)
                     required = true
                     autocomplete = true
@@ -80,7 +87,7 @@ class ConfigGetCommand(
 
         val suggestions = validSections
             .filter { it.lowercase().contains(input) }
-            .take(25)
+            .take(AUTOCOMPLETE_SUGGESTION_LIMIT)
             .map { section ->
                 Choice.StringChoice(
                     name = section,

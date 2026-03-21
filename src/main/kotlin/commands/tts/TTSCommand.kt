@@ -24,12 +24,16 @@ class TTSCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Tts.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.TTS_COMMAND_DESCRIPTION).values.first()
+                description = localizationService.getLocalizations(
+                    LocalizationKeys.TTS_COMMAND_DESCRIPTION
+                ).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.TTS_COMMAND_DESCRIPTION)
                 string(
                     name = TTS_ARGUMENT_NAME,
-                    description = localizationService.getLocalizations(LocalizationKeys.TTS_COMMAND_INPUT_DESCRIPTION).values.first()
+                    description = localizationService.getLocalizations(
+                        LocalizationKeys.TTS_COMMAND_INPUT_DESCRIPTION
+                    ).values.first()
                 ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.TTS_COMMAND_INPUT_DESCRIPTION)
                     required = true

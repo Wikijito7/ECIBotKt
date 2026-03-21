@@ -8,10 +8,10 @@ import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.core.entity.interaction.ApplicationCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
+import es.wokis.exceptions.BotException
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
-import es.wokis.exceptions.BotException
 import es.wokis.services.queue.GuildQueueService
 import io.mockk.coEvery
 import io.mockk.every

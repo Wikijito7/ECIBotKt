@@ -6,7 +6,6 @@ import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalChatInputCreateBuilder
 import dev.kord.rest.builder.interaction.subCommand
-import dev.kord.rest.builder.message.EmbedBuilder
 import dev.kord.rest.builder.message.embed
 import es.wokis.commands.CommandName
 import es.wokis.commands.SubCommand
@@ -19,12 +18,14 @@ import es.wokis.services.radio.RadioService
 private const val MAX_FIELD_LENGTH = 1000 // Stay under 1024 limit
 private const val MAX_FIELDS = 25 // Discord embed limit
 private const val ITEMS_PER_LINE = 8
+private const val EMBED_COLOR = 0x01B05B
+private const val FLAG_EMOJI_OFFSET = 0x1F1E6
 
 private fun getFlagEmoji(countryCode: String): String = if (countryCode == "UNK") {
     "❓"
 } else {
     countryCode.uppercase().map { char ->
-        Character.toChars(0x1F1E6 + (char - 'A')).joinToString("")
+        Character.toChars(FLAG_EMOJI_OFFSET + (char - 'A')).joinToString("")
     }.joinToString("")
 }
 
@@ -75,7 +76,12 @@ class RadioCountryCodesCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Radio.CountryCodes.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_COUNTRYCODES_COMMAND_DESCRIPTION).values.first()) {
+            subCommand(
+                CommandName.Radio.CountryCodes.commandName,
+                localizationService.getLocalizations(
+                    LocalizationKeys.RADIO_COUNTRYCODES_COMMAND_DESCRIPTION
+                ).values.first()
+            ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_COUNTRYCODES_COMMAND_DESCRIPTION)
             }
         }
@@ -112,7 +118,7 @@ class RadioCountryCodesCommand(
                             guildId = guildId,
                             discordLocale = discordLocale
                         )
-                        color = Color(0x01B05B)
+                        color = Color(EMBED_COLOR)
 
                         fieldGroups.forEach { fieldContent ->
                             field {

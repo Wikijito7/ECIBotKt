@@ -36,6 +36,7 @@ class PlayerChannelService {
      * @param buildMessage Function to build the message content
      * @return Result containing the PlayerChannelResult or an error
      */
+    @Suppress("ReturnCount")
     suspend fun sendPlayerMessage(
         interaction: ApplicationCommandInteraction,
         buildMessage: suspend MessageCreateBuilder.() -> Unit
@@ -87,7 +88,9 @@ class PlayerChannelService {
                     )
                 )
             }.also {
-                Log.info("$TAG: Successfully created #player channel '${it.name}' (ID: ${it.id}) in guild '${guild.name}'")
+                Log.info(
+                    "$TAG: Successfully created #player channel '${it.name}' (ID: ${it.id}) in guild '${guild.name}'"
+                )
             }
         } catch (e: Exception) {
             Log.error("$TAG: Unexpected error creating #player channel in guild '${guild.name}': ${e.message}", e)

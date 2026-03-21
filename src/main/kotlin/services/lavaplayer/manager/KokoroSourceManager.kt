@@ -21,6 +21,9 @@ import kotlin.text.Charsets.UTF_8
 
 private const val DEFAULT_VOICE = "em_santa"
 private const val DEFAULT_LANG_CODE = "e"
+private const val CONNECT_TIMEOUT_MS = 30000
+private const val SOCKET_TIMEOUT_MS = 120000
+private const val TTS_TITLE_MAX_LENGTH = 30
 
 class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
     private val httpInterfaceManager: HttpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager()
@@ -31,13 +34,11 @@ class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
     var defaultLangCode: String = ""
 
     init {
-        // Configure extended timeouts for TTS generation
-        // Long text can take 30+ seconds to generate
         configureRequests { config ->
             RequestConfig.copy(config)
-                .setConnectTimeout(30000) // 30 seconds to establish connection
-                .setSocketTimeout(120000) // 2 minutes for data transfer (long TTS generation)
-                .setConnectionRequestTimeout(30000) // 30 seconds to get connection from pool
+                .setConnectTimeout(CONNECT_TIMEOUT_MS)
+                .setSocketTimeout(SOCKET_TIMEOUT_MS)
+                .setConnectionRequestTimeout(CONNECT_TIMEOUT_MS)
                 .build()
         }
     }
@@ -79,7 +80,7 @@ class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
 
     override fun isTrackEncodable(track: AudioTrack): Boolean = true
 
-    override fun encodeTrack(track: AudioTrack, output: DataOutput) {}
+    override fun encodeTrack(track: AudioTrack, output: DataOutput) = Unit
 
     override fun decodeTrack(trackInfo: AudioTrackInfo, input: DataInput): AudioTrack =
         KokoroAudioTrack(trackInfo, this)
@@ -99,9 +100,8 @@ class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
     fun getHttpInterface() = httpInterfaceManager.getInterface()
 
     private fun buildTrackInfo(reference: AudioReference, rawText: String): AudioTrackInfo {
-        // Generate title: "TTS Message: first 30 chars…"
-        val title = if (rawText.length > 30) {
-            "TTS Message: ${rawText.take(30)}…"
+        val title = if (rawText.length > TTS_TITLE_MAX_LENGTH) {
+            "TTS Message: ${rawText.take(TTS_TITLE_MAX_LENGTH)}…"
         } else {
             "TTS Message: $rawText"
         }

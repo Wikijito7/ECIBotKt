@@ -22,6 +22,8 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 
 private const val ARGUMENT_LOCALE = "locale"
+private const val AUTOCOMPLETE_SUGGESTION_LIMIT = 25
+private const val LOCALE_CODE_MAX_LENGTH = 100
 
 class LocaleCommand(
     private val localizationService: LocalizationService,
@@ -32,13 +34,17 @@ class LocaleCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Locale.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_DESCRIPTION).values.first()
+                description = localizationService.getLocalizations(
+                    LocalizationKeys.LOCALE_COMMAND_DESCRIPTION
+                ).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_DESCRIPTION)
                 defaultMemberPermissions = Permissions(Permission.Administrator)
                 string(
                     name = ARGUMENT_LOCALE,
-                    description = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION).values.first()
+                    description = localizationService.getLocalizations(
+                        LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION
+                    ).values.first()
                 ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION)
                     required = true
@@ -111,10 +117,10 @@ class LocaleCommand(
                 code.lowercase().contains(input)
             }
         }
-            .take(25)
+            .take(AUTOCOMPLETE_SUGGESTION_LIMIT)
             .map { (code, _) ->
                 Choice.StringChoice(
-                    name = code.take(100),
+                    name = code.take(LOCALE_CODE_MAX_LENGTH),
                     nameLocalizations = Optional.Missing(),
                     value = code
                 )
