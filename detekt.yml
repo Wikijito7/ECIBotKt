@@ -1,5 +1,5 @@
 build:
-  maxIssues: 40
+  maxIssues: 15
   excludeCorrectable: false
 
 config:
@@ -44,6 +44,8 @@ formatting:
 
 naming:
   active: true
+  InvalidPackageDeclaration:
+    active: false
   FunctionNaming:
     active: true
   VariableNaming:
@@ -58,7 +60,6 @@ potential-bugs:
 style:
   active: true
   MagicNumber:
-    active: true
     excludes: ['**/test/**']
     ignoreNumbers: ['-1', '0', '1', '2', '60', '100', '1000']
   MaxLineLength:

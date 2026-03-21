@@ -167,8 +167,7 @@ class GuildLavaPlayerService(
         }
     }
 
-    fun searchAndPlay(@Suppress("UNUSED_PARAMETER") searchTerm: String) {
-    }
+    fun searchAndPlay(@Suppress("UNUSED_PARAMETER") searchTerm: String): Unit = Unit
 
     suspend fun playRadio(radioName: String, radioUrl: String, customFavicon: String) {
         audioPlayerManager.loadItemSync(radioUrl)?.let { item -> item as? AudioTrack }?.let {

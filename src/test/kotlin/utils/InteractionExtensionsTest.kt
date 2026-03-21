@@ -145,7 +145,7 @@ class InteractionExtensionsTest {
     }
 
     @Test
-    fun `Given interaction with member with voice state without present voice channel When getMemberVoiceChannel is called Then return null`() = runTest {
+    fun `Given no voice channel When getMemberVoiceChannel Then return null`() = runTest {
         // Given
         val interaction = mockk<ChatInputCommandInteraction> {
             every { data } returns mockk {

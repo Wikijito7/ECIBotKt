@@ -77,7 +77,8 @@ class RadioGroupCommand(
             ComponentsEnum.RADIO_SEARCH_NAME_NEXT.customId,
             ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS.customId -> radioSearchGroupCommand.onInteract(interaction)
             ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT.customId,
-            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS.customId -> radioSearchGroupCommand.onInteract(interaction)
+            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS.customId ->
+                radioSearchGroupCommand.onInteract(interaction)
         }
     }
 

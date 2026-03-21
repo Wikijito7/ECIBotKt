@@ -47,7 +47,7 @@ class ConfigServiceTest {
     }
 
     @Test
-    fun `Given config with Deezer enabled but empty decryption key When config is validated Then throw EmptyDeezerMasterDecryptionKeyException`() {
+    fun `Given empty decryption key When Deezer validated Then throw exception`() {
         // Given
         val config = mockk<Config>(relaxed = true) {
             every { discordBotToken } returns "abc123"

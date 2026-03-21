@@ -32,14 +32,9 @@ class PlayCommandTest {
             at io.mockk.impl.recording.states.VerifyingState.recordingDone(VerifyingState.kt:42)
             at io.mockk.impl.recording.CommonCallRecorder.done(CommonCallRecorder.kt:47)
             at io.mockk.impl.eval.RecordedBlockEvaluator.record(RecordedBlockEvaluator.kt:63)
-            at io.mockk.impl.eval.VerifyBlockEvaluator.verify(VerifyBlockEvaluator.kt:30)
-            at io.mockk.MockKDsl.internalVerify(API.kt:120)
-            at io.mockk.MockKKt.verify(MockK.kt:218)
-            at io.mockk.MockKKt.verify$default(MockK.kt:209)
-            at commands.test.TestCommandTest.Given command When onRegisterCommand is called Then register test command(TestCommandTest.kt:32)
-            at java.base/java.lang.reflect.Method.invoke(Method.java:569)
-            at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
-            at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+            at io.mockk.impl.eval.VerifyBlockEvaluator.verify
+            at io.mockk.MockKDsl.internalVerify
+            at io.mockk.MockKKt.verify
      */
     @Test
     @Ignore("Mockk fails")
