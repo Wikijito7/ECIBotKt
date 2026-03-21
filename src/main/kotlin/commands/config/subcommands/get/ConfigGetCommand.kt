@@ -16,7 +16,6 @@ import es.wokis.commands.SubCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.config.ConfigService
 import es.wokis.services.localization.LocalizationService
-import es.wokis.utils.orDefaultLocale
 
 private const val ARGUMENT_SECTION = "section"
 
@@ -44,12 +43,13 @@ class ConfigGetCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val section = interaction.command.strings[ARGUMENT_SECTION]
 
         if (section == null || section !in validSections) {
             response.respond {
-                content = localizationService.getString(LocalizationKeys.CONFIG_INVALID_SECTION, locale)
+                content = localizationService.getString(LocalizationKeys.CONFIG_INVALID_SECTION, guildId = guildId, discordLocale = discordLocale)
             }
             return
         }
@@ -68,8 +68,9 @@ class ConfigGetCommand(
         response.respond {
             content = localizationService.getStringFormat(
                 LocalizationKeys.CONFIG_GET_DISPLAY,
-                locale,
-                arrayOf(section, sectionData.toString())
+                guildId = guildId,
+                discordLocale = discordLocale,
+                arguments = arrayOf(section, sectionData.toString())
             )
         }
     }

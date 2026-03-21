@@ -11,7 +11,6 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.config.ConfigService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.Log
-import es.wokis.utils.orDefaultLocale
 
 class ConfigReloadCommand(
     private val configService: ConfigService,
@@ -30,17 +29,18 @@ class ConfigReloadCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         try {
             configService.reload()
             Log.info("Configuration reloaded via command by user ${interaction.user.id}")
             response.respond {
-                content = localizationService.getString(LocalizationKeys.CONFIG_RELOAD_SUCCESS, locale)
+                content = localizationService.getString(LocalizationKeys.CONFIG_RELOAD_SUCCESS, guildId = guildId, discordLocale = discordLocale)
             }
         } catch (e: Exception) {
             Log.error("Failed to reload config via command", e)
             response.respond {
-                content = localizationService.getString(LocalizationKeys.ERROR_UNEXPECTED, locale)
+                content = localizationService.getString(LocalizationKeys.ERROR_UNEXPECTED, guildId = guildId, discordLocale = discordLocale)
             }
         }
     }

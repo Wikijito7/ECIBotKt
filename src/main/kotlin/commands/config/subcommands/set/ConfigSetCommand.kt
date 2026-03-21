@@ -1,6 +1,5 @@
 package es.wokis.commands.config
 
-import dev.kord.common.entity.Permissions
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
@@ -13,7 +12,6 @@ import es.wokis.localization.LocalizationKeys
 import es.wokis.services.config.ConfigService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.Log
-import es.wokis.utils.orDefaultLocale
 import java.io.File
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -62,35 +60,36 @@ class ConfigSetCommand(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     ) {
-        val locale = interaction.guildLocale.orDefaultLocale()
+        val guildId = interaction.data.guildId.value
+        val discordLocale = interaction.guildLocale
         val section = interaction.command.strings[ARGUMENT_SECTION]
         val key = interaction.command.strings[ARGUMENT_KEY]
         val value = interaction.command.strings[ARGUMENT_VALUE]
 
         if (section == null || section !in validSections) {
             response.respond {
-                content = localizationService.getString(LocalizationKeys.CONFIG_INVALID_SECTION, locale)
+                content = localizationService.getString(LocalizationKeys.CONFIG_INVALID_SECTION, guildId = guildId, discordLocale = discordLocale)
             }
             return
         }
 
         if (key == null || key !in validSections[section]!!) {
             response.respond {
-                content = localizationService.getString(LocalizationKeys.CONFIG_INVALID_KEY, locale)
+                content = localizationService.getString(LocalizationKeys.CONFIG_INVALID_KEY, guildId = guildId, discordLocale = discordLocale)
             }
             return
         }
 
         if (value.isNullOrEmpty()) {
             response.respond {
-                content = localizationService.getString(LocalizationKeys.ERROR_NO_CONTENT_PROVIDED, locale)
+                content = localizationService.getString(LocalizationKeys.ERROR_NO_CONTENT_PROVIDED, guildId = guildId, discordLocale = discordLocale)
             }
             return
         }
 
         if (section == "discord_bot_token" || (section == "database" && key == "password")) {
             response.respond {
-                content = localizationService.getString(LocalizationKeys.CONFIG_CANNOT_MODIFY_TOKEN, locale)
+                content = localizationService.getString(LocalizationKeys.CONFIG_CANNOT_MODIFY_TOKEN, guildId = guildId, discordLocale = discordLocale)
             }
             return
         }
@@ -102,14 +101,15 @@ class ConfigSetCommand(
             response.respond {
                 content = localizationService.getStringFormat(
                     LocalizationKeys.CONFIG_SET_SUCCESS,
-                    locale,
-                    arrayOf("$section.$key", value)
+                    guildId = guildId,
+                    discordLocale = discordLocale,
+                    arguments = arrayOf("$section.$key", value)
                 )
             }
         } catch (e: Exception) {
             Log.error("Failed to update config via command", e)
             response.respond {
-                content = localizationService.getString(LocalizationKeys.ERROR_UNEXPECTED, locale)
+                content = localizationService.getString(LocalizationKeys.ERROR_UNEXPECTED, guildId = guildId, discordLocale = discordLocale)
             }
         }
     }

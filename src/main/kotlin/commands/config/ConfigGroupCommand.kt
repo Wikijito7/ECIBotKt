@@ -12,7 +12,6 @@ import es.wokis.commands.Component
 import es.wokis.commands.GroupCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
-import es.wokis.utils.orDefaultLocale
 
 class ConfigGroupCommand(
     private val configReloadCommand: ConfigReloadCommand,
@@ -42,8 +41,9 @@ class ConfigGroupCommand(
                 CommandName.Config.Get.commandName -> configGetCommand.onExecute(interaction, response)
             }
         } ?: response.respond {
-            val locale = interaction.guildLocale.orDefaultLocale()
-            content = localizationService.getString(LocalizationKeys.ERROR_UNEXPECTED, locale)
+            val guildId = interaction.data.guildId.value
+            val discordLocale = interaction.guildLocale
+            content = localizationService.getString(LocalizationKeys.ERROR_UNEXPECTED, guildId = guildId, discordLocale = discordLocale)
         }
     }
 
