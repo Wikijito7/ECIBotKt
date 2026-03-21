@@ -1,19 +1,19 @@
 # Code Quality Instructions
 
-This document covers both **formatting standards** (ktlint) and **refactoring patterns** for maintaining high-quality code in ECIBotKt.
+This document covers both **formatting standards** (detekt) and **refactoring patterns** for maintaining high-quality code in ECIBotKt.
 
 ---
 
-## Part 1: Code Formatting (ktlint)
+## Part 1: Code Formatting (detekt)
 
-### Running Ktlint
+### Running Detekt
 
 ```bash
 # Check for issues
-./gradlew ktlintCheck
+./gradlew detekt
 
 # Auto-fix issues (when possible)
-./gradlew ktlintFormat
+./gradlew detekt --auto-correct
 ```
 
 ### Common Formatting Issues
@@ -157,9 +157,9 @@ val x = 5
 ### IDE Integration
 
 **IntelliJ IDEA**:
-1. Install ktlint plugin
-2. Enable "Reformat with ktlint on save"
-3. Configure to use project's ktlint settings
+1. Install detekt plugin
+2. Enable "Reformat with detekt on save"
+3. Configure to use project's detekt settings
 
 **VS Code**:
 1. Install "Kotlin Language" extension
@@ -180,7 +180,7 @@ trim_trailing_whitespace = true
 
 ### CI/CD Integration
 
-Ktlint runs in GitHub Actions. **PRs cannot be merged if ktlint fails.**
+Detekt runs in GitHub Actions. **PRs cannot be merged if detekt fails.**
 
 ---
 
@@ -357,7 +357,7 @@ coVerify { lavaPlayerService.loadAndPlay(expectedUrl, addToFront = true) }     /
 
 Before submitting a PR, verify:
 
-- [ ] `./gradlew ktlintCheck` passes
+- [ ] `./gradlew detekt` passes
 - [ ] All existing tests pass
 - [ ] No trailing spaces or formatting issues
 - [ ] Code duplication is minimized
@@ -380,7 +380,7 @@ Before submitting a PR, verify:
 
 ## References
 
-- ktlint: https://pinterest.github.io/ktlint/
+- detekt: https://detekt.dev/
 - Kotlin Coding Conventions: https://kotlinlang.org/docs/coding-conventions.html
 - Refactoring Guru: https://refactoring.guru/
 - EditorConfig: https://editorconfig.org/

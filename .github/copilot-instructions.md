@@ -63,10 +63,10 @@ Country codes are cached for 1 hour to reduce API calls:
 - See `discord-integration.instructions.md` for implementation
 
 ### Code Quality
-- **ktlint**: Strict code style enforcement
+- **detekt**: Strict code style enforcement
 - **Jacoco**: Code coverage reporting
 - **SonarCloud**: Quality gates in CI/CD
-- All code must pass ktlint checks before merge
+- All code must pass detekt checks before merge
 
 ### Testing Strategy
 - **Framework**: Kotlin Test with Mockk
@@ -85,7 +85,7 @@ Country codes are cached for 1 hour to reduce API calls:
 ### Common Tasks
 - **Build**: `./gradlew build`
 - **Test**: `./gradlew test`
-- **Ktlint**: `./gradlew ktlintCheck`
+- **Detekt**: `./gradlew detekt`
 - **Coverage**: `./gradlew jacocoTestReport`
 
 ### Adding New Features
@@ -93,7 +93,7 @@ Country codes are cached for 1 hour to reduce API calls:
 2. Use Koin for dependency injection
 3. Add localization keys for all user-facing strings
 4. Write tests for new functionality
-5. Ensure ktlint compliance
+5. Ensure detekt compliance
 
 ## Related Documentation
 

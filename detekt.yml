@@ -1,0 +1,71 @@
+build:
+  maxIssues: 40
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  active: true
+  LongParameterList:
+    active: true
+    functionThreshold: 10
+    constructorThreshold: 12
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 20
+    thresholdInClasses: 20
+
+coroutines:
+  active: true
+
+empty-blocks:
+  active: true
+
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: false
+  TooGenericExceptionThrown:
+    active: true
+
+formatting:
+  active: true
+  autoCorrect: true
+  MaximumLineLength:
+    active: true
+    maxLineLength: 140
+  Indentation:
+    active: true
+    indentSize: 4
+  NoWildcardImports:
+    active: false
+
+naming:
+  active: true
+  FunctionNaming:
+    active: true
+  VariableNaming:
+    active: true
+
+performance:
+  active: true
+
+potential-bugs:
+  active: true
+
+style:
+  active: true
+  MagicNumber:
+    active: true
+    excludes: ['**/test/**']
+    ignoreNumbers: ['-1', '0', '1', '2', '60', '100', '1000']
+  MaxLineLength:
+    active: true
+    maxLineLength: 140
+  WildcardImport:
+    active: false
+  ReturnCount:
+    active: true
+    max: 3

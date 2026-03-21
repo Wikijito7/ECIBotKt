@@ -1,6 +1,6 @@
 ---
 name: quality-check
-description: CRITICAL: Load BEFORE opening any PR. Missing this skill = failing ktlint/test gates and rejected PRs. Validates all blockers: build, ktlint, tests, coverage. Not for day-to-day coding — pre-PR validation only.
+description: CRITICAL: Load BEFORE opening any PR. Missing this skill = failing detekt/test gates and rejected PRs. Validates all blockers: build, detekt, tests, coverage. Not for day-to-day coding — pre-PR validation only.
 ---
 
 ## When to use me
@@ -18,7 +18,7 @@ description: CRITICAL: Load BEFORE opening any PR. Missing this skill = failing 
 | Gate | Command | Status |
 |------|---------|--------|
 | Build | `./gradlew build` | Must pass |
-| Ktlint | `./gradlew ktlintCheck` | Must pass |
+| Detekt | `./gradlew detekt` | Must pass |
 | Tests | `./gradlew test` | Must pass |
 | Coverage | `./gradlew jacocoTestReport` | Must not drop |
 
@@ -44,16 +44,16 @@ Must compile without errors. Set timeout: 600000ms (10 min).
 
 ---
 
-## Step 2 — Ktlint (Auto-correct first)
+## Step 2 — Detekt (Auto-correct first)
 
-Ktlint has auto-correctable issues. Fix first:
+Detekt has auto-correctable issues. Fix first:
 
 ```bash
 # Auto-fix
-./gradlew ktlintFormat
+./gradlew detekt --auto-correct
 
 # Check remaining
-./gradlew ktlintCheck
+./gradlew detekt
 ```
 
 Set timeout: 300000ms (5 min).
@@ -95,8 +95,8 @@ open build/reports/jacoco/test/html/index.html
 | Change Type | Required Gates |
 |-------------|----------------|
 | Logic changes | Build + Tests + Coverage |
-| UI/Embed changes | Build + Ktlint |
-| New commands | Build + Tests + Ktlint (all 8 registration steps) |
+| UI/Embed changes | Build + Detekt |
+| New commands | Build + Tests + Detekt (all 8 registration steps) |
 | Dependency changes | Build + Full test suite |
 | Localization | Build (keys must be generated) |
 
@@ -105,7 +105,7 @@ open build/reports/jacoco/test/html/index.html
 ## CRITICAL: Run Sequentially
 
 ```
-Build → Ktlint → Tests → Coverage
+Build → Detekt → Tests → Coverage
 ```
 
 Never run in parallel. Order matters — don't test code that doesn't compile.
@@ -114,7 +114,7 @@ Never run in parallel. Order matters — don't test code that doesn't compile.
 
 ## Reporting Format
 
-- **BLOCKER**: Failing build, failing tests, ktlint errors, coverage drops
+- **BLOCKER**: Failing build, failing tests, detekt errors, coverage drops
 - **WARNING**: Non-blocking improvements
 
 ---

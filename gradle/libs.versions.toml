@@ -1,4 +1,5 @@
 [versions]
+detekt = "1.23.7"
 jacoco = "0.8.12"
 # Kord is now loaded from local libs/ folder as SNAPSHOT JARs
 # See libs/ directory for the JAR files
@@ -51,9 +52,11 @@ koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
 koin-core = { module = "io.insert-koin:koin-core" }
 kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 junit-parametrized = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit-parametized" }
+detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
 idea-ext = {id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "idea-ext"}
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

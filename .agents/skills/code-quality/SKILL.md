@@ -1,6 +1,6 @@
 ---
 name: code-quality
-description: CRITICAL: Load for ALL code changes. Defines ktlint rules and refactoring patterns for ECIBotKt. Covers import ordering, constants extraction, expression body, autocomplete prioritization. Violations = failing CI. Must follow before ANY commit.
+description: CRITICAL: Load for ALL code changes. Defines detekt rules and refactoring patterns for ECIBotKt. Covers import ordering, constants extraction, expression body, autocomplete prioritization. Violations = failing CI. Must follow before ANY commit.
 ---
 
 ## When to use me
@@ -15,21 +15,21 @@ description: CRITICAL: Load for ALL code changes. Defines ktlint rules and refac
 
 ---
 
-## Running Ktlint
+## Running Detekt
 
 ```bash
 # Check for issues
-./gradlew ktlintCheck
+./gradlew detekt
 
 # Auto-fix issues
-./gradlew ktlintFormat
+./gradlew detekt --auto-correct
 ```
 
-**PRs cannot be merged if ktlint fails.**
+**PRs cannot be merged if detekt fails.**
 
 ---
 
-## Ktlint Rules
+## Detekt Rules
 
 ### 1. Import Ordering
 
@@ -257,7 +257,7 @@ coVerify { lavaPlayerService.loadAndPlay(expectedUrl, addToFront = true) }     /
 ## PR Checklist
 
 Before submitting:
-- [ ] `./gradlew ktlintCheck` passes
+- [ ] `./gradlew detekt` passes
 - [ ] All existing tests pass
 - [ ] No trailing spaces or formatting issues
 - [ ] Code duplication is minimized
@@ -277,5 +277,5 @@ Before submitting:
 
 ## References
 - `.github/instructions/code-quality.instructions.md` — full context
-- ktlint: https://pinterest.github.io/ktlint/
+- detekt: https://detekt.dev/
 - Kotlin Coding Conventions: https://kotlinlang.org/docs/coding-conventions.html
