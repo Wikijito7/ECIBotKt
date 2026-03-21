@@ -18,7 +18,7 @@ class ConfigMigrationService(private val json: Json) {
     fun migrateConfig(configFile: File): Config {
         Log.info("Starting config migration...")
 
-check(configFile.exists()) { "Config file not found at ${configFile.absolutePath}" }
+        check(configFile.exists()) { "Config file not found at ${configFile.absolutePath}" }
 
         val oldConfigJson = configFile.readText()
 
