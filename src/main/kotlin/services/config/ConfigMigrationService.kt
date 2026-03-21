@@ -18,7 +18,7 @@ class ConfigMigrationService(private val json: Json) {
     fun migrateConfig(configFile: File): Config {
         Log.info("Starting config migration...")
 
-        check(configFile.exists()) { "Config file not found at ${configFile.absolutePath}" }
+check(configFile.exists()) { "Config file not found at ${configFile.absolutePath}" }
 
         val oldConfigJson = configFile.readText()
 
@@ -78,9 +78,11 @@ object JsonObjectBuilder {
                 oldValue == null -> {
                     result[key] = templateValue
                 }
+
                 templateValue is JsonObject && oldValue is JsonObject -> {
                     result[key] = mergeObject(oldValue, templateValue)
                 }
+
                 else -> {
                     result[key] = oldValue
                 }
@@ -107,12 +109,15 @@ object JsonObjectBuilder {
                         result[key] = templateValue
                     }
                 }
+
                 templateValue is JsonObject && oldValue is JsonObject -> {
                     result[key] = mergeObject(oldValue, templateValue)
                 }
+
                 templateValue is JsonArray && oldValue is JsonArray -> {
                     result[key] = mergeArray(oldValue, templateValue)
                 }
+
                 else -> {
                     result[key] = oldValue
                 }
@@ -133,11 +138,13 @@ object JsonObjectBuilder {
                         return true
                     }
                 }
+
                 is JsonObject -> {
                     if (hasNonEmptyValues(value)) {
                         return true
                     }
                 }
+
                 is JsonArray -> {
                     if (value.isNotEmpty()) {
                         return true
