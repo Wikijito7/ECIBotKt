@@ -11,5 +11,5 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-      - uses: gradle/actions/setup-gradle@master
+      - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew detekt
