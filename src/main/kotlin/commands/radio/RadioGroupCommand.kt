@@ -72,15 +72,12 @@ class RadioGroupCommand(
         )?.firstOrNull()
 
         when (customId) {
-            ComponentsEnum.RADIO_LIST_NEXT.customId, ComponentsEnum.RADIO_LIST_PREVIOUS.customId -> radioListCommand.onInteract(
-                interaction
-            )
-            ComponentsEnum.RADIO_SEARCH_NAME_NEXT.customId, ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS.customId -> radioSearchGroupCommand.onInteract(
-                interaction
-            )
-            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT.customId, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS.customId -> radioSearchGroupCommand.onInteract(
-                interaction
-            )
+            ComponentsEnum.RADIO_LIST_NEXT.customId,
+            ComponentsEnum.RADIO_LIST_PREVIOUS.customId -> radioListCommand.onInteract(interaction)
+            ComponentsEnum.RADIO_SEARCH_NAME_NEXT.customId,
+            ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS.customId -> radioSearchGroupCommand.onInteract(interaction)
+            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT.customId,
+            ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS.customId -> radioSearchGroupCommand.onInteract(interaction)
         }
     }
 

@@ -38,7 +38,11 @@ class ConfigReloadCommand(
             configService.reload()
             Log.info("Configuration reloaded via command by user ${interaction.user.id}")
             response.respond {
-                content = localizationService.getString(LocalizationKeys.CONFIG_RELOAD_SUCCESS, guildId = guildId, discordLocale = discordLocale)
+                content = localizationService.getString(
+                    LocalizationKeys.CONFIG_RELOAD_SUCCESS,
+                    guildId = guildId,
+                    discordLocale = discordLocale
+                )
             }
         } catch (e: Exception) {
             Log.error("Failed to reload config via command", e)

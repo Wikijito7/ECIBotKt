@@ -46,6 +46,8 @@ interface CommandHandlerService {
     suspend fun onAutocomplete(interaction: AutoCompleteInteraction)
 }
 
+// TODO: Consider using a command registry pattern (issue: #detekt-suppress)
+@Suppress("LongParameterList", "ForbiddenComment")
 class CommandHandlerServiceImpl(
     private val playCommand: PlayCommand,
     private val soundCommand: SoundCommand,
@@ -85,6 +87,8 @@ class CommandHandlerServiceImpl(
         configGroupCommand.onRegisterCommand(kord)
     }
 
+    // TODO: Refactor to reduce complexity (issue: #detekt-suppress)
+    @Suppress("CyclomaticComplexMethod", "ForbiddenComment")
     override suspend fun onExecute(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
@@ -126,18 +130,26 @@ class CommandHandlerServiceImpl(
 
         try {
             when (ComponentsEnum.forCustomId(customId)) {
-                ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
+                ComponentsEnum.QUEUE_NEXT,
+                ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
 
-                ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
-                ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> playerCommand.onInteract(
-                    interaction
-                )
+                ComponentsEnum.PLAYER_RESUME,
+                ComponentsEnum.PLAYER_PAUSE,
+                ComponentsEnum.PLAYER_SKIP,
+                ComponentsEnum.PLAYER_DISCONNECT,
+                ComponentsEnum.PLAYER_SHUFFLE,
+                ComponentsEnum.PLAYER_RECONNECT -> playerCommand.onInteract(interaction)
 
-                ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
+                ComponentsEnum.SOUNDS_NEXT,
+                ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
 
-                ComponentsEnum.RADIO_LIST_NEXT, ComponentsEnum.RADIO_LIST_PREVIOUS, ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
-                ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
-                ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS, ComponentsEnum.RADIO_COUNTRYCODES_NEXT,
+                ComponentsEnum.RADIO_LIST_NEXT,
+                ComponentsEnum.RADIO_LIST_PREVIOUS,
+                ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
+                ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS,
+                ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
+                ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS,
+                ComponentsEnum.RADIO_COUNTRYCODES_NEXT,
                 ComponentsEnum.RADIO_COUNTRYCODES_PREVIOUS -> radioGroupCommand.onInteract(interaction)
 
                 null -> Unit

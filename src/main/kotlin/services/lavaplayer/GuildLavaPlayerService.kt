@@ -47,10 +47,11 @@ private const val FIRST_BACK_OFF_DELAY = "250ms"
 private const val MAX_BACK_OFF_DELAY = "2s"
 private const val MAX_BACK_OFF_RETRIES = 5
 private const val UNKNOWN_ERROR = "Unknown error"
-private const val SEEK_UPDATE_DELAY = 3000L
 private const val RECONNECT_DELAY = 500L
 private const val FRAME_TIMEOUT_MS = 20L
 
+// TODO: Consider splitting into smaller classes (issue: #detekt-suppress)
+@Suppress("TooManyFunctions", "ForbiddenComment")
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
     private val textChannel: MessageChannel,
@@ -298,16 +299,6 @@ class GuildLavaPlayerService(
         leaveTimer = null
     }
 
-    private fun startSeekUpdateTimer() {
-        if (playerMessage == null) return
-        resetSeekTimerJob()
-        seekTimerJob = coroutineScope.launch {
-            while (true) {
-                updateSeekChannel.send(Unit)
-                delay(SEEK_UPDATE_DELAY)
-            }
-        }
-    }
     private suspend fun sendNowPlayingMessage(
         discordLocale: Locale?,
         voiceChannelName: String
@@ -446,10 +437,17 @@ class GuildLavaPlayerService(
             message.edit {
                 content = if (playlistUrl?.isValidUrl() == true) {
                     localizationService.getStringFormat(
-                        key = if (addToFront) LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_SONGS_TO_QUEUE_WITH_LINK,
+                        key = if (addToFront) {
+                            LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE_WITH_LINK
+                        } else {
+                            LocalizationKeys.ADDED_SONGS_TO_QUEUE_WITH_LINK
+                        },
                         guildId = guildId,
                         discordLocale = discordLocale,
-                        arguments = arrayOf(playlist.name.toSanitizedMarkdownLink(playlistUrl), playlist.tracks.size)
+                        arguments = arrayOf(
+                            playlist.name.toSanitizedMarkdownLink(playlistUrl),
+                            playlist.tracks.size
+                        )
                     )
                 } else {
                     localizationService.getStringFormat(
@@ -471,14 +469,24 @@ class GuildLavaPlayerService(
             textChannel.createMessage(
                 if (track.info.uri.isValidUrl()) {
                     localizationService.getStringFormat(
-                        key = if (addToFront) LocalizationKeys.NEXT_ADDED_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
+                        key = if (addToFront) {
+                            LocalizationKeys.NEXT_ADDED_TO_QUEUE_WITH_LINK
+                        } else {
+                            LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK
+                        },
                         guildId = guildId,
                         discordLocale = discordLocale,
-                        arguments = arrayOf(currentTrack.getDisplayTrackName().toSanitizedMarkdownLink(track.info.uri))
+                        arguments = arrayOf(
+                            currentTrack.getDisplayTrackName().toSanitizedMarkdownLink(track.info.uri)
+                        )
                     )
                 } else {
                     localizationService.getStringFormat(
-                        key = if (addToFront) LocalizationKeys.NEXT_ADDED_TO_QUEUE else LocalizationKeys.ADDED_TRACK_TO_QUEUE,
+                        key = if (addToFront) {
+                            LocalizationKeys.NEXT_ADDED_TO_QUEUE
+                        } else {
+                            LocalizationKeys.ADDED_TRACK_TO_QUEUE
+                        },
                         guildId = guildId,
                         discordLocale = discordLocale,
                         arguments = arrayOf(currentTrack.getDisplayTrackName())

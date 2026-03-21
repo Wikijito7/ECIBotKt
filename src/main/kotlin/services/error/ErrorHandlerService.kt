@@ -132,8 +132,16 @@ class ErrorHandlerService(
         commandName: String?,
         interactionType: InteractionType
     ) {
-        val guildInfo = if (interaction.data.guildId.value != null) "Guild(${interaction.data.guildId.value})" else "DM"
-        val context = "${interactionType.displayName} Error: ${commandName ?: "Unknown"} | User: ${interaction.user.username} (${interaction.user.id}) | Guild: $guildInfo"
+        val guildInfo = if (interaction.data.guildId.value != null) {
+            "Guild(${interaction.data.guildId.value})"
+        } else {
+            "DM"
+        }
+        val context = listOf(
+            "${interactionType.displayName} Error: ${commandName ?: "Unknown"}",
+            "User: ${interaction.user.username} (${interaction.user.id})",
+            "Guild: $guildInfo"
+        ).joinToString(" | ")
         Log.error(context, exception)
     }
 

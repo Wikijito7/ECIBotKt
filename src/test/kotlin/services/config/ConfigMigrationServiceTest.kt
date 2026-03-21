@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test
 
 class ConfigMigrationServiceTest {
 
+    // TODO: Refactor test to be shorter (issue: #detekt-suppress)
+    @Suppress("LongMethod", "ForbiddenComment")
     @Test
     fun `Given old config without hugging_chat When buildMergedJson is called Then return merged config`() {
         // Given

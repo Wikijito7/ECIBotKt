@@ -16,6 +16,8 @@ import es.wokis.utils.takeIfNotEmpty
 
 private const val PAGINATED_EMBED_COLOR = 0x01B05B
 
+// TODO: Refactor to use data class instead of many parameters (issue: #detekt-suppress)
+@Suppress("LongParameterList", "ForbiddenComment")
 suspend fun AbstractMessageModifyBuilder.createPaginatedEmbedMessage(
     guildId: Snowflake?,
     discordLocale: Locale?,

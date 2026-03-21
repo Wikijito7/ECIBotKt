@@ -20,6 +20,8 @@ class GuildQueueService(
 
     private val guildQueues: MutableMap<Snowflake, GuildLavaPlayerService> = mutableMapOf()
 
+    // TODO: Refactor to reduce throw statements (issue: #detekt-suppress)
+    @Suppress("ThrowsCount", "ForbiddenComment")
     suspend fun getOrCreateLavaPlayerService(interaction: ApplicationCommandInteraction): GuildLavaPlayerService {
         val voiceChannel = interaction.getMemberVoiceChannel(interaction.kord)
             ?: throw BotException.UserException.NotInVoiceChannelException()

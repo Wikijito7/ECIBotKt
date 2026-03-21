@@ -112,7 +112,9 @@ class SoundsCommand(
             val soundName = sound.nameWithoutExtension
             val separator = "$BLANK_SPACE$BLANK_SPACE\n"
             val appendDisplayTrackName = separator.plus(soundName)
-            if (currentString.split(separator).size < MAX_SOUNDS_PER_COLUMN && currentString.length + appendDisplayTrackName.length <= EmbedBuilder.Field.Limits.value) {
+            val withinColumnLimit = currentString.split(separator).size < MAX_SOUNDS_PER_COLUMN
+            val withinLengthLimit = currentString.length + appendDisplayTrackName.length <= EmbedBuilder.Field.Limits.value
+            if (withinColumnLimit && withinLengthLimit) {
                 currentString += appendDisplayTrackName
             } else {
                 displaySounds.add(currentString)

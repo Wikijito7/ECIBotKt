@@ -23,6 +23,8 @@ class AudioPlayerManagerProvider(
     private val configService: ConfigService
 ) {
 
+    // TODO: Refactor to reduce complexity (issue: #detekt-suppress)
+    @Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth", "ForbiddenComment")
     fun createAudioPlayerManager(): AudioPlayerManager = DefaultAudioPlayerManager().apply {
         val config = configService.config
         val trackResolverProviders = buildList {

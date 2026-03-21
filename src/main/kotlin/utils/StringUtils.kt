@@ -4,7 +4,8 @@ import java.net.URLEncoder
 
 private const val URL_ENCODED_SPACE = "+"
 private const val SPACE_UTF_8 = "%20"
-private const val EMOJI_REGEX_PATTERN = "(\\p{IsEmoji_Presentation}|\\p{IsEmoji_Modifier}|\\p{IsEmoji_Modifier_Base}|\\p{IsEmoji_Component}|\\p{IsExtended_Pictographic})+"
+private const val EMOJI_REGEX_PATTERN = "(\\p{IsEmoji_Presentation}|\\p{IsEmoji_Modifier}|" +
+    "\\p{IsEmoji_Modifier_Base}|\\p{IsEmoji_Component}|\\p{IsExtended_Pictographic})+"
 private const val URL_PATTERN_REGEX_PATTERN = "https?://[^\\s]+"
 private val PROBLEMATIC_MARKDOWN_PATTERNS_REGEX = Regex("$EMOJI_REGEX_PATTERN|$URL_PATTERN_REGEX_PATTERN")
 

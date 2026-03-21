@@ -56,7 +56,11 @@ class ConfigGetCommand(
 
         if (section == null || section !in validSections) {
             response.respond {
-                content = localizationService.getString(LocalizationKeys.CONFIG_INVALID_SECTION, guildId = guildId, discordLocale = discordLocale)
+                content = localizationService.getString(
+                    LocalizationKeys.CONFIG_INVALID_SECTION,
+                    guildId = guildId,
+                    discordLocale = discordLocale
+                )
             }
             return
         }

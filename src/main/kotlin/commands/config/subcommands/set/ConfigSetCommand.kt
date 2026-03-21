@@ -62,7 +62,8 @@ class ConfigSetCommand(
         }
     }
 
-    @Suppress("ReturnCount")
+    // TODO: Refactor to reduce complexity (issue: #detekt-suppress)
+    @Suppress("ReturnCount", "LongMethod", "ForbiddenComment")
     override suspend fun onExecute(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
@@ -75,28 +76,44 @@ class ConfigSetCommand(
 
         if (section == null || section !in validSections) {
             response.respond {
-                content = localizationService.getString(LocalizationKeys.CONFIG_INVALID_SECTION, guildId = guildId, discordLocale = discordLocale)
+                content = localizationService.getString(
+                    LocalizationKeys.CONFIG_INVALID_SECTION,
+                    guildId = guildId,
+                    discordLocale = discordLocale
+                )
             }
             return
         }
 
         if (key == null || key !in validSections[section]!!) {
             response.respond {
-                content = localizationService.getString(LocalizationKeys.CONFIG_INVALID_KEY, guildId = guildId, discordLocale = discordLocale)
+                content = localizationService.getString(
+                    LocalizationKeys.CONFIG_INVALID_KEY,
+                    guildId = guildId,
+                    discordLocale = discordLocale
+                )
             }
             return
         }
 
         if (value.isNullOrEmpty()) {
             response.respond {
-                content = localizationService.getString(LocalizationKeys.ERROR_NO_CONTENT_PROVIDED, guildId = guildId, discordLocale = discordLocale)
+                content = localizationService.getString(
+                    LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
+                    guildId = guildId,
+                    discordLocale = discordLocale
+                )
             }
             return
         }
 
         if (section == "discord_bot_token" || (section == "database" && key == "password")) {
             response.respond {
-                content = localizationService.getString(LocalizationKeys.CONFIG_CANNOT_MODIFY_TOKEN, guildId = guildId, discordLocale = discordLocale)
+                content = localizationService.getString(
+                    LocalizationKeys.CONFIG_CANNOT_MODIFY_TOKEN,
+                    guildId = guildId,
+                    discordLocale = discordLocale
+                )
             }
             return
         }

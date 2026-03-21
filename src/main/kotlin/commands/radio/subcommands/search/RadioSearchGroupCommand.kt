@@ -44,7 +44,8 @@ class RadioSearchGroupCommand(
                             LocalizationKeys.RADIO_SEARCH_NAME_INPUT_DESCRIPTION
                         ).values.first()
                     ) {
-                        descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_NAME_INPUT_DESCRIPTION)
+                        descriptionLocalizations =
+                            localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_NAME_INPUT_DESCRIPTION)
                         required = true
                     }
                 }
@@ -54,14 +55,16 @@ class RadioSearchGroupCommand(
                         LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_COMMAND_DESCRIPTION
                     ).values.first()
                 ) {
-                    descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_COMMAND_DESCRIPTION)
+                    descriptionLocalizations =
+                        localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_COMMAND_DESCRIPTION)
                     string(
                         "countrycode",
                         localizationService.getLocalizations(
                             LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_INPUT_DESCRIPTION
                         ).values.first()
                     ) {
-                        descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_INPUT_DESCRIPTION)
+                        descriptionLocalizations =
+                            localizationService.getLocalizations(LocalizationKeys.RADIO_SEARCH_COUNTRYCODE_INPUT_DESCRIPTION)
                         required = true
                         autocomplete = true
                     }
