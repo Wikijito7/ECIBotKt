@@ -5,7 +5,6 @@ import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.SubCommand
 import es.wokis.commands.CommandName
-import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import io.mockk.coEvery
 import io.mockk.coJustRun

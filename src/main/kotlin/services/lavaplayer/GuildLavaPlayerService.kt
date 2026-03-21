@@ -85,7 +85,7 @@ class GuildLavaPlayerService(
 
     init {
         coroutineScope.launch {
-            for (_ in updateSeekChannel) {
+            for (ignored in updateSeekChannel) {
                 updatePlayerEmbed()
             }
         }

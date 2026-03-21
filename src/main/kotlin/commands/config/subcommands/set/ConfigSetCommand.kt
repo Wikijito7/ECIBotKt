@@ -85,7 +85,7 @@ class ConfigSetCommand(
             return
         }
 
-        if (key == null || key !in validSections[section]!!) {
+        if (key == null || validSections[section]?.contains(key) != true) {
             response.respond {
                 content = localizationService.getString(
                     LocalizationKeys.CONFIG_INVALID_KEY,
@@ -119,7 +119,7 @@ class ConfigSetCommand(
         }
 
         try {
-            updateConfigValue(section, key, value!!)
+            updateConfigValue(section, key, value)
             configService.reload()
             Log.info("Config updated via command: $section.$key = $value by user ${interaction.user.id}")
             response.respond {
@@ -138,7 +138,8 @@ class ConfigSetCommand(
         }
     }
 
-    private fun updateConfigValue(section: String, key: String, value: String) {
+    private fun updateConfigValue(section: String, key: String, value: String?) {
+        check(!value.isNullOrEmpty()) { "Value cannot be null or empty" }
         val configFile = File(CONFIG_PATH)
         val json = Json { prettyPrint = true }
         val configJson = json.parseToJsonElement(configFile.readText()) as JsonObject

@@ -50,6 +50,8 @@ class ConfigGroupCommand(
         }
     }
 
+    // Config commands don't handle button interactions, only slash commands
+    @Suppress("EmptyFunctionBlock")
     override suspend fun onInteract(interaction: dev.kord.core.entity.interaction.ComponentInteraction) = Unit
 
     override suspend fun onAutoComplete(interaction: AutoCompleteInteraction) {

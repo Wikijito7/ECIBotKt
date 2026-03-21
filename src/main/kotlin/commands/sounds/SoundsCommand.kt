@@ -68,7 +68,7 @@ class SoundsCommand(
                 title = title,
                 description = description,
                 currentPage = 1,
-                columns = columns,
+                columns = SOUNDS_COLUMNS,
                 currentPageContent = currentPageContent,
                 pageCount = pageCount,
                 previousButtonCustomId = ComponentsEnum.SOUNDS_PREVIOUS.customId,
@@ -96,8 +96,7 @@ class SoundsCommand(
             currentPage = currentPage,
             soundsCount = sounds.size,
             displaySoundsPage = displaySoundsPage,
-            pageCount = pageCount,
-            columns = columns
+            pageCount = pageCount
         )
     }
 
@@ -134,8 +133,7 @@ class SoundsCommand(
         currentPage: Int,
         soundsCount: Int,
         displaySoundsPage: List<String>?,
-        pageCount: Int,
-        columns: Int
+        pageCount: Int
     ) {
         val title = localizationService.getString(
             key = LocalizationKeys.SOUNDS_EMBED_TITLE,
@@ -156,7 +154,7 @@ class SoundsCommand(
                 title = title,
                 description = description,
                 currentPage = currentPage,
-                columns = columns,
+                columns = SOUNDS_COLUMNS,
                 currentPageContent = displaySoundsPage,
                 pageCount = pageCount,
                 previousButtonCustomId = ComponentsEnum.SOUNDS_PREVIOUS.customId,

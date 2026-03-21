@@ -2,7 +2,6 @@ package es.wokis.commands.config
 
 import dev.kord.common.Locale
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
-import es.wokis.commands.config.ConfigReloadCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.config.ConfigService
 import es.wokis.services.localization.LocalizationService
