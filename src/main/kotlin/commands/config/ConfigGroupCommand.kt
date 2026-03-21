@@ -5,13 +5,13 @@ import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteract
 import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
-import dev.kord.core.entity.interaction.SubCommand as KordSubCommand
 import es.wokis.commands.Autocomplete
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
 import es.wokis.commands.GroupCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
+import dev.kord.core.entity.interaction.SubCommand as KordSubCommand
 
 class ConfigGroupCommand(
     private val configReloadCommand: ConfigReloadCommand,

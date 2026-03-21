@@ -17,21 +17,21 @@ class ConfigMigrationService(private val json: Json) {
 
     fun migrateConfig(configFile: File): Config {
         Log.info("Starting config migration...")
-        
+
         if (!configFile.exists()) {
             throw IllegalStateException("Config file not found at ${configFile.absolutePath}")
         }
 
         val oldConfigJson = configFile.readText()
-        
+
         backupConfig(oldConfigJson)
-        
+
         val migratedJson = migrateJson(oldConfigJson)
-        
+
         configFile.writeText(migratedJson)
-        
+
         Log.info("Config migration completed successfully.")
-        
+
         return json.decodeFromString<Config>(migratedJson)
     }
 
@@ -43,7 +43,7 @@ class ConfigMigrationService(private val json: Json) {
 
         val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
         val backupFile = File("$ARCHIVE_PATH/config-$timestamp.json")
-        
+
         backupFile.writeText(configContent)
         Log.info("Config backed up to: ${backupFile.absolutePath}")
     }
@@ -53,7 +53,7 @@ class ConfigMigrationService(private val json: Json) {
         val oldJson = json.parseToJsonElement(oldJsonString) as JsonObject
 
         val migratedObject = JsonObjectBuilder.buildMergedJson(oldJson, templateJson)
-        
+
         return json.encodeToString(
             JsonObject.serializer(),
             migratedObject
@@ -63,7 +63,7 @@ class ConfigMigrationService(private val json: Json) {
     private fun getTemplateJson(): JsonObject {
         val templateStream = {}::class.java.getResourceAsStream(CONFIG_TEMPLATE_PATH)
             ?: throw IllegalStateException("Config template not found")
-        
+
         return json.parseToJsonElement(templateStream.bufferedReader().use { it.readText() }) as JsonObject
     }
 }
@@ -80,9 +80,11 @@ object JsonObjectBuilder {
                 oldValue == null -> {
                     result[key] = templateValue
                 }
+
                 templateValue is JsonObject && oldValue is JsonObject -> {
                     result[key] = mergeObject(oldValue, templateValue)
                 }
+
                 else -> {
                     result[key] = oldValue
                 }
@@ -109,12 +111,15 @@ object JsonObjectBuilder {
                         result[key] = templateValue
                     }
                 }
+
                 templateValue is JsonObject && oldValue is JsonObject -> {
                     result[key] = mergeObject(oldValue, templateValue)
                 }
+
                 templateValue is JsonArray && oldValue is JsonArray -> {
                     result[key] = mergeArray(oldValue, templateValue)
                 }
+
                 else -> {
                     result[key] = oldValue
                 }
@@ -134,11 +139,13 @@ object JsonObjectBuilder {
                         return true
                     }
                 }
+
                 is JsonObject -> {
                     if (hasNonEmptyValues(value)) {
                         return true
                     }
                 }
+
                 is JsonArray -> {
                     if (value.isNotEmpty()) {
                         return true
@@ -149,7 +156,5 @@ object JsonObjectBuilder {
         return false
     }
 
-    private fun mergeArray(oldArray: JsonArray, templateArray: JsonArray): JsonArray {
-        return oldArray
-    }
+    private fun mergeArray(oldArray: JsonArray, templateArray: JsonArray): JsonArray = oldArray
 }

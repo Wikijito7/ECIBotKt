@@ -139,9 +139,11 @@ class ConfigSetCommand(
             }
         )
 
-        configFile.writeText(json.encodeToString(
-            JsonObject.serializer(),
-            updatedConfigJson
-        ))
+        configFile.writeText(
+            json.encodeToString(
+                JsonObject.serializer(),
+                updatedConfigJson
+            )
+        )
     }
 }

@@ -36,9 +36,7 @@ class ConfigService(
         }
     }
 
-    fun reload(): Config {
-        return loadFromFile()
-    }
+    fun reload(): Config = loadFromFile()
 
 }
 

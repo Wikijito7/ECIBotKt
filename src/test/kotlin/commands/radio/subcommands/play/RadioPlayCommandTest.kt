@@ -164,11 +164,15 @@ class RadioPlayCommandTest {
                 countryCode = "ES"
             )
         )
-        val interaction = mockk<AutoCompleteInteraction>(relaxed = true) {
+        val interaction = mockk<AutoCompleteInteraction> {
             every { kord } returns mockedKord
             every { id } returns Snowflake(123456789)
             every { token } returns "test-token"
             every { command.strings["radio"] } returns input
+            every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         coEvery {
@@ -187,11 +191,15 @@ class RadioPlayCommandTest {
     @Test
     fun `Given autocomplete with empty input When onAutoComplete Then return empty list`() = runTest {
         // Given
-        val interaction = mockk<AutoCompleteInteraction>(relaxed = true) {
+        val interaction = mockk<AutoCompleteInteraction> {
             every { kord } returns mockedKord
             every { id } returns Snowflake(123456789)
             every { token } returns "test-token"
             every { command.strings["radio"] } returns ""
+            every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         // When
