@@ -101,7 +101,7 @@ class ConfigGetCommand(
 
         return sectionKeys.joinToString("\n") { key ->
             val value = configMap[key]
-            val displayValue = if (isSensitiveKey(section, key)) MASKED_VALUE else value.toString()
+            val displayValue = if (isSensitiveKey(key)) MASKED_VALUE else value.toString()
             "$key: $displayValue"
         }
     }

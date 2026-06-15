@@ -117,7 +117,7 @@ class ConfigSetCommand(
 
         when (val result = configService.updateConfigValue(section, key, value)) {
             is RemoteResponse.Success -> {
-                Log.info("Config updated via command: $section.$key = $value by user ${interaction.user.id}")
+                Log.info("Config updated via command: $section.$key by user ${interaction.user.id}")
                 response.respond {
                     content = localizationService.getStringFormat(
                         LocalizationKeys.CONFIG_SET_SUCCESS,

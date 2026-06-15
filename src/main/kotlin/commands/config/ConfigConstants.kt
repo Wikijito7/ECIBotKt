@@ -11,5 +11,5 @@ val CONFIG_VALID_SECTIONS = mapOf(
 
 val CONFIG_SENSITIVE_KEYS = listOf("password", "token", "secret", "key")
 
-fun isSensitiveKey(section: String, key: String): Boolean =
+fun isSensitiveKey(key: String): Boolean =
     CONFIG_SENSITIVE_KEYS.any { key.lowercase().contains(it) }
