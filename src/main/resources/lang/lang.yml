@@ -118,8 +118,8 @@ config_set_value_description: New value
 config_set_success: Config %s updated to: %s
 config_get_command_description: Get configuration section
 config_get_section_description: Configuration section to display
-config_get_success: Configuration section retrieved
-config_get_display: "%s: %s"
+config_get_display: "%s:\n%s"
 config_invalid_section: Invalid section. Valid sections: database, youtube, deezer, spotify, tidal, kokoro
 config_invalid_key: Invalid key for the selected section
 config_cannot_modify_token: You cannot modify this value
+config_auth_required: Only the bot owner can use this command

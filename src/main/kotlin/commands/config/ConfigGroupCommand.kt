@@ -7,7 +7,6 @@ import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import es.wokis.commands.Autocomplete
 import es.wokis.commands.CommandName
-import es.wokis.commands.Component
 import es.wokis.commands.GroupCommand
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
@@ -18,7 +17,7 @@ class ConfigGroupCommand(
     private val configSetCommand: ConfigSetCommand,
     private val configGetCommand: ConfigGetCommand,
     private val localizationService: LocalizationService
-) : GroupCommand, Component, Autocomplete {
+) : GroupCommand, Autocomplete {
 
     override suspend fun onRegisterCommand(kord: Kord) {
         kord.createGlobalChatInputCommand(
@@ -49,10 +48,6 @@ class ConfigGroupCommand(
             content = localizationService.getString(LocalizationKeys.ERROR_UNEXPECTED, guildId = guildId, discordLocale = discordLocale)
         }
     }
-
-    // Config commands don't handle button interactions, only slash commands
-    @Suppress("EmptyFunctionBlock")
-    override suspend fun onInteract(interaction: dev.kord.core.entity.interaction.ComponentInteraction) = Unit
 
     override suspend fun onAutoComplete(interaction: AutoCompleteInteraction) {
         val subCommandName = (interaction.command as? KordSubCommand)?.name

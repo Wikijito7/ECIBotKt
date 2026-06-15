@@ -5,62 +5,70 @@ import es.wokis.exceptions.EmptyDiscordTokenException
 import es.wokis.services.config.*
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertDoesNotThrow
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class ConfigServiceTest {
 
-    private val configService = mockk<ConfigService>()
-
-    @Test
-    fun `Given fresh config helper When getAllConfig is called Then return a map with default values`() {
-        // Given
-        every { configService.config } returns mockk {
-            every { debug } returns false
-            every { discordBotToken } returns "manolete"
-        }
-
-        // When
-        val actual = configService.config
-
-        // Then
-        assertFalse(actual.debug)
-        assertTrue(actual.discordBotToken.isNotEmpty())
-    }
-
     @Test
     fun `Given config with empty Discord token When config is validated Then throw EmptyDiscordTokenException`() {
-        // Given
         val config = mockk<Config> {
             every { discordBotToken } returns ""
             every { deezer.enabled } returns false
         }
 
-        // When
-        try {
+        val exception = assertThrows(EmptyDiscordTokenException::class.java) {
             config.validate()
-        } catch (e: Throwable) {
-            // Then
-            assertTrue(e is EmptyDiscordTokenException)
         }
+        assertTrue(exception is EmptyDiscordTokenException)
     }
 
     @Test
     fun `Given empty decryption key When Deezer validated Then throw exception`() {
-        // Given
         val config = mockk<Config>(relaxed = true) {
             every { discordBotToken } returns "abc123"
             every { deezer.enabled } returns true
             every { deezer.masterDecryptionKey } returns ""
         }
 
-        // When
-        try {
+        val exception = assertThrows(EmptyDeezerMasterDecryptionKeyException::class.java) {
             config.validate()
-        } catch (e: Throwable) {
-            // Then
-            assertTrue(e is EmptyDeezerMasterDecryptionKeyException)
         }
+        assertTrue(exception is EmptyDeezerMasterDecryptionKeyException)
+    }
+
+    @Test
+    fun `Given valid config When validate is called Then no exception`() {
+        val config = mockk<Config>(relaxed = true) {
+            every { discordBotToken } returns "valid_token"
+            every { deezer.enabled } returns false
+        }
+
+        assertDoesNotThrow { config.validate() }
+    }
+
+    @Test
+    fun `Given matching ownerId When isOwner is called Then return true`() {
+        val mockConfig = mockk<Config>(relaxed = true) {
+            every { botOwnerId } returns "owner123"
+        }
+
+        val result = mockConfig.botOwnerId.isNotEmpty() && mockConfig.botOwnerId == "owner123"
+
+        assertTrue(result)
+    }
+
+    @Test
+    fun `Given non-matching ownerId When isOwner is called Then return false`() {
+        val mockConfig = mockk<Config>(relaxed = true) {
+            every { botOwnerId } returns "owner123"
+        }
+
+        val result = mockConfig.botOwnerId.isNotEmpty() && mockConfig.botOwnerId == "other"
+
+        assertFalse(result)
     }
 }

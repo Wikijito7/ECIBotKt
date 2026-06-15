@@ -7,6 +7,7 @@ import dev.kord.rest.builder.interaction.GlobalChatInputCreateBuilder
 import dev.kord.rest.builder.interaction.subCommand
 import es.wokis.commands.CommandName
 import es.wokis.commands.SubCommand
+import es.wokis.data.response.RemoteResponse
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.config.ConfigService
 import es.wokis.services.localization.LocalizationService
@@ -34,20 +35,39 @@ class ConfigReloadCommand(
     ) {
         val guildId = interaction.data.guildId.value
         val discordLocale = interaction.guildLocale
-        try {
-            configService.reload()
-            Log.info("Configuration reloaded via command by user ${interaction.user.id}")
+        val userId = interaction.user.id.value.toString()
+
+        if (!configService.isOwner(userId)) {
             response.respond {
                 content = localizationService.getString(
-                    LocalizationKeys.CONFIG_RELOAD_SUCCESS,
+                    LocalizationKeys.CONFIG_AUTH_REQUIRED,
                     guildId = guildId,
                     discordLocale = discordLocale
                 )
             }
-        } catch (e: Exception) {
-            Log.error("Failed to reload config via command", e)
-            response.respond {
-                content = localizationService.getString(LocalizationKeys.ERROR_UNEXPECTED, guildId = guildId, discordLocale = discordLocale)
+            return
+        }
+
+        when (val result = configService.reload()) {
+            is RemoteResponse.Success -> {
+                Log.info("Configuration reloaded via command by user ${interaction.user.id}")
+                response.respond {
+                    content = localizationService.getString(
+                        LocalizationKeys.CONFIG_RELOAD_SUCCESS,
+                        guildId = guildId,
+                        discordLocale = discordLocale
+                    )
+                }
+            }
+            is RemoteResponse.Error -> {
+                Log.error("Failed to reload config via command: ${result.error.errorMessage}")
+                response.respond {
+                    content = localizationService.getString(
+                        LocalizationKeys.ERROR_UNEXPECTED,
+                        guildId = guildId,
+                        discordLocale = discordLocale
+                    )
+                }
             }
         }
     }

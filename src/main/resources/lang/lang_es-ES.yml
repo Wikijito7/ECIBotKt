@@ -113,11 +113,11 @@ config_set_value_description: Nuevo valor
 config_set_success: Config %s actualizado a: %s
 config_get_command_description: Obtener sección de configuración
 config_get_section_description: Sección de configuración a mostrar
-config_get_success: Sección de configuración obtenida
-config_get_display: "%s: %s"
+config_get_display: "%s:\n%s"
 config_invalid_section: Sección inválida. Secciones válidas: database, youtube, deezer, spotify, tidal, kokoro
 config_invalid_key: Clave inválida para la sección seleccionada
 config_cannot_modify_token: No puedes modificar este valor
+config_auth_required: Solo el dueño del bot puede usar este comando
 locale_command_description: Establecer el idioma preferido para este servidor
 locale_command_input_description: Idioma a establecer (usa el autocompletado para ver las opciones disponibles)
 locale_command_success: El idioma del servidor se ha establecido a %s

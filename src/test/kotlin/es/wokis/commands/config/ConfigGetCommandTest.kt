@@ -27,8 +27,7 @@ class ConfigGetCommandTest {
     )
 
     @Test
-    fun `Given valid section When onExecute Then display config`() = runTest {
-        // Given
+    fun `Given valid section When onExecute Then display config with masked sensitive values`() = runTest {
         val mockConfig = createMockConfig()
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
@@ -49,23 +48,57 @@ class ConfigGetCommandTest {
             )
         } returns "Database config displayed"
 
-        // When
         configGetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getStringFormat(
                 LocalizationKeys.CONFIG_GET_DISPLAY,
                 guildId = null,
                 discordLocale = Locale.ENGLISH_UNITED_STATES,
-                arguments = arrayOf("database", mockConfig.database.toString())
+                arguments = arrayOf("database", "enabled: true\nusername: testuser\npassword: ****\ndatabase: testdb")
+            )
+        }
+    }
+
+    @Test
+    fun `Given sensitive section When onExecute Then mask token fields`() = runTest {
+        val mockConfig = createMockConfig()
+        val interaction = mockk<ChatInputCommandInteraction> {
+            every { kord } returns mockedKord
+            every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
+            every { command.strings["section"] } returns "deezer"
+        }
+
+        every { configService.config } returns mockConfig
+        coEvery {
+            localizationService.getStringFormat(
+                LocalizationKeys.CONFIG_GET_DISPLAY,
+                any(),
+                any(),
+                *anyVararg()
+            )
+        } returns "Deezer config displayed"
+
+        configGetCommand.onExecute(interaction, mockedResponse)
+
+        coVerify(exactly = 1) {
+            localizationService.getStringFormat(
+                LocalizationKeys.CONFIG_GET_DISPLAY,
+                guildId = null,
+                discordLocale = Locale.ENGLISH_UNITED_STATES,
+                arguments = arrayOf(
+                    "deezer",
+                    "enabled: true\nmaster_decryption_key: ****\narl_token: ****"
+                )
             )
         }
     }
 
     @Test
     fun `Given invalid section When onExecute Then show error`() = runTest {
-        // Given
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
@@ -83,10 +116,8 @@ class ConfigGetCommandTest {
             )
         } returns "Invalid section provided"
 
-        // When
         configGetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_SECTION,
@@ -98,7 +129,6 @@ class ConfigGetCommandTest {
 
     @Test
     fun `Given null section When onExecute Then show error`() = runTest {
-        // Given
         val interaction = mockk<ChatInputCommandInteraction> {
             every { kord } returns mockedKord
             every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
@@ -116,10 +146,8 @@ class ConfigGetCommandTest {
             )
         } returns "Invalid section provided"
 
-        // When
         configGetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_SECTION,
@@ -131,7 +159,6 @@ class ConfigGetCommandTest {
 
     @Test
     fun `Given autocomplete with empty input When onAutoComplete Then completes successfully`() = runTest {
-        // Given
         val interaction = mockk<AutoCompleteInteraction> {
             every { kord } returns mockedKord
             every { command.strings["section"] } returns ""
@@ -139,13 +166,11 @@ class ConfigGetCommandTest {
             every { id } returns mockk()
         }
 
-        // When & Then - should complete without exception
         configGetCommand.onAutoComplete(interaction)
     }
 
     @Test
     fun `Given autocomplete with partial input When onAutoComplete Then completes successfully`() = runTest {
-        // Given
         val interaction = mockk<AutoCompleteInteraction> {
             every { kord } returns mockedKord
             every { command.strings["section"] } returns "sp"
@@ -153,13 +178,11 @@ class ConfigGetCommandTest {
             every { id } returns mockk()
         }
 
-        // When & Then - should complete without exception
         configGetCommand.onAutoComplete(interaction)
     }
 
     @Test
     fun `Given autocomplete with no matches When onAutoComplete Then completes successfully`() = runTest {
-        // Given
         val interaction = mockk<AutoCompleteInteraction> {
             every { kord } returns mockedKord
             every { command.strings["section"] } returns "xyz"
@@ -167,13 +190,13 @@ class ConfigGetCommandTest {
             every { id } returns mockk()
         }
 
-        // When & Then - should complete without exception
         configGetCommand.onAutoComplete(interaction)
     }
 
     private fun createMockConfig(): Config {
         return Config(
             discordBotToken = "test-token",
+            botOwnerId = "owner123",
             debug = false,
             database = es.wokis.services.config.DatabaseConfig(
                 enabled = true,

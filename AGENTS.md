@@ -1,4 +1,4 @@
-# ECIBotKt - Copilot Instructions
+# ECIBotKt - AGENTS.md
 
 ## Project Overview
 
@@ -10,7 +10,6 @@
 - **JDK**: Java 17
 - **Architecture**: Clean Architecture with Koin DI
 - **Discord Library**: Kord (currently using local SNAPSHOT JARs for voice encryption support)
-- **Test Coverage**: 148 tests, all passing
 
 ### Main Features
 - **Music**: YouTube, SoundCloud, Spotify via Lavaplayer
@@ -54,13 +53,13 @@ src/main/kotlin/es/wokis/
 Kord is loaded from `libs/` folder due to using a SNAPSHOT version with voice encryption:
 - 12 JAR files in `libs/` directory
 - Transitive dependencies manually configured: `kotlinx-datetime`, `kord-cache`, `ktor-client-okhttp`
-- See `dependencies.instructions.md` for details
+- See `dependencies` skill for details
 
 #### In-Memory Caching
 Country codes are cached for 1 hour to reduce API calls:
 - 75x performance improvement (150ms → 2ms)
 - Cache clears on bot restart
-- See `discord-integration.instructions.md` for implementation
+- See `discord-integration` skill for implementation
 
 ### Code Quality
 - **detekt**: Strict code style enforcement
@@ -71,14 +70,27 @@ Country codes are cached for 1 hour to reduce API calls:
 ### Testing Strategy
 - **Framework**: Kotlin Test with Mockk
 - **Pattern**: Mock external dependencies (Discord API, HTTP clients)
-- **Coverage**: 148 tests covering main functionality
 - **CI**: Tests run on every PR via GitHub Actions
+
+## Skills Reference
+
+Skills in `.agents/skills/` provide workflow-level guidance. Load them when working on related tasks:
+
+| Skill | When to Load |
+|-------|-------------|
+| `architecture` | Adding new commands, services, or features |
+| `code-quality` | ALL code changes (detekt compliance) |
+| `dependencies` | Adding/updating dependencies or troubleshooting class errors |
+| `discord-integration` | Adding new Discord commands (8-step checklist) |
+| `localization` | Adding user-facing strings or new languages |
+| `quality-check` | BEFORE opening any PR (build + detekt + tests + coverage gates) |
+| `testing` | Writing tests or debugging test failures |
 
 ## Working with This Project
 
 ### Before Starting
 1. Read `.memory/STATUS.md` for current project state
-2. Check `.github/instructions/` for topic-specific guidance
+2. Load the appropriate skill for your task from `.agents/skills/`
 3. Verify Java 17 is installed
 4. Ensure Discord bot token is configured
 
@@ -89,20 +101,13 @@ Country codes are cached for 1 hour to reduce API calls:
 - **Coverage**: `./gradlew jacocoTestReport`
 
 ### Adding New Features
-1. Follow clean architecture patterns
-2. Use Koin for dependency injection
-3. Add localization keys for all user-facing strings
-4. Write tests for new functionality
-5. Ensure detekt compliance
-
-## Related Documentation
-
-- **Architecture**: `.github/instructions/architecture.instructions.md`
-- **Dependencies**: `.github/instructions/dependencies.instructions.md`
-- **Discord Integration**: `.github/instructions/discord-integration.instructions.md`
-- **Testing**: `.github/instructions/testing.instructions.md`
-- **Localization**: `.github/instructions/localization.instructions.md`
-- **Code Style**: `.github/instructions/code-style.instructions.md`
+1. Load `architecture` and `discord-integration` skills
+2. Follow clean architecture patterns
+3. Use Koin for dependency injection
+4. Add localization keys for all user-facing strings (load `localization` skill)
+5. Write tests for new functionality (load `testing` skill)
+6. Ensure detekt compliance (load `code-quality` skill)
+7. Run quality gates before PR (load `quality-check` skill)
 
 ## Important Notes
 
@@ -111,3 +116,9 @@ Country codes are cached for 1 hour to reduce API calls:
 - Audio features require voice channel permissions
 - Guild-specific state is isolated by guild ID
 - Configuration via JSON files in `src/main/resources/`
+
+## Memory Bank
+
+See `.memory/` for past learnings and project state:
+- `.memory/STATUS.md` — current project state
+- `.memory/learning/` — historical learnings and decisions

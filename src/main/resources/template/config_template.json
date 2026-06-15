@@ -1,5 +1,6 @@
 {
   "discord_bot_token": "",
+  "bot_owner_id": "",
   "debug": false,
   "database": {
     "enabled": false,

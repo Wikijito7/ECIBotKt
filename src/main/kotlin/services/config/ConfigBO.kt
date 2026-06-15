@@ -7,6 +7,8 @@ import kotlinx.serialization.Serializable
 data class Config(
     @SerialName("discord_bot_token")
     val discordBotToken: String,
+    @SerialName("bot_owner_id")
+    val botOwnerId: String,
     @SerialName("debug")
     val debug: Boolean,
     @SerialName("database")
@@ -58,7 +60,7 @@ data class DeezerConfig(
     @SerialName("master_decryption_key")
     val masterDecryptionKey: String,
     @SerialName("arl_token")
-    val arlToken: String,
+    val arlToken: String
 )
 
 @Serializable

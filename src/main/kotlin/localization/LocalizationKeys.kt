@@ -121,9 +121,9 @@ object LocalizationKeys {
     const val CONFIG_SET_SUCCESS = "config_set_success"
     const val CONFIG_GET_COMMAND_DESCRIPTION = "config_get_command_description"
     const val CONFIG_GET_SECTION_DESCRIPTION = "config_get_section_description"
-    const val CONFIG_GET_SUCCESS = "config_get_success"
     const val CONFIG_GET_DISPLAY = "config_get_display"
     const val CONFIG_INVALID_SECTION = "config_invalid_section"
     const val CONFIG_INVALID_KEY = "config_invalid_key"
     const val CONFIG_CANNOT_MODIFY_TOKEN = "config_cannot_modify_token"
+    const val CONFIG_AUTH_REQUIRED = "config_auth_required"
 }

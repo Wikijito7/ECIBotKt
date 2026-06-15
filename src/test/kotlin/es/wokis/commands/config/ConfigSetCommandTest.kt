@@ -1,7 +1,10 @@
 package es.wokis.commands.config
 
 import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
+import es.wokis.data.response.ErrorType
+import es.wokis.data.response.RemoteResponse
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.config.ConfigService
 import es.wokis.services.localization.LocalizationService
@@ -28,20 +31,76 @@ class ConfigSetCommandTest {
         localizationService = localizationService
     )
 
-    // Note: The success path test (Given valid section/key/value) is omitted
-    // because updateConfigValue() is a private method that reads from a file.
-    // Testing this would require file system setup or refactoring.
-    // All error paths are tested below.
+    @Test
+    fun `Given valid section key and value When onExecute Then update config successfully`() = runTest {
+        val interaction = createMockInteraction(
+            section = "database",
+            key = "username",
+            value = "newuser"
+        )
+
+        every { configService.isOwner(any()) } returns true
+        every {
+            configService.updateConfigValue("database", "username", "newuser")
+        } returns RemoteResponse.Success(Unit)
+        coEvery {
+            localizationService.getStringFormat(
+                LocalizationKeys.CONFIG_SET_SUCCESS,
+                guildId = null,
+                discordLocale = Locale.ENGLISH_UNITED_STATES,
+                arguments = arrayOf("database.username", "newuser")
+            )
+        } returns "Config database.username updated to: newuser"
+
+        configSetCommand.onExecute(interaction, mockedResponse)
+
+        coVerify(exactly = 1) {
+            localizationService.getStringFormat(
+                LocalizationKeys.CONFIG_SET_SUCCESS,
+                guildId = null,
+                discordLocale = Locale.ENGLISH_UNITED_STATES,
+                arguments = arrayOf("database.username", "newuser")
+            )
+        }
+    }
+
+    @Test
+    fun `Given non-owner user When onExecute Then show auth error`() = runTest {
+        val interaction = createMockInteraction(
+            section = "database",
+            key = "username",
+            value = "newuser"
+        )
+
+        every { configService.isOwner(any()) } returns false
+        coEvery {
+            localizationService.getString(
+                LocalizationKeys.CONFIG_AUTH_REQUIRED,
+                guildId = null,
+                discordLocale = Locale.ENGLISH_UNITED_STATES
+            )
+        } returns "Only the bot owner can use this command"
+
+        configSetCommand.onExecute(interaction, mockedResponse)
+
+        coVerify(exactly = 1) {
+            localizationService.getString(
+                LocalizationKeys.CONFIG_AUTH_REQUIRED,
+                guildId = null,
+                discordLocale = Locale.ENGLISH_UNITED_STATES
+            )
+        }
+    }
 
     @Test
     fun `Given invalid section When onExecute Then show invalid section error`() = runTest {
-        // Given
         val interaction = createMockInteraction(
             section = "invalidsection",
             key = "enabled",
             value = "true"
         )
 
+        every { configService.isOwner(any()) } returns true
         coEvery {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_SECTION,
@@ -50,10 +109,8 @@ class ConfigSetCommandTest {
             )
         } returns "Invalid section"
 
-        // When
         configSetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_SECTION,
@@ -65,13 +122,13 @@ class ConfigSetCommandTest {
 
     @Test
     fun `Given null section When onExecute Then show invalid section error`() = runTest {
-        // Given
         val interaction = createMockInteraction(
             section = null,
             key = "enabled",
             value = "true"
         )
 
+        every { configService.isOwner(any()) } returns true
         coEvery {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_SECTION,
@@ -80,10 +137,8 @@ class ConfigSetCommandTest {
             )
         } returns "Invalid section"
 
-        // When
         configSetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_SECTION,
@@ -95,13 +150,13 @@ class ConfigSetCommandTest {
 
     @Test
     fun `Given invalid key for section When onExecute Then show invalid key error`() = runTest {
-        // Given
         val interaction = createMockInteraction(
             section = "database",
             key = "invalidkey",
             value = "true"
         )
 
+        every { configService.isOwner(any()) } returns true
         coEvery {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_KEY,
@@ -110,10 +165,8 @@ class ConfigSetCommandTest {
             )
         } returns "Invalid key"
 
-        // When
         configSetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_KEY,
@@ -125,13 +178,13 @@ class ConfigSetCommandTest {
 
     @Test
     fun `Given null key for section When onExecute Then show invalid key error`() = runTest {
-        // Given
         val interaction = createMockInteraction(
             section = "database",
             key = null,
             value = "true"
         )
 
+        every { configService.isOwner(any()) } returns true
         coEvery {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_KEY,
@@ -140,10 +193,8 @@ class ConfigSetCommandTest {
             )
         } returns "Invalid key"
 
-        // When
         configSetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_KEY,
@@ -155,13 +206,13 @@ class ConfigSetCommandTest {
 
     @Test
     fun `Given empty value When onExecute Then show no content error`() = runTest {
-        // Given
         val interaction = createMockInteraction(
             section = "database",
             key = "username",
             value = ""
         )
 
+        every { configService.isOwner(any()) } returns true
         coEvery {
             localizationService.getString(
                 LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
@@ -170,10 +221,8 @@ class ConfigSetCommandTest {
             )
         } returns "No content provided"
 
-        // When
         configSetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getString(
                 LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
@@ -185,13 +234,13 @@ class ConfigSetCommandTest {
 
     @Test
     fun `Given null value When onExecute Then show no content error`() = runTest {
-        // Given
         val interaction = createMockInteraction(
             section = "database",
             key = "username",
             value = null
         )
 
+        every { configService.isOwner(any()) } returns true
         coEvery {
             localizationService.getString(
                 LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
@@ -200,10 +249,8 @@ class ConfigSetCommandTest {
             )
         } returns "No content provided"
 
-        // When
         configSetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getString(
                 LocalizationKeys.ERROR_NO_CONTENT_PROVIDED,
@@ -214,14 +261,14 @@ class ConfigSetCommandTest {
     }
 
     @Test
-    fun `Given discord_bot_token as section When onExecute Then show invalid section error`() = runTest {
-        // Given
+    fun `Given discord_bot_token When onExecute Then show invalid section error`() = runTest {
         val interaction = createMockInteraction(
             section = "discord_bot_token",
             key = "token",
             value = "newtoken"
         )
 
+        every { configService.isOwner(any()) } returns true
         coEvery {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_SECTION,
@@ -230,10 +277,8 @@ class ConfigSetCommandTest {
             )
         } returns "Invalid section"
 
-        // When
         configSetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getString(
                 LocalizationKeys.CONFIG_INVALID_SECTION,
@@ -245,13 +290,13 @@ class ConfigSetCommandTest {
 
     @Test
     fun `Given database password key When onExecute Then show cannot modify error`() = runTest {
-        // Given
         val interaction = createMockInteraction(
             section = "database",
             key = "password",
             value = "newpassword"
         )
 
+        every { configService.isOwner(any()) } returns true
         coEvery {
             localizationService.getString(
                 LocalizationKeys.CONFIG_CANNOT_MODIFY_TOKEN,
@@ -260,10 +305,8 @@ class ConfigSetCommandTest {
             )
         } returns "Cannot modify token"
 
-        // When
         configSetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getString(
                 LocalizationKeys.CONFIG_CANNOT_MODIFY_TOKEN,
@@ -274,14 +317,17 @@ class ConfigSetCommandTest {
     }
 
     @Test
-    fun `Given exception during reload When onExecute Then show unexpected error`() = runTest {
-        // Given
+    fun `Given error response from service When onExecute Then show unexpected error`() = runTest {
         val interaction = createMockInteraction(
             section = "spotify",
             key = "enabled",
             value = "true"
         )
 
+        every { configService.isOwner(any()) } returns true
+        every {
+            configService.updateConfigValue("spotify", "enabled", "true")
+        } returns RemoteResponse.Error(ErrorType.UnknownError(RuntimeException("fail"), "Failed to update config"))
         coEvery {
             localizationService.getString(
                 LocalizationKeys.ERROR_UNEXPECTED,
@@ -289,12 +335,9 @@ class ConfigSetCommandTest {
                 any()
             )
         } returns "Unexpected error"
-        every { configService.reload() } throws RuntimeException("Reload failed")
 
-        // When
         configSetCommand.onExecute(interaction, mockedResponse)
 
-        // Then
         coVerify(exactly = 1) {
             localizationService.getString(
                 LocalizationKeys.ERROR_UNEXPECTED,
@@ -321,7 +364,7 @@ class ConfigSetCommandTest {
                 every { strings } returns stringsMap
             }
             every { user } returns mockk {
-                every { id } returns mockk()
+                every { id } returns Snowflake(123u)
             }
         }
     }
