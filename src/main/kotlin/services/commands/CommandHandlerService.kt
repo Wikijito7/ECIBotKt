@@ -46,7 +46,7 @@ interface CommandHandlerService {
     suspend fun onAutocomplete(interaction: AutoCompleteInteraction)
 }
 
-// TODO: Consider using a command registry pattern (issue: #detekt-suppress)
+// TODO: Consider using a command registry pattern (issue: #107)
 @Suppress("LongParameterList", "ForbiddenComment")
 class CommandHandlerServiceImpl(
     private val playCommand: PlayCommand,
@@ -87,7 +87,7 @@ class CommandHandlerServiceImpl(
         configGroupCommand.onRegisterCommand(kord)
     }
 
-    // TODO: Refactor to reduce complexity (issue: #detekt-suppress)
+    // TODO: Refactor to reduce complexity (issue: #107)
     @Suppress("CyclomaticComplexMethod", "ForbiddenComment")
     override suspend fun onExecute(
         interaction: ChatInputCommandInteraction,

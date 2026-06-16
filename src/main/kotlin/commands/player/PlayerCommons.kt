@@ -23,7 +23,7 @@ private const val PLAYER_EMBED_COLOR = 0x01B05B
 private const val PLAYBACK_BAR_LENGTH = 9
 private const val QUEUE_DISPLAY_LIMIT = 3
 
-// TODO: Refactor to reduce method length (issue: #detekt-suppress)
+// TODO: Refactor to reduce method length (issue: #107)
 @Suppress("LongMethod", "ForbiddenComment")
 suspend fun MessageBuilder.createPlayerEmbed(
     guildId: Snowflake?,
@@ -127,7 +127,7 @@ private fun generatePlayerPosition(currentSeek: Long, maxDuration: Long): String
     return playerString
 }
 
-// TODO: Refactor to reduce method length (issue: #detekt-suppress)
+// TODO: Refactor to reduce method length (issue: #107)
 @Suppress("LongMethod", "ForbiddenComment")
 private suspend fun createPlayerComponents(
     localizationService: LocalizationService,

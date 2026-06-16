@@ -50,7 +50,7 @@ private const val UNKNOWN_ERROR = "Unknown error"
 private const val RECONNECT_DELAY = 500L
 private const val FRAME_TIMEOUT_MS = 20L
 
-// TODO: Consider splitting into smaller classes (issue: #detekt-suppress)
+// TODO: Consider splitting into smaller classes (issue: #107)
 @Suppress("TooManyFunctions", "ForbiddenComment")
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
