@@ -11,6 +11,10 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 detekt {
     buildUponDefaultConfig = true
     allRules = false
