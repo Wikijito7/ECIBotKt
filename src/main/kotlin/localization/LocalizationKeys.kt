@@ -111,4 +111,8 @@ object LocalizationKeys {
     const val LOCALE_COMMAND_SUCCESS = "locale_command_success"
     const val LOCALE_COMMAND_RESET_SUCCESS = "locale_command_reset_success"
     const val LOCALE_COMMAND_INVALID_LOCALE = "locale_command_invalid_locale"
+    const val ASK_COMMAND_DESCRIPTION = "ask_command_description"
+    const val ASK_COMMAND_INPUT_DESCRIPTION = "ask_command_input_description"
+    const val ASK_THINKING = "ask_thinking"
+    const val ASK_NOT_ENABLED = "ask_not_enabled"
 }

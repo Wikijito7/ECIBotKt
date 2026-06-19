@@ -108,3 +108,7 @@ locale_command_input_description: Idioma a establecer (usa el autocompletado par
 locale_command_success: El idioma del servidor se ha establecido a %s
 locale_command_reset_success: El idioma del servidor se ha restablecido al valor predeterminado de Discord
 locale_command_invalid_locale: Idioma proporcionado no válido. Por favor, usa las opciones de autocompletado.
+ask_command_description: Pregunta a una IA
+ask_command_input_description: La pregunta para la IA
+ask_thinking: Pensando…
+ask_not_enabled: La función de preguntar no está habilitada. Configúrala en el archivo de configuración.

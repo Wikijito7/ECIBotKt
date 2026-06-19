@@ -20,6 +20,8 @@ import es.wokis.commands.sound.SoundCommand
 import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.tts.TTSCommand
 import es.wokis.commands.locale.LocaleCommand
+import es.wokis.commands.ask.AskCommand
+import es.wokis.commands.ask.AskContextMenuCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.error.ErrorHandlerService
 import es.wokis.services.localization.LocalizationService
@@ -43,6 +45,8 @@ class CommandHandlerServiceTest {
     private val localeCommand: LocaleCommand = mockk()
     private val localizationService: LocalizationService = mockk()
     private val radioGroupCommand: RadioGroupCommand = mockk()
+    private val askCommand: AskCommand = mockk()
+    private val askContextMenuCommand: AskContextMenuCommand = mockk()
     private val errorHandlerService: ErrorHandlerService = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
@@ -60,6 +64,8 @@ class CommandHandlerServiceTest {
         nextCommand = nextCommand,
         disconnectCommand = disconnectCommand,
         localeCommand = localeCommand,
+        askCommand = askCommand,
+        askContextMenuCommand = askContextMenuCommand,
         errorHandlerService = errorHandlerService
     )
 
@@ -83,6 +89,8 @@ class CommandHandlerServiceTest {
         justRun { nextCommand.onRegisterCommand(any()) }
         justRun { disconnectCommand.onRegisterCommand(any()) }
         justRun { localeCommand.onRegisterCommand(any()) }
+        justRun { askCommand.onRegisterCommand(any()) }
+        justRun { askContextMenuCommand.onRegisterCommand(any()) }
 
         // When
         commandHandlerService.onRegisterSimpleCommand(commandBuilder)
@@ -101,6 +109,8 @@ class CommandHandlerServiceTest {
             nextCommand.onRegisterCommand(commandBuilder)
             disconnectCommand.onRegisterCommand(commandBuilder)
             localeCommand.onRegisterCommand(commandBuilder)
+            askCommand.onRegisterCommand(commandBuilder)
+            askContextMenuCommand.onRegisterCommand(commandBuilder)
         }
     }
 
@@ -311,6 +321,43 @@ class CommandHandlerServiceTest {
         // Then
         coVerify(exactly = 1) {
             disconnectCommand.onExecute(interaction, response)
+        }
+    }
+
+    @Test
+    fun `Given ask command When onExecute is called Then execute AskCommand`() = runTest {
+        // Given
+        val commandName = CommandName.Ask.commandName
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { command } returns mockk {
+                every { rootName } returns commandName
+            }
+        }
+        val response: DeferredPublicMessageInteractionResponseBehavior = mockk()
+        coJustRun { askCommand.onExecute(any(), any()) }
+
+        // When
+        commandHandlerService.onExecute(interaction, response)
+
+        // Then
+        coVerify(exactly = 1) {
+            askCommand.onExecute(interaction, response)
+        }
+    }
+
+    @Test
+    fun `When onExecuteMessageCommand is called Then execute AskContextMenuCommand`() = runTest {
+        // Given
+        val interaction = mockk<dev.kord.core.entity.interaction.MessageCommandInteraction>()
+        val response = mockk<DeferredPublicMessageInteractionResponseBehavior>()
+        coJustRun { askContextMenuCommand.onExecute(any(), any()) }
+
+        // When
+        commandHandlerService.onExecuteMessageCommand(interaction, response)
+
+        // Then
+        coVerify(exactly = 1) {
+            askContextMenuCommand.onExecute(interaction, response)
         }
     }
 

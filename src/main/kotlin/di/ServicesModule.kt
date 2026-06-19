@@ -2,6 +2,9 @@ package es.wokis.di
 
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.dispatchers.AppDispatchersImpl
+import es.wokis.services.ask.AIProvider
+import es.wokis.services.ask.AskService
+import es.wokis.services.ask.HuggingFaceProvider
 import es.wokis.services.commands.CommandHandlerService
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.config.ConfigService
@@ -29,6 +32,9 @@ val servicesModule = module {
     singleOf(::RadioService)
     factoryOf(::PlayerChannelService)
     factoryOf(::ErrorHandlerService)
+
+    singleOf(::HuggingFaceProvider) { bind<AIProvider>() }
+    singleOf(::AskService)
 
     single<AppDispatchers> { AppDispatchersImpl() }
 }

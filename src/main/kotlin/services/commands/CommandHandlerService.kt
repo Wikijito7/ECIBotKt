@@ -6,9 +6,12 @@ import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteract
 import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
+import dev.kord.core.entity.interaction.MessageCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.CommandName
 import es.wokis.commands.ComponentsEnum
+import es.wokis.commands.ask.AskCommand
+import es.wokis.commands.ask.AskContextMenuCommand
 import es.wokis.commands.queue.QueueCommand
 import commands.play.PlayCommand
 import dev.kord.core.Kord
@@ -28,6 +31,7 @@ import es.wokis.constants.CUSTOM_COMPONENT_SEPARATOR
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.error.ErrorHandlerService
 import es.wokis.services.localization.LocalizationService
+import es.wokis.utils.Log
 
 interface CommandHandlerService {
 
@@ -37,6 +41,11 @@ interface CommandHandlerService {
 
     suspend fun onExecute(
         interaction: ChatInputCommandInteraction,
+        response: DeferredPublicMessageInteractionResponseBehavior
+    )
+
+    suspend fun onExecuteMessageCommand(
+        interaction: MessageCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
     )
 
@@ -59,6 +68,8 @@ class CommandHandlerServiceImpl(
     private val disconnectCommand: DisconnectCommand,
     private val localeCommand: LocaleCommand,
     private val radioGroupCommand: RadioGroupCommand,
+    private val askCommand: AskCommand,
+    private val askContextMenuCommand: AskContextMenuCommand,
     private val localizationService: LocalizationService,
     private val errorHandlerService: ErrorHandlerService
 ) : CommandHandlerService {
@@ -76,6 +87,8 @@ class CommandHandlerServiceImpl(
         nextCommand.onRegisterCommand(commandBuilder)
         disconnectCommand.onRegisterCommand(commandBuilder)
         localeCommand.onRegisterCommand(commandBuilder)
+        askCommand.onRegisterCommand(commandBuilder)
+        askContextMenuCommand.onRegisterCommand(commandBuilder)
     }
 
     override suspend fun onRegisterGroupCommand(kord: Kord) {
@@ -97,6 +110,7 @@ class CommandHandlerServiceImpl(
                 CommandName.Tts.commandName -> ttsCommand.onExecute(interaction, response)
                 CommandName.Player.commandName -> playerCommand.onExecute(interaction, response)
                 CommandName.Sounds.commandName -> soundsCommand.onExecute(interaction, response)
+                CommandName.Ask.commandName -> askCommand.onExecute(interaction, response)
                 CommandName.Radio.commandName -> radioGroupCommand.onExecute(interaction, response)
                 CommandName.Reconnect.commandName -> reconnectCommand.onExecute(interaction, response)
                 CommandName.Next.commandName -> nextCommand.onExecute(interaction, response)
@@ -106,6 +120,24 @@ class CommandHandlerServiceImpl(
             }
         } catch (exception: Throwable) {
             errorHandlerService.handleCommandError(exception, interaction, response, commandName)
+        }
+    }
+
+    override suspend fun onExecuteMessageCommand(
+        interaction: MessageCommandInteraction,
+        response: DeferredPublicMessageInteractionResponseBehavior
+    ) {
+        try {
+            askContextMenuCommand.onExecute(interaction, response)
+        } catch (exception: Throwable) {
+            Log.error("Error in ask context menu command", exception)
+            response.respond {
+                content = localizationService.getString(
+                    key = LocalizationKeys.ERROR_UNEXPECTED,
+                    guildId = interaction.data.guildId.value,
+                    discordLocale = interaction.guildLocale
+                )
+            }
         }
     }
 

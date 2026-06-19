@@ -108,3 +108,7 @@ locale_command_input_description: Locale to set (use autocomplete to see availab
 locale_command_success: Guild locale has been set to %s
 locale_command_reset_success: Guild locale has been reset to Discord's default
 locale_command_invalid_locale: Invalid locale provided. Please use the autocomplete options.
+ask_command_description: Asks an AI a question
+ask_command_input_description: The question to ask the AI
+ask_thinking: Thinking…
+ask_not_enabled: Ask feature is not enabled. Please configure it in the config file.
