@@ -1,3 +1,8 @@
+---
+name: write-tests
+description: Load when writing or fixing tests for ECIBotKt. Covers MockK patterns, command/service/HTTP test conventions, interaction mocking, and what not to mock. Only relevant for this project's Kotlin + Kord + Ktor stack.
+---
+
 # Write Tests Skill — ECIBotKt
 
 ## Frameworks
