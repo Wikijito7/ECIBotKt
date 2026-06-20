@@ -14,6 +14,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
+import es.wokis.services.lavaplayer.LyricsService
 import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.player.PlayerChannelService
@@ -38,11 +39,13 @@ class PlayerCommandTest {
     private val localizationService: LocalizationService = mockk()
     private val guildQueueService: GuildQueueService = mockk()
     private val playerChannelService: PlayerChannelService = mockk()
+    private val lyricsService: LyricsService = mockk()
 
     private val playerCommand = PlayerCommand(
         localizationService = localizationService,
         guildQueueService = guildQueueService,
-        playerChannelService = playerChannelService
+        playerChannelService = playerChannelService,
+        lyricsService = lyricsService
     )
 
     @Test

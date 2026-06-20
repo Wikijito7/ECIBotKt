@@ -1,6 +1,7 @@
 package es.wokis.services.lavaplayer
 
 import com.github.topi314.lavasrc.deezer.DeezerAudioSourceManager
+import com.github.topi314.lavasrc.lrclib.LrcLibLyricsManager
 import com.github.topi314.lavasrc.mirror.DefaultMirroringAudioTrackResolver
 import com.github.topi314.lavasrc.mirror.MirroringAudioSourceManager
 import com.github.topi314.lavasrc.spotify.SpotifySourceManager
@@ -20,8 +21,10 @@ import services.lavaplayer.manager.KokoroSourceManager
 import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager as DeprecatedYoutubeAudioSourceManager
 
 class AudioPlayerManagerProvider(
-    private val configService: ConfigService
+    private val configService: ConfigService,
+    private val lyricsService: LyricsService
 ) {
+    private var lyricsConfigured = false
 
     fun createAudioPlayerManager(): AudioPlayerManager = DefaultAudioPlayerManager().apply {
         val config = configService.config
@@ -58,12 +61,12 @@ class AudioPlayerManagerProvider(
             )
         }
         if (config.deezer.enabled) {
-            this.registerSourceManager(
-                DeezerAudioSourceManager(
-                    config.deezer.masterDecryptionKey,
-                    config.deezer.arlToken
-                )
+            val deezerSource = DeezerAudioSourceManager(
+                config.deezer.masterDecryptionKey,
+                config.deezer.arlToken
             )
+            this.registerSourceManager(deezerSource)
+            if (!lyricsConfigured) lyricsService.registerLyricsManager(deezerSource)
         }
         if (config.spotify.enabled) {
             this.registerSourceManager(
@@ -101,6 +104,10 @@ class AudioPlayerManagerProvider(
                     defaultLangCode = config.kokoro.defaultLangCode
                 }
             )
+        }
+        if (!lyricsConfigured) {
+            lyricsService.registerLyricsManager(LrcLibLyricsManager())
+            lyricsConfigured = true
         }
         AudioSourceManagers.registerLocalSource(this)
         // This one should be the last registered as it is used as a fallback for unknown sources,

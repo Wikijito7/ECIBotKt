@@ -108,3 +108,8 @@ locale_command_input_description: Locale to set (use autocomplete to see availab
 locale_command_success: Guild locale has been set to %s
 locale_command_reset_success: Guild locale has been reset to Discord's default
 locale_command_invalid_locale: Invalid locale provided. Please use the autocomplete options.
+player_lyrics: Lyrics
+player_hide_lyrics: Hide Lyrics
+player_lyrics_not_found: No lyrics found for the current track
+player_lyrics_no_track: No track is currently playing
+player_lyrics_title: "%s — Lyrics"

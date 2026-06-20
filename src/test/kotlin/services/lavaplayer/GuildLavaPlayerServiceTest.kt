@@ -5,6 +5,7 @@ import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
+import es.wokis.services.lavaplayer.LyricsService
 import es.wokis.services.localization.LocalizationService
 import io.mockk.*
 import mock.TestDispatchers
@@ -22,6 +23,7 @@ class GuildLavaPlayerServiceTest {
         }
     }
     private val localizationService: LocalizationService = mockk()
+    private val lyricsService: LyricsService = mockk()
 
     private val playerService = GuildLavaPlayerService(
         appDispatchers = appDispatchers,
@@ -29,6 +31,7 @@ class GuildLavaPlayerServiceTest {
         voiceChannel = voiceChannel,
         audioPlayerManager = audioPlayerManager,
         localizationService = localizationService,
+        lyricsService = lyricsService,
         guildId = Snowflake(123)
     )
 

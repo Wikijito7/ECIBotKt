@@ -108,3 +108,8 @@ locale_command_input_description: Idioma a establecer (usa el autocompletado par
 locale_command_success: El idioma del servidor se ha establecido a %s
 locale_command_reset_success: El idioma del servidor se ha restablecido al valor predeterminado de Discord
 locale_command_invalid_locale: Idioma proporcionado no válido. Por favor, usa las opciones de autocompletado.
+player_lyrics: Letra
+player_hide_lyrics: Ocultar letra
+player_lyrics_not_found: No se encontraron letras para la pista actual
+player_lyrics_no_track: No hay ninguna pista reproduciéndose
+player_lyrics_title: "%s — Letra"

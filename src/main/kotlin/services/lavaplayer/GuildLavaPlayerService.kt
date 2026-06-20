@@ -56,6 +56,7 @@ class GuildLavaPlayerService(
     private val voiceChannel: BaseVoiceChannelBehavior,
     private val audioPlayerManager: AudioPlayerManager,
     private val localizationService: LocalizationService,
+    private val lyricsService: LyricsService,
     val guildId: Snowflake,
     var discordLocale: Locale? = null
 ) : AudioEventAdapter() {
@@ -76,6 +77,7 @@ class GuildLavaPlayerService(
     private var connectingToVoiceChannel: Boolean = false
     private var isReconnecting: Boolean = false
     private var playerMessage: Message? = null
+    private var lyricsMessage: Message? = null
     private var seekTimerJob: Job? = null
     private val updateSeekChannel = Channel<Unit>(Channel.CONFLATED)
     private var frameTimeOut = 20L
@@ -115,6 +117,7 @@ class GuildLavaPlayerService(
             playerMessage?.let {
                 updateSeekChannel.send(Unit)
             } ?: sendNowPlayingMessage(discordLocale, voiceChannelName)
+            updateLyricsMessage()
         }
     }
 
@@ -258,11 +261,23 @@ class GuildLavaPlayerService(
         resetLeaveTimer()
         resetSeekTimerJob()
         connectingToVoiceChannel = false
+        lyricsMessage?.delete()
+        lyricsMessage = null
         updatePlayerEmbed()
     }
 
     fun savePlayerMessage(message: Message) {
         this.playerMessage = message
+    }
+
+    fun saveLyricsMessage(message: Message) {
+        this.lyricsMessage = message
+    }
+
+    fun getLyricsMessage(): Message? = lyricsMessage
+
+    fun clearLyricsMessage() {
+        this.lyricsMessage = null
     }
 
     private fun tryPlayNextTrack() {
@@ -539,6 +554,20 @@ class GuildLavaPlayerService(
     private suspend fun resetVoiceConnection() {
         voiceConnection?.leave()
         voiceConnection = null
+    }
+
+    private suspend fun updateLyricsMessage() {
+        val msg = lyricsMessage ?: return
+        val track = currentTrack ?: return
+        val lyrics = lyricsService.getFormattedLyrics(track.audioTrack)
+        if (lyrics != null) {
+            msg.edit { content = localizationService.getStringFormat(
+                key = LocalizationKeys.PLAYER_LYRICS_TITLE,
+                guildId = guildId,
+                discordLocale = discordLocale,
+                arguments = arrayOf(track.getDisplayTrackName())
+            ) + "\n\n```\n$lyrics\n```" }
+        }
     }
 
     private suspend fun updatePlayerEmbed() {

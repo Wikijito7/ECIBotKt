@@ -3,7 +3,9 @@ package services.lavaplayer
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import es.wokis.services.config.ConfigService
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
+import es.wokis.services.lavaplayer.LyricsService
 import io.mockk.every
+import io.mockk.justRun
 import io.mockk.mockk
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
@@ -11,7 +13,10 @@ import kotlin.test.assertTrue
 class AudioPlayerManagerProviderTest {
 
     private val configService = mockk<ConfigService>()
-    private val audioPlayerManagerProvider = AudioPlayerManagerProvider(configService)
+    private val lyricsService = mockk<LyricsService> {
+        justRun { registerLyricsManager(any()) }
+    }
+    private val audioPlayerManagerProvider = AudioPlayerManagerProvider(configService, lyricsService)
 
     @Test
     fun `When createAudioPlayerManager is called Then return DefaultAudioPlayerManager`() {

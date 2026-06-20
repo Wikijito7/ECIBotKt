@@ -111,4 +111,9 @@ object LocalizationKeys {
     const val LOCALE_COMMAND_SUCCESS = "locale_command_success"
     const val LOCALE_COMMAND_RESET_SUCCESS = "locale_command_reset_success"
     const val LOCALE_COMMAND_INVALID_LOCALE = "locale_command_invalid_locale"
+    const val PLAYER_LYRICS = "player_lyrics"
+    const val PLAYER_HIDE_LYRICS = "player_hide_lyrics"
+    const val PLAYER_LYRICS_NOT_FOUND = "player_lyrics_not_found"
+    const val PLAYER_LYRICS_NO_TRACK = "player_lyrics_no_track"
+    const val PLAYER_LYRICS_TITLE = "player_lyrics_title"
 }

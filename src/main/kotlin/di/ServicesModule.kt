@@ -8,6 +8,7 @@ import es.wokis.services.config.ConfigService
 import es.wokis.services.error.ErrorHandlerService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
+import es.wokis.services.lavaplayer.LyricsService
 import es.wokis.services.processor.MessageProcessorService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.services.player.PlayerChannelService
@@ -22,6 +23,7 @@ val servicesModule = module {
     singleOf(::ConfigService)
     factoryOf(::MessageProcessorService)
     factoryOf(::AudioPlayerManagerProvider)
+    singleOf(::LyricsService)
     singleOf(::GuildQueueService)
     factoryOf(::CommandHandlerServiceImpl) { bind<CommandHandlerService>() }
     singleOf(::LocalizationService)
