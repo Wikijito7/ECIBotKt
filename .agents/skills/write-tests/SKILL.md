@@ -1,175 +1,119 @@
 ---
 name: write-tests
-description: Load when writing or fixing tests for ECIBotKt. Covers MockK patterns, command/service/HTTP test conventions, interaction mocking, and what not to mock. Only relevant for this project's Kotlin + Kord + Ktor stack.
+description: "CRITICAL: Load when writing tests for ECIBotKt. Covers MockK patterns, command/service/HTTP mocking, interaction mocks, and pitfalls specific to Kord + Ktor + MockK. Missing this = flaky tests and wasted time."
 ---
 
-# Write Tests Skill — ECIBotKt
+## When to use me
+- After implementing a new command, service, or provider — write tests for it.
+- When fixing a bug — add a test that reproduces the issue first.
+- When CI is failing due to test compilation or coverage drops.
 
-## Frameworks
-- **Test runner**: Kotlin Test (`kotlin.test.Test`) + JUnit 5 (`org.junit.jupiter.api.Test`)
-- **Mocking**: MockK (`io.mockk.*`)
-- **Coroutines**: `kotlinx.coroutines.test.runTest`
-- **Assertions**: JUnit 5 Assertions (`org.junit.jupiter.api.Assertions.*`) or direct `assertTrue`/`assertEquals` from Kotlin test
-- **HTTP mocking**: Ktor MockEngine via `mock.getMockedHttpClient`
+## Not intended for
+- Running tests → use `./gradlew test` directly.
+- Debugging test logic → use IntelliJ debugger.
 
-## Test Structure
+---
 
-### Package naming
-Tests mirror the source package under `src/test/kotlin/`:
-```
-src/main/kotlin/commands/tts/TTSCommand.kt → src/test/kotlin/commands/tts/TTSCommandTest.kt
-src/main/kotlin/services/radio/RadioService.kt → src/test/kotlin/services/radio/RadioServiceTest.kt
-```
+## Test structure
 
-### Class template
+Tests mirror source under `src/test/kotlin/`. File name ends with `Test.kt`.
+
 ```kotlin
-package <some>.package
+package commands.something
 
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
-import kotlin.test.Test  // or org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 class FooTest {
-
-    // Dependencies: mockk() each
     private val dep1 = mockk<Dep1>()
-
-    // SUT
     private val sut = Foo(dep1)
 
     @Test
-    fun `Given state When action Then expected result`() = runTest {
-        // Given — arrange mocks
-        coEvery { dep1.something(any()) } returns "value"
+    fun `Given state When action Then expected`() = runTest {
+        coEvery { dep1.method(any()) } returns "value"
         coJustRun { dep1.voidMethod(any()) }
 
-        // When
         val result = sut.doSomething()
 
-        // Then — verify
         assertEquals("expected", result)
-        coVerify(exactly = 1) { dep1.something("arg") }
+        coVerify(exactly = 1) { dep1.method("arg") }
         coVerify(exactly = 0) { dep1.otherMethod(any()) }
     }
 }
 ```
 
-## MockK Patterns
+---
 
-### Standard mock
-```kotlin
-val service = mockk<MyService>()
-coEvery { service.method(any()) } returns "result"
-```
+## MockK patterns
 
-### Relaxed mock (for complex objects where you don't care about mock setup)
-```kotlin
-val response = mockk<DeferredPublicMessageInteractionResponseBehavior>(relaxed = true)
-```
+| Pattern | Syntax |
+|---|---|
+| Standard mock | `val svc = mockk<MyService>()`, `coEvery { svc.foo(any()) } returns "x"` |
+| Relaxed mock | `mockk<ComplexType>(relaxed = true)` — for `respond`/`edit` (inline exts) |
+| Chained config | `mockk<ConfigService> { every { config } returns mockk { every { field } returns value } }` |
+| Void method | `coJustRun { svc.voidMethod(any()) }` |
+| Throw | `coEvery { svc.method(any()) } throws IllegalStateException()` |
+| vararg | `coEvery { svc.method(any(), *anyVararg()) }` |
 
-### Chained mock config (for config objects)
-```kotlin
-val configService = mockk<ConfigService> {
-    every { config } returns mockk {
-        every { ask } returns mockk {
-            every { enabled } returns true
-        }
-    }
-}
-```
+---
 
-### Void / Unit returning methods
-```kotlin
-coJustRun { service.voidMethod(any()) }
-```
+## HTTP mocking
 
-### Throwing
-```kotlin
-coEvery { service.method(any()) } throws IllegalStateException()
-```
+Use `mock.getMockedHttpClient` — it returns a Ktor `HttpClient` with `MockEngine`:
 
-### vararg matcher
-```kotlin
-coEvery { service.method(any(), *anyVararg()) } returns "value"
-```
-
-## HTTP Mocking
-Use the existing helper at `src/test/kotlin/mock/HttpClientMock.kt`:
 ```kotlin
 import mock.getMockedHttpClient
 
 val httpClient = getMockedHttpClient("""{"key": "value"}""")
-val service = MyService(httpClient)
+val svc = MyService(httpClient)
 ```
-This creates a Ktor `HttpClient` with `MockEngine` that always responds with the given JSON content.
 
-## Command Test Patterns
+---
 
-### `onExecute` — verify downstream service calls
-**Don't mock `respond` or `edit` (inline extension functions)** — use `relaxed = true`:
+## Command test patterns
+
+**Don't mock inline extension functions** (`respond`, `edit`, `deferPublicResponse`). Use `relaxed = true`:
+
 ```kotlin
 val response = mockk<DeferredPublicMessageInteractionResponseBehavior>(relaxed = true)
-coEvery { localizationService.getString(any(), any(), any()) } returns "message"
-coJustRun { service.loadAndPlayMessage(any(), any()) }
 
-sut.onExecute(interaction, response)
+// Verify downstream service calls instead
+coVerify(exactly = 1) { someService.method("expected arg") }
 
-coVerify(exactly = 1) { service.loadAndPlayMessage(any(), "expected arg") }
+// For error cases, verify NOT called
+coVerify(exactly = 0) { someService.method(any(), any()) }
 ```
 
-### Error cases — verify service was NOT called
-```kotlin
-sut.onExecute(interaction, response)
-coVerify(exactly = 0) { service.loadAndPlayMessage(any(), any()) }
-```
+`onRegisterCommand` tests are `@Ignore`'d — don't add new ones.
 
-### `onRegisterCommand` — currently **@Ignored** due to MockK issues
-See `TTSCommandTest.kt` for reference. Don't add new `onRegisterCommand` tests.
+---
 
-## Interaction Mocking
+## Interaction mocks
 
 ### ChatInputCommandInteraction
 ```kotlin
 val interaction = mockk<ChatInputCommandInteraction> {
     every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
-    every { data } returns mockk {
-        every { guildId.value } returns Snowflake(123)
-    }
-    every { command } returns mockk {
-        every { strings } returns mapOf("argName" to "value")
-    }
+    every { data } returns mockk { every { guildId.value } returns Snowflake(123) }
+    every { command } returns mockk { every { strings } returns mapOf("arg" to "value") }
 }
 ```
 
 ### MessageCommandInteraction
 ```kotlin
-val targetMessage = mockk<Message> {
-    every { content } returns "message content"
-}
+val message = mockk<Message> { every { content } returns "text" }
 val interaction = mockk<MessageCommandInteraction> {
     every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
-    every { data } returns mockk {
-        every { guildId.value } returns Snowflake(123)
-    }
-    coEvery { getTarget() } returns targetMessage
+    every { data } returns mockk { every { guildId.value } returns Snowflake(123) }
+    coEvery { getTarget() } returns message
 }
 ```
 
-## Key Imports
-```kotlin
-import dev.kord.common.Locale
-import dev.kord.common.entity.Snowflake
-import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
-import dev.kord.core.entity.interaction.ChatInputCommandInteraction
-import dev.kord.core.entity.interaction.MessageCommandInteraction
-import dev.kord.core.entity.Message
-import io.mockk.*
-import kotlinx.coroutines.test.runTest
-import kotlin.test.Test
-```
+---
 
 ## Don't
-- ❌ Mock inline extension functions (`respond`, `edit`, `deferPublicResponse`)
-- ❌ Write `onRegisterCommand` tests (MockK can't handle the builder pattern)
-- ❌ Use `@Test` from JUnit 5 and Kotlin test in the same file (pick one)
-- ❌ Import unused Kord entities
+- Mock inline extension functions (`respond`, `edit`, `deferPublicResponse`)
+- Write `onRegisterCommand` tests (MockK can't handle the builder)
+- Mix JUnit 5 `@Test` and Kotlin test `@Test` in the same file
+- Import unused Kord entities
