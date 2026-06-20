@@ -52,13 +52,17 @@ class AskExecutorTest {
     @Test
     fun `Given prompt when ask not enabled When execute is called Then show error`() = runTest {
         // Given
-        val disabledExecutor = AskExecutor(askService, localizationService, mockk {
-            every { config } returns mockk {
-                every { ask } returns mockk {
-                    every { enabled } returns false
+        val disabledExecutor = AskExecutor(
+            askService,
+            localizationService,
+            mockk {
+                every { config } returns mockk {
+                    every { ask } returns mockk {
+                        every { enabled } returns false
+                    }
                 }
             }
-        })
+        )
         val response = mockk<DeferredPublicMessageInteractionResponseBehavior>(relaxed = true)
         val guildLavaPlayerService: GuildLavaPlayerService = mockk()
 
