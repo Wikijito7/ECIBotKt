@@ -3,6 +3,7 @@ package es.wokis.di
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.dispatchers.AppDispatchersImpl
 import es.wokis.services.ask.AIProvider
+import es.wokis.services.ask.AskExecutor
 import es.wokis.services.ask.AskService
 import es.wokis.services.ask.HuggingFaceProvider
 import es.wokis.services.commands.CommandHandlerService
@@ -35,6 +36,7 @@ val servicesModule = module {
 
     singleOf(::HuggingFaceProvider) { bind<AIProvider>() }
     singleOf(::AskService)
+    singleOf(::AskExecutor)
 
     single<AppDispatchers> { AppDispatchersImpl() }
 }
