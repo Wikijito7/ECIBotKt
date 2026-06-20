@@ -7,6 +7,7 @@ import es.wokis.services.lavaplayer.LyricsService
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 
@@ -18,9 +19,7 @@ class AudioPlayerManagerProviderTest {
     }
     private val audioPlayerManagerProvider = AudioPlayerManagerProvider(configService, lyricsService)
 
-    @Test
-    fun `When createAudioPlayerManager is called Then return DefaultAudioPlayerManager`() {
-        // Given
+    private fun setUpConfigMocks() {
         every { configService.config.youtube.oauth2Token } returns null
         every { configService.config.deezer.enabled } returns true
         every { configService.config.deezer.masterDecryptionKey } returns "master_key"
@@ -41,11 +40,30 @@ class AudioPlayerManagerProviderTest {
         every { configService.config.kokoro.defaultVoice } returns ""
         every { configService.config.kokoro.defaultSpeed } returns 1.0f
         every { configService.config.kokoro.defaultLangCode } returns ""
+    }
+
+    @Test
+    fun `When createAudioPlayerManager is called Then return DefaultAudioPlayerManager`() {
+        // Given
+        setUpConfigMocks()
 
         // When
         val actual = audioPlayerManagerProvider.createAudioPlayerManager()
 
         // Then
         assertTrue(actual is DefaultAudioPlayerManager)
+    }
+
+    @Test
+    fun `When createAudioPlayerManager is called twice Then lyrics managers registered only on first call`() {
+        // Given
+        setUpConfigMocks()
+
+        // When
+        audioPlayerManagerProvider.createAudioPlayerManager()
+        audioPlayerManagerProvider.createAudioPlayerManager()
+
+        // Then
+        verify(exactly = 2) { lyricsService.registerLyricsManager(any()) }
     }
 }

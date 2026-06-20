@@ -336,6 +336,46 @@ class CommandHandlerServiceTest {
     }
 
     @Test
+    fun `Given player resume interaction When onInteract is called Then execute PlayerCommand onInteract`() = runTest {
+        // Given
+        val componentId = ComponentsEnum.PLAYER_RESUME.customId
+        val interaction: ButtonInteraction = mockk {
+            every { component } returns mockk {
+                every { customId } returns componentId
+            }
+        }
+        coJustRun { playerCommand.onInteract(any()) }
+
+        // When
+        commandHandlerService.onInteract(interaction)
+
+        // Then
+        coVerify(exactly = 1) {
+            playerCommand.onInteract(interaction)
+        }
+    }
+
+    @Test
+    fun `Given player lyrics interaction When onInteract is called Then execute PlayerCommand onInteract`() = runTest {
+        // Given
+        val componentId = ComponentsEnum.PLAYER_LYRICS.customId
+        val interaction: ButtonInteraction = mockk {
+            every { component } returns mockk {
+                every { customId } returns componentId
+            }
+        }
+        coJustRun { playerCommand.onInteract(any()) }
+
+        // When
+        commandHandlerService.onInteract(interaction)
+
+        // Then
+        coVerify(exactly = 1) {
+            playerCommand.onInteract(interaction)
+        }
+    }
+
+    @Test
     fun `Given queue previous interaction When onInteract is called Then execute QueueCommand onInteract`() = runTest {
         // Given
         val componentId = ComponentsEnum.QUEUE_PREVIOUS.customId
