@@ -561,13 +561,13 @@ class GuildLavaPlayerService(
         val track = currentTrack ?: return
         val lyrics = lyricsService.getFormattedLyrics(track.audioTrack)
         if (lyrics != null) {
-            val content = localizationService.getStringFormat(
+            val lyricsContent = localizationService.getStringFormat(
                 key = LocalizationKeys.PLAYER_LYRICS_TITLE,
                 guildId = guildId,
                 discordLocale = discordLocale,
                 arguments = arrayOf(track.getDisplayTrackName())
             ) + "\n\n```\n$lyrics\n```"
-            msg.edit { content = content }
+            msg.edit { content = lyricsContent }
         }
     }
 
