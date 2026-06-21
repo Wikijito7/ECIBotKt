@@ -3,6 +3,8 @@ package mock
 import dev.kord.common.entity.DiscordMessage
 import dev.kord.common.entity.DiscordUser
 import dev.kord.common.entity.Snowflake
+import dev.kord.common.entity.optional.Optional
+import dev.kord.common.entity.optional.OptionalInt
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
@@ -30,7 +32,7 @@ val mockUser = mockk<DiscordUser> {
     every { publicFlags } returns mockk()
     every { banner } returns null
     every { accentColor } returns null
-    every { avatarDecoration } returns mockk()
+    every { avatarDecorationData } returns Optional.Missing()
 }
 
 val mockedMessage = mockk<Message> {
@@ -62,10 +64,14 @@ val mockedDiscordMessage = mockk<DiscordMessage> {
     every { application } returns mockk()
     every { applicationId } returns mockk()
     every { messageReference } returns mockk()
+    every { messageSnapshots } returns Optional.Missing()
     every { flags } returns mockk()
     every { stickers } returns mockk()
     every { referencedMessage } returns mockk()
+    every { interactionMetadata } returns Optional.Missing()
     every { interaction } returns mockk()
+    every { thread } returns Optional.Missing()
+    every { position } returns OptionalInt.Missing
     every { components } returns mockk()
     every { roleSubscriptionData } returns mockk()
     every { id } returns mockk()
