@@ -7,14 +7,14 @@ import kotlinx.serialization.Serializable
 data class Config(
     @SerialName("discord_bot_token")
     val discordBotToken: String,
+    @SerialName("bot_owner_id")
+    val botOwnerId: String,
     @SerialName("debug")
     val debug: Boolean,
     @SerialName("database")
     val database: DatabaseConfig,
     @SerialName("youtube")
     val youtube: YouTubeConfig,
-    @SerialName("hugging_chat")
-    val huggingChat: HuggingChatConfig,
     @SerialName("deezer")
     val deezer: DeezerConfig,
     @SerialName("spotify")
@@ -54,23 +54,13 @@ data class YouTubeConfig(
 )
 
 @Serializable
-data class HuggingChatConfig(
-    @SerialName("enabled")
-    val enabled: Boolean,
-    @SerialName("user")
-    val user: String,
-    @SerialName("password")
-    val password: String
-)
-
-@Serializable
 data class DeezerConfig(
     @SerialName("enabled")
     val enabled: Boolean,
     @SerialName("master_decryption_key")
     val masterDecryptionKey: String,
     @SerialName("arl_token")
-    val arlToken: String,
+    val arlToken: String
 )
 
 @Serializable
@@ -97,6 +87,8 @@ data class TidalConfig(
 
 @Serializable
 data class KokoroConfig(
+    @SerialName("enabled")
+    val enabled: Boolean,
     @SerialName("base_url")
     val baseUrl: String,
     @SerialName("default_voice")

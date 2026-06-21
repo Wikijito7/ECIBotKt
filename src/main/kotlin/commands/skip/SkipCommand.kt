@@ -19,7 +19,9 @@ class SkipCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Skip.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.SKIP_COMMAND_DESCRIPTION).values.first()
+                description = localizationService.getLocalizations(
+                    LocalizationKeys.SKIP_COMMAND_DESCRIPTION
+                ).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SKIP_COMMAND_DESCRIPTION)
             }

@@ -1,6 +1,5 @@
 package utils
 
-import es.wokis.utils.UrlTransformer
 import es.wokis.utils.transformUrl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

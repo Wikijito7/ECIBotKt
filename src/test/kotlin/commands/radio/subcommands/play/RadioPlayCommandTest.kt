@@ -6,7 +6,6 @@ import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import es.wokis.commands.radio.subcommands.play.RadioPlayCommand
 import es.wokis.data.radio.RadioDTO
-import es.wokis.data.response.ErrorType
 import es.wokis.data.response.RemoteResponse
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
@@ -164,11 +163,15 @@ class RadioPlayCommandTest {
                 countryCode = "ES"
             )
         )
-        val interaction = mockk<AutoCompleteInteraction>(relaxed = true) {
+        val interaction = mockk<AutoCompleteInteraction> {
             every { kord } returns mockedKord
             every { id } returns Snowflake(123456789)
             every { token } returns "test-token"
             every { command.strings["radio"] } returns input
+            every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         coEvery {
@@ -187,11 +190,15 @@ class RadioPlayCommandTest {
     @Test
     fun `Given autocomplete with empty input When onAutoComplete Then return empty list`() = runTest {
         // Given
-        val interaction = mockk<AutoCompleteInteraction>(relaxed = true) {
+        val interaction = mockk<AutoCompleteInteraction> {
             every { kord } returns mockedKord
             every { id } returns Snowflake(123456789)
             every { token } returns "test-token"
             every { command.strings["radio"] } returns ""
+            every { guildLocale } returns Locale.ENGLISH_UNITED_STATES
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
         }
 
         // When

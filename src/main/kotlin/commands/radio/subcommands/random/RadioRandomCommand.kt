@@ -7,7 +7,6 @@ import dev.kord.rest.builder.interaction.GlobalChatInputCreateBuilder
 import dev.kord.rest.builder.interaction.subCommand
 import es.wokis.commands.CommandName
 import es.wokis.commands.SubCommand
-import es.wokis.data.radio.RadioDTO
 import es.wokis.data.response.RemoteResponse
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
@@ -22,7 +21,10 @@ class RadioRandomCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Radio.Random.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_RANDOM_COMMAND_DESCRIPTION).values.first()) {
+            subCommand(
+                CommandName.Radio.Random.commandName,
+                localizationService.getLocalizations(LocalizationKeys.RADIO_RANDOM_COMMAND_DESCRIPTION).values.first()
+            ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_RANDOM_COMMAND_DESCRIPTION)
             }
         }

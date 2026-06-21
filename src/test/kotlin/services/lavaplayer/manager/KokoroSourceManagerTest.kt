@@ -3,15 +3,9 @@ package services.lavaplayer.manager
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.track.AudioReference
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
-import org.apache.http.client.methods.CloseableHttpResponse
-import org.apache.http.impl.client.CloseableHttpClient
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue

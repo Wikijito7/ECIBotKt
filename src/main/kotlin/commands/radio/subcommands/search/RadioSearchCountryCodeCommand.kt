@@ -4,7 +4,6 @@ import dev.kord.common.entity.Choice
 import dev.kord.common.entity.optional.Optional
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.suggest
-import dev.kord.core.entity.component.ButtonComponent
 import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
@@ -20,8 +19,9 @@ import es.wokis.constants.CUSTOM_COMPONENT_SEPARATOR
 import es.wokis.data.response.RemoteResponse
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.radio.RadioService
-import es.wokis.utils.takeAtMost
 import es.wokis.utils.takeIfNotEmpty
+
+private const val AUTOCOMPLETE_SUGGESTION_LIMIT = 25
 
 class RadioSearchCountryCodeCommand(
     private val radioService: RadioService,
@@ -72,7 +72,7 @@ class RadioSearchCountryCodeCommand(
             val countryCodes = (radioService.getCountryCodes() as? RemoteResponse.Success)?.data?.countryCodes.orEmpty()
             val filteredCodes = countryCodes.filter { code ->
                 code.contains(input, ignoreCase = true)
-            }.take(25)
+            }.take(AUTOCOMPLETE_SUGGESTION_LIMIT)
             val choices = filteredCodes.map { code ->
                 Choice.StringChoice(code, Optional.Missing(), code)
             }

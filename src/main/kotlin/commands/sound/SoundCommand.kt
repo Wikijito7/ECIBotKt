@@ -22,6 +22,8 @@ import java.io.File
 private const val ARGUMENT_NAME = "name"
 private const val AUDIO_FOLDER = "./audio/"
 private const val AUDIO_EXTENSION = ".mp3"
+private const val AUTOCOMPLETE_SOUND_LIMIT = 25
+private const val SOUND_NAME_MAX_LENGTH = 100
 
 class SoundCommand(
     private val guildQueueService: GuildQueueService,
@@ -32,12 +34,16 @@ class SoundCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Sound.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_DESCRIPTION).values.first()
+                description = localizationService.getLocalizations(
+                    LocalizationKeys.SOUND_COMMAND_DESCRIPTION
+                ).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_DESCRIPTION)
                 string(
                     name = ARGUMENT_NAME,
-                    description = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_INPUT_DESCRIPTION).values.first()
+                    description = localizationService.getLocalizations(
+                        LocalizationKeys.SOUND_COMMAND_INPUT_DESCRIPTION
+                    ).values.first()
                 ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_INPUT_DESCRIPTION)
                     required = true
@@ -108,18 +114,18 @@ class SoundCommand(
             val containsMatches = allFiles
                 .filter { file ->
                     !file.nameWithoutExtension.startsWith(input, ignoreCase = true) &&
-                    file.nameWithoutExtension.contains(input, ignoreCase = true)
+                        file.nameWithoutExtension.contains(input, ignoreCase = true)
                 }
                 .sortedBy { it.nameWithoutExtension.lowercase() }
 
             // Combine: startsWith first, then contains, up to 25 total
             val sounds = (startsWithMatches + containsMatches)
-                .take(25)
+                .take(AUTOCOMPLETE_SOUND_LIMIT)
                 .map { file ->
                     Choice.StringChoice(
-                        name = file.nameWithoutExtension.take(100),
+                        name = file.nameWithoutExtension.take(SOUND_NAME_MAX_LENGTH),
                         nameLocalizations = Optional.Missing(),
-                        value = file.nameWithoutExtension.take(100)
+                        value = file.nameWithoutExtension.take(SOUND_NAME_MAX_LENGTH)
                     )
                 }
                 .toList()

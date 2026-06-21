@@ -8,10 +8,10 @@ import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.core.entity.interaction.ApplicationCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
+import es.wokis.exceptions.BotException
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
-import es.wokis.exceptions.BotException
 import es.wokis.services.queue.GuildQueueService
 import io.mockk.coEvery
 import io.mockk.every
@@ -64,7 +64,7 @@ class GuildQueueServiceTest {
     }
 
     @Test
-    fun `Given dispatcher When getOrCreateLavaPlayerService is called for two different guilds Then create and return GuildLavaPlayer for each Guild`() {
+    fun `Given two guilds When getOrCreateLavaPlayerService Then create separate players`() {
         // Given
         val guildId1 = Snowflake(123)
         val guildId2 = Snowflake(456)
@@ -95,7 +95,7 @@ class GuildQueueServiceTest {
     }
 
     @Test
-    fun `Given dispatcher When getOrCreateLavaPlayerService is called for the same guild twice Then create and return the same GuildLavaPlayer`() {
+    fun `Given same guild twice When getOrCreateLavaPlayerService Then return same player`() {
         // Given
         val guildId1 = Snowflake(123)
         val guildId2 = Snowflake(123)

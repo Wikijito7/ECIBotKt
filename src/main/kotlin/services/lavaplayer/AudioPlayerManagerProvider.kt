@@ -23,6 +23,8 @@ class AudioPlayerManagerProvider(
     private val configService: ConfigService
 ) {
 
+    // TODO: Refactor to reduce complexity (issue: #107)
+    @Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth", "ForbiddenComment")
     fun createAudioPlayerManager(): AudioPlayerManager = DefaultAudioPlayerManager().apply {
         val config = configService.config
         val trackResolverProviders = buildList {
@@ -47,7 +49,12 @@ class AudioPlayerManagerProvider(
                 }
             }
             this.registerSourceManager(
-                YoutubeAudioSourceManager(youtubeOptions, TvHtml5EmbeddedWithThumbnail(), WebWithThumbnail(), MusicWithThumbnail()).apply {
+                YoutubeAudioSourceManager(
+                    youtubeOptions,
+                    TvHtml5EmbeddedWithThumbnail(),
+                    WebWithThumbnail(),
+                    MusicWithThumbnail()
+                ).apply {
                     setPlaylistPageCount(Integer.MAX_VALUE)
                     useOauth2(config.youtube.oauth2Token, true)
                     Web.setPoTokenAndVisitorData(

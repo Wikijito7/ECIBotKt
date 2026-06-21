@@ -14,6 +14,8 @@ class GetFloweryVoicesUseCase(
     override suspend fun invoke(): List<String> = ErrorManagementWrapper.wrap {
         httpClient.get("https://api.flowery.pw/v1/tts/voices").body<FloweryVoicesDTO>()
     }.let { response ->
-        (response as? RemoteResponse.Success)?.data?.voices?.filter { it.language.code.contains("es-") }?.map { it.id }.orEmpty()
+        (response as? RemoteResponse.Success)?.data?.voices?.filter {
+            it.language.code.contains("es-")
+        }?.map { it.id }.orEmpty()
     }
 }

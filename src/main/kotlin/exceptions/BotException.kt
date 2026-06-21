@@ -8,6 +8,8 @@ import es.wokis.localization.LocalizationKeys
  * All custom exceptions must extend one of the sealed subclasses.
  * This allows for exhaustive when expressions and better type safety.
  */
+// TODO: Consider redesign to avoid vararg spreading (issue: #107)
+@Suppress("SpreadOperator", "ForbiddenComment")
 sealed class BotException(
     message: String,
     cause: Throwable? = null

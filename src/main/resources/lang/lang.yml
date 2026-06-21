@@ -108,3 +108,18 @@ locale_command_input_description: Locale to set (use autocomplete to see availab
 locale_command_success: Guild locale has been set to %s
 locale_command_reset_success: Guild locale has been reset to Discord's default
 locale_command_invalid_locale: Invalid locale provided. Please use the autocomplete options.
+config_command_description: Manage bot configuration
+config_reload_command_description: Reload configuration from file
+config_reload_success: Configuration reloaded successfully
+config_set_command_description: Set a configuration value
+config_set_section_description: Configuration section
+config_set_key_description: Configuration key
+config_set_value_description: New value
+config_set_success: Config %s updated to: %s
+config_get_command_description: Get configuration section
+config_get_section_description: Configuration section to display
+config_get_display: "%s:\n%s"
+config_invalid_section: Invalid section. Valid sections: database, youtube, deezer, spotify, tidal, kokoro
+config_invalid_key: Invalid key for the selected section
+config_cannot_modify_token: You cannot modify this value
+config_auth_required: Only the bot owner can use this command

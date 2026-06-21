@@ -1,5 +1,7 @@
 package commands.player
 
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.Kord
@@ -9,8 +11,6 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
@@ -22,7 +22,6 @@ import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import services.player.result.PlayerChannelResult
-import kotlin.test.Ignore
 
 private fun createMockTrackBO(): TrackBO {
     val audioTrack = mockk<AudioTrack> {

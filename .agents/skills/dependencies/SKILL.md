@@ -1,8 +1,19 @@
-# Dependencies Instructions
+---
+name: dependencies
+description: IMPORTANT: Load when adding/updating dependencies or troubleshooting class errors. Covers Gradle version catalog, local JAR Kord SNAPSHOT setup, transitive dependencies. Missing transitive deps = runtime crashes.
+---
 
-## Dependency Management
+## When to use me
+- When adding or updating dependencies
+- When troubleshooting missing class errors at runtime
+- When migrating from local JARs to Maven (when Kord voice encryption merges)
 
-This project uses **Gradle with Kotlin DSL** for dependency management.
+## Not intended for
+- Code quality checks → use `code-quality`
+- Build/test gates → use `quality-check`
+- Architecture patterns → use `architecture`
+
+---
 
 ## Version Catalog
 
@@ -23,6 +34,7 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ```
 
 ### Usage in build.gradle.kts
+
 ```kotlin
 dependencies {
     implementation(libs.ktor.client.core)
@@ -30,7 +42,9 @@ dependencies {
 }
 ```
 
-## Special Case: Local JAR Dependencies
+---
+
+## Local JAR Dependencies (Kord SNAPSHOT)
 
 ### When to Use
 - SNAPSHOT versions not in Maven Central
@@ -39,13 +53,13 @@ dependencies {
 
 ### Setup
 
-1. **Copy JARs to `libs/` folder**:
+**1. Copy JARs to `libs/` folder:**
 ```bash
 mkdir -p libs
 cp /path/to/jars/*.jar libs/
 ```
 
-2. **Configure repository in build.gradle.kts**:
+**2. Configure repository in build.gradle.kts:**
 ```kotlin
 repositories {
     flatDir {
@@ -56,32 +70,29 @@ repositories {
 }
 ```
 
-3. **Add dependency**:
+**3. Add dependency:**
 ```kotlin
 dependencies {
     implementation(fileTree("libs") { include("kord-*.jar") })
 }
 ```
 
-### Transitive Dependencies
+### CRITICAL: Transitive Dependencies
 
-**Critical**: `flatDir` doesn't resolve transitive dependencies. You must manually add all required dependencies.
+`flatDir` doesn't resolve transitive dependencies. You must add them manually:
 
-**Example** (Kord requires these):
 ```kotlin
 // Transitive deps required by local Kord JARs
-implementation(libs.kotlinx.datetime)        // kotlinx-datetime
-implementation(libs.kord.cache)             // kord-cache-api
-implementation(libs.kord.cache.map)         // kord-cache-map
-implementation(libs.ktor.client.okhttp)     // ktor-client-okhttp
+implementation(libs.kotlinx.datetime)
+implementation(libs.kord.cache)
+implementation(libs.kord.cache.map)
+implementation(libs.ktor.client.okhttp)
 ```
 
 ### Version Catalog for Transitive Deps
 
-Add to `gradle/libs.versions.toml`:
 ```toml
 [versions]
-# TODO: Remove when Kord merges voice encryption to main
 kord-cache = "0.5.4"
 kotlinx-datetime = "0.6.1"
 
@@ -91,11 +102,13 @@ kord-cache-map = { module = "dev.kord.cache:cache-map", version.ref = "kord-cach
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 ```
 
+---
+
 ## Key Dependencies
 
 ### Discord Integration
-- **Kord**: Discord API wrapper (currently local SNAPSHOT)
-- **Kord sub-modules**: core, voice, rest, gateway, common
+- **Kord**: Discord API wrapper (local SNAPSHOT with voice encryption)
+- Kord sub-modules: core, voice, rest, gateway, common
 
 ### HTTP & Networking
 - **Ktor**: HTTP client framework
@@ -108,10 +121,8 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 - **Lavaplayer-youtube**: YouTube support
 - **Lavaplayer-lavasrc**: Additional sources (Spotify, Deezer)
 
-### Dependency Injection
+### DI
 - **Koin**: Lightweight DI (4.0.2)
-  - Use BOM for version management
-  - Core module only
 
 ### Serialization
 - **Kotlinx Serialization**: JSON (1.8.1)
@@ -121,8 +132,7 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 - **Kotlinx Coroutines Test**: Coroutine testing
 - **JUnit Jupiter**: Test framework
 
-### Logging
-- **SLF4J Simple**: Logging implementation
+---
 
 ## Build Commands
 
@@ -140,38 +150,21 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 ./gradlew fatJar
 ```
 
+---
+
 ## Troubleshooting
 
-### Missing transitive dependency
-```
-java.lang.NoClassDefFoundError: kotlinx/datetime/Instant
-```
-**Fix**: Add the missing dependency manually to build.gradle.kts
+| Error | Fix |
+|-------|-----|
+| `NoClassDefFoundError: kotlinx/datetime/Instant` | Add `kotlinx-datetime` dependency |
+| `ClassNotFoundException: io.ktor.client.engine.okhttp.OkHttp` | Add `ktor-client-okhttp` dependency |
+| Version conflicts | Check: `./gradlew dependencies --configuration runtimeClasspath` |
 
-### Class not found at runtime
-```
-java.lang.ClassNotFoundException: io.ktor.client.engine.okhttp.OkHttp
-```
-**Fix**: Add ktor-client-okhttp dependency
-
-### Version conflicts
-Check dependency tree:
-```bash
-./gradlew dependencies --configuration runtimeClasspath
-```
-
-## Best Practices
-
-1. **Use version catalog** for all dependencies
-2. **Document temporary dependencies** with TODO comments
-3. **Keep JARs out of git** (add to .gitignore if needed)
-4. **Test after dependency changes** - run full test suite
-5. **Update regularly** - check for new stable versions
-6. **Pin versions** - avoid using `+` or dynamic versions
+---
 
 ## Migration from Local to Maven
 
-When Kord releases voice encryption support:
+When Kord releases voice encryption:
 
 1. Remove JARs from `libs/`
 2. Remove `flatDir` repository
@@ -179,3 +172,19 @@ When Kord releases voice encryption support:
 4. Remove manual transitive dependencies
 5. Update to stable version in version catalog
 6. Run tests to verify
+
+---
+
+## Best Practices
+
+1. Use version catalog for all dependencies
+2. Document temporary dependencies with TODO comments
+3. Keep JARs out of git (add to .gitignore if needed)
+4. Test after dependency changes
+5. Pin versions — avoid `+` or dynamic versions
+
+---
+
+## References
+- `.github/instructions/dependencies.instructions.md` — full context
+- Version catalog: `gradle/libs.versions.toml`

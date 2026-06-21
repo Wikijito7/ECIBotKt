@@ -1,7 +1,5 @@
 package es.wokis.commands.radio
 
-import dev.kord.common.Locale
-import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -17,9 +15,10 @@ import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.takeAtMost
 
 private const val RADIO_LIST_COLUMNS = 3
+private const val MAX_RADIO_NAME_LENGTH = 20
 
 fun List<RadioDTO>.chunked(columns: Int): List<String> = map {
-    (if (it.radioName.contains(Regex("^[#*-]"))) "\\" else "").plus(it.radioName.takeAtMost(20))
+    (if (it.radioName.contains(Regex("^[#*-]"))) "\\" else "").plus(it.radioName.takeAtMost(MAX_RADIO_NAME_LENGTH))
 }.chunked((size / columns).coerceAtLeast(1)).map {
     it.joinToString(separator = "$BLANK_SPACE$BLANK_SPACE\n")
 }
@@ -42,7 +41,11 @@ suspend fun onExecuteRadioListCommand(
             discordLocale = discordLocale,
             localizationService = localizationService,
             title = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_TITLE, guildId, discordLocale),
-            description = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_DESCRIPTION, guildId, discordLocale),
+            description = localizationService.getString(
+                LocalizationKeys.RADIO_LIST_EMBED_DESCRIPTION,
+                guildId,
+                discordLocale
+            ),
             currentPage = 1,
             currentPageContent = radioPageContent,
             columns = RADIO_LIST_COLUMNS,
@@ -77,7 +80,11 @@ suspend fun onInteractRadioListCommand(
             discordLocale = discordLocale,
             localizationService = localizationService,
             title = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_TITLE, guildId, discordLocale),
-            description = localizationService.getString(LocalizationKeys.RADIO_LIST_EMBED_DESCRIPTION, guildId, discordLocale),
+            description = localizationService.getString(
+                LocalizationKeys.RADIO_LIST_EMBED_DESCRIPTION,
+                guildId,
+                discordLocale
+            ),
             currentPage = currentPage,
             currentPageContent = radioPageContent,
             columns = RADIO_LIST_COLUMNS,

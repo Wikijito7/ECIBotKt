@@ -18,9 +18,9 @@ import java.time.format.DateTimeFormatter
 
 private const val MAX_DISCORD_MESSAGE_LENGTH = 2000
 private const val STACK_TRACE_MAX_LENGTH = 1900
-private const val ERROR_HEADER_LENGTH = 100
 private const val TIMESTAMP_PATTERN = "yyyy-MM-dd HH:mm:ss"
 private const val TRUNCATED_SUFFIX = "\n… (truncated)"
+private const val TRUNCATION_BUFFER = 3
 
 /**
  * Enum representing different types of interactions that can generate errors.
@@ -132,8 +132,16 @@ class ErrorHandlerService(
         commandName: String?,
         interactionType: InteractionType
     ) {
-        val guildInfo = if (interaction.data.guildId.value != null) "Guild(${interaction.data.guildId.value})" else "DM"
-        val context = "${interactionType.displayName} Error: ${commandName ?: "Unknown"} | User: ${interaction.user.username} (${interaction.user.id}) | Guild: $guildInfo"
+        val guildInfo = if (interaction.data.guildId.value != null) {
+            "Guild(${interaction.data.guildId.value})"
+        } else {
+            "DM"
+        }
+        val context = listOf(
+            "${interactionType.displayName} Error: ${commandName ?: "Unknown"}",
+            "User: ${interaction.user.username} (${interaction.user.id})",
+            "Guild: $guildInfo"
+        ).joinToString(" | ")
         Log.error(context, exception)
     }
 
@@ -153,7 +161,7 @@ class ErrorHandlerService(
 
             // Truncate if necessary
             val truncatedMessage = if (errorMessage.length > MAX_DISCORD_MESSAGE_LENGTH) {
-                errorMessage.take(MAX_DISCORD_MESSAGE_LENGTH - 3) + "…"
+                errorMessage.take(MAX_DISCORD_MESSAGE_LENGTH - TRUNCATION_BUFFER) + "…"
             } else {
                 errorMessage
             }

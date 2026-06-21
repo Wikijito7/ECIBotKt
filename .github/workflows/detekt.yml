@@ -1,0 +1,15 @@
+name: detekt
+
+on: [pull_request]
+
+jobs:
+  detekt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew detekt

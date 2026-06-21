@@ -1,5 +1,7 @@
 package es.wokis.commands.player
 
+import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -7,8 +9,6 @@ import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
-import dev.kord.common.Locale
-import dev.kord.common.entity.Snowflake
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
@@ -32,7 +32,9 @@ class PlayerCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Player.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.PLAYER_COMMAND_DESCRIPTION).values.first()
+                description = localizationService.getLocalizations(
+                    LocalizationKeys.PLAYER_COMMAND_DESCRIPTION
+                ).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.PLAYER_COMMAND_DESCRIPTION)
             }

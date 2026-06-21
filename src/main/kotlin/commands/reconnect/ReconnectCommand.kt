@@ -17,7 +17,9 @@ class ReconnectCommand(
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
         commandBuilder.input(
             name = CommandName.Reconnect.commandName,
-            description = localizationService.getLocalizations(LocalizationKeys.RECONNECT_COMMAND_DESCRIPTION).values.first()
+            description = localizationService.getLocalizations(
+                LocalizationKeys.RECONNECT_COMMAND_DESCRIPTION
+            ).values.first()
         ) {
             descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RECONNECT_COMMAND_DESCRIPTION)
         }

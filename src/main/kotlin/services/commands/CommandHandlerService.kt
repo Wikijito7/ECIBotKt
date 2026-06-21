@@ -1,24 +1,25 @@
 package es.wokis.services.commands
 
+import commands.play.PlayCommand
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
+import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
+import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.CommandName
 import es.wokis.commands.ComponentsEnum
-import es.wokis.commands.queue.QueueCommand
-import commands.play.PlayCommand
-import dev.kord.core.Kord
-import dev.kord.core.entity.interaction.AutoCompleteInteraction
-import es.wokis.commands.player.PlayerCommand
-import es.wokis.commands.radio.RadioGroupCommand
-import es.wokis.commands.next.NextCommand
+import es.wokis.commands.config.ConfigGroupCommand
 import es.wokis.commands.disconnect.DisconnectCommand
-import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.locale.LocaleCommand
+import es.wokis.commands.next.NextCommand
+import es.wokis.commands.player.PlayerCommand
+import es.wokis.commands.queue.QueueCommand
+import es.wokis.commands.radio.RadioGroupCommand
+import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
 import es.wokis.commands.sound.SoundCommand
@@ -45,6 +46,8 @@ interface CommandHandlerService {
     suspend fun onAutocomplete(interaction: AutoCompleteInteraction)
 }
 
+// TODO: Consider using a command registry pattern (issue: #107)
+@Suppress("LongParameterList", "ForbiddenComment")
 class CommandHandlerServiceImpl(
     private val playCommand: PlayCommand,
     private val soundCommand: SoundCommand,
@@ -59,6 +62,7 @@ class CommandHandlerServiceImpl(
     private val disconnectCommand: DisconnectCommand,
     private val localeCommand: LocaleCommand,
     private val radioGroupCommand: RadioGroupCommand,
+    private val configGroupCommand: ConfigGroupCommand,
     private val localizationService: LocalizationService,
     private val errorHandlerService: ErrorHandlerService
 ) : CommandHandlerService {
@@ -80,8 +84,11 @@ class CommandHandlerServiceImpl(
 
     override suspend fun onRegisterGroupCommand(kord: Kord) {
         radioGroupCommand.onRegisterCommand(kord)
+        configGroupCommand.onRegisterCommand(kord)
     }
 
+    // TODO: Refactor to reduce complexity (issue: #107)
+    @Suppress("CyclomaticComplexMethod", "ForbiddenComment")
     override suspend fun onExecute(
         interaction: ChatInputCommandInteraction,
         response: DeferredPublicMessageInteractionResponseBehavior
@@ -98,11 +105,17 @@ class CommandHandlerServiceImpl(
                 CommandName.Player.commandName -> playerCommand.onExecute(interaction, response)
                 CommandName.Sounds.commandName -> soundsCommand.onExecute(interaction, response)
                 CommandName.Radio.commandName -> radioGroupCommand.onExecute(interaction, response)
+                CommandName.Config.commandName -> configGroupCommand.onExecute(interaction, response)
                 CommandName.Reconnect.commandName -> reconnectCommand.onExecute(interaction, response)
                 CommandName.Next.commandName -> nextCommand.onExecute(interaction, response)
                 CommandName.Disconnect.commandName -> disconnectCommand.onExecute(interaction, response)
                 CommandName.Locale.commandName -> localeCommand.onExecute(interaction, response)
-                else -> respondUnknownCommand(response, interaction.data.guildId.value, interaction.guildLocale, commandName)
+                else -> respondUnknownCommand(
+                    response,
+                    interaction.data.guildId.value,
+                    interaction.guildLocale,
+                    commandName
+                )
             }
         } catch (exception: Throwable) {
             errorHandlerService.handleCommandError(exception, interaction, response, commandName)
@@ -117,16 +130,26 @@ class CommandHandlerServiceImpl(
 
         try {
             when (ComponentsEnum.forCustomId(customId)) {
-                ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
+                ComponentsEnum.QUEUE_NEXT,
+                ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
 
-                ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
-                ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> playerCommand.onInteract(interaction)
+                ComponentsEnum.PLAYER_RESUME,
+                ComponentsEnum.PLAYER_PAUSE,
+                ComponentsEnum.PLAYER_SKIP,
+                ComponentsEnum.PLAYER_DISCONNECT,
+                ComponentsEnum.PLAYER_SHUFFLE,
+                ComponentsEnum.PLAYER_RECONNECT -> playerCommand.onInteract(interaction)
 
-                ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
+                ComponentsEnum.SOUNDS_NEXT,
+                ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
 
-                ComponentsEnum.RADIO_LIST_NEXT, ComponentsEnum.RADIO_LIST_PREVIOUS, ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
-                ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS, ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
-                ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS, ComponentsEnum.RADIO_COUNTRYCODES_NEXT,
+                ComponentsEnum.RADIO_LIST_NEXT,
+                ComponentsEnum.RADIO_LIST_PREVIOUS,
+                ComponentsEnum.RADIO_SEARCH_NAME_NEXT,
+                ComponentsEnum.RADIO_SEARCH_NAME_PREVIOUS,
+                ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_NEXT,
+                ComponentsEnum.RADIO_SEARCH_COUNTRY_CODE_PREVIOUS,
+                ComponentsEnum.RADIO_COUNTRYCODES_NEXT,
                 ComponentsEnum.RADIO_COUNTRYCODES_PREVIOUS -> radioGroupCommand.onInteract(interaction)
 
                 null -> Unit
@@ -142,6 +165,7 @@ class CommandHandlerServiceImpl(
             when (commandName) {
                 CommandName.Sound.commandName -> soundCommand.onAutoComplete(interaction)
                 CommandName.Radio.commandName -> radioGroupCommand.onAutoComplete(interaction)
+                CommandName.Config.commandName -> configGroupCommand.onAutoComplete(interaction)
                 CommandName.Locale.commandName -> localeCommand.onAutoComplete(interaction)
             }
         } catch (exception: Throwable) {

@@ -10,7 +10,6 @@ import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.CommandName
 import es.wokis.commands.tts.TTSCommand
-import es.wokis.localization.LocalizationKeys
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
@@ -40,8 +39,7 @@ class TTSCommandTest {
     )
 
     /*
-        Verification failed: call 6 of 6: List(child of #4#6).add(eq(dev.kord.rest.builder.interaction.ChatInputCreateBuilderImpl@30cb489a))) was not called
-        java.lang.AssertionError: Verification failed: call 6 of 6: List(child of #4#6).add(eq(dev.kord.rest.builder.interaction.ChatInputCreateBuilderImpl@30cb489a))) was not called
+        Verification failed: call 6 of 6: List(child of #4#6).add(eq(ChatInputCreateBuilderImpl)) was not called
      */
 
     @Test

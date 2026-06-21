@@ -19,7 +19,9 @@ class LocalizationService(
 
     private val localizedStrings: Map<String, List<LocalizedString>> = loadLanguages()
 
-    fun getLocalizations(key: String): MutableMap<Locale, String> = localizedStrings[key]?.associate { it.locale to it.value }?.toMutableMap()
+    fun getLocalizations(key: String): MutableMap<Locale, String> = localizedStrings[key]?.associate {
+        it.locale to it.value
+    }?.toMutableMap()
         ?: throw NoLocalizationFoundException(key)
 
     suspend fun getString(

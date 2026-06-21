@@ -32,9 +32,15 @@ class RadioPlayCommand(
 
     override suspend fun onRegisterCommand(builder: GlobalChatInputCreateBuilder) {
         builder.apply {
-            subCommand(CommandName.Radio.Play.commandName, localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_COMMAND_DESCRIPTION).values.first()) {
+            subCommand(
+                CommandName.Radio.Play.commandName,
+                localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_COMMAND_DESCRIPTION).values.first()
+            ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_COMMAND_DESCRIPTION)
-                string(RADIO_INPUT_NAME, localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_INPUT_DESCRIPTION).values.first()) {
+                string(
+                    RADIO_INPUT_NAME,
+                    localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_INPUT_DESCRIPTION).values.first()
+                ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.RADIO_PLAY_INPUT_DESCRIPTION)
                     required = true
                     autocomplete = true

@@ -7,7 +7,6 @@ import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteract
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
 import es.wokis.commands.locale.LocaleCommand
-import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.exceptions.BotException
 import es.wokis.services.localization.LocalizationService

@@ -1,5 +1,7 @@
 package es.wokis.commands.sounds
 
+import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -8,8 +10,6 @@ import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.message.EmbedBuilder
-import dev.kord.common.Locale
-import dev.kord.common.entity.Snowflake
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
@@ -23,6 +23,7 @@ import java.io.File
 
 private const val SOUNDS_PATH = "./audio"
 private const val MAX_SOUNDS_PER_COLUMN = 50
+private const val SOUNDS_COLUMNS = 3
 
 class SoundsCommand(
     private val localizationService: LocalizationService
@@ -46,16 +47,19 @@ class SoundsCommand(
         val discordLocale = interaction.guildLocale
         val sounds: List<File> = getSoundFilesSorted()
         val displaySounds = getDisplaySounds(sounds).sorted()
-        val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, guildId = guildId, discordLocale = discordLocale)
+        val title = localizationService.getString(
+            key = LocalizationKeys.SOUNDS_EMBED_TITLE,
+            guildId = guildId,
+            discordLocale = discordLocale
+        )
         val description = localizationService.getStringFormat(
             key = LocalizationKeys.SOUNDS_EMBED_DESCRIPTION,
             guildId = guildId,
             discordLocale = discordLocale,
             arguments = arrayOf(sounds.size)
         )
-        val columns = 3
-        val currentPageContent = displaySounds.chunked(columns).firstOrNull()
-        val pageCount = displaySounds.size / columns
+        val currentPageContent = displaySounds.chunked(SOUNDS_COLUMNS).firstOrNull()
+        val pageCount = displaySounds.size / SOUNDS_COLUMNS
         response.respond {
             createPaginatedEmbedMessage(
                 guildId = guildId,
@@ -64,7 +68,7 @@ class SoundsCommand(
                 title = title,
                 description = description,
                 currentPage = 1,
-                columns = columns,
+                columns = SOUNDS_COLUMNS,
                 currentPageContent = currentPageContent,
                 pageCount = pageCount,
                 previousButtonCustomId = ComponentsEnum.SOUNDS_PREVIOUS.customId,
@@ -80,12 +84,11 @@ class SoundsCommand(
         val updatePageBy = if (interactionCustomId == ComponentsEnum.QUEUE_PREVIOUS.customId) -1 else 1
         val sounds: List<File> = getSoundFilesSorted()
         val displayQueue = getDisplaySounds(sounds)
-        val columns = 3
-        val pageCount = displayQueue.size / columns
+        val pageCount = displayQueue.size / SOUNDS_COLUMNS
         val currentPage = interaction.message.embeds.firstOrNull()
             ?.footer?.text?.split(" ")?.get(1)?.toIntOrNull()?.plus(updatePageBy)
             ?.takeUnless { it > pageCount } ?: 1
-        val displaySoundsPage = displayQueue.chunked(columns).getOrNull(currentPage - 1)
+        val displaySoundsPage = displayQueue.chunked(SOUNDS_COLUMNS).getOrNull(currentPage - 1)
         updateQueueMessage(
             interaction = interaction,
             guildId = guildId,
@@ -93,8 +96,7 @@ class SoundsCommand(
             currentPage = currentPage,
             soundsCount = sounds.size,
             displaySoundsPage = displaySoundsPage,
-            pageCount = pageCount,
-            columns = columns
+            pageCount = pageCount
         )
     }
 
@@ -109,7 +111,9 @@ class SoundsCommand(
             val soundName = sound.nameWithoutExtension
             val separator = "$BLANK_SPACE$BLANK_SPACE\n"
             val appendDisplayTrackName = separator.plus(soundName)
-            if (currentString.split(separator).size < MAX_SOUNDS_PER_COLUMN && currentString.length + appendDisplayTrackName.length <= EmbedBuilder.Field.Limits.value) {
+            val withinColumnLimit = currentString.split(separator).size < MAX_SOUNDS_PER_COLUMN
+            val withinLengthLimit = currentString.length + appendDisplayTrackName.length <= EmbedBuilder.Field.Limits.value
+            if (withinColumnLimit && withinLengthLimit) {
                 currentString += appendDisplayTrackName
             } else {
                 displaySounds.add(currentString)
@@ -129,10 +133,13 @@ class SoundsCommand(
         currentPage: Int,
         soundsCount: Int,
         displaySoundsPage: List<String>?,
-        pageCount: Int,
-        columns: Int
+        pageCount: Int
     ) {
-        val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, guildId = guildId, discordLocale = discordLocale)
+        val title = localizationService.getString(
+            key = LocalizationKeys.SOUNDS_EMBED_TITLE,
+            guildId = guildId,
+            discordLocale = discordLocale
+        )
         val description = localizationService.getStringFormat(
             key = LocalizationKeys.SOUNDS_EMBED_DESCRIPTION,
             guildId = guildId,
@@ -147,7 +154,7 @@ class SoundsCommand(
                 title = title,
                 description = description,
                 currentPage = currentPage,
-                columns = columns,
+                columns = SOUNDS_COLUMNS,
                 currentPageContent = displaySoundsPage,
                 pageCount = pageCount,
                 previousButtonCustomId = ComponentsEnum.SOUNDS_PREVIOUS.customId,

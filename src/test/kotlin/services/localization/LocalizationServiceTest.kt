@@ -145,7 +145,11 @@ class LocalizationServiceTest {
         val result = "esta string tiene argumentos, yay!"
 
         // When
-        val actual = localizationService.getStringFormat(key, discordLocale = Locale.SPANISH_SPAIN, arguments = arrayOf("yay!"))
+        val actual = localizationService.getStringFormat(
+            key,
+            discordLocale = Locale.SPANISH_SPAIN,
+            arguments = arrayOf("yay!")
+        )
 
         // Then
         assertEquals(result, actual)
@@ -173,7 +177,11 @@ class LocalizationServiceTest {
         val result = "this string has arguments, yay!"
 
         // When
-        val actual = localizationService.getStringFormat(key, discordLocale = Locale.FRENCH, arguments = arrayOf("yay!"))
+        val actual = localizationService.getStringFormat(
+            key,
+            discordLocale = Locale.FRENCH,
+            arguments = arrayOf("yay!")
+        )
 
         // Then
         assertEquals(result, actual)

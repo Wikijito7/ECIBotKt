@@ -8,6 +8,17 @@ plugins {
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.plugin.serialization)
     alias(libs.plugins.idea.ext)
+    alias(libs.plugins.detekt)
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom(files("$projectDir/detekt.yml"))
 }
 
 group = "es.wokis"
@@ -83,6 +94,9 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.kotlin.coroutines.test)
     testImplementation(libs.junit.parametrized)
+
+    // Detekt
+    detektPlugins(libs.detekt.formatting)
 }
 
 tasks.test {

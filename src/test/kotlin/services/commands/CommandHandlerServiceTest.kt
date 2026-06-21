@@ -1,25 +1,26 @@
 package services.commands
 
+import commands.play.PlayCommand
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
+import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.CommandName
 import es.wokis.commands.ComponentsEnum
-import es.wokis.commands.queue.QueueCommand
-import commands.play.PlayCommand
+import es.wokis.commands.config.ConfigGroupCommand
+import es.wokis.commands.disconnect.DisconnectCommand
+import es.wokis.commands.locale.LocaleCommand
+import es.wokis.commands.next.NextCommand
 import es.wokis.commands.player.PlayerCommand
+import es.wokis.commands.queue.QueueCommand
 import es.wokis.commands.radio.RadioGroupCommand
+import es.wokis.commands.reconnect.ReconnectCommand
 import es.wokis.commands.shuffle.ShuffleCommand
 import es.wokis.commands.skip.SkipCommand
-import dev.kord.core.entity.interaction.AutoCompleteInteraction
-import es.wokis.commands.next.NextCommand
-import es.wokis.commands.disconnect.DisconnectCommand
-import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.sound.SoundCommand
-import es.wokis.commands.reconnect.ReconnectCommand
+import es.wokis.commands.sounds.SoundsCommand
 import es.wokis.commands.tts.TTSCommand
-import es.wokis.commands.locale.LocaleCommand
 import es.wokis.services.commands.CommandHandlerServiceImpl
 import es.wokis.services.error.ErrorHandlerService
 import es.wokis.services.localization.LocalizationService
@@ -43,6 +44,7 @@ class CommandHandlerServiceTest {
     private val localeCommand: LocaleCommand = mockk()
     private val localizationService: LocalizationService = mockk()
     private val radioGroupCommand: RadioGroupCommand = mockk()
+    private val configGroupCommand: ConfigGroupCommand = mockk()
     private val errorHandlerService: ErrorHandlerService = mockk()
 
     private val commandHandlerService = CommandHandlerServiceImpl(
@@ -56,6 +58,7 @@ class CommandHandlerServiceTest {
         playerCommand = playerCommand,
         soundsCommand = soundsCommand,
         radioGroupCommand = radioGroupCommand,
+        configGroupCommand = configGroupCommand,
         reconnectCommand = reconnectCommand,
         nextCommand = nextCommand,
         disconnectCommand = disconnectCommand,

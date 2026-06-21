@@ -25,7 +25,7 @@ class KokoroAudioTrack(
     var langCode: String = ""
 
     override fun process(localExecutor: LocalAudioTrackExecutor) {
-        if (baseUrl.isEmpty()) throw IllegalStateException("Base URL not set for KokoroAudioTrack")
+        check(baseUrl.isNotEmpty()) { "Base URL not set for KokoroAudioTrack" }
 
         sourceManager.getHttpInterface().use { httpInterface ->
             val post = HttpPost(URI.create("$baseUrl$KOKORO_SPEECH_ENDPOINT").normalize()).apply {

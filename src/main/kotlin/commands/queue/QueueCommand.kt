@@ -1,6 +1,7 @@
 package es.wokis.commands.queue
 
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
+import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -9,8 +10,6 @@ import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.message.EmbedBuilder
-import dev.kord.common.Locale
-import dev.kord.common.entity.Snowflake
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
@@ -30,7 +29,9 @@ class QueueCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Queue.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION).values.first()
+                description = localizationService.getLocalizations(
+                    LocalizationKeys.QUEUE_COMMAND_DESCRIPTION
+                ).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION)
             }

@@ -103,6 +103,21 @@ error_no_track_playing: No hay ninguna pista reproduciéndose
 error_api_unexpected: Ocurrió un error al comunicarse con servicios externos. Por favor, inténtalo de nuevo más tarde.
 error_unexpected: Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde.
 error_unexpected_with_debug: Ocurrió un error inesperado: %s
+config_command_description: Gestionar la configuración del bot
+config_reload_command_description: Recargar configuración desde archivo
+config_reload_success: Configuración recargada correctamente
+config_set_command_description: Establecer un valor de configuración
+config_set_section_description: Sección de configuración
+config_set_key_description: Clave de configuración
+config_set_value_description: Nuevo valor
+config_set_success: Config %s actualizado a: %s
+config_get_command_description: Obtener sección de configuración
+config_get_section_description: Sección de configuración a mostrar
+config_get_display: "%s:\n%s"
+config_invalid_section: Sección inválida. Secciones válidas: database, youtube, deezer, spotify, tidal, kokoro
+config_invalid_key: Clave inválida para la sección seleccionada
+config_cannot_modify_token: No puedes modificar este valor
+config_auth_required: Solo el dueño del bot puede usar este comando
 locale_command_description: Establecer el idioma preferido para este servidor
 locale_command_input_description: Idioma a establecer (usa el autocompletado para ver las opciones disponibles)
 locale_command_success: El idioma del servidor se ha establecido a %s
