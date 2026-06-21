@@ -17,36 +17,20 @@ repositories {
     flatDir {
         dirs("libs")
     }
-    // Keep mavenLocal for transitive dependencies of local JARs
-    mavenLocal()
+    mavenCentral()
     maven(url = "https://maven.lavalink.dev/releases")
     maven(url = "https://maven.topi.wtf/releases")
-    mavenCentral()
     maven(url = "https://jitpack.io")
 }
 
 dependencies {
-    // Kord - Local SNAPSHOT JARs (voice encryption branch)
-    // TODO: Switch back to version catalog when Kord merges voice encryption to main
+    // Kord - Local JARs from libs/ (feature-dave-support-SNAPSHOT, tracked in kord#1063)
+    // TODO: Switch to Maven Central version when DAVE voice encryption is merged to main
     implementation(fileTree("libs") { include("kord-*.jar") })
-
-    // Transitive dependencies required by local Kord JARs (flatDir doesn't resolve these)
-    // TODO: Remove when Kord merges voice encryption to main
-    implementation(libs.kotlinx.datetime)
-    implementation(libs.kord.cache)
-    implementation(libs.kord.cache.map)
-
-    //    implementation(libs.kord.core)
-    //    implementation(libs.kord.voice)
-    //    implementation(libs.kord.core.voice)
-    //    implementation(libs.kord.rest)
-    //    implementation(libs.kord.gateway)
-    //    implementation(libs.kord.common)
 
     // Ktor
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
-    // TODO: Remove when Kord merges voice encryption to main (Kord needs OkHttp engine)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.logging)
     implementation(libs.ktor.client.content.negotiation)
@@ -64,6 +48,14 @@ dependencies {
 
     // Serialization
     implementation(libs.kotlinx.serialization)
+
+    // libdave-jvm for DAVE protocol
+    implementation(libs.libdave.api)
+    implementation(libs.libdave.impl.jni)
+    runtimeOnly(libs.libdave.natives.darwin)
+    runtimeOnly(libs.libdave.natives.linuxX64)
+    runtimeOnly(libs.libdave.natives.linuxAarch64)
+    runtimeOnly(libs.libdave.natives.winX64)
 
     // Lavaplayer
     implementation(libs.lavaplayer)
@@ -120,6 +112,7 @@ sonar {
 
 kotlin {
     jvmToolchain(21)
+
 }
 
 tasks.register("generateLangClass") {
