@@ -4,6 +4,7 @@ import dev.kord.common.Locale
 import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import es.wokis.commands.sound.SoundCommand
+import es.wokis.localization.LocalizationKeys
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
@@ -192,6 +193,70 @@ class SoundCommandTest {
         }
         coVerify(exactly = 0) {
             lavaPlayerService.loadAndPlayMultipleWithCustomName(any(), any())
+        }
+        coVerify(exactly = 1) {
+            localizationService.getStringFormat(
+                key = LocalizationKeys.NO_MATCHES,
+                guildId = null,
+                discordLocale = Locale.ENGLISH_UNITED_STATES,
+                arguments = any()
+            )
+        }
+        coVerify(exactly = 0) {
+            localizationService.getString(
+                key = LocalizationKeys.SEARCHING_SONG,
+                guildId = null,
+                discordLocale = Locale.ENGLISH_UNITED_STATES
+            )
+        }
+    }
+
+    @Test
+    fun `Given non-existent sound name When onExecute is called Then only one respond and never SEARCHING_SONG`() = runTest {
+        // Regression test: ensures the file check happens before the "searching" response,
+        // so only NO_MATCHES is sent (not both SEARCHING_SONG and NO_MATCHES).
+        // Given
+        val soundName = "nonexistent"
+        val mockedStrings: Map<String, String> = mapOf("name" to soundName)
+        val interaction: ChatInputCommandInteraction = mockk {
+            every { kord } returns mockedKord
+            every { channel } returns mockedTextChannel
+            every { command } returns mockk {
+                every { strings } returns mockedStrings
+            }
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
+        }
+
+        coEvery {
+            interaction.getMemberVoiceChannel(mockedKord)
+        } returns mockedVoiceChannel
+
+        val lavaPlayerService = mockk<GuildLavaPlayerService>()
+        coEvery {
+            guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
+        } returns lavaPlayerService
+        every { interaction.guildLocale } returns Locale.ENGLISH_UNITED_STATES
+
+        // When
+        soundCommand.onExecute(interaction, mockedResponse)
+
+        // Then: only NO_MATCHES is localised, never SEARCHING_SONG
+        coVerify(exactly = 1) {
+            localizationService.getStringFormat(
+                key = LocalizationKeys.NO_MATCHES,
+                guildId = null,
+                discordLocale = Locale.ENGLISH_UNITED_STATES,
+                arguments = any()
+            )
+        }
+        coVerify(exactly = 0) {
+            localizationService.getString(
+                key = LocalizationKeys.SEARCHING_SONG,
+                guildId = null,
+                discordLocale = Locale.ENGLISH_UNITED_STATES
+            )
         }
     }
 
