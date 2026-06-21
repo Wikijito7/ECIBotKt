@@ -27,11 +27,11 @@ repositories {
 
 dependencies {
     // Kord - Local SNAPSHOT JARs (voice encryption branch)
-    // TODO: Switch back to version catalog when Kord merges voice encryption to main
+    // TODO: Switch back to version catalog when Kord merges voice encryption to main (kord#1063)
     implementation(fileTree("libs") { include("kord-*.jar") })
 
     // Transitive dependencies required by local Kord JARs (flatDir doesn't resolve these)
-    // TODO: Remove when Kord merges voice encryption to main
+    // TODO: Remove when Kord merges voice encryption to main (kord#1063)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kord.cache)
     implementation(libs.kord.cache.map)
@@ -64,6 +64,14 @@ dependencies {
 
     // Serialization
     implementation(libs.kotlinx.serialization)
+
+    // libdave-jvm for DAVE protocol
+    implementation(libs.libdave.api)
+    implementation(libs.libdave.impl.jni)
+    runtimeOnly(libs.libdave.natives.darwin)
+    runtimeOnly(libs.libdave.natives.linuxX64)
+    runtimeOnly(libs.libdave.natives.linuxAarch64)
+    runtimeOnly(libs.libdave.natives.winX64)
 
     // Lavaplayer
     implementation(libs.lavaplayer)
