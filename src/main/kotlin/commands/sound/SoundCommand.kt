@@ -63,14 +63,6 @@ class SoundCommand(
                 )
             }.let { return }
 
-        response.respond {
-            content = localizationService.getString(
-                LocalizationKeys.SEARCHING_SONG,
-                guildId = guildId,
-                discordLocale = discordLocale
-            )
-        }
-
         val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction = interaction)
         val soundFilePath = "$AUDIO_FOLDER$soundName$AUDIO_EXTENSION"
         val file = File(soundFilePath)
@@ -84,6 +76,14 @@ class SoundCommand(
                     arguments = arrayOf(soundName)
                 )
             }.let { return }
+        }
+
+        response.respond {
+            content = localizationService.getString(
+                LocalizationKeys.SEARCHING_SONG,
+                guildId = guildId,
+                discordLocale = discordLocale
+            )
         }
 
         guildLavaPlayerService.loadAndPlayMultipleWithCustomName(

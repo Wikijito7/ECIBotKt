@@ -1,6 +1,7 @@
 package es.wokis.commands.radio.subcommands.random
 
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
+import dev.kord.core.behavior.interaction.response.edit
 import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.rest.builder.interaction.GlobalChatInputCreateBuilder
@@ -36,7 +37,7 @@ class RadioRandomCommand(
         val discordLocale = interaction.guildLocale
         val guildLavaPlayerService = guildQueueService.getOrCreateLavaPlayerService(interaction)
 
-        response.respond {
+        val originalResponse = response.respond {
             content = localizationService.getString(
                 key = LocalizationKeys.RADIO_RANDOM_SEARCHING,
                 guildId = guildId,
@@ -52,7 +53,7 @@ class RadioRandomCommand(
                         radioUrl = radio.url,
                         customFavicon = radio.thumbnailUrl
                     )
-                } ?: response.respond {
+                } ?: originalResponse.edit {
                     content = localizationService.getString(
                         key = LocalizationKeys.RADIO_RANDOM_ERROR,
                         guildId = guildId,
@@ -62,7 +63,7 @@ class RadioRandomCommand(
             }
 
             is RemoteResponse.Error -> {
-                response.respond {
+                originalResponse.edit {
                     content = localizationService.getString(
                         key = LocalizationKeys.RADIO_RANDOM_ERROR,
                         guildId = guildId,
