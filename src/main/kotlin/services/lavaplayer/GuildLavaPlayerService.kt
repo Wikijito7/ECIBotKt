@@ -424,7 +424,7 @@ class GuildLavaPlayerService(
                     key = LocalizationKeys.FOUND_TRACK_LIST,
                     guildId = guildId,
                     discordLocale = discordLocale,
-                    arguments = arrayOf(playlist.name, playlist.tracks.size)
+                    arguments = arrayOf<Any>(playlist.name, playlist.tracks.size)
                 )
             )
             connectToVoiceChannel()
@@ -443,7 +443,7 @@ class GuildLavaPlayerService(
                         },
                         guildId = guildId,
                         discordLocale = discordLocale,
-                        arguments = arrayOf(
+                        arguments = arrayOf<Any>(
                             playlist.name.toSanitizedMarkdownLink(playlistUrl),
                             playlist.tracks.size
                         )
@@ -453,7 +453,7 @@ class GuildLavaPlayerService(
                         key = if (addToFront) LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE else LocalizationKeys.ADDED_SONGS_TO_QUEUE,
                         guildId = guildId,
                         discordLocale = discordLocale,
-                        arguments = arrayOf(playlist.name, playlist.tracks.size)
+                        arguments = arrayOf<Any>(playlist.name, playlist.tracks.size)
                     )
                 }
             }

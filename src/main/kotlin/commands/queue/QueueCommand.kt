@@ -55,7 +55,7 @@ class QueueCommand(
                 key = LocalizationKeys.QUEUE_EMBED_DESCRIPTION,
                 guildId = guildId,
                 discordLocale = discordLocale,
-                arguments = arrayOf(queue.size, guildName)
+                arguments = arrayOf<Any>(queue.size, guildName)
             )
             val currentPageContent = displayQueue.takeIf { it.isNotEmpty() }?.get(0)?.let { listOf(it) }
             response.respond {
@@ -138,7 +138,7 @@ class QueueCommand(
             key = LocalizationKeys.QUEUE_EMBED_DESCRIPTION,
             guildId = guildId,
             discordLocale = discordLocale,
-            arguments = arrayOf(queueLength, guildName)
+            arguments = arrayOf<Any>(queueLength, guildName)
         )
         val currentPageContent = displayQueuePage?.let { listOf(it) }
         interaction.message.edit {

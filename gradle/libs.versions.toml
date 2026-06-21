@@ -1,9 +1,8 @@
 [versions]
 detekt = "1.23.7"
 jacoco = "0.8.12"
-# Kord is now loaded from local libs/ folder as SNAPSHOT JARs
-# See libs/ directory for the JAR files
-kotlin = "2.1.21"
+kord = "feature-dave-support-SNAPSHOT"
+kotlin = "2.3.10"
 ktor = "3.1.3"
 mockk = "1.14.2"
 slf4j = "2.0.17"
@@ -19,6 +18,8 @@ lavaplayer-youtube = "1.17.0"
 lavaplayer-lavasrc = "4.8.1"
 idea-ext = "1.1.10"
 junit-parametized = "5.13.0"
+libdave = "0.1.2"
+libdave-natives = "0.1.3"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
@@ -30,7 +31,7 @@ ktor-client-serialization-kotlin-json = { module = "io.ktor:ktor-serialization-k
 ktor-client-client-resources = { module = "io.ktor:ktor-client-resources", version.ref = "ktor" }
 ktor-client-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
-# TODO: Re-enable when Kord merges voice encryption branch to main
+# Kord - from local JARs in libs/ until DAVE support is merged to main (kord#1063)
 # kord-core = { module = "dev.kord:kord-core", version.ref = "kord" }
 # kord-core-voice = { module = "dev.kord:kord-core-voice", version.ref = "kord"}
 # kord-voice = { module = "dev.kord:kord-voice", version.ref = "kord" }
@@ -42,21 +43,27 @@ kord-cache = { module = "dev.kord.cache:cache-api", version.ref = "kord-cache" }
 kord-cache-map = { module = "dev.kord.cache:cache-map", version.ref = "kord-cache" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 lavaplayer = { module = "dev.arbjerg:lavaplayer", version.ref = "lavaplayer" }
-lavaplayer-youtube = { module = "dev.lavalink.youtube:v2", version.ref = "lavaplayer-youtube"}
+lavaplayer-youtube = { module = "dev.lavalink.youtube:v2", version.ref = "lavaplayer-youtube" }
 lavaplayer-lavasrc = { module = "com.github.topi314.lavasrc:lavasrc", version.ref = "lavaplayer-lavasrc" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
-kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref="kotlin-coroutines-test" }
+kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlin-coroutines-test" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin" }
 koin-core = { module = "io.insert-koin:koin-core" }
 kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 junit-parametrized = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit-parametized" }
 detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-formatting", version.ref = "detekt" }
+libdave-api = { module = "moe.kyokobot.libdave:api", version.ref = "libdave" }
+libdave-impl-jni = { module = "moe.kyokobot.libdave:impl-jni", version.ref = "libdave" }
+libdave-natives-darwin = { module = "moe.kyokobot.libdave:natives-darwin", version.ref = "libdave-natives" }
+libdave-natives-linuxX64 = { module = "moe.kyokobot.libdave:natives-linux-x86-64", version.ref = "libdave-natives" }
+libdave-natives-linuxAarch64 = { module = "moe.kyokobot.libdave:natives-linux-aarch64", version.ref = "libdave-natives" }
+libdave-natives-winX64 = { module = "moe.kyokobot.libdave:natives-win-x86-64", version.ref = "libdave-natives" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
-idea-ext = {id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "idea-ext"}
+idea-ext = { id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "idea-ext" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
