@@ -10,6 +10,7 @@ import dev.kord.core.event.gateway.ReadyEvent
 import dev.kord.core.event.interaction.AutoCompleteInteractionCreateEvent
 import dev.kord.core.event.interaction.ButtonInteractionCreateEvent
 import dev.kord.core.event.interaction.ChatInputCommandInteractionCreateEvent
+import dev.kord.core.event.interaction.MessageCommandInteractionCreateEvent
 import dev.kord.core.event.message.MessageCreateEvent
 import dev.kord.core.event.user.VoiceStateUpdateEvent
 import dev.kord.core.on
@@ -77,6 +78,11 @@ class Bot(
         bot.on<ButtonInteractionCreateEvent> {
             interaction.deferPublicMessageUpdate()
             commandHandlerService.onInteract(interaction)
+        }
+
+        bot.on<MessageCommandInteractionCreateEvent> {
+            val response = interaction.deferPublicResponse()
+            commandHandlerService.onExecuteMessageCommand(interaction, response)
         }
 
         bot.on<AutoCompleteInteractionCreateEvent> {

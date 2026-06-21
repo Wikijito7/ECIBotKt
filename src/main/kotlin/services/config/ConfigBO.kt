@@ -22,7 +22,9 @@ data class Config(
     @SerialName("tidal")
     val tidal: TidalConfig,
     @SerialName("kokoro")
-    val kokoro: KokoroConfig
+    val kokoro: KokoroConfig,
+    @SerialName("ask")
+    val ask: AskConfig
 )
 
 @Serializable
@@ -93,6 +95,18 @@ data class TidalConfig(
     val countryCode: String,
     @SerialName("token")
     val token: String
+)
+
+@Serializable
+data class AskConfig(
+    @SerialName("enabled")
+    val enabled: Boolean,
+    @SerialName("provider")
+    val provider: String,
+    @SerialName("api_token")
+    val apiToken: String,
+    @SerialName("model")
+    val model: String
 )
 
 @Serializable

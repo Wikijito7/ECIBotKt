@@ -41,5 +41,11 @@
     "default_voice": "",
     "default_speed": 1.0,
     "default_lang_code": ""
+  },
+  "ask": {
+    "enabled": false,
+    "provider": "huggingface",
+    "api_token": "",
+    "model": "gpt-5.4-mini"
   }
 }
