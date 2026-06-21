@@ -141,6 +141,13 @@ private suspend fun createPlayerComponents(localizationService: LocalizationServ
                 emoji = DiscordPartialEmoji(name = "🔄")
             }
             interactionButton(
+                style = ButtonStyle.Secondary,
+                customId = ComponentsEnum.PLAYER_LYRICS.customId
+            ) {
+                label = localizationService.getString(key = LocalizationKeys.PLAYER_LYRICS, guildId = guildId, discordLocale = discordLocale)
+                emoji = DiscordPartialEmoji(name = "📝")
+            }
+            interactionButton(
                 style = ButtonStyle.Danger,
                 customId = ComponentsEnum.PLAYER_DISCONNECT.customId
             ) {

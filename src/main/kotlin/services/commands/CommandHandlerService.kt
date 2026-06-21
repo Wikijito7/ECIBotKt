@@ -120,7 +120,8 @@ class CommandHandlerServiceImpl(
                 ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> queueCommand.onInteract(interaction)
 
                 ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
-                ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> playerCommand.onInteract(interaction)
+                ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT,
+                ComponentsEnum.PLAYER_LYRICS -> playerCommand.onInteract(interaction)
 
                 ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> soundsCommand.onInteract(interaction)
 
@@ -169,7 +170,8 @@ class CommandHandlerServiceImpl(
         ComponentsEnum.QUEUE_NEXT, ComponentsEnum.QUEUE_PREVIOUS -> CommandName.Queue.commandName
 
         ComponentsEnum.PLAYER_RESUME, ComponentsEnum.PLAYER_PAUSE, ComponentsEnum.PLAYER_SKIP,
-        ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT -> CommandName.Player.commandName
+        ComponentsEnum.PLAYER_DISCONNECT, ComponentsEnum.PLAYER_SHUFFLE, ComponentsEnum.PLAYER_RECONNECT,
+        ComponentsEnum.PLAYER_LYRICS -> CommandName.Player.commandName
 
         ComponentsEnum.SOUNDS_NEXT, ComponentsEnum.SOUNDS_PREVIOUS -> CommandName.Sounds.commandName
 

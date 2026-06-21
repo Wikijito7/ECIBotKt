@@ -10,6 +10,7 @@ import dev.kord.core.entity.interaction.ApplicationCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
+import es.wokis.services.lavaplayer.LyricsService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.exceptions.BotException
 import es.wokis.services.queue.GuildQueueService
@@ -32,11 +33,13 @@ class GuildQueueServiceTest {
     private val audioPlayerManagerProvider: AudioPlayerManagerProvider = mockk()
     private val appDispatchers = TestDispatchers()
     private val localizationService: LocalizationService = mockk()
+    private val lyricsService: LyricsService = mockk()
 
     private val guildQueueService = GuildQueueService(
         audioPlayerManagerProvider = audioPlayerManagerProvider,
         appDispatchers = appDispatchers,
-        localizationService = localizationService
+        localizationService = localizationService,
+        lyricsService = lyricsService
     )
 
     @Test

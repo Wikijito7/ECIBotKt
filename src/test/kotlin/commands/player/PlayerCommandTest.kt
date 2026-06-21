@@ -14,6 +14,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
+import es.wokis.services.lavaplayer.LyricsService
 import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.player.PlayerChannelService
@@ -38,11 +39,13 @@ class PlayerCommandTest {
     private val localizationService: LocalizationService = mockk()
     private val guildQueueService: GuildQueueService = mockk()
     private val playerChannelService: PlayerChannelService = mockk()
+    private val lyricsService: LyricsService = mockk()
 
     private val playerCommand = PlayerCommand(
         localizationService = localizationService,
         guildQueueService = guildQueueService,
-        playerChannelService = playerChannelService
+        playerChannelService = playerChannelService,
+        lyricsService = lyricsService
     )
 
     @Test
@@ -354,5 +357,217 @@ class PlayerCommandTest {
             guildLavaPlayerService.isPaused()
             guildLavaPlayerService.pause()
         }
+    }
+
+    @Test
+    fun `Given lyrics interaction with no service When onInteract Then respond ephemeral`() = runTest {
+        // Given
+        val mockKord: Kord = mockk {
+            every { resources } returns mockk {
+                every { defaultStrategy } returns EntitySupplyStrategy.rest
+            }
+            every { defaultSupplier } returns mockk()
+            every { rest } returns mockk {
+                every { interaction } returns mockk(relaxed = true)
+            }
+        }
+        val interaction = mockk<ButtonInteraction> {
+            every { id } returns Snowflake(456)
+            every { data } returns mockk {
+                every { guildId.value } returns null
+            }
+            every { kord } returns mockKord
+            every { guildLocale } returns Locale.BULGARIAN
+            every { component } returns mockk {
+                every { customId } returns ComponentsEnum.PLAYER_LYRICS.customId
+            }
+            every { message } returns mockk(relaxed = true)
+            every { applicationId } returns Snowflake(456)
+            every { token } returns "testToken"
+        }
+
+        // When
+        playerCommand.onInteract(interaction)
+
+        // Then
+        coVerify(exactly = 0) { guildQueueService.getLavaPlayerService(any()) }
+    }
+
+    @Test
+    fun `Given lyrics interaction with existing message When onInteract Then toggle off lyrics`() = runTest {
+        // Given
+        val mockKord: Kord = mockk {
+            every { resources } returns mockk {
+                every { defaultStrategy } returns EntitySupplyStrategy.rest
+            }
+            every { defaultSupplier } returns mockk()
+            every { rest } returns mockk {
+                every { interaction } returns mockk(relaxed = true)
+            }
+        }
+        val existingMsg = mockk<Message>(relaxed = true)
+        val guildLavaPlayerService: GuildLavaPlayerService = mockk {
+            every { getLyricsMessage() } returns existingMsg
+            justRun { clearLyricsMessage() }
+        }
+        val interaction = mockk<ButtonInteraction> {
+            every { id } returns Snowflake(456)
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockKord
+            every { guildLocale } returns Locale.BULGARIAN
+            every { component } returns mockk {
+                every { customId } returns ComponentsEnum.PLAYER_LYRICS.customId
+            }
+            every { message } returns mockk(relaxed = true)
+            every { applicationId } returns Snowflake(456)
+            every { token } returns "testToken"
+        }
+        coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+
+        // When
+        playerCommand.onInteract(interaction)
+
+        // Then
+        verify(exactly = 1) { guildLavaPlayerService.getLyricsMessage() }
+        coVerify(exactly = 1) { existingMsg.delete() }
+        verify(exactly = 1) { guildLavaPlayerService.clearLyricsMessage() }
+    }
+
+    @Test
+    fun `Given lyrics interaction with no track When onInteract Then respond ephemeral with no track error`() = runTest {
+        // Given
+        val mockKord: Kord = mockk {
+            every { resources } returns mockk {
+                every { defaultStrategy } returns EntitySupplyStrategy.rest
+            }
+            every { defaultSupplier } returns mockk()
+            every { rest } returns mockk {
+                every { interaction } returns mockk(relaxed = true)
+            }
+        }
+        val guildLavaPlayerService: GuildLavaPlayerService = mockk {
+            every { getLyricsMessage() } returns null
+            every { getCurrentPlayingTrack() } returns null
+        }
+        val interaction = mockk<ButtonInteraction> {
+            every { id } returns Snowflake(456)
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockKord
+            every { guildLocale } returns Locale.BULGARIAN
+            every { component } returns mockk {
+                every { customId } returns ComponentsEnum.PLAYER_LYRICS.customId
+            }
+            every { message } returns mockk(relaxed = true)
+            every { applicationId } returns Snowflake(456)
+            every { token } returns "testToken"
+        }
+        coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+
+        // When
+        playerCommand.onInteract(interaction)
+
+        // Then
+        verify(exactly = 1) { guildLavaPlayerService.getLyricsMessage() }
+        verify(exactly = 1) { guildLavaPlayerService.getCurrentPlayingTrack() }
+        coVerify(exactly = 0) { guildLavaPlayerService.saveLyricsMessage(any()) }
+    }
+
+    @Test
+    fun `Given lyrics interaction with lyrics found When onInteract Then respond with lyrics`() = runTest {
+        // Given
+        val mockKord: Kord = mockk {
+            every { resources } returns mockk {
+                every { defaultStrategy } returns EntitySupplyStrategy.rest
+            }
+            every { defaultSupplier } returns mockk()
+            every { rest } returns mockk {
+                every { interaction } returns mockk(relaxed = true)
+            }
+        }
+        val guildLavaPlayerService: GuildLavaPlayerService = mockk {
+            every { getLyricsMessage() } returns null
+            every { getCurrentPlayingTrack() } returns createMockTrackBO()
+            justRun { saveLyricsMessage(any()) }
+        }
+        val interaction = mockk<ButtonInteraction> {
+            every { id } returns Snowflake(456)
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockKord
+            every { guildLocale } returns Locale.BULGARIAN
+            every { component } returns mockk {
+                every { customId } returns ComponentsEnum.PLAYER_LYRICS.customId
+            }
+            every { message } returns mockk(relaxed = true)
+            every { applicationId } returns Snowflake(456)
+            every { token } returns "testToken"
+        }
+        coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns "Lyrics Title"
+        every { lyricsService.getFormattedLyrics(any()) } returns "Some lyrics"
+
+        val lyricsMsg = mockk<Message>(relaxed = true)
+        coEvery { interaction.getOriginalInteractionResponse() } returns lyricsMsg
+
+        // When
+        playerCommand.onInteract(interaction)
+
+        // Then
+        verify(exactly = 1) { guildLavaPlayerService.getLyricsMessage() }
+        verify(exactly = 1) { guildLavaPlayerService.getCurrentPlayingTrack() }
+        verify(exactly = 1) { lyricsService.getFormattedLyrics(any()) }
+        coVerify(exactly = 1) { guildLavaPlayerService.saveLyricsMessage(lyricsMsg) }
+    }
+
+    @Test
+    fun `Given lyrics interaction with no lyrics found When onInteract Then respond ephemeral with not found`() = runTest {
+        // Given
+        val mockKord: Kord = mockk {
+            every { resources } returns mockk {
+                every { defaultStrategy } returns EntitySupplyStrategy.rest
+            }
+            every { defaultSupplier } returns mockk()
+            every { rest } returns mockk {
+                every { interaction } returns mockk(relaxed = true)
+            }
+        }
+        val guildLavaPlayerService: GuildLavaPlayerService = mockk {
+            every { getLyricsMessage() } returns null
+            every { getCurrentPlayingTrack() } returns createMockTrackBO()
+        }
+        val interaction = mockk<ButtonInteraction> {
+            every { id } returns Snowflake(456)
+            every { data } returns mockk {
+                every { guildId.value } returns Snowflake(123)
+            }
+            every { kord } returns mockKord
+            every { guildLocale } returns Locale.BULGARIAN
+            every { component } returns mockk {
+                every { customId } returns ComponentsEnum.PLAYER_LYRICS.customId
+            }
+            every { message } returns mockk(relaxed = true)
+            every { applicationId } returns Snowflake(456)
+            every { token } returns "testToken"
+        }
+        coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
+        coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
+        every { lyricsService.getFormattedLyrics(any()) } returns null
+
+        // When
+        playerCommand.onInteract(interaction)
+
+        // Then
+        verify(exactly = 1) { guildLavaPlayerService.getLyricsMessage() }
+        verify(exactly = 1) { guildLavaPlayerService.getCurrentPlayingTrack() }
+        verify(exactly = 1) { lyricsService.getFormattedLyrics(any()) }
+        coVerify(exactly = 0) { guildLavaPlayerService.saveLyricsMessage(any()) }
     }
 }

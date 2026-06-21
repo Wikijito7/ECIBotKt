@@ -9,13 +9,15 @@ import es.wokis.dispatchers.AppDispatchers
 import es.wokis.exceptions.BotException
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
+import es.wokis.services.lavaplayer.LyricsService
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.getMemberVoiceChannel
 
 class GuildQueueService(
     private val audioPlayerManagerProvider: AudioPlayerManagerProvider,
     private val appDispatchers: AppDispatchers,
-    private val localizationService: LocalizationService
+    private val localizationService: LocalizationService,
+    private val lyricsService: LyricsService
 ) {
 
     private val guildQueues: MutableMap<Snowflake, GuildLavaPlayerService> = mutableMapOf()
@@ -63,6 +65,7 @@ class GuildQueueService(
         voiceChannel = voiceChannel,
         audioPlayerManager = audioPlayerManagerProvider.createAudioPlayerManager(),
         localizationService = localizationService,
+        lyricsService = lyricsService,
         guildId = guild,
         discordLocale = discordLocale
     ).also {
