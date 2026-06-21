@@ -97,7 +97,11 @@ class ErrorHandlerService(
     ) {
         handleError(exception, interaction, commandName, InteractionType.AUTOCOMPLETE) {
             // Return empty suggestions on error
-            interaction.suggest(emptyList())
+            try {
+                interaction.suggest(emptyList())
+            } catch (e: Exception) {
+                Log.error("Failed to send empty suggestions on autocomplete error (likely already acknowledged)", e)
+            }
         }
     }
 
@@ -120,7 +124,11 @@ class ErrorHandlerService(
         }
 
         // Execute user response callback
-        onUserResponse()
+        try {
+            onUserResponse()
+        } catch (e: Exception) {
+            Log.error("Failed to send error response to user (interaction may already be acknowledged)", e)
+        }
     }
 
     /**
