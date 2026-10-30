@@ -1,9 +1,9 @@
 package domain.locale
 
-import dev.kord.common.Locale
-import dev.kord.common.entity.Snowflake
 import es.wokis.domain.locale.GetGuildLocaleUseCase
-import es.wokis.repositories.locale.LocalJsonLocaleRepository
+import es.wokis.domain.locale.LocaleCode
+import es.wokis.domain.model.GuildId
+import es.wokis.repositories.locale.LocaleRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -14,14 +14,14 @@ import org.junit.jupiter.api.Test
 
 class GetGuildLocaleUseCaseTest {
 
-    private val localeRepository: LocalJsonLocaleRepository = mockk()
+    private val localeRepository: LocaleRepository = mockk()
     private val getGuildLocaleUseCase = GetGuildLocaleUseCase(localeRepository)
 
     @Test
     fun `Given guild has custom locale When invoke is called Then return custom locale`() = runTest {
         // Given
-        val guildId = Snowflake(123)
-        val expectedLocale = Locale.SPANISH_SPAIN
+        val guildId = GuildId(123uL)
+        val expectedLocale = LocaleCode("es-ES")
         coEvery { localeRepository.getGuildLocale(guildId) } returns expectedLocale
 
         // When
@@ -35,7 +35,7 @@ class GetGuildLocaleUseCaseTest {
     @Test
     fun `Given guild has no custom locale When invoke is called Then return null`() = runTest {
         // Given
-        val guildId = Snowflake(123)
+        val guildId = GuildId(123uL)
         coEvery { localeRepository.getGuildLocale(guildId) } returns null
 
         // When
@@ -44,5 +44,20 @@ class GetGuildLocaleUseCaseTest {
         // Then
         assertNull(result)
         coVerify(exactly = 1) { localeRepository.getGuildLocale(guildId) }
+    }
+
+    @Test
+    fun `Given max ULong guild id When invoke is called Then forward exact ids`() = runTest {
+        // Given
+        val guildId = GuildId(ULong.MAX_VALUE)
+        val expectedLocale = LocaleCode("de")
+        coEvery { localeRepository.getGuildLocale(guildId) } returns expectedLocale
+
+        // When
+        val result = getGuildLocaleUseCase(guildId)
+
+        // Then
+        assertEquals(expectedLocale, result)
+        coVerify(exactly = 1) { localeRepository.getGuildLocale(GuildId(ULong.MAX_VALUE)) }
     }
 }

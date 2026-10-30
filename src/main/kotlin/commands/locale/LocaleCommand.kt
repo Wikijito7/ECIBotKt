@@ -14,12 +14,14 @@ import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.Autocomplete
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
-import es.wokis.data.locale.DISCORD_LOCALE_MAP
 import es.wokis.data.locale.RESET_LOCALE_VALUE
 import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.exceptions.BotException
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
+import es.wokis.utils.DISCORD_LOCALE_MAP
+import es.wokis.utils.toGuildId
+import es.wokis.utils.toLocaleCode
 
 private const val ARGUMENT_LOCALE = "locale"
 
@@ -66,7 +68,7 @@ class LocaleCommand(
         }
 
         if (localeInput.equals(RESET_LOCALE_VALUE, ignoreCase = true)) {
-            setGuildLocaleUseCase.removeLocale(guildId)
+            setGuildLocaleUseCase.removeLocale(guildId.toGuildId())
             response.respond {
                 content = localizationService.getString(
                     key = LocalizationKeys.LOCALE_COMMAND_RESET_SUCCESS,
@@ -90,7 +92,7 @@ class LocaleCommand(
             return
         }
 
-        setGuildLocaleUseCase(guildId, selectedLocale)
+        setGuildLocaleUseCase(guildId.toGuildId(), selectedLocale.toLocaleCode())
         response.respond {
             content = localizationService.getStringFormat(
                 key = LocalizationKeys.LOCALE_COMMAND_SUCCESS,

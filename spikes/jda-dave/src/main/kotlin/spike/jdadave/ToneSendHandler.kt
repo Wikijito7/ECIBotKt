@@ -82,8 +82,10 @@ class ToneSendHandler(
                 val sampleIndex = frameIndex * samplesPerFrame + sampleInFrame
                 val envelope = when {
                     sampleIndex < fadeSamples -> sampleIndex.toDouble() / fadeSamples
+
                     sampleIndex >= totalSamples - fadeSamples ->
                         (totalSamples - 1 - sampleIndex).toDouble() / fadeSamples
+
                     else -> 1.0
                 }
                 val seconds = sampleIndex.toDouble() / SAMPLE_RATE

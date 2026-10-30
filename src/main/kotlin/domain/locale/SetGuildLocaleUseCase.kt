@@ -1,8 +1,7 @@
 package es.wokis.domain.locale
 
-import dev.kord.common.Locale
-import dev.kord.common.entity.Snowflake
-import es.wokis.repositories.locale.LocalJsonLocaleRepository
+import es.wokis.domain.model.GuildId
+import es.wokis.repositories.locale.LocaleRepository
 
 /**
  * Use case for setting or removing a guild's custom locale preference.
@@ -10,25 +9,25 @@ import es.wokis.repositories.locale.LocalJsonLocaleRepository
  * switching between different repository implementations.
  */
 class SetGuildLocaleUseCase(
-    private val localeRepository: LocalJsonLocaleRepository
+    private val localeRepository: LocaleRepository
 ) {
 
     /**
      * Sets a custom locale for a guild.
      *
      * @param guildId The guild's unique identifier
-     * @param locale The locale to set
+     * @param locale The locale code to set
      */
-    suspend operator fun invoke(guildId: Snowflake, locale: Locale) {
+    suspend operator fun invoke(guildId: GuildId, locale: LocaleCode) {
         localeRepository.setGuildLocale(guildId, locale)
     }
 
     /**
-     * Removes the custom locale for a guild, reverting to Discord's default.
+     * Removes a custom locale for a guild, reverting to Discord's default.
      *
      * @param guildId The guild's unique identifier
      */
-    suspend fun removeLocale(guildId: Snowflake) {
+    suspend fun removeLocale(guildId: GuildId) {
         localeRepository.removeGuildLocale(guildId)
     }
 }

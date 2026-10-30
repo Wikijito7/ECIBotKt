@@ -458,8 +458,11 @@ class VoiceTestProbe(
 
     private fun failureMessage(t: Throwable): String = when (t) {
         is InsufficientPermissionException -> "The bot is missing permission ${t.permission}."
+
         is VoiceProbeException -> t.message ?: "Voice connection failed."
+
         is TimeoutException -> "Timed out waiting for the voice connection or tone send."
+
         else -> "Probe failed (${t.javaClass.simpleName}). Check the container logs."
     }
 
@@ -682,22 +685,26 @@ class VoiceTestProbe(
                 )
                 StatusDecision(observedState = observedState, connectSignal = true)
             }
+
             status == ConnectionStatus.NOT_CONNECTED -> classifyNotConnectedLocked(
                 status,
                 observedState,
                 observedRequest,
             )
+
             status == ConnectionStatus.SHUTTING_DOWN -> terminalDecisionLocked(
                 status,
                 observedState,
                 "JDA shut down while the voice connection was open (SHUTTING_DOWN).",
             )
+
             status == ConnectionStatus.DISCONNECTED_CHANNEL_DELETED -> terminalDecisionLocked(
                 status,
                 observedState,
                 "The voice channel was deleted while the probe was connected " +
                     "(DISCONNECTED_CHANNEL_DELETED).",
             )
+
             status == ConnectionStatus.DISCONNECTED_AUTHENTICATION_FAILURE -> terminalDecisionLocked(
                 status,
                 observedState,
@@ -705,6 +712,7 @@ class VoiceTestProbe(
                     "(DISCONNECTED_AUTHENTICATION_FAILURE). Check that the staging bot token is still " +
                     "valid and that the bot may join voice in the test guild.",
             )
+
             status == ConnectionStatus.AUDIO_REGION_CHANGE -> terminalDecisionLocked(
                 status,
                 observedState,
@@ -712,16 +720,19 @@ class VoiceTestProbe(
                     "(AUDIO_REGION_CHANGE). The probe treats a region change as terminal; " +
                     "re-run /${VoiceTestProbe.COMMAND_NAME} to try again.",
             )
+
             status.name.startsWith("ERROR_") -> terminalDecisionLocked(
                 status,
                 observedState,
                 "Voice connection failed: $status.",
             )
+
             !status.shouldReconnect() -> terminalDecisionLocked(
                 status,
                 observedState,
                 "Voice connection failed: $status.",
             )
+
             else -> StatusDecision(observedState = observedState)
         }
 
@@ -762,19 +773,23 @@ class VoiceTestProbe(
                     )
                 }
             }
+
             ProbeConnectionState.DISCONNECTED -> StatusDecision(
                 observedState = observedState,
                 infoMessage = "NOT_CONNECTED observed again after the requested disconnected state was reached",
             )
+
             ProbeConnectionState.IDLE -> StatusDecision(
                 observedState = observedState,
                 infoMessage = "NOT_CONNECTED observed while no connection was requested; ignoring",
             )
+
             ProbeConnectionState.CONNECTING -> terminalDecisionLocked(
                 status,
                 observedState,
                 "Voice connection closed before it reached CONNECTED (NOT_CONNECTED).",
             )
+
             // Once CONNECTED was observed, a NOT_CONNECTED that cleanup did not ask for
             // means the connection dropped during the tone/flush. It is terminal: the run
             // must not report Success.

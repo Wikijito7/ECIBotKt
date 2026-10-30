@@ -50,7 +50,7 @@ fun main() {
     LOG.info("[config] {}", config)
 
     try {
-        requireLinuxX86_64()
+        requireLinuxX64()
     } catch (t: Throwable) {
         LOG.error("[platform] {}", t.message)
         exitProcess(EXIT_PLATFORM)
@@ -86,6 +86,7 @@ fun main() {
                     "evidence and manual audible confirmation; disconnect cause is not attributable " +
                     "via the public JDA API)",
             )
+
             is ProbeOutcome.Failure -> LOG.error("[probe] result: FAILURE - {}", outcome.userMessage)
         }
         if (!config.keepOnline) {
@@ -251,7 +252,7 @@ private fun awaitGatewayReady(jda: JDA, timeoutMillis: Long) {
     }
 }
 
-private fun requireLinuxX86_64() {
+private fun requireLinuxX64() {
     val os = System.getProperty("os.name", "unknown").lowercase(Locale.ROOT)
     val arch = System.getProperty("os.arch", "unknown").lowercase(Locale.ROOT)
     val supportedArch = arch == "amd64" || arch == "x86_64"

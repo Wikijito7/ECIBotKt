@@ -201,7 +201,9 @@ class ToneSendHandlerTest {
 
     private fun decodeSamples(bytes: ByteArray): List<Short> =
         (0 until bytes.size / 2).map { sampleIndex ->
-            ((bytes[sampleIndex * 2].toInt() shl 8) or
-                (bytes[sampleIndex * 2 + 1].toInt() and 0xFF)).toShort()
+            (
+                (bytes[sampleIndex * 2].toInt() shl 8) or
+                    (bytes[sampleIndex * 2 + 1].toInt() and 0xFF)
+                ).toShort()
         }
 }
