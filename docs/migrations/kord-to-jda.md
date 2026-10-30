@@ -22,8 +22,8 @@ still open · **OPEN** = not started, gate open.
 | Phase 1 — dependency and DAVE transport feasibility | **IN PROGRESS** | **DAVE transport subgate PASS** on staging (protocol v1 + audible tone); the planned missing-native fail-fast simulation is not demonstrated, so the overall gate remains open on that mandatory criterion |
 | R1 — `jda-ktx 0.14.2` + JDA 6.7.0 pairing | **IN PROGRESS — transport subgate PASS only** | Candidate resolved and exercised for voice transport; still not an upstream-declared combination and not yet re-verified on the final Phase 6 artifact |
 | R2 — `adapter-jda` 0.2.0 vs JDA 6.7.0 ABI | **IN PROGRESS — transport subgate PASS only** | DAVE negotiated and played through JDA; published metadata still does not declare or test 6.7.0, and the ABI is not yet re-verified on the final Phase 6 artifact |
-| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork only; JDA runtime/bootstrap and production integration remain blocked by the open Phase 1 missing-native fault test; command layer and locale service/command neutrality remain **OPEN** |
-| Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS** | Locale repository and use cases are neutral; `LocalizationService` and `/locale` remain Kord-facing |
+| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork only, present on `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115; commit and push state are read from Git and PR #115, not asserted here. JDA runtime/bootstrap and production integration remain blocked by the open Phase 1 missing-native fault test; command layer and locale service/command neutrality remain **OPEN** |
+| Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS** | Phase 2A source and test changes are present on `feature/114-kord-to-jda-migration`, and draft PR #115 targets the epic branch; whether they are committed or pushed is read from Git and PR #115, not asserted here. The Phase 2A scope itself is not finished: locale repository and use cases are neutral, while `LocalizationService` and `/locale` remain Kord-facing |
 | Phase 6 — Kord-free build, artifact and digest gates | **OPEN** | Not started |
 | Production cutover (Phase 7) | **OPEN** | Blocked by the Phase 6 and staging gates |
 
@@ -56,6 +56,11 @@ had exited. Stop the service, or disable the restart policy for strictly one-sho
 before repeating the test.
 
 ### Phase 2A — domain-owned ID/locale values and locale persistence — IN PROGRESS
+
+The active feature branch `feature/114-kord-to-jda-migration` carries this plan,
+`.opencode/opencode.json`, `spikes/jda-dave/**`, and the Phase 2A source and test changes; draft PR
+#115 targets the epic integration branch. Commit status and history are not asserted by this
+document — read them from Git and the pull request.
 
 - `GuildId(ULong)` now lives in `es.wokis.domain.model` and `LocaleCode` in
   `es.wokis.domain.locale`; both are **domain-owned**, platform-neutral values.
@@ -97,10 +102,12 @@ before repeating the test.
   `4badb92`. The active child branch is `feature/114-kord-to-jda-migration`; open draft PR #115
   targets the epic branch.
 - `.opencode/opencode.json`, this plan and `spikes/jda-dave/**` are **tracked** on
-  `feature/114-kord-to-jda-migration` by the Phase 1 checkpoint commit `8ca6242`; they are part of
-  the branch history, not untracked or local-only artifacts.
-- The Phase 2A source and test changes, plus the later edits to this plan, are **uncommitted** until
-  the next checkpoint commit.
+  `feature/114-kord-to-jda-migration`; the Phase 1 checkpoint `8ca6242` records them in branch
+  history. They are part of the migration record and are updated as the migration proceeds.
+- The active feature branch `feature/114-kord-to-jda-migration` contains this plan, the OpenCode
+  configuration, `spikes/jda-dave/**`, and the Phase 2A source and test changes; draft PR #115
+  targets the epic integration branch. Commit status and history are read from Git and the pull
+  request, not asserted by this document.
 - No secrets, bot/guild/channel/user identifiers, tokens or raw logs are recorded in this plan or
   in the spike.
 
@@ -239,10 +246,11 @@ A documented blocker, a "known issue", or an accepted-risk note is **not** a pas
   `4badb92`, and migration work lands on the child working branch
   `feature/114-kord-to-jda-migration` through draft PR #115, which targets the epic branch and not
   `master`.
-- The working branch records migration work in checkpoint commits and draft PR #115 against the
-  epic branch. `8ca6242` tracks this plan, `.opencode/opencode.json` and `spikes/jda-dave/**`; the
-  Phase 2A source/test changes remain **uncommitted** and are added by the next checkpoint, so the
-  committed diff at `8ca6242` does not yet contain them.
+- The working branch carries migration work as checkpoint commits and proposes it to the epic
+  branch through draft PR #115. `8ca6242` records this plan, `.opencode/opencode.json` and
+  `spikes/jda-dave/**` in branch history; the Phase 2A source/test changes and the matching plan
+  edits are present on `feature/114-kord-to-jda-migration`. Current Git and PR state is
+  authoritative for what is committed and pushed.
 - Inventory table reproduced from a clean checkout.
 - Out-of-scope items explicitly listed.
 
@@ -490,12 +498,12 @@ accepted risk, and a documented blocker does not close a gate.
   active child branch is `feature/114-kord-to-jda-migration`, with draft PR #115 targeting the epic
   branch rather than `master`.
 - `.opencode/opencode.json`, this migration plan (`docs/migrations/kord-to-jda.md`) and
-  `spikes/jda-dave/**` are **tracked** on `feature/114-kord-to-jda-migration` by the Phase 1
-  checkpoint commit `8ca6242`. They are part of the migration record and are expected to be
-  updated as the migration proceeds.
-- The Phase 2A source and test changes, and the plan edits made after `8ca6242`, are
-  **uncommitted** on the working branch until the next checkpoint commit; they are not otherwise
-  preserved.
+  `spikes/jda-dave/**` are **tracked** on `feature/114-kord-to-jda-migration`; the Phase 1
+  checkpoint `8ca6242` records them in branch history. They are part of the migration record and
+  are expected to be updated as the migration proceeds.
+- The Phase 2A source and test changes, and the plan edits made after `8ca6242`, are present on
+  `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115.
+  Current Git and PR state is authoritative for what is committed and pushed.
 - `stash@{0}` — housekeeping WIP; preserved, untouched.
 - `stash@{1}` — assistant voice feature WIP (out of scope); preserved, untouched.
 - Ignored caches and user data (for example `.gradle/`, `build/`, `data/`, `.idea/`, `.memory/`,

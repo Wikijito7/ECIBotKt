@@ -1,10 +1,9 @@
-package es.wokis.repositories.locale
+package es.wokis.domain.locale
 
-import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.GuildId
 
 /**
- * Repository interface for managing guild locale preferences.
+ * Domain port for managing guild locale preferences.
  * This abstraction allows for easy switching between different storage implementations
  * (e.g., local JSON file, database, API backend).
  */

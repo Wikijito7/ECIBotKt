@@ -1,7 +1,6 @@
 package es.wokis.domain.locale
 
 import es.wokis.domain.model.GuildId
-import es.wokis.repositories.locale.LocaleRepository
 
 /**
  * Use case for setting or removing a guild's custom locale preference.

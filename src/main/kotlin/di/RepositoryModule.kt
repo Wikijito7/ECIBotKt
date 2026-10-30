@@ -1,7 +1,7 @@
 package es.wokis.di
 
+import es.wokis.domain.locale.LocaleRepository
 import es.wokis.repositories.locale.LocalJsonLocaleRepository
-import es.wokis.repositories.locale.LocaleRepository
 import kotlinx.serialization.json.Json
 import org.koin.dsl.bind
 import org.koin.dsl.module

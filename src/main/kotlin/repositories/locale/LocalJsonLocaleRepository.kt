@@ -2,6 +2,7 @@ package es.wokis.repositories.locale
 
 import es.wokis.data.locale.GuildLocalesContainer
 import es.wokis.domain.locale.LocaleCode
+import es.wokis.domain.locale.LocaleRepository
 import es.wokis.domain.model.GuildId
 import es.wokis.utils.Log
 import es.wokis.utils.getOrCreateFile

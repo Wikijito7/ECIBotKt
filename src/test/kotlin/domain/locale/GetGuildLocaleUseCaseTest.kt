@@ -2,8 +2,8 @@ package domain.locale
 
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.LocaleCode
+import es.wokis.domain.locale.LocaleRepository
 import es.wokis.domain.model.GuildId
-import es.wokis.repositories.locale.LocaleRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
