@@ -1,0 +1,7 @@
+.gradle/
+build/
+.kotlin/
+.env
+*.env
+spike.env
+spike.log

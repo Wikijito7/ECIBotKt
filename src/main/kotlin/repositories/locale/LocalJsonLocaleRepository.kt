@@ -1,9 +1,9 @@
 package es.wokis.repositories.locale
 
-import dev.kord.common.Locale
-import dev.kord.common.entity.Snowflake
 import es.wokis.data.locale.GuildLocalesContainer
-import es.wokis.data.locale.toDiscordCode
+import es.wokis.domain.locale.LocaleCode
+import es.wokis.domain.locale.LocaleRepository
+import es.wokis.domain.model.GuildId
 import es.wokis.utils.Log
 import es.wokis.utils.getOrCreateFile
 import kotlinx.coroutines.sync.Mutex
@@ -18,12 +18,27 @@ private const val FILE_NAME = "guild_locales.json"
  * Local JSON implementation of LocaleRepository.
  * Stores guild locale preferences in a JSON file with in-memory caching.
  * This implementation is suitable for single-instance deployments.
+ *
+ * The persisted format is unchanged:
+ * `{ "guild_locales": { "decimal-id": "locale-code" } }`
+ *
+ * @param json JSON codec used to read/write the container
+ * @param file file backing the guild locales. Tests can inject a temporary file to avoid
+ * touching the real `./data/guild_locales.json` file
  */
-class LocalJsonLocaleRepository(
-    private val json: Json
-) {
+class LocalJsonLocaleRepository internal constructor(
+    private val json: Json,
+    private val file: File
+) : LocaleRepository {
 
-    private val file: File = getOrCreateFile(DATA_PATH, FILE_NAME, null)
+    /**
+     * Production constructor. Resolves (and creates if missing) the default
+     * `./data/guild_locales.json` file, preserving the original behavior.
+     *
+     * @param json JSON codec used to read/write the container
+     */
+    constructor(json: Json) : this(json, getOrCreateFile(DATA_PATH, FILE_NAME, null))
+
     private val mutex = Mutex()
     private val guildLocalesMap: MutableMap<String, String> = mutableMapOf()
 
@@ -35,31 +50,23 @@ class LocalJsonLocaleRepository(
      * Retrieves the custom locale for a specific guild.
      *
      * @param guildId The guild's unique identifier
-     * @return The custom locale if set, null otherwise
+     * @return The custom locale code if set, null otherwise
      */
-    suspend fun getGuildLocale(guildId: Snowflake): Locale? = mutex.withLock {
-        guildLocalesMap[guildId.toString()]?.let { localeCode ->
-            try {
-                Locale.fromString(localeCode)
-            } catch (e: Exception) {
-                Log.error("Failed to parse locale '$localeCode' for guild $guildId", e)
-                null
-            }
-        }
+    override suspend fun getGuildLocale(guildId: GuildId): LocaleCode? = mutex.withLock {
+        guildLocalesMap[guildId.toString()]?.let(::LocaleCode)
     }
 
     /**
      * Sets a custom locale for a specific guild.
      *
      * @param guildId The guild's unique identifier
-     * @param locale The locale to set
+     * @param locale The locale code to set
      */
-    suspend fun setGuildLocale(guildId: Snowflake, locale: Locale) = mutex.withLock {
+    override suspend fun setGuildLocale(guildId: GuildId, locale: LocaleCode) = mutex.withLock {
         try {
-            val localeCode = locale.toDiscordCode()
-            guildLocalesMap[guildId.toString()] = localeCode
+            guildLocalesMap[guildId.toString()] = locale.value
             writeToFile()
-            Log.info("Set locale for guild $guildId to $localeCode")
+            Log.info("Set locale for guild $guildId to ${locale.value}")
         } catch (e: Exception) {
             Log.error("Failed to set locale for guild $guildId", e)
             throw e
@@ -71,7 +78,7 @@ class LocalJsonLocaleRepository(
      *
      * @param guildId The guild's unique identifier
      */
-    suspend fun removeGuildLocale(guildId: Snowflake) = mutex.withLock {
+    override suspend fun removeGuildLocale(guildId: GuildId) = mutex.withLock {
         try {
             guildLocalesMap.remove(guildId.toString())
             writeToFile()
@@ -85,18 +92,12 @@ class LocalJsonLocaleRepository(
     /**
      * Retrieves all guild locale mappings.
      *
-     * @return Map of guild IDs to their custom locales
+     * @return Map of guild IDs to their custom locale codes
      */
-    suspend fun getAllGuildLocales(): Map<Snowflake, Locale> = mutex.withLock {
-        guildLocalesMap.mapKeys { Snowflake(it.key.toULong()) }
-            .mapValues { (_, localeCode) ->
-                try {
-                    Locale.fromString(localeCode)
-                } catch (e: Exception) {
-                    Log.error("Failed to parse locale '$localeCode'", e)
-                    Locale.ENGLISH_UNITED_STATES
-                }
-            }
+    override suspend fun getAllGuildLocales(): Map<GuildId, LocaleCode> = mutex.withLock {
+        guildLocalesMap.map { (guildId, localeCode) ->
+            GuildId.fromDecimal(guildId) to LocaleCode(localeCode)
+        }.toMap()
     }
 
     private fun loadFromFile() {
