@@ -458,11 +458,8 @@ class VoiceTestProbe(
 
     private fun failureMessage(t: Throwable): String = when (t) {
         is InsufficientPermissionException -> "The bot is missing permission ${t.permission}."
-
         is VoiceProbeException -> t.message ?: "Voice connection failed."
-
         is TimeoutException -> "Timed out waiting for the voice connection or tone send."
-
         else -> "Probe failed (${t.javaClass.simpleName}). Check the container logs."
     }
 
