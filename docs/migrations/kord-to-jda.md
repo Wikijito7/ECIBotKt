@@ -5,6 +5,8 @@ Epic integration branch: `feature/114-migrate-to-jda-jda-ktx`, based on `master`
 remains the merge baseline for this epic until PR #115 lands.
 Active working branch: `feature/114-kord-to-jda-migration` — draft PR
 [#115](https://github.com/Wikijito7/ECIBotKt/pull/115) targets the **epic branch**, not `master`.
+Phase 1B subphase branch: `feature/114-native-failfast-check`, stacked on the working branch; its PR
+targets the working branch, not the epic branch.
 
 > **This is a plan, not implementation.** Nothing below is proven until the gate it belongs to
 > produces recorded evidence. "Fact" = verified against the repository or upstream sources today.
@@ -19,11 +21,15 @@ still open · **OPEN** = not started, gate open.
 
 | Item | Status | Recorded 2026-10-30 |
 | --- | --- | --- |
-| Phase 1 — dependency and DAVE transport feasibility | **IN PROGRESS** | **DAVE transport subgate PASS** on staging (protocol v1 + audible tone); the planned missing-native fail-fast simulation is not demonstrated, so the overall gate remains open on that mandatory criterion |
+| Phase 1 — dependency and DAVE transport feasibility | **IN PROGRESS** | **DAVE transport subgate (1A) PASS** on staging (protocol v1 + audible tone); the mandatory missing-native fail-fast simulation is tracked as subphase **1B** and is **not yet demonstrated**, so the overall gate remains open |
+| Phase 1B — missing-DAVE-native fail-fast simulation | **IN PROGRESS — artifact prepared, not yet user-run** | The negative-test jar (`fatJarWithoutDaveNative`) and its offline packaging guard (`verifyNegativeTestJar`) are prepared on the stacked child branch `feature/114-native-failfast-check`; the container run has **not** been executed by the user yet. Required evidence: exit code `3` (`EXIT_NATIVE`) before any gateway login, with `--network none` and a placeholder token. Packaging alone does not close this subphase, and Phase 1 overall stays **IN PROGRESS** |
 | R1 — `jda-ktx 0.14.2` + JDA 6.7.0 pairing | **IN PROGRESS — transport subgate PASS only** | Candidate resolved and exercised for voice transport; still not an upstream-declared combination and not yet re-verified on the final Phase 6 artifact |
 | R2 — `adapter-jda` 0.2.0 vs JDA 6.7.0 ABI | **IN PROGRESS — transport subgate PASS only** | DAVE negotiated and played through JDA; published metadata still does not declare or test 6.7.0, and the ABI is not yet re-verified on the final Phase 6 artifact |
-| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork only, present on `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115; commit and push state are read from Git and PR #115, not asserted here. JDA runtime/bootstrap and production integration remain blocked by the open Phase 1 missing-native fault test; command layer and locale service/command neutrality remain **OPEN** |
-| Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS** | Phase 2A source and test changes are present on `feature/114-kord-to-jda-migration`, and draft PR #115 targets the epic branch; whether they are committed or pushed is read from Git and PR #115, not asserted here. The Phase 2A scope itself is not finished: locale repository and use cases are neutral, while `LocalizationService` and `/locale` remain Kord-facing |
+| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork only, present on `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115; commit and push state are read from Git and PR #115, not asserted here. JDA runtime/bootstrap and production integration remain blocked by the open Phase 1 missing-native fault test; command layer and locale service/command neutrality remain **OPEN**. Remaining work is split into subphases 2B, 2C and 2D, each with its own child branch and stacked PR (see Phase 2) |
+| Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS** | Phase 2A source and test changes are present on `feature/114-kord-to-jda-migration`, and draft PR #115 targets the epic branch; whether they are committed or pushed is read from Git and PR #115, not asserted here. `GuildId`/`LocaleCode` and the locale repository/use cases are **neutral**, but the Phase 2A scope itself is not finished: `LocalizationService` and `/locale` remain Kord-facing and must be moved behind/adapted in a later Phase 2 subphase (2D) |
+| Phase 2B — neutral command context + responder/response port | **OPEN** | Not started, and **blocked until the Phase 1B fail-fast check passes**. Planned child branch and PR stacked on the preceding unmerged Phase 2 branch; do not restructure #115 |
+| Phase 2C — voice/session/player message ports and adapters | **OPEN** | Not started. Planned child branch and PR stacked on 2B; do not restructure #115 |
+| Phase 2D — channel/message/locale edge adapters | **OPEN** | Not started. Planned child branch and PR stacked on 2C; carries the `LocalizationService` and `/locale` neutrality work |
 | Phase 6 — Kord-free build, artifact and digest gates | **OPEN** | Not started |
 | Production cutover (Phase 7) | **OPEN** | Blocked by the Phase 6 and staging gates |
 
@@ -68,7 +74,11 @@ document — read them from Git and the pull request.
   `GetGuildLocaleUseCase`, `SetGuildLocaleUseCase`) speak only those domain values.
 - `LocalizationService` is **not** neutral: its public signatures still take Kord `Snowflake` /
   `Locale` and convert to the domain values internally. The `/locale` command is also still
-  Kord-facing. Locale service and command neutrality remain open Phase 2/Phase 4 work.
+  Kord-facing. This is expected: **Phase 2A is a neutral-values/persistence checkpoint, not the
+  endpoint**. `LocalizationService` and `/locale` must be moved behind a neutral port and adapted
+  at the Discord edge in a **later Phase 2 subphase** (planned **2D — channel/message/locale edge
+  adapters**); until then, the Phase 2A boundary is incomplete by design and must not be recorded
+  as fully neutral.
 - Kord conversions stay at the existing Kord edge (`utils/LocaleExtensions.kt` and the
   Kord-facing service/command), not in the repository or use cases.
 - The persisted `guild_locales` JSON shape is preserved
@@ -81,8 +91,35 @@ document — read them from Git and the pull request.
   0 failures, 0 errors, 5 pre-existing skips**.
 - Repository tests now use a JUnit-managed temporary file instead of reading or writing the real
   `./data` directory; the production constructor still resolves `./data/guild_locales.json`.
-- Phase 2 stays **IN PROGRESS**: JDA bootstrap, shard/event wiring, the command dispatch/response
-  layer, and locale service/command neutrality are **OPEN**.
+- Phase 2A remains **IN PROGRESS** and is **not** marked complete: it records only the neutral
+  `GuildId`/`LocaleCode` and locale persistence boundary. JDA bootstrap, shard/event wiring, the
+  command dispatch/response layer, and locale service/command neutrality are **OPEN** and belong to
+  the later Phase 2 subphases below.
+
+#### Phase 2 subphase plan and stacked branches
+
+Phase 2 is delivered in subphases. Each subphase gets its **own child branch and PR stacked on the
+preceding unmerged phase branch**; it is not folded into an already-open earlier PR. Phase 2A is
+the checkpoint already on `feature/114-kord-to-jda-migration`, and **draft PR #115 is the agreed
+initial combined checkpoint — it is not restructured**. The epic branch
+`feature/114-migrate-to-jda-jda-ktx` remains the **final integration target**, and `master` is
+merged only at migration completion.
+
+| Subphase | Scope | Branch/PR posture | Status |
+| --- | --- | --- | --- |
+| **2A** | Domain-owned `GuildId`/`LocaleCode` + neutral locale repository/use cases | On `feature/114-kord-to-jda-migration`; draft PR #115 is the agreed initial combined checkpoint; leave it as-is | **IN PROGRESS** — as recorded above |
+| **2B** | Neutral command context + responder/response port; adapters translate defer/ephemeral, locales and IDs | New child branch/PR stacked on the unmerged 2A branch (#115), not merged into it | **OPEN** — not started, blocked until the Phase 1B fail-fast check passes |
+| **2C** | Voice/session/player-message narrow ports; JDA `AudioSendHandler`/DAVE and lifecycle stay in the adapter | New child branch/PR stacked on 2B | **OPEN** — not started |
+| **2D** | Channel/message/locale edge adapters; move `LocalizationService` and `/locale` behind/adapted to a neutral port | New child branch/PR stacked on 2C | **OPEN** — not started |
+
+Stacking rules:
+
+- A subphase PR targets the **preceding unmerged phase branch**, never `master` and never the epic
+  branch directly, until the epic integration step.
+- Subphase branches are **not** squashed into #115 or rebased onto `master` mid-flight; #115 keeps
+  its agreed combined-checkpoint shape.
+- A subphase is recorded complete only when its own gate evidence exists. **Open subphases are
+  never marked complete** because an earlier checkpoint passed.
 
 #### Phase 2A — recorded behavior shifts (tested)
 
@@ -101,6 +138,10 @@ document — read them from Git and the pull request.
 - The epic integration branch `feature/114-migrate-to-jda-jda-ktx` remains at its base
   `4badb92`. The active child branch is `feature/114-kord-to-jda-migration`; open draft PR #115
   targets the epic branch.
+- Phase 1B is stacked one level deeper: `feature/114-native-failfast-check` branches from the head of
+  `feature/114-kord-to-jda-migration` and will PR back into that parent branch, not into the epic
+  branch. It carries only the negative-test packaging task, the spike runbook section and these plan
+  edits; the parent branch is not rebased or rewritten for it.
 - `.opencode/opencode.json`, this plan and `spikes/jda-dave/**` are **tracked** on
   `feature/114-kord-to-jda-migration`; the Phase 1 checkpoint `8ca6242` records them in branch
   history. They are part of the migration record and are updated as the migration proceeds.
@@ -108,6 +149,11 @@ document — read them from Git and the pull request.
   configuration, `spikes/jda-dave/**`, and the Phase 2A source and test changes; draft PR #115
   targets the epic integration branch. Commit status and history are read from Git and the pull
   request, not asserted by this document.
+- PR #115 is the **agreed initial combined checkpoint** (Phase 1 record plus Phase 2A) and is **not
+  restructured**. Later subphases land as separate child branches/PRs stacked on the preceding
+  unmerged phase branch: Phase 1B on `feature/114-native-failfast-check` (PR targets the parent
+  feature branch), and Phase 2 subphases 2B, 2C, 2D on their own stacked branches. The epic branch
+  remains the **final integration target**; `master` is merged only at migration completion.
 - No secrets, bot/guild/channel/user identifiers, tokens or raw logs are recorded in this plan or
   in the spike.
 
@@ -194,6 +240,34 @@ These decisions were made by the user and are not open for re-litigation during 
 - DAVE-enabled real voice playback on staging is required **before** removing Kord.
 - Ship fail-fast native availability checks and fat-JAR content checks.
 
+### Framework replaceability goal (acceptance criterion)
+
+The migration is **not** only a Kord → JDA swap. Its architectural goal is that the Discord
+library is **replaceable**: if JDA is ever replaced again, most business logic stays intact and the
+change is confined to adapter/edge code. This goal is an **acceptance criterion for migration
+completion**, not an optional aspiration.
+
+- Domain value objects, use cases, repositories and core business services must **not** import
+  `dev.kord.*` or `net.dv8tion.*`. They speak neutral value types — for example `GuildId`,
+  `LocaleCode`, and domain-owned channel/user/message identifiers — and collaborate through
+  **domain-owned ports**.
+- Repository **interfaces belong in the domain**; their **implementations live in
+  infrastructure/repository adapters**. The domain never sees a Kord/JDA-backed implementation type.
+- Commands and application handlers receive a **neutral command context** plus a
+  **responder/response port**, not Kord/JDA interaction objects or response-builder types. The
+  Kord/JDA adapters translate responses, defer/ephemeral behaviour, locales, IDs and component IDs
+  **at the edge**.
+- Voice/audio transport and Discord message/channel delivery sit behind **narrow ports**.
+  Lavaplayer, queue, TTS and radio behaviour stays **framework-neutral**; JDA `AudioSendHandler`,
+  DAVE and JDA lifecycle stay **in the adapter**.
+- Use only the ports the business logic actually needs. Do **not** build a generic facade over every
+  JDA API — that would re-couple the domain to one library's shape.
+
+**Enforcement gate:** before migration completion, an **architectural test/CI rule** must forbid
+`dev.kord.*` and `net.dv8tion.*` imports outside explicitly declared Discord adapter packages.
+Tests and core code must mock the **neutral ports**, not Kord/JDA types. Without that rule in
+place and passing, the replaceability criterion is **not** met.
+
 ### Architecture guardrail
 
 Kord and KTX both dispatch events concurrently. The JDA design must add a **narrow per-guild
@@ -279,7 +353,11 @@ alignment and final-artifact checks belong to the Kord-free build phase (Phase 6
 - **Real DAVE-enabled voice playback succeeds through JDA on the Linux x86_64 staging bot** —
   not a mock, not a unit test, not a "native located" check. **PASS (staging, protocol v1 +
   audible tone).**
-- Native fail-fast check demonstrated by simulating a missing native. **OPEN — not demonstrated.**
+- Native fail-fast check demonstrated by simulating a missing native. **OPEN — artifact prepared,
+  not yet run.** The negative-test jar (`fatJarWithoutDaveNative`) and its offline packaging guard
+  (`verifyNegativeTestJar`) are prepared on the stacked subphase branch; the required evidence is a
+  **user-run** container execution that exits `3` before gateway login. Packaging alone does **not**
+  close this criterion.
 - Root dependency alignment and root fat-JAR validation are **Phase 6** exit criteria, not Phase 1.
 
 **Stop condition:** a documented blocker is **not** a pass. If native loading or DAVE-enabled
@@ -287,6 +365,35 @@ voice playback fails, Phase 1 fails and migration progression pauses until the f
 and re-tested or the user approves a defined alternative. The JDA runtime/bootstrap and production
 integration portion of Phase 2 does not start while the missing-native fail-fast check is open;
 neutral Phase 2A locale groundwork may proceed in parallel (see Phase 2).
+
+#### Phase 1 subphase plan and stacked branches
+
+Phase 1 follows the same branch-per-subphase strategy as Phase 2: each subphase gets its **own child
+branch and PR stacked on the preceding unmerged phase branch**, never on `master`, and it is never
+folded into an already-open PR.
+
+| Subphase | Scope | Branch/PR posture | Status |
+| --- | --- | --- | --- |
+| **1A** | DAVE-enabled staging voice transport probe (protocol v1 + audible tone) | Recorded on `feature/114-kord-to-jda-migration`; draft PR #115 | **PASS** — transport subgate only |
+| **1B** | Missing-DAVE-native fail-fast simulation: negative packaging artifact plus the user-run container check | Child branch `feature/114-native-failfast-check` stacked on `feature/114-kord-to-jda-migration`; its PR targets the **parent feature branch**, not the epic branch and not `master` | **IN PROGRESS** — artifact prepared and packaged, **not yet user-run** |
+
+**1B evidence requirements** (all mandatory; only the user-run execution counts):
+
+- Artifact: `spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar`,
+  produced by `./gradlew -p spikes/jda-dave verifyNegativeTestJar`. The guard proves the jar omits
+  **only** `natives/linux-x86-64/libdave-jvm.so` while keeping the libdave API classes, Opus, JNA and
+  the `spike.jdadave.MainKt` entry point.
+- Run conditions: `--network none` (no network path exists) and a deliberately invalid
+  **placeholder** token; no real token, no secret, no live Discord login.
+- Required result: **exit code `3`** (`EXIT_NATIVE`) with the DAVE loader failure
+  (`[dave] native library is unavailable`, `UnsatisfiedLinkError` / `Required library was not
+  found`) and **zero** `[gateway] logging in` / `[gateway] ready` lines.
+- A run that logs in, contacts Discord, exits `2` (config/platform rejection), or exits `0`/`1` is a
+  **failure** of this subphase.
+
+Until that run is recorded, **Phase 1 stays IN PROGRESS**, the Phase 1 stop condition continues to
+govern migration progression, and **Phase 2B remains blocked**. Only the neutral 2A groundwork and
+this packaging work are parallel-safe.
 
 #### Phase 1 staging result — voice transport probe (recorded)
 
@@ -334,7 +441,10 @@ final Phase 6 artifact before promotion.
 
 **Status: IN PROGRESS** — the Phase 2A locale repository/use-case boundary is implemented, but
 `LocalizationService` and the `/locale` command remain Kord-facing. Bootstrap and the command layer
-are still open, so this phase is **not** complete.
+are still open, so this phase is **not** complete. Remaining work is split into subphases **2B**
+(neutral command context/responders), **2C** (voice/session/player-message ports) and **2D**
+(channel/message/locale edge adapters), each with its own stacked child branch and PR (see the
+subphase plan above).
 
 **Safe parallel prep:** the neutral Phase 2A groundwork (domain-owned `GuildId`/`LocaleCode`, locale
 repository and use cases) may proceed independently while the Phase 1 missing-native fault test is
@@ -347,12 +457,18 @@ Phase 1 gate is closed; the Phase 1 stop condition still governs migration progr
   **Partially done** (Phase 2A): domain-owned `GuildId`/`LocaleCode` plus a neutral locale
   repository and use cases. Command code still speaks Kord types.
 - Establish a single command dispatch/response layer with correct deferred/replied semantics.
+- Apply the framework-replaceability goal from §1: commands/handlers take a neutral command
+  context and responder/response port; only Discord adapter packages may touch `dev.kord.*` /
+  `net.dv8tion.*`.
 
 **Exit criteria**
 - Bot connects on staging with the staging token. **OPEN**
 - Slash commands register and respond; deferred vs. immediate reply is explicit and tested. **OPEN**
 - No Kord types leak into the new abstraction boundary. **PASS for the locale repository/use-case
   boundary only. OPEN for `LocalizationService`, `/locale`, all other commands and bootstrap.**
+- The architectural import rule (no `dev.kord.*` / `net.dv8tion.*` outside declared Discord adapter
+  packages) exists and passes as a test/CI gate. **OPEN** — required before migration completion;
+  Phase 2 exit cannot be recorded without it.
 
 ### Phase 3 — Per-guild serialized voice
 
@@ -429,6 +545,9 @@ Cleanup and the promotable artifact are completed **before** the production swit
 
 **Exit criteria**
 - The build tree contains no Kord source, Kord dependency, or local Kord JAR.
+- The architectural import rule forbids `dev.kord.*` and `net.dv8tion.*` outside declared Discord
+  adapter packages, and passes as a test/CI gate on the Kord-free tree. Core tests mock neutral
+  ports, not library types.
 - The root version catalog resolves the tested stack — JDA 6.7.0, jda-ktx 0.14.2, libdave 0.2.0
   including `adapter-jda` and the Linux x86_64 natives — with no spike-local force or override
   carrying the runtime.
@@ -488,6 +607,7 @@ or replaced by "roll forward".
 | R7 | Existing Kord build does not support channel obfuscation at all | Fact — this is the reason for the migration, not a regression |
 | R8 | Per-guild serialization regressions when porting concurrent Kord handlers | Open — Phase 3 go/no-go |
 | R9 | Schedule pressure: Nov 16 is a readiness target; the 17–19 day estimate is unvalidated | Open — re-estimate once the DAVE transport subgate result is folded in and Phase 1's missing-native fail-fast check is demonstrated |
+| R10 | Domain/command code can silently re-couple to Kord/JDA during the port, defeating library replaceability | Open — **acceptance criterion**; closed only when the architectural test/CI rule forbids `dev.kord.*` / `net.dv8tion.*` outside declared Discord adapter packages and core tests mock neutral ports |
 
 Open entries marked as gates are **stop conditions** per §3. They are never downgraded to
 accepted risk, and a documented blocker does not close a gate.
@@ -501,6 +621,11 @@ accepted risk, and a documented blocker does not close a gate.
   `spikes/jda-dave/**` are **tracked** on `feature/114-kord-to-jda-migration`; the Phase 1
   checkpoint `8ca6242` records them in branch history. They are part of the migration record and
   are expected to be updated as the migration proceeds.
+- The Phase 1B negative-test packaging (`fatJarWithoutDaveNative`, `verifyNegativeTestJar`), its
+  runbook section and the Phase 1B plan edits are committed on the stacked child branch
+  `feature/114-native-failfast-check`, which stacks on `feature/114-kord-to-jda-migration`. Its PR
+  targets the parent feature branch. Current Git state is authoritative for what is committed and
+  pushed.
 - The Phase 2A source and test changes, and the plan edits made after `8ca6242`, are present on
   `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115.
   Current Git and PR state is authoritative for what is committed and pushed.

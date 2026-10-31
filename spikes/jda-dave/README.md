@@ -144,6 +144,115 @@ The Opus and JNA natives are needed because the tone is supplied as PCM and JDA 
 with its Opus encoder before DAVE encryption. If any of these entries is missing, stop and
 fix packaging before deploying.
 
+## Negative test: missing DAVE native must fail fast (Phase 1 gate)
+
+This is a **separate, safe artifact** used only to prove the startup guard. It is not a
+voice test and it never contacts Discord. The normal staging jar above is left untouched.
+
+### Build and inspect
+
+```bash
+./gradlew -p spikes/jda-dave verifyNegativeTestJar
+```
+
+That task builds both jars and fails unless all of the following are true:
+
+- `jda-dave-spike-0.1.0-all.jar` **contains** `natives/linux-x86-64/libdave-jvm.so`.
+- `jda-dave-spike-negative-no-dave-native-0.1.0-all.jar` **does not contain** it.
+- Both jars still contain `natives/linux-x86-64/libopus.so`,
+  `com/sun/jna/linux-x86-64/libjnidispatch.so`, `spike/jdadave/MainKt.class` and
+  `moe/kyokobot/libdave/NativeDaveFactory.class`.
+- The negative jar differs from the normal jar **only** by the DAVE native entry.
+- `Main-Class` is `spike.jdadave.MainKt` in both jars.
+
+Artifacts:
+
+```text
+spikes/jda-dave/build/libs/jda-dave-spike-0.1.0-all.jar                                  (normal, unchanged)
+spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar           (negative test only)
+```
+
+The negative task uses `negativeTestRuntimeClasspath`, which extends the normal
+`runtimeClasspath` and excludes only `moe.kyokobot.libdave:natives-linux-x86-64:0.2.0`.
+It is reproducible (`isPreserveFileTimestamps = false`, `isReproducibleFileOrder = true`)
+and reuses the normal manifest. The build is offline-safe; no Discord connection is made.
+
+Manual equivalent of the guard:
+
+```bash
+jar tf spikes/jda-dave/build/libs/jda-dave-spike-0.1.0-all.jar \
+  | grep -F 'natives/linux-x86-64/libdave-jvm.so'
+jar tf spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar \
+  | grep -E 'natives/linux-x86-64/(libdave-jvm|libopus)\.so'   # only libopus may match
+```
+
+### Run the negative test (offline container)
+
+Use the **placeholder** token below. It is deliberately invalid and non-secret. Do not use
+a real token for this test; the process must fail before reading it or opening a gateway
+connection.
+
+```bash
+cd /path/to/ECIBotKt
+
+docker run --rm \
+  --name jda-dave-spike-negative \
+  --platform linux/amd64 \
+  --network none \
+  --restart=no \
+  -e DISCORD_BOT_TOKEN=negative-test-placeholder-not-a-real-token \
+  -e DISCORD_TEST_GUILD_ID=123456789012345678 \
+  -v "$PWD/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar:/app/jda-dave-spike-negative.jar:ro" \
+  eclipse-temurin:21 \
+  java -jar /app/jda-dave-spike-negative.jar > spike-negative.log 2>&1; echo "exit=$?"
+```
+
+- `--network none` guarantees no gateway/HTTP path exists.
+- `--restart=no` prevents Docker from retrying the expected failure.
+- The numeric `DISCORD_TEST_GUILD_ID` is a placeholder too; it only has to pass config
+  validation, because the process exits before guild lookup.
+- The negative jar is mounted read-only and writes no data.
+
+Expected result: **exit code `3`** (`EXIT_NATIVE`) and output that stops at the DAVE load:
+
+```text
+JDA/DAVE staging transport probe (test-only, not production)
+[env] java=... jda=6.7.0 os=Linux arch=amd64
+[config] SpikeConfig(testGuildId=<numeric-id>, keepOnline=false, ...)
+[dave] loading native library for linux-x86-64
+Native library dave-jvm: loading with filter null
+Native library dave-jvm: loading failed.
+java.lang.UnsatisfiedLinkError: Required library was not found
+...
+[dave] native library is unavailable: java.lang.UnsatisfiedLinkError: Required library was not found
+...
+```
+
+The exact loader wording may vary slightly by lava-common/slf4j version. The required
+signals are: `[dave] native library is unavailable`, an `UnsatisfiedLinkError` /
+`Required library was not found` cause, and exit `3`.
+
+The token is never logged; `[config]` omits it. Verify all of the following:
+
+```bash
+grep -qF '[dave] native library is unavailable' spike-negative.log   # fail-fast happened
+grep -qF '[dave] loading native library for linux-x86-64' spike-negative.log
+test "$(grep -cF '[gateway] logging in' spike-negative.log)" -eq 0   # no login attempt
+test "$(grep -cF 'negative-test-placeholder-not-a-real-token' spike-negative.log)" -eq 0
+```
+
+If `[gateway] logging in`, `[gateway] ready`, `[command]`, or any network/login error
+appears, the run is a **failure**: the negative artifact still had a usable DAVE native,
+or the wrong jar/command was used. Exit `2` is also a failure for this test (it means
+config or platform rejection, not the native gate); exit `0` or `1` is never expected.
+
+### Scope of this evidence
+
+A successful negative test proves only that the probe **fails fast when the DAVE native is
+absent**, before any gateway login. It does **not** replace the successful audible DAVE
+voice test recorded in `docs/migrations/kord-to-jda.md`. The audible run remains the
+transport evidence; this negative artifact is a guard check only.
+
 ## Deploy and run on the external Temurin 21 container
 
 The target must be Linux **x86_64/amd64** with glibc (`eclipse-temurin:21` is suitable).
