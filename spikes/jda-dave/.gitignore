@@ -5,3 +5,4 @@ build/
 *.env
 spike.env
 spike.log
+spike-negative.log
