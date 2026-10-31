@@ -61,7 +61,7 @@ secret is stored in this repository.
 Create a local env file outside version control, or materialize it from your deployment
 secret store for the duration of the run:
 
-```bash
+```text
 # spikes/jda-dave/spike.env  (git-ignored)
 DISCORD_BOT_TOKEN=<staging-bot-token>
 DISCORD_TEST_GUILD_ID=<numeric-test-guild-id>
@@ -144,7 +144,7 @@ The Opus and JNA natives are needed because the tone is supplied as PCM and JDA 
 with its Opus encoder before DAVE encryption. If any of these entries is missing, stop and
 fix packaging before deploying.
 
-## Negative test: missing DAVE native must fail fast (Phase 1 gate)
+## Negative test: missing DAVE native must fail fast (Phase 1B fail-fast gate)
 
 This is a **separate, safe artifact** used only to prove the startup guard. It is not a
 voice test and it never contacts Discord. The normal staging jar above is left untouched.
@@ -160,8 +160,11 @@ That task builds both jars and fails unless all of the following are true:
 - `jda-dave-spike-0.1.0-all.jar` **contains** `natives/linux-x86-64/libdave-jvm.so`.
 - `jda-dave-spike-negative-no-dave-native-0.1.0-all.jar` **does not contain** it.
 - Both jars still contain `natives/linux-x86-64/libopus.so`,
-  `com/sun/jna/linux-x86-64/libjnidispatch.so`, `spike/jdadave/MainKt.class` and
-  `moe/kyokobot/libdave/NativeDaveFactory.class`.
+  `com/sun/jna/linux-x86-64/libjnidispatch.so`, `spike/jdadave/MainKt.class`,
+  `moe/kyokobot/libdave/NativeDaveFactory.class` and the known JDA class
+  `net/dv8tion/jda/api/JDA.class`.
+- Every entry present in both jars has identical bytes (SHA-256 compared); a shared entry
+  that differs fails the task.
 - The negative jar differs from the normal jar **only** by the DAVE native entry.
 - `Main-Class` is `spike.jdadave.MainKt` in both jars.
 
@@ -175,7 +178,28 @@ spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar 
 The negative task uses `negativeTestRuntimeClasspath`, which extends the normal
 `runtimeClasspath` and excludes only `moe.kyokobot.libdave:natives-linux-x86-64:0.2.0`.
 It is reproducible (`isPreserveFileTimestamps = false`, `isReproducibleFileOrder = true`)
-and reuses the normal manifest. The build is offline-safe; no Discord connection is made.
+and declares its own manifest with the same attributes as the normal jar (`Main-Class`,
+`Implementation-Title`, `Implementation-Version`, `Multi-Release`); it does not reuse the
+normal manifest file. The verifier checks that equality: both jars must report the same
+`Main-Class`, and the shared `META-INF/MANIFEST.MF` entry is covered by the byte-identical
+shared-entry comparison.
+
+On network access, be precise:
+
+- The **runtime** negative container makes **no Discord connection at all**: it runs with
+  `--network none`, so no gateway/HTTP path exists.
+- The verifier's **inspection action** makes **no Discord and no network call**: once the JARs
+  exist it only reads their entries and compares SHA-256 hashes of the entries they share.
+  That inspection step does not itself write files.
+- Invoking `./gradlew verifyNegativeTestJar` is **not** only that inspection. The task depends
+  on the `fatJar` tasks, so Gradle may re-run them, write compilation output and JARs under
+  `spikes/jda-dave/build/`, and resolve Maven dependencies or plugins over the network when
+  they are not already in the local Gradle cache. Do not claim that running the Gradle task
+  writes nothing.
+- The surrounding **Gradle build is not offline**. Gradle dependency and plugin resolution may
+  still require network access unless those artifacts are already in the local Gradle cache.
+  Do not describe the task or the build as "offline" or "offline-safe"; the correct claim is
+  "packaging-only, with dependency resolution potentially requiring network".
 
 Manual equivalent of the guard:
 
@@ -186,34 +210,108 @@ jar tf spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-a
   | grep -E 'natives/linux-x86-64/(libdave-jvm|libopus)\.so'   # only libopus may match
 ```
 
-### Run the negative test (offline container)
+### Run the negative test (`--network none` container)
 
-Use the **placeholder** token below. It is deliberately invalid and non-secret. Do not use
-a real token for this test; the process must fail before reading it or opening a gateway
-connection.
+**Token rule:** the command below uses
+`DISCORD_BOT_TOKEN=negative-test-placeholder-not-a-real-token`. That string is a **fake
+placeholder**, not a credential. It must **never** be replaced with a real staging or
+production token for this negative test. No real token is needed and none may be used: the
+native failure must happen **before** any JDA login, so a real token would muddy the
+evidence — the run must show that the native gate trips, not that a login would have failed.
+The config parser does read the placeholder value to validate that required configuration is
+non-empty; the value is never used for a JDA login, because the process fails fast at the
+DAVE native load.
+
+Run the block exactly as written. The whole run — the `docker run` call, the `rc` capture, the
+`check` helper, every assertion, and the final PASS/FAIL verdict — is wrapped in a POSIX
+subshell `( ... )`. The fake `DISCORD_BOT_TOKEN` and `DISCORD_TEST_GUILD_ID` values, `LOG`
+and `failed` therefore exist **only inside that subshell** and never alter the caller's
+environment, even when names such as `DISCORD_BOT_TOKEN` were already exported in the invoking
+shell. The parent shell's variables keep their previous values.
+
+Inside the subshell the expected-failure `docker run` is wrapped in
+`if ...; then rc=0; else rc=$?; fi`, so the non-zero Docker exit status is captured instead of
+aborting the block — this holds **even if the caller has `set -e` enabled**. All assertions
+run against `rc`; the variable is deliberately `rc` and not `status`, because `status` is a
+read-only special variable in zsh. Log capture goes to
+`spikes/jda-dave/spike-negative.log` (git-ignored).
+
+Run the block from the **root of the checked-out repository**. Every path below is
+relative to that root, so no substitute path is needed. The Docker values stay inside the
+subshell, are passed to the container with `-e`, and are never `unset` — a parent shell's
+own values are left untouched. The subshell's exit status is non-zero only when a check
+fails, so a failing run is still reported to the caller without the expected `docker run`
+status `3` ever aborting the block.
 
 ```bash
-cd /path/to/ECIBotKt
+# Run from the root of the checked-out repository; all paths below are repo-relative.
 
-docker run --rm \
-  --name jda-dave-spike-negative \
-  --platform linux/amd64 \
-  --network none \
-  --restart=no \
-  -e DISCORD_BOT_TOKEN=negative-test-placeholder-not-a-real-token \
-  -e DISCORD_TEST_GUILD_ID=123456789012345678 \
-  -v "$PWD/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar:/app/jda-dave-spike-negative.jar:ro" \
-  eclipse-temurin:21 \
-  java -jar /app/jda-dave-spike-negative.jar > spike-negative.log 2>&1; echo "exit=$?"
+# POSIX subshell: the fake values and all helper state live only in this block.
+# Nothing here is exported into, unset in, or otherwise written to the caller's shell.
+(
+  # Fake placeholder only. Never substitute a real token for this negative test.
+  DISCORD_BOT_TOKEN=negative-test-placeholder-not-a-real-token
+  DISCORD_TEST_GUILD_ID=123456789012345678
+  LOG=spikes/jda-dave/spike-negative.log
+
+  # The expected non-zero exit is captured, never raised: `docker run` is the whole
+  # `if` condition, so this block stays safe even when the caller has `set -e` enabled.
+  # `rc` (not `status`) avoids zsh's read-only special variable.
+  if docker run --rm \
+    --name jda-dave-spike-negative \
+    --platform linux/amd64 \
+    --network none \
+    --restart=no \
+    -e DISCORD_BOT_TOKEN="$DISCORD_BOT_TOKEN" \
+    -e DISCORD_TEST_GUILD_ID="$DISCORD_TEST_GUILD_ID" \
+    -v "$PWD/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar:/app/jda-dave-spike-negative.jar:ro" \
+    eclipse-temurin:21 \
+    java -jar /app/jda-dave-spike-negative.jar > "$LOG" 2>&1
+  then
+    rc=0
+  else
+    rc=$?
+  fi
+
+  failed=0
+  check() {
+    label="$1"
+    shift
+    if "$@"; then
+      printf 'PASS  %s\n' "$label"
+    else
+      printf 'FAIL  %s\n' "$label"
+      failed=1
+    fi
+  }
+
+  check "exit code is exactly 3 (EXIT_NATIVE), got $rc" test "$rc" -eq 3
+  check "[dave] native library is unavailable" grep -qF '[dave] native library is unavailable' "$LOG"
+  check "native load error names UnsatisfiedLinkError or Required library was not found" \
+    grep -qE 'UnsatisfiedLinkError|Required library was not found' "$LOG"
+  check "zero [gateway] logging in lines" test "$(grep -cF '[gateway] logging in' "$LOG")" -eq 0
+  check "zero [gateway] ready lines" test "$(grep -cF '[gateway] ready' "$LOG")" -eq 0
+  check "placeholder token never printed" test "$(grep -cF 'negative-test-placeholder-not-a-real-token' "$LOG")" -eq 0
+
+  if [ "$failed" -ne 0 ]; then
+    echo "NEGATIVE TEST FAILED - Phase 1B gate stays OPEN; inspect $LOG"
+    exit 1
+  fi
+  echo "NEGATIVE TEST PASSED - exit=3 with zero gateway lines; keep $LOG as Phase 1B evidence"
+)
 ```
 
 - `--network none` guarantees no gateway/HTTP path exists.
 - `--restart=no` prevents Docker from retrying the expected failure.
+- `--platform linux/amd64` and `eclipse-temurin:21` pin the supported Linux x86-64 runtime;
+  the DAVE native in this candidate is Linux x86-64 only.
+- The negative jar is mounted **read-only** (`:ro`) and writes no data.
 - The numeric `DISCORD_TEST_GUILD_ID` is a placeholder too; it only has to pass config
   validation, because the process exits before guild lookup.
-- The negative jar is mounted read-only and writes no data.
 
-Expected result: **exit code `3`** (`EXIT_NATIVE`) and output that stops at the DAVE load:
+Expected result: **exit code exactly `3`** (`EXIT_NATIVE`) and output that stops at the DAVE
+load. The sample below is illustrative — the loader/JDK wording varies — but the structure
+(exit `3`, no `[gateway]` line) must hold:
 
 ```text
 JDA/DAVE staging transport probe (test-only, not production)
@@ -228,25 +326,37 @@ java.lang.UnsatisfiedLinkError: Required library was not found
 ...
 ```
 
-The exact loader wording may vary slightly by lava-common/slf4j version. The required
-signals are: `[dave] native library is unavailable`, an `UnsatisfiedLinkError` /
-`Required library was not found` cause, and exit `3`.
+The exact loader wording may vary by lava-common/JDK/slf4j version, so the assertion does
+**not** require the literal phrase `Required library was not found`. The required signals are:
 
-The token is never logged; `[config]` omits it. Verify all of the following:
+- `[dave] native library is unavailable` (exact text, required), and
+- a native-load error matching **either** `UnsatisfiedLinkError` **or**
+  `Required library was not found` — asserted as
+  `grep -qE 'UnsatisfiedLinkError|Required library was not found' "$LOG"`
+  (ordinary `grep`, no bash-only `[[ ... ]]`, so it runs in both bash and zsh), plus
+- exit `3`, and **zero** `[gateway] logging in` and **zero** `[gateway] ready` lines.
 
-```bash
-grep -qF '[dave] native library is unavailable' spike-negative.log   # fail-fast happened
-grep -qF '[dave] loading native library for linux-x86-64' spike-negative.log
-test "$(grep -cF '[gateway] logging in' spike-negative.log)" -eq 0   # no login attempt
-test "$(grep -cF 'negative-test-placeholder-not-a-real-token' spike-negative.log)" -eq 0
-```
+The token is never logged; `[config]` omits it.
 
-If `[gateway] logging in`, `[gateway] ready`, `[command]`, or any network/login error
-appears, the run is a **failure**: the negative artifact still had a usable DAVE native,
-or the wrong jar/command was used. Exit `2` is also a failure for this test (it means
-config or platform rejection, not the native gate); exit `0` or `1` is never expected.
+If any check prints `FAIL`, the run is a **failure**: the negative artifact still had a
+usable DAVE native, the wrong jar/command was used, or a login was attempted. Exit `2` is
+also a failure for this test (config or platform rejection, not the native gate); exit `0`
+or `1` is never expected.
 
 ### Scope of this evidence
+
+**Building or verifying the JARs does not close Phase 1B.** `verifyNegativeTestJar` proves
+packaging only: it reads JAR entries and shared-entry hashes, and it makes no network or
+Discord call of its own (running the Gradle task can still write build output and resolve
+dependencies over the network — see above). The gate remains **OPEN** until the **user** runs
+the exact negative path documented above — the Linux amd64 `eclipse-temurin:21` container with
+`--network none`, `--restart=no`, the fake placeholder token, and the assertion block that
+requires exit `3` (`EXIT_NATIVE`), the `[dave] native library is unavailable` line together
+with an `UnsatisfiedLinkError` **or** `Required library was not found` native-load error, and
+**zero** `[gateway] logging in` **and zero** `[gateway] ready` lines — matching the migration
+plan's Phase 1B evidence requirements.
+Nothing in this README records that run as executed or passed; do not report the gate as
+closed until the user has produced that evidence.
 
 A successful negative test proves only that the probe **fails fast when the DAVE native is
 absent**, before any gateway login. It does **not** replace the successful audible DAVE
@@ -309,11 +419,12 @@ Audio System successfully setup!
 [probe] waiting for /voice-test ...
 ```
 
-The process prints no token. For evidence, redirect the run to a file (for example append
-`> spike.log 2>&1` to the `docker run` command) and keep that log with the staging notes.
-`spike.log` is git-ignored: never add it to Git or attach it unredacted. It contains the
-staging guild and channel names/IDs (and the bot's own ID), so redact those identifiers
-before pasting the log into an issue, PR, or chat.
+The process prints no token. For evidence, redirect the run to a file in the spike directory
+(for example append `> spikes/jda-dave/spike.log 2>&1` to the `docker run` command) and keep
+that log with the staging notes. `spikes/jda-dave/spike.log` and
+`spikes/jda-dave/spike-negative.log` are git-ignored: never add them to Git or attach them
+unredacted. They contain the staging guild and channel names/IDs (and the bot's own ID), so
+redact those identifiers before pasting a log into an issue, PR, or chat.
 
 ## Run `/voice-test`
 
@@ -437,7 +548,7 @@ Capture the full container stdout/stderr. A pass requires **all** of the followi
 Useful grep for evidence collection:
 
 ```bash
-grep -E '\[dave\]|\[voice\]|\[tone\]|\[command\]|DAVE Init|Transition executed|MLS Failure|Native library dave-jvm' spike.log
+grep -E '\[dave\]|\[voice\]|\[tone\]|\[command\]|DAVE Init|Transition executed|MLS Failure|Native library dave-jvm' spikes/jda-dave/spike.log
 ```
 
 Also record `docker inspect --format '{{.State.ExitCode}}' jda-dave-spike` when the

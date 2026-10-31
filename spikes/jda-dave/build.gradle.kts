@@ -1,3 +1,4 @@
+import java.security.MessageDigest
 import java.util.jar.JarFile
 import java.util.zip.ZipFile
 
@@ -121,8 +122,11 @@ val fatJar by tasks.registering(Jar::class) {
 }
 
 /**
- * Negative-test staging jar. It is byte-for-byte the same packaging recipe and manifest as
- * [fatJar]; the only difference is that [negativeTestRuntimeClasspath] omits
+ * Negative-test staging jar. It uses the same packaging recipe and matching manifest
+ * attributes as [fatJar], but declares its own `manifest` block; it does not reuse a
+ * manifest object or file from [fatJar].
+ *
+ * The only difference is that [negativeTestRuntimeClasspath] omits
  * `moe.kyokobot.libdave:natives-linux-x86-64:0.2.0`. The libdave Java classes, JDA, the
  * Opus native and the JNA dispatch native remain, so startup must reach the DAVE native
  * probe and fail there before any gateway login.
@@ -169,9 +173,22 @@ val fatJarWithoutDaveNative by tasks.registering(Jar::class) {
 }
 
 /**
- * Offline packaging guard for both jars. It verifies the negative jar lost exactly the DAVE
- * native and nothing else: classes, manifest, Opus and JNA natives are still present, and
- * the normal jar still contains the DAVE native.
+ * Packaging guard for both jars. The task itself makes no Discord connection and performs no
+ * login; it only inspects jar contents. Dependency resolution may still need network access
+ * unless the required Maven dependencies and plugins are already in the local Gradle cache,
+ * so this task must not be described as "offline".
+ *
+ * It verifies the negative jar lost exactly the DAVE native and nothing else:
+ *
+ * - the normal jar contains the DAVE native and the negative jar does not;
+ * - both jars keep the Opus/JNA natives, the probe entry point, the libdave factory and a
+ *   known JDA class;
+ * - every entry shared by both jars has identical bytes (SHA-256), so the exclusion cannot
+ *   have changed a class or resource;
+ * - both jars declare the same `Main-Class`.
+ *
+ * The jars are built with reproducible timestamps and file order, so a clean rebuild yields
+ * the same comparison result.
  */
 val verifyNegativeTestJar by tasks.registering {
     group = "verification"
@@ -191,13 +208,26 @@ val verifyNegativeTestJar by tasks.registering {
             "Normal and negative jars must have different paths but both are $normal"
         }
 
-        fun fileEntries(file: File): Set<String> =
-            ZipFile(file).use { zip ->
-                zip.entries().asSequence()
-                    .map { it.name }
-                    .filterNot { it.endsWith("/") }
-                    .toSet()
+        fun fileEntries(zip: ZipFile): Set<String> =
+            zip.entries().asSequence()
+                .map { it.name }
+                .filterNot { it.endsWith("/") }
+                .toSet()
+
+        fun sha256(zip: ZipFile, entryName: String): String {
+            val entry = zip.getEntry(entryName)
+                ?: error("Entry $entryName disappeared while comparing the jars")
+            val digest = MessageDigest.getInstance("SHA-256")
+            zip.getInputStream(entry).use { input ->
+                val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    digest.update(buffer, 0, read)
+                }
             }
+            return digest.digest().joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
+        }
 
         fun mainClass(file: File): String? =
             JarFile(file).use { it.manifest?.mainAttributes?.getValue("Main-Class") }
@@ -207,43 +237,80 @@ val verifyNegativeTestJar by tasks.registering {
         val jnaNative = "com/sun/jna/linux-x86-64/libjnidispatch.so"
         val mainClassEntry = "spike/jdadave/MainKt.class"
         val daveApiEntry = "moe/kyokobot/libdave/NativeDaveFactory.class"
+        // A JDA class that must survive the exclusion untouched.
+        val jdaEntry = "net/dv8tion/jda/api/JDA.class"
 
-        val normalEntries = fileEntries(normal)
-        val negativeEntries = fileEntries(negative)
+        ZipFile(normal).use { normalZip ->
+            ZipFile(negative).use { negativeZip ->
+                val normalEntries = fileEntries(normalZip)
+                val negativeEntries = fileEntries(negativeZip)
 
-        check(daveNative in normalEntries) {
-            "Normal jar ${normal.name} is missing $daveNative; packaging is broken"
-        }
-        check(daveNative !in negativeEntries) {
-            "Negative jar ${negative.name} still contains $daveNative; the exclusion did not apply"
-        }
+                check(daveNative in normalEntries) {
+                    "Normal jar ${normal.name} is missing $daveNative; packaging is broken"
+                }
+                check(daveNative !in negativeEntries) {
+                    "Negative jar ${negative.name} still contains $daveNative; the exclusion did not apply"
+                }
 
-        listOf(opusNative, jnaNative, mainClassEntry, daveApiEntry).forEach { entry ->
-            check(entry in normalEntries) { "Normal jar ${normal.name} is missing $entry" }
-            check(entry in negativeEntries) { "Negative jar ${negative.name} is missing $entry" }
-        }
+                listOf(opusNative, jnaNative, mainClassEntry, daveApiEntry, jdaEntry).forEach { entry ->
+                    check(entry in normalEntries) { "Normal jar ${normal.name} is missing $entry" }
+                    check(entry in negativeEntries) { "Negative jar ${negative.name} is missing $entry" }
+                }
 
-        val onlyInNormal = normalEntries - negativeEntries
-        val onlyInNegative = negativeEntries - normalEntries
-        check(onlyInNormal == setOf(daveNative)) {
-            "Negative jar must differ from the normal jar only by $daveNative, but only-in-normal=$onlyInNormal"
-        }
-        check(onlyInNegative.isEmpty()) {
-            "Negative jar has entries absent from the normal jar: $onlyInNegative"
-        }
+                val onlyInNormal = normalEntries - negativeEntries
+                val onlyInNegative = negativeEntries - normalEntries
+                check(onlyInNormal == setOf(daveNative)) {
+                    "Negative jar must differ from the normal jar only by $daveNative, " +
+                        "but only-in-normal=$onlyInNormal"
+                }
+                check(onlyInNegative.isEmpty()) {
+                    "Negative jar has entries absent from the normal jar: $onlyInNegative"
+                }
 
-        val normalMain = mainClass(normal)
-        val negativeMain = mainClass(negative)
-        check(normalMain == "spike.jdadave.MainKt") {
-            "Normal jar Main-Class is $normalMain, expected spike.jdadave.MainKt"
-        }
-        check(negativeMain == normalMain) {
-            "Negative jar Main-Class ($negativeMain) does not match the normal jar ($normalMain)"
-        }
+                // Every remaining entry must be byte-identical: the exclusion may not alter
+                // any class or resource. Compare sorted names so the first mismatch is stable.
+                val sharedEntries = (normalEntries intersect negativeEntries).sorted()
+                val differing = sharedEntries.filter { entry ->
+                    sha256(normalZip, entry) != sha256(negativeZip, entry)
+                }
+                check(differing.isEmpty()) {
+                    "Shared entries differ between the normal and negative jars " +
+                        "(${differing.size} of ${sharedEntries.size}), first: " +
+                        differing.take(10).joinToString()
+                }
 
-        logger.lifecycle("verifyNegativeTestJar: OK")
-        logger.lifecycle("  normal   : {} ({} entries, has {})", normal.absolutePath, normalEntries.size, daveNative)
-        logger.lifecycle("  negative : {} ({} entries, no {})", negative.absolutePath, negativeEntries.size, daveNative)
-        logger.lifecycle("  kept     : {}, {}, {}, {}", opusNative, jnaNative, mainClassEntry, daveApiEntry)
+                val normalMain = mainClass(normal)
+                val negativeMain = mainClass(negative)
+                check(normalMain == "spike.jdadave.MainKt") {
+                    "Normal jar Main-Class is $normalMain, expected spike.jdadave.MainKt"
+                }
+                check(negativeMain == normalMain) {
+                    "Negative jar Main-Class ($negativeMain) does not match the normal jar ($normalMain)"
+                }
+
+                logger.lifecycle("verifyNegativeTestJar: OK")
+                logger.lifecycle(
+                    "  normal   : {} ({} entries, has {})",
+                    normal.absolutePath,
+                    normalEntries.size,
+                    daveNative,
+                )
+                logger.lifecycle(
+                    "  negative : {} ({} entries, no {})",
+                    negative.absolutePath,
+                    negativeEntries.size,
+                    daveNative,
+                )
+                logger.lifecycle(
+                    "  kept     : {}, {}, {}, {}, {}",
+                    opusNative,
+                    jnaNative,
+                    mainClassEntry,
+                    daveApiEntry,
+                    jdaEntry,
+                )
+                logger.lifecycle("  shared   : {} entries byte-identical (SHA-256)", sharedEntries.size)
+            }
+        }
     }
 }

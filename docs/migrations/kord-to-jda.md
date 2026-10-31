@@ -22,7 +22,7 @@ still open · **OPEN** = not started, gate open.
 | Item | Status | Recorded 2026-10-30 |
 | --- | --- | --- |
 | Phase 1 — dependency and DAVE transport feasibility | **IN PROGRESS** | **DAVE transport subgate (1A) PASS** on staging (protocol v1 + audible tone); the mandatory missing-native fail-fast simulation is tracked as subphase **1B** and is **not yet demonstrated**, so the overall gate remains open |
-| Phase 1B — missing-DAVE-native fail-fast simulation | **IN PROGRESS — artifact prepared, not yet user-run** | The negative-test jar (`fatJarWithoutDaveNative`) and its offline packaging guard (`verifyNegativeTestJar`) are prepared on the stacked child branch `feature/114-native-failfast-check`; the container run has **not** been executed by the user yet. Required evidence: exit code `3` (`EXIT_NATIVE`) before any gateway login, with `--network none` and a placeholder token. Packaging alone does not close this subphase, and Phase 1 overall stays **IN PROGRESS** |
+| Phase 1B — missing-DAVE-native fail-fast simulation | **IN PROGRESS — artifact prepared, not yet user-run** | The negative-test jar (`fatJarWithoutDaveNative`) and its packaging-only verifier (`verifyNegativeTestJar`) are prepared on the stacked child branch `feature/114-native-failfast-check`; the container run has **not** been executed by the user yet. The verifier inspects the built JARs only (no Discord or network call), although Gradle dependency/plugin resolution may still need network unless cached. Required evidence: exit code `3` (`EXIT_NATIVE`) before any gateway login, with `--network none` and a placeholder token. Packaging alone does not close this subphase, and Phase 1 overall stays **IN PROGRESS** |
 | R1 — `jda-ktx 0.14.2` + JDA 6.7.0 pairing | **IN PROGRESS — transport subgate PASS only** | Candidate resolved and exercised for voice transport; still not an upstream-declared combination and not yet re-verified on the final Phase 6 artifact |
 | R2 — `adapter-jda` 0.2.0 vs JDA 6.7.0 ABI | **IN PROGRESS — transport subgate PASS only** | DAVE negotiated and played through JDA; published metadata still does not declare or test 6.7.0, and the ABI is not yet re-verified on the final Phase 6 artifact |
 | Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork only, present on `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115; commit and push state are read from Git and PR #115, not asserted here. JDA runtime/bootstrap and production integration remain blocked by the open Phase 1 missing-native fault test; command layer and locale service/command neutrality remain **OPEN**. Remaining work is split into subphases 2B, 2C and 2D, each with its own child branch and stacked PR (see Phase 2) |
@@ -354,8 +354,10 @@ alignment and final-artifact checks belong to the Kord-free build phase (Phase 6
   not a mock, not a unit test, not a "native located" check. **PASS (staging, protocol v1 +
   audible tone).**
 - Native fail-fast check demonstrated by simulating a missing native. **OPEN — artifact prepared,
-  not yet run.** The negative-test jar (`fatJarWithoutDaveNative`) and its offline packaging guard
-  (`verifyNegativeTestJar`) are prepared on the stacked subphase branch; the required evidence is a
+  not yet run.** The negative-test jar (`fatJarWithoutDaveNative`) and its packaging-only verifier
+  (`verifyNegativeTestJar`) are prepared on the stacked subphase branch; the verifier inspects the
+  built JARs only and makes no Discord or network call, while Gradle dependency/plugin resolution may
+  still require network unless cached. The required evidence is a
   **user-run** container execution that exits `3` before gateway login. Packaging alone does **not**
   close this criterion.
 - Root dependency alignment and root fat-JAR validation are **Phase 6** exit criteria, not Phase 1.
