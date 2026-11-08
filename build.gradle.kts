@@ -129,6 +129,11 @@ sonar {
     }
 }
 
+tasks.named("sonar") {
+    // Ensure each module produces its XML coverage report before analysis
+    dependsOn(":core:jacocoTestReport", ":jda-runtime:jacocoTestReport")
+}
+
 kotlin {
     jvmToolchain(21)
 }
