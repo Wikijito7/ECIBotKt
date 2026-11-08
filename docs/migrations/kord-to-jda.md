@@ -14,14 +14,17 @@ Phase 2B subphase branch: `feature/114-phase-2b-command-port`, based on Phase 1B
 #115. Phase 2B is **IN PROGRESS** (see the Phase 2B section below), not complete. On the covered
 implementation/CI checkpoint `e607ff7` all four #117 checks passed — Check Code Quality, Build and
 analyze, SonarCloud Code Analysis and SonarCloud — and the Sonar quality gate reported **75.0%
-Coverage on New Code**, 0 new issues and 0 hotspots. The earlier head `001e722` failed only on
-0.0% new-code coverage because `:core` and `:jda-runtime` had no JaCoCo XML reports; the JaCoCo
-0.8.12 wiring that fixed it is recorded below. The subsequent docs-only checkpoint `2850907`
-(`Recorded Phase 2B coverage gate pass`) also passed all four #117 checks — Check Code Quality,
-Build and analyze, SonarCloud Code Analysis and SonarCloud. Both are **historical verified
-checkpoints**, not a standing guarantee: read the GitHub check runs for any later head. Local QA
-and review agents passed, but no GitHub PR review has been submitted and no staging login or
-`/jda-walkthrough` interaction has been recorded, so the Phase 2B gate remains open.
+Coverage on New Code**, 0 new issues and 0 hotspots. The earlier head `001e722` failed only its
+**SonarCloud Code Analysis** check, whose Quality Gate reported **0.0% Coverage on New Code**, because
+`:core` and `:jda-runtime` had no JaCoCo XML reports; on that same head the separately named
+**SonarCloud** check, **Check Code Quality** and **Build and analyze** all succeeded. The JaCoCo
+0.8.12 wiring that fixed the coverage gap is recorded below. The subsequent docs-only checkpoints
+`2850907` (`Recorded Phase 2B coverage gate pass`) and `16247f8` (`Recorded passing Phase 2B docs
+checkpoint`) also passed all four #117 checks — Check Code Quality, Build and analyze, SonarCloud
+Code Analysis and SonarCloud. All of these are **historical verified checkpoints**, not a standing
+guarantee: read the GitHub check runs for any later head. Local QA and review agents passed, but no
+GitHub PR review has been submitted and no staging login or `/jda-walkthrough` interaction has been
+recorded, so the Phase 2B gate remains open.
 
 > **This is a plan, not implementation.** Nothing below is proven until the gate it belongs to
 > produces recorded evidence. "Fact" = verified against the repository or upstream sources today.
@@ -40,9 +43,9 @@ still open · **OPEN** = not started, gate still open.
 | Phase 1B — missing-DAVE-native fail-fast simulation | **PASS — gate closed (2026-11-08)** | User-run negative container on Linux amd64, Temurin 21.0.13 (`eclipse-temurin:21`), negative no-DAVE-native JAR: exit exactly `3` (`EXIT_NATIVE`), DAVE native unavailable with `UnsatisfiedLinkError: Required library was not found`, **zero** `[gateway] logging in` and **zero** `[gateway] ready` lines, fake placeholder token never printed. The host pre-pulled the image, so the image pull was not itself isolated; the container ran with `--network none`. Sanitized record only |
 | R1 — `jda-ktx 0.14.2` + JDA 6.7.0 pairing | **IN PROGRESS — transport subgate PASS only** | Candidate resolved and exercised for voice transport; still not an upstream-declared combination and not yet re-verified on the final Phase 6 artifact |
 | R2 — `adapter-jda` 0.2.0 vs JDA 6.7.0 ABI | **IN PROGRESS — transport subgate PASS only** | DAVE negotiated and played through JDA; published metadata still does not declare or test 6.7.0, and the ABI is not yet re-verified on the final Phase 6 artifact |
-| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork is on `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115; commit and push state are read from Git and PR #115, not asserted here. Phase 2B's neutral command boundary and isolated JDA runtime now exist with unit tests on child branch `feature/114-phase-2b-command-port`, and JaCoCo coverage is wired for both isolated modules with #117 CI green on the historical verified checkpoints `e607ff7` and the later docs-only `2850907`, but nothing is wired into the root runtime and the command layer and locale service/command neutrality remain **OPEN**. Remaining work is split into subphases 2B, 2C and 2D, each with its own child branch and PR based on the immediately preceding unmerged branch (see Phase 2) |
+| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork is on `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115; commit and push state are read from Git and PR #115, not asserted here. Phase 2B's neutral command boundary and isolated JDA runtime now exist with unit tests on child branch `feature/114-phase-2b-command-port`, and JaCoCo coverage is wired for both isolated modules with #117 CI green on the historical verified checkpoints `e607ff7`, the later docs-only `2850907` and the later docs-only `16247f8`, but nothing is wired into the root runtime and the command layer and locale service/command neutrality remain **OPEN**. Remaining work is split into subphases 2B, 2C and 2D, each with its own child branch and PR based on the immediately preceding unmerged branch (see Phase 2) |
 | Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS** | Phase 2A source and test changes are present on `feature/114-kord-to-jda-migration`, and draft PR #115 targets the epic branch; whether they are committed or pushed is read from Git and PR #115, not asserted here. `GuildId`/`LocaleCode` and the locale repository/use cases are **neutral**, but the Phase 2A scope itself is not finished: `LocalizationService` and `/locale` remain Kord-facing and must be moved behind/adapted in a later Phase 2 subphase (2D) |
-| Phase 2B — neutral command context + responder/response port | **IN PROGRESS** | Implementation and unit tests are present on `feature/114-phase-2b-command-port` as the initial implementation checkpoint `fbd9f5a`, stacked on Phase 1B `feature/114-native-failfast-check`; draft PR #117 targets that Phase 1B branch (PR #116), not #115. The branch adds isolated Gradle modules `:core` (gateway-free neutral ports and a pure walkthrough handler) and `:jda-runtime` (JDA 6.7.0 adapter, guild-only `/jda-walkthrough`); the root project depends on `:core` only and remains Kord-based and JDA-free. On head `001e722` the quality and build jobs passed while SonarCloud failed its Quality Gate at 0.0% coverage on new code (required >=50%) because the modules emitted no JaCoCo XML; the JaCoCo 0.8.12 fix then passed CI on the covered checkpoint `e607ff7` — all four #117 checks green, including both SonarCloud checks, with 75.0% Coverage on New Code, 0 new issues and 0 hotspots. The later docs-only checkpoint `2850907` also passed all four #117 checks; both are historical verified checkpoints, so CI status for any newer head must be read from the GitHub check runs. Local QA and review agents passed, but no GitHub PR review is submitted and manual staging login/interaction is still pending, so the gate is **not** closed |
+| Phase 2B — neutral command context + responder/response port | **IN PROGRESS** | Implementation and unit tests are present on `feature/114-phase-2b-command-port` as the initial implementation checkpoint `fbd9f5a`, stacked on Phase 1B `feature/114-native-failfast-check`; draft PR #117 targets that Phase 1B branch (PR #116), not #115. The branch adds isolated Gradle modules `:core` (gateway-free neutral ports and a pure walkthrough handler) and `:jda-runtime` (JDA 6.7.0 adapter, guild-only `/jda-walkthrough`); the root project depends on `:core` only and remains Kord-based and JDA-free. On head `001e722` **Check Code Quality**, **Build and analyze** and the separately named **SonarCloud** check passed, while **SonarCloud Code Analysis** failed its Quality Gate at 0.0% coverage on new code (required >=50%) because the modules emitted no JaCoCo XML; the JaCoCo 0.8.12 fix then passed CI on the covered checkpoint `e607ff7` — all four #117 checks green, including both SonarCloud checks, with 75.0% Coverage on New Code, 0 new issues and 0 hotspots. The later docs-only checkpoints `2850907` and `16247f8` also passed all four #117 checks; all are historical verified checkpoints, so CI status for any newer head must be read from the GitHub check runs. Local QA and review agents passed, but no GitHub PR review is submitted and manual staging login/interaction is still pending, so the gate is **not** closed |
 | Phase 2C — voice/session/player message ports and adapters | **OPEN** | Not started. Planned child branch and PR based on the immediately preceding unmerged branch (2B); do not restructure #115 |
 | Phase 2D — channel/message/locale edge adapters | **OPEN** | Not started. Planned child branch and PR based on the immediately preceding unmerged branch (2C); carries the `LocalizationService` and `/locale` neutrality work |
 | Phase 6 — Kord-free build, artifact and digest gates | **OPEN** | Not started |
@@ -157,7 +160,7 @@ the **final integration target**, and `master` is merged only at migration compl
 | Subphase | Scope | Branch/PR posture | Status |
 | --- | --- | --- | --- |
 | **2A** | Domain-owned `GuildId`/`LocaleCode` + neutral locale repository/use cases | On `feature/114-kord-to-jda-migration`; draft PR #115 is the agreed combined Phase 1/2A checkpoint; leave it as-is | **IN PROGRESS** — as recorded above |
-| **2B** | Neutral command context + responder/response port; adapters translate defer/ephemeral, locales and IDs | Child branch `feature/114-phase-2b-command-port`, based on the immediately preceding unmerged branch, Phase 1B `feature/114-native-failfast-check`; draft PR #117 targets that branch, not #115 | **IN PROGRESS** — isolated `:core`/`:jda-runtime` modules, neutral command boundary and JDA 6.7.0 adapter implemented with unit tests; #117 CI passed on covered checkpoint `e607ff7` (both SonarCloud checks PASS, 75.0% new-code coverage) and local QA/review passed; no GitHub PR review is submitted and staging evidence is still pending |
+| **2B** | Neutral command context + responder/response port; adapters translate defer/ephemeral, locales and IDs | Child branch `feature/114-phase-2b-command-port`, based on the immediately preceding unmerged branch, Phase 1B `feature/114-native-failfast-check`; draft PR #117 targets that branch, not #115 | **IN PROGRESS** — isolated `:core`/`:jda-runtime` modules, neutral command boundary and JDA 6.7.0 adapter implemented with unit tests; #117 CI passed on covered checkpoint `e607ff7` (both SonarCloud checks PASS, 75.0% new-code coverage) and on the later docs-only checkpoints `2850907` and `16247f8`; local QA/review passed; no GitHub PR review is submitted and staging evidence is still pending |
 | **2C** | Voice/session/player-message narrow ports; JDA `AudioSendHandler`/DAVE and lifecycle stay in the adapter | New child branch/PR based on the immediately preceding unmerged branch (2B) | **OPEN** — not started |
 | **2D** | Channel/message/locale edge adapters; move `LocalizationService` and `/locale` behind/adapted to a neutral port | New child branch/PR based on the immediately preceding unmerged branch (2C) | **OPEN** — not started |
 
@@ -190,12 +193,13 @@ Phase 2B is implemented and unit-tested on the child branch
 `feature/114-phase-2b-command-port`, stacked on Phase 1B
 `feature/114-native-failfast-check`; draft PR #117 targets that Phase 1B branch (PR #116), not #115.
 Commit `fbd9f5a` is the **initial implementation checkpoint** and `e607ff7` is the **covered
-implementation/CI checkpoint**: all four #117 checks passed there. The later docs-only checkpoint
-`2850907` (`Recorded Phase 2B coverage gate pass`) also passed all four #117 checks — Check Code
-Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud. Both are **historical verified
-checkpoints**, not a guarantee about later heads: read the GitHub check runs on PR #117 for whatever
-head is current rather than assuming green CI. This is a **work-in-progress checkpoint with green
-CI, not a closed gate** — the GitHub review and staging gates are still open.
+implementation/CI checkpoint**: all four #117 checks passed there. The later docs-only checkpoints
+`2850907` (`Recorded Phase 2B coverage gate pass`) and `16247f8` (`Recorded passing Phase 2B docs
+checkpoint`) also passed all four #117 checks — Check Code Quality, Build and analyze, SonarCloud
+Code Analysis and SonarCloud. All of these are **historical verified checkpoints**, not a guarantee
+about later heads: read the GitHub check runs on PR #117 for whatever head is current rather than
+assuming green CI. This is a **work-in-progress checkpoint with green CI, not a closed gate** — the
+GitHub review and staging gates are still open.
 
 What the branch contains today:
 
@@ -239,10 +243,18 @@ evidence, and no staging or Phase 2B pass is claimed.
   Code Quality**, **Build and analyze**, **SonarCloud Code Analysis** and **SonarCloud**. It is
   recorded as a historical verified checkpoint alongside `e607ff7`, not as proof that every later
   commit is green; read the GitHub check runs for the current head.
-- **Historical failure on prior head `001e722`.** There the quality and build jobs passed but
-  SonarCloud failed its Quality Gate at **0.0% Coverage on New Code** against a required
+- **PR #117 CI on later docs-only `16247f8` — PASS (docs-only checkpoint).** This commit
+  (`Recorded passing Phase 2B docs checkpoint`) changed only `docs/migrations/kord-to-jda.md` and
+  also passed all four checks: **Check Code Quality**, **Build and analyze**, **SonarCloud Code
+  Analysis** and **SonarCloud**. Like `e607ff7` and `2850907` it is a **historical verified
+  checkpoint**; it is not evidence that heads after it are green, so read the current GitHub check
+  runs on PR #117.
+- **Historical failure on prior head `001e722`.** There the **Check Code Quality** and **Build and
+  analyze** jobs passed, as did the separately named **SonarCloud** check, while the **SonarCloud
+  Code Analysis** check failed its Quality Gate at **0.0% Coverage on New Code** against a required
   **>=50%**, because `:core` and `:jda-runtime` emitted **no JaCoCo XML reports**. That failure is
-  kept as history, not as current status.
+  kept as history, not as current status, and must not be summarised as "SonarCloud failed" without
+  naming the check that did.
 - **Coverage wiring that fixed it.** JaCoCo `0.8.12` (from the version catalog) is applied in
   both modules; each module's `tasks.test` finalizes its own `jacocoTestReport`, which requires XML
   at the module-local default `build/reports/jacoco/test/jacocoTestReport.xml`; the root `sonar`
@@ -291,11 +303,13 @@ Acceptance for closing 2B (not yet met):
   isolated `:core`/`:jda-runtime` modules plus the root `:core` dependency and version-catalog
   entries; the parent branches are not rebased or rewritten for it. Initial implementation checkpoint
   `fbd9f5a`; covered implementation/CI checkpoint `e607ff7`, where all four #117 checks passed
-  (75.0% new-code coverage, 0 new issues, 0 hotspots), and the later docs-only checkpoint `2850907`
-  also passed all four. Both are historical verified checkpoints — read the GitHub check runs for any
-  later head. The earlier head `001e722` passed quality/build and failed the SonarCloud Quality Gate
-  at 0.0% new-code coverage; the JaCoCo 0.8.12 plus root `sonar` wiring fixed it. No GitHub PR review
-  is submitted, no staging interaction has been recorded, and the gate stays open.
+  (75.0% new-code coverage, 0 new issues, 0 hotspots), and the later docs-only checkpoints `2850907`
+  and `16247f8` also passed all four. All are historical verified checkpoints — read the GitHub check
+  runs for any later head. The earlier head `001e722` passed **Check Code Quality**, **Build and
+  analyze** and the separately named **SonarCloud** check, but the **SonarCloud Code Analysis** check
+  failed its Quality Gate at 0.0% new-code coverage; the JaCoCo 0.8.12 plus root `sonar` wiring fixed
+  it. No GitHub PR review is submitted, no staging interaction has been recorded, and the gate stays
+  open.
 - `.opencode/opencode.json`, this plan and `spikes/jda-dave/**` are **tracked** on
   `feature/114-kord-to-jda-migration`; the Phase 1 checkpoint `8ca6242` records them in branch
   history. They are part of the migration record and are updated as the migration proceeds.
@@ -321,7 +335,7 @@ Branch, commit and PR facts below were read from Git and GitHub; they are **not*
 | `feature/114-migrate-to-jda-jda-ktx` (epic baseline) | Still at `4badb92`; unchanged |
 | `feature/114-kord-to-jda-migration` → draft PR #115 (base: epic) | Remote head `67802d1`. Carries the combined Phase 1/2A checkpoint: the plan/spike record and the neutral locale repository/use-case boundary. Phase 1 is **PASS** (1A + 1B recorded), Phase 2A is **partial**, Phase 2B is **IN PROGRESS** on its child branch |
 | `feature/114-native-failfast-check` → draft PR #116 (base: the 2A feature branch) | Remote head `49b4bc1` (`Recorded Phase 1B fail-fast pass`); `1461204` was the earlier pre-pass-update head. Artifact, runbook and the pass record live here. **Phase 1B PASS — gate closed on 2026-11-08** |
-| `feature/114-phase-2b-command-port` → draft PR #117 (base: the Phase 1B branch, PR #116) | Initial implementation checkpoint `fbd9f5a`; the documentation commits that record this handoff follow it, so read the current head from Git. Carries the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests, plus JaCoCo 0.8.12 coverage for both modules wired into root `sonar`. **Phase 2B IN PROGRESS** — all four #117 checks passed on covered implementation/CI checkpoint `e607ff7` (75.0% new-code coverage, 0 new issues, 0 hotspots) and again on the later docs-only checkpoint `2850907`; both are historical verified checkpoints, so read the GitHub check runs for the current head. The earlier `001e722` 0.0% gate failure is history. Local QA/review passed, no GitHub PR review is submitted, and manual staging interaction evidence is still pending |
+| `feature/114-phase-2b-command-port` → draft PR #117 (base: the Phase 1B branch, PR #116) | Initial implementation checkpoint `fbd9f5a`; the documentation commits that record this handoff follow it, so read the current head from Git. Carries the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests, plus JaCoCo 0.8.12 coverage for both modules wired into root `sonar`. **Phase 2B IN PROGRESS** — all four #117 checks passed on covered implementation/CI checkpoint `e607ff7` (75.0% new-code coverage, 0 new issues, 0 hotspots) and again on the later docs-only checkpoints `2850907` and `16247f8`; all are historical verified checkpoints, so read the GitHub check runs for the current head. The earlier `001e722` history is that the SonarCloud Code Analysis check failed its Quality Gate at 0.0% new-code coverage while Check Code Quality, Build and analyze and the separately named SonarCloud check passed. Local QA/review passed, no GitHub PR review is submitted, and manual staging interaction evidence is still pending |
 
 - Phase 1B evidence, sanitized: user-run negative no-DAVE-native JAR in the Linux amd64
   `eclipse-temurin:21` container (Temurin 21.0.13), exit exactly `3` (`EXIT_NATIVE`), DAVE native
@@ -349,10 +363,10 @@ Branch, commit and PR facts below were read from Git and GitHub; they are **not*
 Next actions, in order:
 
 1. #117 CI passed on the covered implementation/CI checkpoint `e607ff7` (75.0% new-code coverage,
-   0 new issues, 0 hotspots) and on the later docs-only checkpoint `2850907` (all four checks PASS
-   on both). These are historical verified checkpoints, not a standing guarantee — read the GitHub
-   check runs for the current head. Leave #115 as the combined Phase 1/2A checkpoint and do not merge
-   #117.
+   0 new issues, 0 hotspots) and on the later docs-only checkpoints `2850907` and `16247f8` (all four
+   checks PASS on each). These are historical verified checkpoints, not a standing guarantee — read
+   the GitHub check runs for the current head. Leave #115 as the combined Phase 1/2A checkpoint and
+   do not merge #117.
 2. Submit the GitHub PR review for #117 — local QA/review passed, but no review is recorded on the
    PR.
 3. Prepare the staging `/jda-walkthrough` evidence with the isolated `:jda-runtime` against the
@@ -658,11 +672,12 @@ subphase plan above).
 
 **Gate status:** the Phase 1 missing-native fault test passed on 2026-11-08, so it no longer blocks
 this phase. Phase 2B is now **IN PROGRESS** on `feature/114-phase-2b-command-port` under draft PR #117
-(base: the Phase 1B branch). The earlier head `001e722` passed quality/build and failed the
-SonarCloud Quality Gate at 0.0% new-code coverage because the modules had no JaCoCo XML; after the
-JaCoCo 0.8.12 plus root `sonar` wiring, all four #117 checks passed on covered checkpoint `e607ff7`
-(75.0% new-code coverage, 0 new issues, 0 hotspots) and on the later docs-only checkpoint `2850907`.
-Both are historical verified checkpoints, not a guarantee for later commits. Local QA/review passed
+(base: the Phase 1B branch). The earlier head `001e722` passed Check Code Quality, Build and analyze
+and the separately named SonarCloud check, while the SonarCloud Code Analysis check failed its
+Quality Gate at 0.0% new-code coverage because the modules had no JaCoCo XML; after the JaCoCo 0.8.12
+plus root `sonar` wiring, all four #117 checks passed on covered checkpoint `e607ff7` (75.0% new-code
+coverage, 0 new issues, 0 hotspots) and on the later docs-only checkpoints `2850907` and `16247f8`.
+All are historical verified checkpoints, not a guarantee for later commits. Local QA/review passed
 but no GitHub PR review is submitted, manual staging interaction evidence is still pending, and the
 root runtime remains Kord-based.
 
@@ -855,10 +870,11 @@ accepted risk, and a documented blocker does not close a gate.
   `feature/114-phase-2b-command-port`, stacked on `feature/114-native-failfast-check` and proposed
   through draft PR #117 (base: that Phase 1B branch). The initial implementation checkpoint is
   `fbd9f5a`; the covered implementation/CI checkpoint is `e607ff7`, on which all four #117 checks
-  passed, and the later docs-only checkpoint `2850907` also passed all four. Both are historical
-  verified checkpoints, so read the GitHub check runs for any later head. JaCoCo 0.8.12 coverage
-  is applied in `core/build.gradle.kts` and `jda-runtime/build.gradle.kts`, and root `sonar` depends
-  on both module reports. Current Git and PR state is authoritative for what is committed and pushed.
+  passed, and the later docs-only checkpoints `2850907` and `16247f8` also passed all four. All are
+  historical verified checkpoints, so read the GitHub check runs for any later head. JaCoCo 0.8.12
+  coverage is applied in `core/build.gradle.kts` and `jda-runtime/build.gradle.kts`, and root `sonar`
+  depends on both module reports. Current Git and PR state is authoritative for what is committed and
+  pushed.
 - `stash@{0}` — housekeeping WIP; preserved, untouched.
 - `stash@{1}` — assistant voice feature WIP (out of scope); preserved, untouched.
 - Ignored caches and user data (for example `.gradle/`, `build/`, `data/`, `.idea/`, `.memory/`,
