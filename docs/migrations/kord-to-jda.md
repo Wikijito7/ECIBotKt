@@ -8,6 +8,9 @@ Active working branch: `feature/114-kord-to-jda-migration` — draft PR
 Phase 1B subphase branch: `feature/114-native-failfast-check`, based on the working branch; its PR
 targets the working branch, not the epic branch. Its negative fail-fast test **passed** on
 2026-11-08 (see the Phase 1B result below).
+Phase 2B subphase branch: `feature/114-phase-2b-command-port`, based on Phase 1B
+`feature/114-native-failfast-check`; no PR exists yet and the intended base is that Phase 1B branch.
+Phase 2B is **IN PROGRESS** (see the Phase 2B section below), not complete.
 
 > **This is a plan, not implementation.** Nothing below is proven until the gate it belongs to
 > produces recorded evidence. "Fact" = verified against the repository or upstream sources today.
@@ -26,9 +29,9 @@ still open · **OPEN** = not started, gate still open.
 | Phase 1B — missing-DAVE-native fail-fast simulation | **PASS — gate closed (2026-11-08)** | User-run negative container on Linux amd64, Temurin 21.0.13 (`eclipse-temurin:21`), negative no-DAVE-native JAR: exit exactly `3` (`EXIT_NATIVE`), DAVE native unavailable with `UnsatisfiedLinkError: Required library was not found`, **zero** `[gateway] logging in` and **zero** `[gateway] ready` lines, fake placeholder token never printed. The host pre-pulled the image, so the image pull was not itself isolated; the container ran with `--network none`. Sanitized record only |
 | R1 — `jda-ktx 0.14.2` + JDA 6.7.0 pairing | **IN PROGRESS — transport subgate PASS only** | Candidate resolved and exercised for voice transport; still not an upstream-declared combination and not yet re-verified on the final Phase 6 artifact |
 | R2 — `adapter-jda` 0.2.0 vs JDA 6.7.0 ABI | **IN PROGRESS — transport subgate PASS only** | DAVE negotiated and played through JDA; published metadata still does not declare or test 6.7.0, and the ABI is not yet re-verified on the final Phase 6 artifact |
-| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork only, present on `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115; commit and push state are read from Git and PR #115, not asserted here. The Phase 1 fail-fast gate closed on 2026-11-08, so the JDA runtime/bootstrap work is no longer blocked by it — but no JDA runtime/bootstrap work has been started, and the command layer and locale service/command neutrality remain **OPEN**. Remaining work is split into subphases 2B, 2C and 2D, each with its own child branch and PR based on the immediately preceding unmerged branch (see Phase 2) |
+| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork is on `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115; commit and push state are read from Git and PR #115, not asserted here. Phase 2B's neutral command boundary and isolated JDA runtime now exist with unit tests on child branch `feature/114-phase-2b-command-port`, but nothing is wired into the root runtime and the command layer and locale service/command neutrality remain **OPEN**. Remaining work is split into subphases 2B, 2C and 2D, each with its own child branch and PR based on the immediately preceding unmerged branch (see Phase 2) |
 | Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS** | Phase 2A source and test changes are present on `feature/114-kord-to-jda-migration`, and draft PR #115 targets the epic branch; whether they are committed or pushed is read from Git and PR #115, not asserted here. `GuildId`/`LocaleCode` and the locale repository/use cases are **neutral**, but the Phase 2A scope itself is not finished: `LocalizationService` and `/locale` remain Kord-facing and must be moved behind/adapted in a later Phase 2 subphase (2D) |
-| Phase 2B — neutral command context + responder/response port | **OPEN — unblocked, not started** | Gate is **unblocked**: Phase 1B passed on 2026-11-08. No code has been started. Planned child branch/PR based on the immediately preceding unmerged branch, `feature/114-native-failfast-check`, and targeting that branch; do not restructure #115 |
+| Phase 2B — neutral command context + responder/response port | **IN PROGRESS** | Implementation and unit tests are present on `feature/114-phase-2b-command-port`, stacked on Phase 1B `feature/114-native-failfast-check`; no PR has been created and the intended base is that Phase 1B branch. The branch adds isolated Gradle modules `:core` (gateway-free neutral ports and a pure walkthrough handler) and `:jda-runtime` (JDA 6.7.0 adapter, guild-only `/jda-walkthrough`); the root project depends on `:core` only and remains Kord-based and JDA-free. Independent final QA/review and any manual staging login/interaction evidence are still pending, so the gate is **not** closed |
 | Phase 2C — voice/session/player message ports and adapters | **OPEN** | Not started. Planned child branch and PR based on the immediately preceding unmerged branch (2B); do not restructure #115 |
 | Phase 2D — channel/message/locale edge adapters | **OPEN** | Not started. Planned child branch and PR based on the immediately preceding unmerged branch (2C); carries the `LocalizationService` and `/locale` neutrality work |
 | Phase 6 — Kord-free build, artifact and digest gates | **OPEN** | Not started |
@@ -92,7 +95,8 @@ Scope of this evidence:
   recorded here or in the repository.
 
 With this result, subphase **1B is PASS and its gate is closed**, the Phase 1 stop condition no
-longer blocks Phase 2, and Phase 2B is **unblocked** (still not started).
+longer blocks Phase 2, and Phase 2B is **unblocked**; a Phase 2B implementation checkpoint now
+exists on `feature/114-phase-2b-command-port` and is **IN PROGRESS**, not complete.
 
 ### Phase 2A — domain-owned ID/locale values and locale persistence — IN PROGRESS
 
@@ -142,7 +146,7 @@ the **final integration target**, and `master` is merged only at migration compl
 | Subphase | Scope | Branch/PR posture | Status |
 | --- | --- | --- | --- |
 | **2A** | Domain-owned `GuildId`/`LocaleCode` + neutral locale repository/use cases | On `feature/114-kord-to-jda-migration`; draft PR #115 is the agreed combined Phase 1/2A checkpoint; leave it as-is | **IN PROGRESS** — as recorded above |
-| **2B** | Neutral command context + responder/response port; adapters translate defer/ephemeral, locales and IDs | New child branch/PR based on the immediately preceding unmerged branch, Phase 1B `feature/114-native-failfast-check`; its PR targets that branch, not #115 directly | **OPEN** — **unblocked** since 2026-11-08 (Phase 1B passed); not started |
+| **2B** | Neutral command context + responder/response port; adapters translate defer/ephemeral, locales and IDs | Child branch `feature/114-phase-2b-command-port`, based on the immediately preceding unmerged branch, Phase 1B `feature/114-native-failfast-check`; no PR yet, intended to target that branch rather than #115 | **IN PROGRESS** — isolated `:core`/`:jda-runtime` modules, neutral command boundary and JDA 6.7.0 adapter implemented with unit tests; independent QA/review and staging evidence pending |
 | **2C** | Voice/session/player-message narrow ports; JDA `AudioSendHandler`/DAVE and lifecycle stay in the adapter | New child branch/PR based on the immediately preceding unmerged branch (2B) | **OPEN** — not started |
 | **2D** | Channel/message/locale edge adapters; move `LocalizationService` and `/locale` behind/adapted to a neutral port | New child branch/PR based on the immediately preceding unmerged branch (2C) | **OPEN** — not started |
 
@@ -169,6 +173,58 @@ Stacking rules:
   stored, `setGuildLocale`/`removeGuildLocale` propagate write failures by throwing, and the
   persisted JSON shape and raw stored values are preserved.
 
+### Phase 2B — neutral command boundary + isolated JDA runtime — IN PROGRESS
+
+Phase 2B is implemented and unit-tested on the child branch
+`feature/114-phase-2b-command-port`, stacked on Phase 1B
+`feature/114-native-failfast-check`; no PR exists yet and the intended base is that Phase 1B branch.
+This is a **work-in-progress checkpoint, not a closed gate**.
+
+What the branch contains today:
+
+- **Isolated Gradle modules.** `settings.gradle.kts` includes `:core` and `:jda-runtime`. The root
+  project adds only `implementation(project(":core"))`; it remains Kord-based (local
+  `libs/kord-*.jar`) and declares **no** JDA dependency or JDA runtime wiring. JDA 6.7.0 and
+  coroutines are declared in the version catalog and consumed only by `:jda-runtime`.
+- **`:core` is gateway-free.** It declares no Kord or JDA dependency and contains the neutral
+  `CommandContext` (`guildId`, `channelId`, `userId`, `locale`, all domain values),
+  `CommandHandler`, `CommandResponder` (at most one `defer` and one `respond`; after `defer` the
+  response edits the original and visibility stays fixed by the defer), `CommandResponse`, the pure
+  `WalkthroughCommand` handler, and the domain-owned `GuildId`/`LocaleCode` values moved out of the
+  root source set alongside the new `ChannelId` and `UserId` values introduced by `:core`.
+- **`:jda-runtime` is the only gateway adapter.** It depends on `:core` and JDA 6.7.0 and contains
+  `JdaBootstrap`, `JdaCommandRouter` (the gateway callback only identifies the handler; handler and
+  REST work run off the JDA event thread), `JdaCommandContextMapper`, the state-machine
+  `JdaCommandResponder` (a failed REST action restores the previous state so the router can fall
+  back safely) and the coroutine `RestActionBridge`.
+- **Guild-only walkthrough command.** The only registered command is `/jda-walkthrough`, upserted
+  guild-scoped from `DISCORD_DEV_GUILD_ID`; `DISCORD_BOT_TOKEN` and `DISCORD_DEV_GUILD_ID` are
+  mandatory and the isolated runtime fails fast without them. No global command is published, no
+  gateway intents are enabled, and the isolated JDA entry point is **not** wired into the root
+  runtime.
+- **Deliberately out of scope for 2B:** `/locale` and `LocalizationService` stay Kord-facing (2D),
+  voice/DAVE and session/player ports are 2C, and root bootstrap/fat-JAR wiring stays Phase 6.
+
+Unit tests exist in both modules. The last local run recorded **18 `:core` tests** and
+**62 `:jda-runtime` tests**; the root project suite recorded **380 tests with 5 pre-existing
+skips**, which is **460** tests combined. That is local implementation evidence only, **not** gate
+evidence, and no QA, staging or Phase 2B pass is claimed.
+
+Acceptance for closing 2B (not yet met):
+
+- `:core` compiles with no Kord/JDA dependency, and the neutral boundary exposes no `dev.kord.*` /
+  `net.dv8tion.*` types. The branch carries a reflection-based unit test over the neutral types; the
+  full import rule covering all core packages remains the Phase 2 exit/CI gate and is **not** closed
+  by it.
+- The JDA responder honours the neutral contract under test: one defer, one response, deferred
+  responses edit the original with the defer visibility, and a failed REST action restores the prior
+  state so the router fallback stays reachable.
+- The bootstrap registers exactly one guild-scoped command and refuses to start without a token and
+  a development guild id; no global registration path exists.
+- Independent final QA/review passes, and any required manual staging login plus a
+  `/jda-walkthrough` interaction are recorded. Until then Phase 2B stays **IN PROGRESS**, is not
+  described as complete, and no staging pass is claimed.
+
 ### Checkpoint state
 
 - The epic integration branch `feature/114-migrate-to-jda-jda-ktx` remains at its base
@@ -179,6 +235,10 @@ Stacking rules:
   branch. It carries only the negative-test packaging task, the spike runbook section and these plan
   edits; the parent branch is not rebased or rewritten for it. Its gate is **PASS** as of
   2026-11-08.
+- Phase 2B is stacked one level deeper again: `feature/114-phase-2b-command-port` branches from
+  Phase 1B and is intended to PR back into `feature/114-native-failfast-check`. It adds the isolated
+  `:core`/`:jda-runtime` modules plus the root `:core` dependency and version-catalog entries; the
+  parent branches are not rebased or rewritten for it. No PR exists yet.
 - `.opencode/opencode.json`, this plan and `spikes/jda-dave/**` are **tracked** on
   `feature/114-kord-to-jda-migration`; the Phase 1 checkpoint `8ca6242` records them in branch
   history. They are part of the migration record and are updated as the migration proceeds.
@@ -202,8 +262,9 @@ Branch, commit and PR facts below were read from Git and GitHub; they are **not*
 | Branch / PR | Handoff state |
 | --- | --- |
 | `feature/114-migrate-to-jda-jda-ktx` (epic baseline) | Still at `4badb92`; unchanged |
-| `feature/114-kord-to-jda-migration` → draft PR #115 (base: epic) | Remote head `67802d1`. Carries the combined Phase 1/2A checkpoint: the plan/spike record and the neutral locale repository/use-case boundary. Phase 1 is **PASS** (1A + 1B recorded), Phase 2A is **partial**, Phase 2B is **OPEN — unblocked, not started** |
+| `feature/114-kord-to-jda-migration` → draft PR #115 (base: epic) | Remote head `67802d1`. Carries the combined Phase 1/2A checkpoint: the plan/spike record and the neutral locale repository/use-case boundary. Phase 1 is **PASS** (1A + 1B recorded), Phase 2A is **partial**, Phase 2B is **IN PROGRESS** on its child branch |
 | `feature/114-native-failfast-check` → draft PR #116 (base: the 2A feature branch) | Remote head `1461204` at handoff. Artifact, runbook and the pass record live here. **Phase 1B PASS — gate closed on 2026-11-08** |
+| `feature/114-phase-2b-command-port` (base: the Phase 1B branch) | No PR created. Carries the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests. **Phase 2B IN PROGRESS** — independent QA/review and any staging interaction evidence still pending |
 
 - Phase 1B evidence, sanitized: user-run negative no-DAVE-native JAR in the Linux amd64
   `eclipse-temurin:21` container (Temurin 21.0.13), exit exactly `3` (`EXIT_NATIVE`), DAVE native
@@ -230,10 +291,10 @@ Branch, commit and PR facts below were read from Git and GitHub; they are **not*
 
 Next actions, in order:
 
-1. Create the Phase 2B child branch from `feature/114-native-failfast-check` and open its PR against
-   that branch; leave #115 as the combined Phase 1/2A checkpoint.
-2. Implement Phase 2B's neutral command context/responder port plus the adapters that translate
-   defer/ephemeral, locales and IDs at the Discord edge.
+1. Open the Phase 2B PR from `feature/114-phase-2b-command-port` against Phase 1B
+   `feature/114-native-failfast-check`; leave #115 as the combined Phase 1/2A checkpoint.
+2. Close Phase 2B's acceptance: independent final QA/review plus any required staging login and
+   `/jda-walkthrough` interaction evidence. Do not record 2B as complete before that.
 3. Push this Phase 1B pass record to PR #116 and refresh CI status for #115/#116.
 
 ---
@@ -477,7 +538,8 @@ These requirements were met by the recorded run: **exit `3`**, `[dave] native li
 unavailable` with `UnsatisfiedLinkError: Required library was not found`, **zero**
 `[gateway] logging in` and **zero** `[gateway] ready` lines, and the fake placeholder token was
 never printed. **Phase 1B is PASS and its gate is closed**, so the Phase 1 stop condition no longer
-governs progression and **Phase 2B is unblocked** (not started).
+governs progression and **Phase 2B is unblocked**; it is now **IN PROGRESS** on
+`feature/114-phase-2b-command-port` and is **not** complete.
 
 #### Phase 1 staging result — voice transport probe (recorded)
 
@@ -522,33 +584,43 @@ final Phase 6 artifact before promotion.
 ### Phase 2 — JDA bootstrap, event and command-response foundation
 
 **Status: IN PROGRESS** — the Phase 2A locale repository/use-case boundary is implemented, but
-`LocalizationService` and the `/locale` command remain Kord-facing. Bootstrap and the command layer
-are still open, so this phase is **not** complete. Remaining work is split into subphases **2B**
-(neutral command context/responders), **2C** (voice/session/player-message ports) and **2D**
-(channel/message/locale edge adapters), each with its own child branch and PR based on the
-immediately preceding unmerged branch (see the subphase plan above).
+`LocalizationService` and the `/locale` command remain Kord-facing. Phase 2B's neutral command
+boundary and isolated JDA adapter are implemented with unit tests on their child branch, but the
+bootstrap and command layer are not wired into the root runtime, so this phase is **not** complete.
+Remaining work is split into subphases **2B** (neutral command context/responders, in progress),
+**2C** (voice/session/player-message ports) and **2D** (channel/message/locale edge adapters), each
+with its own child branch and PR based on the immediately preceding unmerged branch (see the
+subphase plan above).
 
 **Gate status:** the Phase 1 missing-native fault test passed on 2026-11-08, so it no longer blocks
-this phase. No JDA runtime/bootstrap work has been started; Phase 2B is **unblocked but not
-started**.
+this phase. Phase 2B is now **IN PROGRESS** on `feature/114-phase-2b-command-port` (no PR yet); its
+independent QA/review and any staging interaction evidence are still pending, and the root runtime
+remains Kord-based.
 
 - Replace Kord bootstrap with JDA lifecycle (login, shard/event wiring, shutdown).
 - Introduce neutral abstractions for IDs and locales so command code stops speaking Kord types.
   **Partially done** (Phase 2A): domain-owned `GuildId`/`LocaleCode` plus a neutral locale
-  repository and use cases. Command code still speaks Kord types.
+  repository and use cases. Phase 2B moves those values into `:core` and adds neutral command
+  ports, but production command code still speaks Kord types.
 - Establish a single command dispatch/response layer with correct deferred/replied semantics.
+  **Partially done** (Phase 2B): implemented and unit-tested in the isolated `:jda-runtime`; not
+  wired into the root runtime.
 - Apply the framework-replaceability goal from §1: commands/handlers take a neutral command
   context and responder/response port; only Discord adapter packages may touch `dev.kord.*` /
   `net.dv8tion.*`.
 
 **Exit criteria**
 - Bot connects on staging with the staging token. **OPEN**
-- Slash commands register and respond; deferred vs. immediate reply is explicit and tested. **OPEN**
+- Slash commands register and respond; deferred vs. immediate reply is explicit and tested.
+  **OPEN** — implemented and unit-tested only in the isolated `:jda-runtime`; no staging evidence and
+  no root-runtime wiring.
 - No Kord types leak into the new abstraction boundary. **PASS for the locale repository/use-case
-  boundary only. OPEN for `LocalizationService`, `/locale`, all other commands and bootstrap.**
+  boundary and for the Phase 2B `:core` module only. OPEN for `LocalizationService`, `/locale`, all
+  other commands and bootstrap.**
 - The architectural import rule (no `dev.kord.*` / `net.dv8tion.*` outside declared Discord adapter
   packages) exists and passes as a test/CI gate. **OPEN** — required before migration completion;
-  Phase 2 exit cannot be recorded without it.
+  Phase 2 exit cannot be recorded without it. The Phase 2B reflection test covers only the neutral
+  types, not the whole import rule.
 
 ### Phase 3 — Per-guild serialized voice
 
@@ -709,6 +781,10 @@ accepted risk, and a documented blocker does not close a gate.
 - The Phase 2A source and test changes, and the plan edits made after `8ca6242`, are present on
   `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115.
   Current Git and PR state is authoritative for what is committed and pushed.
+- The Phase 2B modules `core/` and `jda-runtime/`, the root `settings.gradle.kts` /
+  `build.gradle.kts` changes and the version-catalog entries are present on
+  `feature/114-phase-2b-command-port`, stacked on `feature/114-native-failfast-check`. No PR exists
+  yet. Current Git state is authoritative for what is committed and pushed.
 - `stash@{0}` — housekeeping WIP; preserved, untouched.
 - `stash@{1}` — assistant voice feature WIP (out of scope); preserved, untouched.
 - Ignored caches and user data (for example `.gradle/`, `build/`, `data/`, `.idea/`, `.memory/`,

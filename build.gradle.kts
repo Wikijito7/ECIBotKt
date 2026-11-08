@@ -26,6 +26,9 @@ repositories {
 }
 
 dependencies {
+    // Neutral domain/command boundary shared with the isolated JDA runtime.
+    implementation(project(":core"))
+
     // Kord - Local SNAPSHOT JARs (voice encryption branch)
     // TODO: Switch back to version catalog when Kord merges voice encryption to main (kord#1063)
     implementation(fileTree("libs") { include("kord-*.jar") })
