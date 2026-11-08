@@ -144,7 +144,7 @@ The Opus and JNA natives are needed because the tone is supplied as PCM and JDA 
 with its Opus encoder before DAVE encryption. If any of these entries is missing, stop and
 fix packaging before deploying.
 
-## Negative test: missing DAVE native must fail fast (Phase 1B fail-fast gate)
+## Negative test: missing DAVE native must fail fast (Phase 1B fail-fast gate — PASS 2026-11-08)
 
 This is a **separate, safe artifact** used only to prove the startup guard. It is not a
 voice test and it never contacts Discord. The normal staging jar above is left untouched.
@@ -431,7 +431,8 @@ to the caller without the expected `docker run` status `3` ever aborting the blo
   validation, because the process exits before guild lookup.
 
 Expected result: **exit code exactly `3`** (`EXIT_NATIVE`) and output that stops at the DAVE
-load. The sample below is illustrative — the loader/JDK wording varies — but the structure
+load. This expected result was observed in the recorded 2026-11-08 run (see below). The sample
+below is illustrative — the loader/JDK wording varies — but the structure
 (exit `3`, no `[gateway]` line) must hold:
 
 ```text
@@ -464,23 +465,42 @@ usable DAVE native, the wrong jar/command was used, or a login was attempted. Ex
 also a failure for this test (config or platform rejection, not the native gate); exit `0`
 or `1` is never expected.
 
+### Recorded result — PASS (2026-11-08)
+
+The user ran the negative test on 2026-11-08. Sanitized record only; no token, identifier or raw log
+is stored in this repository.
+
+| Check | Result |
+| --- | --- |
+| Host / runtime | Linux amd64, Temurin **21.0.13** (`eclipse-temurin:21`) |
+| Artifact | Negative no-DAVE-native JAR (DAVE native entry deliberately absent) |
+| Container exit code | exactly **`3`** (`EXIT_NATIVE`) |
+| DAVE native | Unavailable — `UnsatisfiedLinkError: Required library was not found` |
+| `[gateway] logging in` lines | **zero** |
+| `[gateway] ready` lines | **zero** |
+| Placeholder token | fake placeholder; **never printed** |
+
+Notes on what this run does and does not prove:
+
+- The **container** ran with `--network none`, so the running process had no gateway/HTTP path and
+  exited at the DAVE native load, before any login attempt. That is the guard behaviour under test.
+- The `eclipse-temurin:21` image was **pulled by the Docker host before** that container run. The
+  pull used the host's network and was **not** isolated by `--network none`. Do not describe this
+  result as a fully offline, end-to-end network-isolated verification.
+- The fake placeholder token was supplied only to pass config validation and was never printed.
+
 ### Scope of this evidence
 
-**Building or verifying the JARs does not close Phase 1B.** `verifyNegativeTestJar` proves
-packaging only: it reads JAR entries and shared-entry hashes, and it makes no network or
-Discord call of its own (running the Gradle task can still write build output and resolve
-dependencies over the network — see above). The gate remains **OPEN** until the **user** runs
-the exact negative path documented above — the Linux amd64 `eclipse-temurin:21` container with
-`--network none`, Docker's default restart policy (`no`, so no `--restart` flag alongside
-`--rm`), the fake placeholder token, `NEGATIVE_JAR` set to the negative jar's absolute host
-path (the resolved in-repo artifact or an explicit absolute path on the Docker daemon host),
-and the assertion block that
-requires exit `3` (`EXIT_NATIVE`), the `[dave] native library is unavailable` line together
-with an `UnsatisfiedLinkError` **or** `Required library was not found` native-load error, and
-**zero** `[gateway] logging in` **and zero** `[gateway] ready` lines — matching the migration
-plan's Phase 1B evidence requirements.
-Nothing in this README records that run as executed or passed; do not report the gate as
-closed until the user has produced that evidence.
+**The gate is closed.** The 2026-11-08 user-run execution above satisfies the Phase 1B evidence
+requirements: Linux amd64 `eclipse-temurin:21` container, `--network none` for the running process,
+the fake placeholder token, exit `3` (`EXIT_NATIVE`), the `[dave] native library is unavailable`
+line together with `UnsatisfiedLinkError` / `Required library was not found`, and **zero**
+`[gateway] logging in` **and zero** `[gateway] ready` lines.
+
+Building or verifying the JARs alone never closed this gate. `verifyNegativeTestJar` proves
+packaging only: it reads JAR entries and shared-entry hashes, and it makes no network or Discord
+call of its own (running the Gradle task can still write build output and resolve dependencies over
+the network — see above). The recorded container execution is what closed it.
 
 A successful negative test proves only that the probe **fails fast when the DAVE native is
 absent**, before any gateway login. It does **not** replace the successful audible DAVE
