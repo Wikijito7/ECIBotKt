@@ -187,7 +187,14 @@ shared-entry comparison.
 On network access, be precise:
 
 - The **runtime** negative container makes **no Discord connection at all**: it runs with
-  `--network none`, so no gateway/HTTP path exists.
+  `--network none`, so no gateway/HTTP path exists **inside the running container**.
+- `--network none` applies to the container only, and only once it exists. Image acquisition
+  happens earlier, on the **Docker host**: if `eclipse-temurin:21` is not already cached locally,
+  `docker run` asks the daemon to pull it over the **host's** network, which `--network none`
+  does not restrict. A fully offline run therefore requires the image to be pre-pulled on the
+  daemon host (for example `docker pull eclipse-temurin:21` while the host still has network
+  access, or `docker load` from a saved archive). If the host is offline and the image is absent,
+  `docker run` fails before any container starts; that is a "test not run" outcome, not a pass.
 - The verifier's **inspection action** makes **no Discord and no network call**: once the JARs
   exist it only reads their entries and compares SHA-256 hashes of the entries they share.
   That inspection step does not itself write files.
@@ -224,47 +231,141 @@ DAVE native load.
 
 Run the block exactly as written. The whole run — the `docker run` call, the `rc` capture, the
 `check` helper, every assertion, and the final PASS/FAIL verdict — is wrapped in a POSIX
-subshell `( ... )`. The fake `DISCORD_BOT_TOKEN` and `DISCORD_TEST_GUILD_ID` values, `LOG`
-and `failed` therefore exist **only inside that subshell** and never alter the caller's
-environment, even when names such as `DISCORD_BOT_TOKEN` were already exported in the invoking
-shell. The parent shell's variables keep their previous values.
+subshell `( ... )`. The fake `DISCORD_BOT_TOKEN` and `DISCORD_TEST_GUILD_ID` values, the
+`NEGATIVE_JAR` default, `LOG` and `failed` are assigned **only inside that subshell** and never
+alter the caller's environment, even when names such as `DISCORD_BOT_TOKEN` were already
+exported in the invoking shell. An externally exported `NEGATIVE_JAR` is only read as the
+override. The parent shell's variables keep their previous values.
+
+### Absolute host paths: why an earlier attempt failed with `No such file or directory`
+
+An earlier attempt redirected the run to the **relative** path
+`spikes/jda-dave/spike-negative.log` while the invoking shell's current directory was the
+user's server directory, where no `spikes/jda-dave/` exists. A shell sets up output
+redirection **before** it executes the command, so that redirection failed with
+`No such file or directory` and `docker run` never started — no container was created and no
+image was pulled. This is a current-directory/path problem, **not** a zsh-vs-Bash
+incompatibility: both shells perform redirection before `exec`, and both fail the same way
+when the target directory is absent.
+
+The same rule applies to the jar bind mount. `-v` takes a **host** path that must exist on the
+machine where the Docker daemon runs — not a path inside the container, and not a path
+relative to some other working directory. With a remote daemon or a Docker Desktop VM, only
+the configured shared paths are visible, so copy the jar there or point `NEGATIVE_JAR` at a
+shared absolute path.
+
+The block below therefore uses two absolute host paths:
+
+- `NEGATIVE_JAR` — absolute host path of
+  `jda-dave-spike-negative-no-dave-native-0.1.0-all.jar`. When the block runs from the
+  repository root it defaults to the `realpath` of
+  `$PWD/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar`
+  (`realpath` resolves symlinks in the whole path, because the Docker daemon resolves the bind
+  source, not this shell). The fallback used when `realpath` is unavailable is **weaker**:
+  `pwd -P` makes the *containing checkout directory* physical and absolute, but it does **not**
+  resolve a symlink on the jar file itself, so a symlinked jar would remain a symlink in
+  `NEGATIVE_JAR`. The default artifact here is a regular Gradle-built file under `build/libs/`,
+  not a symlink, so the fallback is adequate for the documented default; if you swap the jar for
+  a symlink, use `realpath` or pass a canonical absolute `NEGATIVE_JAR` instead.
+  Replace it with the actual file location when you run from anywhere else or when the Docker
+  daemon is remote: either `export NEGATIVE_JAR=/abs/path/to/...-all.jar` before the block or
+  edit the assignment. An explicit `NEGATIVE_JAR` is never rewritten or resolved, so it must
+  already be the absolute path **as seen by the Docker daemon host**. A preflight always
+  rejects a relative value and exits before Docker with a clear message; a missing default jar
+  is also a hard stop, while a missing override only warns, because a remote daemon may hold
+  the jar at that path even when this shell cannot see it.
+- `LOG=/tmp/spike-negative.log` — absolute host path for the process output, so host
+  redirection works regardless of the current directory. It is written by your local shell,
+  not by the container. Pick another absolute writable path (for example under `/var/tmp`)
+  if `/tmp` is unsuitable.
 
 Inside the subshell the expected-failure `docker run` is wrapped in
 `if ...; then rc=0; else rc=$?; fi`, so the non-zero Docker exit status is captured instead of
 aborting the block — this holds **even if the caller has `set -e` enabled**. All assertions
 run against `rc`; the variable is deliberately `rc` and not `status`, because `status` is a
-read-only special variable in zsh. Log capture goes to
-`spikes/jda-dave/spike-negative.log` (git-ignored).
+read-only special variable in zsh. Log capture goes to the absolute path
+`/tmp/spike-negative.log`, outside the repository, so it does not depend on the current
+directory and needs no `.gitignore` entry.
 
-Run the block from the **root of the checked-out repository**. Every path below is
-relative to that root, so no substitute path is needed. The Docker values stay inside the
-subshell, are passed to the container with `-e`, and are never `unset` — a parent shell's
-own values are left untouched. The subshell's exit status is non-zero only when a check
-fails, so a failing run is still reported to the caller without the expected `docker run`
-status `3` ever aborting the block.
+The subshell uses no relative paths. The only working-directory assumption is the default
+value of `NEGATIVE_JAR`: it is built from `$PWD/spikes/...` and then passed through `realpath`
+(falling back to `pwd -P`), so it is correct only from the repository root; set `NEGATIVE_JAR`
+to an absolute path in every other case. Note that the `pwd -P` fallback only makes the
+containing directory physical and absolute — it does not resolve a symlink on the jar file
+itself. That is sufficient for the default regular Gradle-built artifact; for a symlinked jar,
+use `realpath` or supply a canonical absolute `NEGATIVE_JAR`. If the Docker host is the server
+and that server holds only the JAR, set `NEGATIVE_JAR` to the jar's absolute path **on the
+server** — from the build machine that path need not exist, and the missing-file preflight only
+warns for an explicit override. The Docker values stay inside the subshell, are passed to the
+container with `-e`, and are never `unset` — a parent shell's own values are left untouched. The
+subshell's exit status is non-zero only when a check fails, so a failing run is still reported
+to the caller without the expected `docker run` status `3` ever aborting the block.
 
 ```bash
-# Run from the root of the checked-out repository; all paths below are repo-relative.
+# Run from the repository root: NEGATIVE_JAR then defaults to the resolved absolute path of
+# the in-repo artifact. From anywhere else, pass NEGATIVE_JAR as an absolute host path.
 
 # POSIX subshell: the fake values and all helper state live only in this block.
 # Nothing here is exported into, unset in, or otherwise written to the caller's shell.
 (
+  jar_from_override=0
+  if [ -n "${NEGATIVE_JAR:-}" ]; then
+    # Use the override verbatim: it names a path on the Docker daemon host, which may be a
+    # different machine, so it must not be rewritten or resolved here.
+    jar_from_override=1
+  else
+    # Repository-root default. Resolve it to a real absolute path with symlinks removed,
+    # because the bind-mount source is resolved by the Docker daemon, not by this shell.
+    default_jar="$PWD/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar"
+    NEGATIVE_JAR=$(realpath "$default_jar" 2>/dev/null \
+      || printf '%s\n' "$(pwd -P)/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar")
+  fi
+
   # Fake placeholder only. Never substitute a real token for this negative test.
   DISCORD_BOT_TOKEN=negative-test-placeholder-not-a-real-token
   DISCORD_TEST_GUILD_ID=123456789012345678
-  LOG=spikes/jda-dave/spike-negative.log
+
+  # Absolute host path, written by the local shell (not by the container), so host
+  # redirection works regardless of the current directory.
+  LOG=/tmp/spike-negative.log
+
+  # Preflight before Docker: reject a relative path and stop clearly when the default jar
+  # is missing. Otherwise the failure would surface later as a confusing "No such file or
+  # directory", or as an empty directory created by `-v` for an absent bind source.
+  case "$NEGATIVE_JAR" in
+    /*) ;;
+    *)
+      printf 'FAIL  NEGATIVE_JAR must be an absolute host path, got: %s\n' "$NEGATIVE_JAR" >&2
+      echo "NEGATIVE TEST NOT RUN - Phase 1B gate stays OPEN" >&2
+      exit 1
+      ;;
+  esac
+  if [ ! -f "$NEGATIVE_JAR" ]; then
+    if [ "$jar_from_override" -eq 1 ]; then
+      # An explicit override is not required to be readable from this shell: a remote
+      # Docker daemon resolves the bind-mount source on the daemon host.
+      printf 'WARN  NEGATIVE_JAR is not readable from this shell: %s\n' "$NEGATIVE_JAR" >&2
+      echo "Continuing: the Docker daemon host must hold the jar at exactly that absolute path." >&2
+    else
+      printf 'FAIL  negative jar not found: %s\n' "$NEGATIVE_JAR" >&2
+      echo "Point NEGATIVE_JAR at the actual jar on the Docker host and re-run; Docker was not started." >&2
+      echo "NEGATIVE TEST NOT RUN - Phase 1B gate stays OPEN" >&2
+      exit 1
+    fi
+  fi
 
   # The expected non-zero exit is captured, never raised: `docker run` is the whole
   # `if` condition, so this block stays safe even when the caller has `set -e` enabled.
   # `rc` (not `status`) avoids zsh's read-only special variable.
+  # No --restart flag here: Docker's default restart policy is already `no`, and `--rm`
+  # cannot be combined with an explicit restart policy (Docker rejects the pair).
   if docker run --rm \
     --name jda-dave-spike-negative \
     --platform linux/amd64 \
     --network none \
-    --restart=no \
     -e DISCORD_BOT_TOKEN="$DISCORD_BOT_TOKEN" \
     -e DISCORD_TEST_GUILD_ID="$DISCORD_TEST_GUILD_ID" \
-    -v "$PWD/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar:/app/jda-dave-spike-negative.jar:ro" \
+    -v "$NEGATIVE_JAR:/app/jda-dave-spike-negative.jar:ro" \
     eclipse-temurin:21 \
     java -jar /app/jda-dave-spike-negative.jar > "$LOG" 2>&1
   then
@@ -301,11 +402,31 @@ status `3` ever aborting the block.
 )
 ```
 
-- `--network none` guarantees no gateway/HTTP path exists.
-- `--restart=no` prevents Docker from retrying the expected failure.
+- `--network none` guarantees no gateway/HTTP path exists **for the running container**. It
+  does not cover image acquisition: pulling `eclipse-temurin:21` when it is not cached uses
+  the Docker **host's** network before the container starts. Keep the host disconnected from
+  Discord for this test, but note that a fully offline run requires the image to be pre-pulled.
+- There is no `--restart` flag. Docker's **default** restart policy is `no`, which is exactly
+  the behaviour this test needs: the expected failure must not be retried. `--rm` cannot be
+  combined with an explicit restart policy — `docker run --rm --restart=no` is rejected with
+  `Conflicting options: --restart and --rm` — so the flag is omitted rather than restated.
 - `--platform linux/amd64` and `eclipse-temurin:21` pin the supported Linux x86-64 runtime;
   the DAVE native in this candidate is Linux x86-64 only.
-- The negative jar is mounted **read-only** (`:ro`) and writes no data.
+- `NEGATIVE_JAR` is an absolute **host** path, mounted **read-only** (`:ro`) at
+  `/app/jda-dave-spike-negative.jar`; the negative jar writes no data. When unset, it is the
+  `realpath` of
+  `$PWD/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar`
+  (or, if `realpath` is unavailable, `$(pwd -P)/spikes/...`, which makes the containing
+  directory physical but does not resolve a symlink on the jar itself), so the default is
+  correct only from the repository root. The default artifact is a regular Gradle-built file,
+  not a symlink; if you substitute a symlinked jar, use `realpath` or pass a canonical
+  absolute `NEGATIVE_JAR`. A relative value stops the preflight with `NEGATIVE TEST NOT RUN`
+  before Docker is invoked — that outcome neither passes nor fails the gate; it means the test
+  did not run. A missing default jar is also a hard stop; a missing explicit override only
+  warns, because the jar may live on a remote daemon host.
+- `LOG=/tmp/spike-negative.log` is written by the local shell on the host. It is not inside
+  the repo, so no `.gitignore` entry is needed, and it is absolute, so the current directory
+  cannot break redirection.
 - The numeric `DISCORD_TEST_GUILD_ID` is a placeholder too; it only has to pass config
   validation, because the process exits before guild lookup.
 
@@ -350,7 +471,10 @@ packaging only: it reads JAR entries and shared-entry hashes, and it makes no ne
 Discord call of its own (running the Gradle task can still write build output and resolve
 dependencies over the network — see above). The gate remains **OPEN** until the **user** runs
 the exact negative path documented above — the Linux amd64 `eclipse-temurin:21` container with
-`--network none`, `--restart=no`, the fake placeholder token, and the assertion block that
+`--network none`, Docker's default restart policy (`no`, so no `--restart` flag alongside
+`--rm`), the fake placeholder token, `NEGATIVE_JAR` set to the negative jar's absolute host
+path (the resolved in-repo artifact or an explicit absolute path on the Docker daemon host),
+and the assertion block that
 requires exit `3` (`EXIT_NATIVE`), the `[dave] native library is unavailable` line together
 with an `UnsatisfiedLinkError` **or** `Required library was not found` native-load error, and
 **zero** `[gateway] logging in` **and zero** `[gateway] ready` lines — matching the migration
@@ -419,12 +543,15 @@ Audio System successfully setup!
 [probe] waiting for /voice-test ...
 ```
 
-The process prints no token. For evidence, redirect the run to a file in the spike directory
-(for example append `> spikes/jda-dave/spike.log 2>&1` to the `docker run` command) and keep
-that log with the staging notes. `spikes/jda-dave/spike.log` and
-`spikes/jda-dave/spike-negative.log` are git-ignored: never add them to Git or attach them
+The process prints no token. For evidence, redirect the run to a file — for example append
+`> /tmp/spike.log 2>&1` (an absolute path) or `> spikes/jda-dave/spike.log 2>&1` when the
+current directory is the repository root — and keep that log with the staging notes.
+`spikes/jda-dave/spike.log` is git-ignored; the negative test writes
+`/tmp/spike-negative.log` outside the repo. Never add either log to Git or attach it
 unredacted. They contain the staging guild and channel names/IDs (and the bot's own ID), so
-redact those identifiers before pasting a log into an issue, PR, or chat.
+redact those identifiers before pasting a log into an issue, PR, or chat. A relative redirect
+target fails with `No such file or directory` when its parent directory does not exist in the
+current directory, and then Docker never runs.
 
 ## Run `/voice-test`
 

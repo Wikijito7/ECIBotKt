@@ -157,6 +157,44 @@ Stacking rules:
 - No secrets, bot/guild/channel/user identifiers, tokens or raw logs are recorded in this plan or
   in the spike.
 
+### Handoff snapshot — 2026-10-31
+
+Branch, commit and PR facts below were read from Git and GitHub; they are **not** gate evidence.
+
+| Branch / PR | Handoff state |
+| --- | --- |
+| `feature/114-migrate-to-jda-jda-ktx` (epic baseline) | Still at `4badb92`; unchanged |
+| `feature/114-kord-to-jda-migration` → draft PR #115 (base: epic) | Remote head `67802d1`. Carries the plan/spike checkpoint and the neutral locale repository/use-case boundary. Phase 1 remains **open**, Phase 2A is **partial**, Phase 2B is **blocked** |
+| `feature/114-native-failfast-check` → draft PR #116 (base: the 2A feature branch) | Remote head `e8970d0`. Artifact and runbook live here; the user has **not** run the no-native test, so Phase 1B is **not** passed |
+
+- At handoff the Phase 1B working tree is **clean**: `docs/migrations/kord-to-jda.md`,
+  `spikes/jda-dave/.gitignore`, `spikes/jda-dave/README.md` and `spikes/jda-dave/build.gradle.kts`
+  are committed and pushed in `e8970d0`, the PR #116 head. Any edit newer than `e8970d0` is
+  local-only until pushed; re-check `git status` and the PR before assuming either state.
+- The negative-jar packaging verifier (`verifyNegativeTestJar`) **passes locally**, but packaging
+  is not the gate. The required **user-run** `--network none` execution with a placeholder token,
+  exiting `3` (`EXIT_NATIVE`) with **zero** gateway login/ready lines, is still **open**.
+- The positive Phase 1 DAVE transport staging run **passed**: Temurin 21, Linux amd64, protocol
+  version 1, audible tone, exit `0`. That closes the transport subgate only; no identifiers,
+  tokens or raw log lines are recorded.
+- Last local validation: root build/tests passed with **380 tests, 5 pre-existing skips**; the
+  isolated spike passed **75 tests**. Phase 1B changes are documentation, Gradle task and logging
+  only — no production JDA dependency was added.
+- CI, last known (not re-verified): PR #115's SonarCloud job failed with a **403 on JRE
+  provisioning**, while **Check Code Quality passed**; the user is updating `SONAR_TOKEN`. A
+  rerun or fix is **not** confirmed here — refresh CI for current status.
+- Branch policy is unchanged: every next subphase gets its **own child branch and PR stacked on
+  the previous unmerged branch**. Phase 2B starts **only after** the Phase 1B negative test passes.
+
+Next actions, in order:
+
+1. Confirm the Phase 1B tree is clean and the four files are the pushed `e8970d0` state; update and
+   re-check draft PR #116.
+2. The user runs the negative jar in Temurin 21 with a fake placeholder token and
+   `--network none`.
+3. Only if it exits `3` with no gateway login/ready lines: close Phase 1B and start Phase 2B on a
+   new stacked branch. Otherwise Phase 1B stays open and Phase 2B stays blocked.
+
 ---
 
 ## 1. Context and settled decisions
