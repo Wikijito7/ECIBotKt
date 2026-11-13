@@ -26,6 +26,9 @@ repositories {
 }
 
 dependencies {
+    // Neutral domain/command boundary shared with the isolated JDA runtime.
+    implementation(project(":core"))
+
     // Kord - Local SNAPSHOT JARs (voice encryption branch)
     // TODO: Switch back to version catalog when Kord merges voice encryption to main (kord#1063)
     implementation(fileTree("libs") { include("kord-*.jar") })
@@ -124,6 +127,11 @@ sonar {
         property("sonar.host.url", "https://sonarcloud.io")
         property("sonar.coverage.exclusions", exclusions)
     }
+}
+
+tasks.named("sonar") {
+    // Ensure each module produces its XML coverage report before analysis
+    dependsOn(":core:jacocoTestReport", ":jda-runtime:jacocoTestReport")
 }
 
 kotlin {

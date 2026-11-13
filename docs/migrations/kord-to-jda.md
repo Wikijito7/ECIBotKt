@@ -1,13 +1,66 @@
 # Kord → JDA 6.7 Migration Plan
 
 Tracking issue: [#114](https://github.com/Wikijito7/ECIBotKt/issues/114) — *Migrate to JDA / jda-ktx*
-Epic integration branch: `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; it
-remains the merge baseline for this epic until PR #115 lands.
-Active working branch: `feature/114-kord-to-jda-migration` — draft PR
-[#115](https://github.com/Wikijito7/ECIBotKt/pull/115) targets the **epic branch**, not `master`.
-Phase 1B subphase branch: `feature/114-native-failfast-check`, based on the working branch; its PR
-targets the working branch, not the epic branch. Its negative fail-fast test **passed** on
-2026-11-08 (see the Phase 1B result below).
+Epic integration branch: `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; it now
+carries the **squash merge of PR #116** at `c00bdf1`, on top of `5aad7c7` (the **squash merge of PR
+#115**), and remains the merge baseline for this epic. Phase 2A working branch
+`feature/114-kord-to-jda-migration` **no longer exists**: PR
+[#115](https://github.com/Wikijito7/ECIBotKt/pull/115) was **squash-merged** into the epic branch as
+`5aad7c7` and the remote branch was deleted. Phase 2A stays **IN PROGRESS / partial** — the merge is
+not a 2A completion and does not complete Phase 2.
+Phase 1B subphase branch: `feature/114-native-failfast-check`; its PR
+[#116](https://github.com/Wikijito7/ECIBotKt/pull/116) had targeted the **epic branch**, because the
+former 2A branch was merged and deleted. Its negative fail-fast test **passed** on 2026-11-08 (see the
+Phase 1B result below). Its head `1b753b9` is an **ancestry-only merge** of `5aad7c7` into `49b4bc1`:
+the four add/add conflicts were resolved by retaining this branch's Phase 1B content, so the resolved
+tree is **byte-identical** to `49b4bc1` and **no source content changed**. All four checks on
+`1b753b9` passed on 2026-11-13 — Check Code Quality 17:20:31Z, SonarCloud Code Analysis 17:22:32Z,
+Build and analyze 17:22:35Z and SonarCloud 17:22:40Z. PR #116 is now **CLOSED / MERGED by squash** into
+the epic branch as `c00bdf1`.
+Phase 2B subphase branch: `feature/114-phase-2b-command-port`, originally based on Phase 1B
+`feature/114-native-failfast-check`; PR
+[#117](https://github.com/Wikijito7/ECIBotKt/pull/117) now targets the **epic branch** (base branch
+name only; this document does not assert its live base SHA) and is **open and ready** (not draft). Its
+only conflict — this plan — was resolved by an ancestry merge of `c00bdf1` that kept the Phase 2B
+document and changed no code. Phase 2B is **PASS — gate closed on 2026-11-13** and that pass remains
+valid (see the Phase 2B section below). The immediate next phase is **Phase 2C planning**: 2C is
+**not started**, has no branch yet, and still needs its own acceptance criteria; it must branch from
+the Phase 2B head once #117 merges. Broader
+**Phase 2 remains IN PROGRESS**: subphases 2C/2D, root Kord removal/bootstrap wiring and the overall
+Phase 2 exit criteria are still open. `7bf5419` (`Corrected Phase 2B CI status record`) is the latest
+**verified all-green CI checkpoint** before the subsequent docs-only updates: all four #117 checks
+passed on **2026-11-13** — Check Code Quality (16:47:15Z), SonarCloud Code Analysis (16:48:52Z),
+Build and analyze (16:48:56Z) and SonarCloud (16:48:58Z) — and Sonar reported **75.0% Coverage on New
+Code**, 0 new issues and 0 hotspots. It was PR #117's head at that point; later commits, including
+this docs-only update, move the head. The preceding docs-only checkpoint
+`988a7cd` (`Clarified Phase 2B CI and artifact scope`) is **also green**: the same four checks passed,
+latest completion **2026-11-13 16:38:44Z**. The earlier docs-only `d353113` (`Document legacy guild
+locale defaults`, latest completion **16:34:38Z**) and `cd9d6db` are green as well; `cd9d6db`
+reported the Sonar quality gate result (**75.0% Coverage on New Code**, 0 new issues, 0 hotspots).
+`e4a9e29` (`Refreshed Phase 2B CI handoff head`) was observed on 2026-11-13 at **16:41:06Z** — that
+timestamp is the observation time, at which only **Check Code Quality** had concluded successfully —
+with **Build and analyze** still in progress and the SonarCloud checks not yet listed. That
+in-progress observation is kept as dated history only — `e4a9e29` **later completed all four checks
+successfully** (SonarCloud Code Analysis 16:44:04Z, Build and analyze 16:44:09Z, SonarCloud 16:44:11Z)
+and is green, but it is no longer the head. `f5f04d1` (`Recorded passing Phase 2B CI runs`, docs-only)
+was PR #117's head in a dated snapshot observed on **2026-11-13**: only **Check Code Quality** had
+concluded successfully (**16:53:24Z**), **Build and analyze** was still in progress and the
+SonarCloud checks were not yet listed, so it was **not green at that snapshot**. That observation
+predates this docs-only follow-up, which itself creates a newer head, so it is not a claim about the
+resulting HEAD or its status. No recorded checkpoint is a promise about later commits: read the live
+GitHub check runs on PR #117 for whatever head is current. The earlier head `001e722` failed only its
+**SonarCloud Code Analysis** check, whose Quality Gate reported **0.0% Coverage on New Code**, because
+`:core` and `:jda-runtime` had no JaCoCo XML reports; on that same head the separately named
+**SonarCloud** check, **Check Code Quality** and **Build and analyze** all succeeded. The JaCoCo 0.8.12
+wiring that fixed the coverage gap is recorded below. The subsequent docs-only
+checkpoints `2850907` (`Recorded Phase 2B coverage gate pass`) and `16247f8` (`Recorded
+passing Phase 2B docs checkpoint`) also passed all four #117 checks — Check Code Quality, Build and
+analyze, SonarCloud Code Analysis and SonarCloud. All of these are **historical verified checkpoints**,
+not a standing guarantee: read the GitHub check runs for any later head. Local QA and reviewer agents
+satisfied the independent review criterion; no GitHub PR review has been submitted, which is not itself
+a required gate. PR #117 stays **open and ready** (not draft) and is not merged here. Issue #114 stays
+open because broader Phase 2 (2C/2D, root Kord removal and bootstrap wiring) is unfinished;
+**2C planning is the next step**.
 
 > **This is a plan, not implementation.** Nothing below is proven until the gate it belongs to
 > produces recorded evidence. "Fact" = verified against the repository or upstream sources today.
@@ -15,7 +68,7 @@ targets the working branch, not the epic branch. Its negative fail-fast test **p
 
 ---
 
-## Progress record (verified, 2026-11-08)
+## Progress record (verified, 2026-11-13)
 
 Status labels: **PASS** = recorded evidence, gate closed · **IN PROGRESS** = work started, gate
 still open · **OPEN** = not started, gate still open.
@@ -26,11 +79,11 @@ still open · **OPEN** = not started, gate still open.
 | Phase 1B — missing-DAVE-native fail-fast simulation | **PASS — gate closed (2026-11-08)** | User-run negative container on Linux amd64, Temurin 21.0.13 (`eclipse-temurin:21`), negative no-DAVE-native JAR: exit exactly `3` (`EXIT_NATIVE`), DAVE native unavailable with `UnsatisfiedLinkError: Required library was not found`, **zero** `[gateway] logging in` and **zero** `[gateway] ready` lines, fake placeholder token never printed. The host pre-pulled the image, so the image pull was not itself isolated; the container ran with `--network none`. Sanitized record only |
 | R1 — `jda-ktx 0.14.2` + JDA 6.7.0 pairing | **IN PROGRESS — transport subgate PASS only** | Candidate resolved and exercised for voice transport; still not an upstream-declared combination and not yet re-verified on the final Phase 6 artifact |
 | R2 — `adapter-jda` 0.2.0 vs JDA 6.7.0 ABI | **IN PROGRESS — transport subgate PASS only** | DAVE negotiated and played through JDA; published metadata still does not declare or test 6.7.0, and the ABI is not yet re-verified on the final Phase 6 artifact |
-| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork only, present on `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115; commit and push state are read from Git and PR #115, not asserted here. The Phase 1 fail-fast gate closed on 2026-11-08, so the JDA runtime/bootstrap work is no longer blocked by it — but no JDA runtime/bootstrap work has been started, and the command layer and locale service/command neutrality remain **OPEN**. Remaining work is split into subphases 2B, 2C and 2D, each with its own child branch and PR based on the immediately preceding unmerged branch (see Phase 2) |
-| Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS** | Phase 2A source and test changes are present on `feature/114-kord-to-jda-migration`, and draft PR #115 targets the epic branch; whether they are committed or pushed is read from Git and PR #115, not asserted here. `GuildId`/`LocaleCode` and the locale repository/use cases are **neutral**, but the Phase 2A scope itself is not finished: `LocalizationService` and `/locale` remain Kord-facing and must be moved behind/adapted in a later Phase 2 subphase (2D) |
-| Phase 2B — neutral command context + responder/response port | **OPEN — unblocked, not started** | Gate is **unblocked**: Phase 1B passed on 2026-11-08. No code has been started. Planned child branch/PR based on the immediately preceding unmerged branch, `feature/114-native-failfast-check`, and targeting that branch; do not restructure #115 |
-| Phase 2C — voice/session/player message ports and adapters | **OPEN** | Not started. Planned child branch and PR based on the immediately preceding unmerged branch (2B); do not restructure #115 |
-| Phase 2D — channel/message/locale edge adapters | **OPEN** | Not started. Planned child branch and PR based on the immediately preceding unmerged branch (2C); carries the `LocalizationService` and `/locale` neutrality work |
+| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork **landed on the epic branch** through the squash merge of PR #115 (`5aad7c7`, tree identical to the former 2A head `67802d1`); Phase 2A itself remains **partial**, not complete. Phase 2B is **PASS — gate closed 2026-11-13**: its neutral command boundary and isolated JDA runtime exist with unit tests on child branch `feature/114-phase-2b-command-port`, JaCoCo coverage is wired for both isolated modules, CI passed on the verified all-green checkpoints `988a7cd` and `7bf5419` (the latest verified all-green checkpoint before the subsequent docs-only updates; all of these are historical checkpoints, so read the live checks for later heads), and the user-run staging `/jda-walkthrough` interaction succeeded (sanitized evidence in the Phase 2B section). Nothing is wired into the root runtime, and the command layer plus locale service/command neutrality remain **OPEN**. Remaining work is subphases 2C and 2D (see Phase 2); **2C is not started and is only in planning — it has no branch and its acceptance criteria are not yet written**, and it must branch from the Phase 2B head once PR #117 merges. PR #116 has since been **squash-merged** into the epic branch (`c00bdf1`), so PR #117 now targets the epic branch and is **open and ready** (not draft); its only conflict was this plan, resolved by an ancestry merge that changed no code |
+| Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS / partial** | Phase 2A source and test changes were **squash-merged** into the epic branch by PR #115 as `5aad7c7`; that commit's tree equals the former 2A head `67802d1`, and the former `feature/114-kord-to-jda-migration` branch is deleted. The merge brings the groundwork in but does **not** complete 2A: `GuildId`/`LocaleCode` and the locale repository/use cases are **neutral**, while `LocalizationService` and `/locale` remain Kord-facing and must be moved behind/adapted in a later Phase 2 subphase (2D) |
+| Phase 2B — neutral command context + responder/response port | **PASS — gate closed (2026-11-13)** | Implementation and unit tests are present on `feature/114-phase-2b-command-port` as the initial implementation checkpoint `fbd9f5a`, originally stacked on Phase 1B `feature/114-native-failfast-check`. PR #116 has since been **squash-merged** into the epic branch (`c00bdf1`), so PR #117 was retargeted to the epic branch and is **open and ready** (not draft); its only conflict — this plan — was resolved by an ancestry merge that changed no code. The branch adds isolated Gradle modules `:core` (gateway-free neutral ports and a pure walkthrough handler) and `:jda-runtime` (JDA 6.7.0 adapter, guild-only `/jda-walkthrough`); the root project depends on `:core` only and remains Kord-based and JDA-free. On head `001e722` **Check Code Quality**, **Build and analyze** and the separately named **SonarCloud** check passed, while **SonarCloud Code Analysis** failed its Quality Gate at 0.0% coverage on new code (required >=50%) because the modules emitted no JaCoCo XML; the JaCoCo 0.8.12 fix then passed CI on the covered checkpoint `e607ff7` — all four #117 checks green, including both SonarCloud checks, with 75.0% Coverage on New Code, 0 new issues and 0 hotspots. The later docs-only checkpoints `2850907`, `16247f8` and `d353113` also passed all four #117 checks, as did `988a7cd` (last check completed 2026-11-13 16:38:44Z), and `e4a9e29` was observed in progress at 16:41:06Z (the observation time, when only Check Code Quality had concluded successfully) and later completed all four checks successfully (last at 16:44:11Z). `7bf5419` (`Corrected Phase 2B CI status record`) is the latest verified all-green checkpoint before the subsequent docs-only updates: all four checks passed on 2026-11-13 — Check Code Quality 16:47:15Z, SonarCloud Code Analysis 16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z — with 75.0% Coverage on New Code, 0 new issues and 0 hotspots; it was the head at that point, not afterwards. The later docs-only `f5f04d1` (`Recorded passing Phase 2B CI runs`) was the head in a dated snapshot observed on 2026-11-13 in which only Check Code Quality had concluded successfully (16:53:24Z), Build and analyze was still in progress and the SonarCloud checks were not yet listed — so it was **not green at that snapshot**; GitHub holds the status of the head after this docs-only follow-up. All of these are historical verified checkpoints, not a guarantee for later commits, so CI status for any newer head must be read from the GitHub check runs. Local QA and reviewer agents satisfied the independent review criterion while no GitHub PR review has been submitted. The user ran the isolated runtime on 2026-11-13 against staging and the guild-scoped `/jda-walkthrough` replied `JDA walkthrough OK`, closing the gate. The root runtime is still Kord-based and JDA-free |
+| Phase 2C — voice/session/player message ports and adapters | **OPEN** | Not started — **planning is the immediate next step**. Needs its own acceptance criteria before any child branch/PR is opened against the Phase 2B branch (PR #117) after it merges. No 2C branch exists yet |
+| Phase 2D — channel/message/locale edge adapters | **OPEN** | Not started. Planned child branch and PR based on the immediately preceding unmerged branch (2C); carries the `LocalizationService` and `/locale` neutrality work. Must preserve the guild default locale (`en_US` for non-Community guilds, community-configurable) as distinct from the user/client locale, and validate conversion/fallback at the adapter boundary. The root bot's localization behaviour is **not** migrated |
 | Phase 6 — Kord-free build, artifact and digest gates | **OPEN** | Not started |
 | Production cutover (Phase 7) | **OPEN** | Blocked by the Phase 6 and staging gates |
 
@@ -91,15 +144,20 @@ Scope of this evidence:
 - Sanitized record: no token, no bot/guild/channel/user identifiers and no raw log lines are
   recorded here or in the repository.
 
-With this result, subphase **1B is PASS and its gate is closed**, the Phase 1 stop condition no
-longer blocks Phase 2, and Phase 2B is **unblocked** (still not started).
+With this result, subphase **1B is PASS and its gate is closed**, and the Phase 1 stop condition no
+longer blocks Phase 2. Phase 2B was subsequently implemented on
+`feature/114-phase-2b-command-port` and is now **PASS — gate closed 2026-11-13** (see the Phase 2B
+section); broader Phase 2 remains **IN PROGRESS**.
 
 ### Phase 2A — domain-owned ID/locale values and locale persistence — IN PROGRESS
 
-The active feature branch `feature/114-kord-to-jda-migration` carries this plan,
-`.opencode/opencode.json`, `spikes/jda-dave/**`, and the Phase 2A source and test changes; draft PR
-#115 targets the epic integration branch. Commit status and history are not asserted by this
-document — read them from Git and the pull request.
+This plan, `.opencode/opencode.json`, `spikes/jda-dave/**` and the Phase 2A source and test changes
+were carried on `feature/114-kord-to-jda-migration` and **squash-merged** into the epic integration
+branch by PR #115 as `5aad7c7`; the merged tree is identical to the former Phase 2A head `67802d1`.
+That branch was deleted after the merge. The merge makes the 2A groundwork part of the epic branch; it
+does **not** complete Phase 2A, which stays **IN PROGRESS / partial** because `LocalizationService`
+and `/locale` are still Kord-facing (2D). Read Git and the pull request for commit history; this
+document asserts no head beyond the recorded merge commit.
 
 - `GuildId(ULong)` now lives in `es.wokis.domain.model` and `LocaleCode` in
   `es.wokis.domain.locale`; both are **domain-owned**, platform-neutral values.
@@ -131,29 +189,43 @@ document — read them from Git and the pull request.
 
 #### Phase 2 subphase plan and stacked branches
 
-Phase 2 is delivered in subphases. Each subsequent subphase gets its **own child branch and PR based
-on the immediately preceding unmerged branch**; it is not folded into an already-open earlier PR.
-Phase 2A is the checkpoint already on `feature/114-kord-to-jda-migration`, and **draft PR #115 is
-the agreed combined Phase 1/2A checkpoint — it is not restructured**. Phase 2B therefore branches
-from, and targets, the Phase 1B branch `feature/114-native-failfast-check`, not #115 directly; 2C
-then branches from 2B and 2D from 2C. The epic branch `feature/114-migrate-to-jda-jda-ktx` remains
-the **final integration target**, and `master` is merged only at migration completion.
+Phase 2 is delivered in subphases. Each subsequent subphase gets its **own child branch and PR**, based
+on the branch that carries the immediately preceding subphase; it is not folded into an already-open
+earlier PR. Phase 2A's combined Phase 1/2A checkpoint landed as PR #115, **squash-merged** into the
+epic branch at `5aad7c7`; the former `feature/114-kord-to-jda-migration` branch is deleted and nothing
+is restructured in place. Phase 2B branched from the Phase 1B branch
+`feature/114-native-failfast-check`; PR #116 was then **squash-merged** into the epic branch at
+`c00bdf1`, so PR #117 was retargeted to the epic branch. **Phase 2C is not started and is only in
+planning** — no branch exists until its acceptance criteria are written, and it must branch from the
+Phase 2B head once PR #117 is merged. The epic branch `feature/114-migrate-to-jda-jda-ktx` remains the
+**final integration target**, and `master` is merged only at migration completion.
 
 | Subphase | Scope | Branch/PR posture | Status |
 | --- | --- | --- | --- |
-| **2A** | Domain-owned `GuildId`/`LocaleCode` + neutral locale repository/use cases | On `feature/114-kord-to-jda-migration`; draft PR #115 is the agreed combined Phase 1/2A checkpoint; leave it as-is | **IN PROGRESS** — as recorded above |
-| **2B** | Neutral command context + responder/response port; adapters translate defer/ephemeral, locales and IDs | New child branch/PR based on the immediately preceding unmerged branch, Phase 1B `feature/114-native-failfast-check`; its PR targets that branch, not #115 directly | **OPEN** — **unblocked** since 2026-11-08 (Phase 1B passed); not started |
-| **2C** | Voice/session/player-message narrow ports; JDA `AudioSendHandler`/DAVE and lifecycle stay in the adapter | New child branch/PR based on the immediately preceding unmerged branch (2B) | **OPEN** — not started |
-| **2D** | Channel/message/locale edge adapters; move `LocalizationService` and `/locale` behind/adapted to a neutral port | New child branch/PR based on the immediately preceding unmerged branch (2C) | **OPEN** — not started |
+| **2A** | Domain-owned `GuildId`/`LocaleCode` + neutral locale repository/use cases | **Squash-merged** into the epic branch by PR #115 as `5aad7c7`; the former `feature/114-kord-to-jda-migration` branch is deleted and the checkpoint is not restructured | **IN PROGRESS / partial** — merged groundwork does not complete 2A; see above |
+| **2B** | Neutral command context + responder/response port; adapters translate defer/ephemeral, locales and IDs | Child branch `feature/114-phase-2b-command-port`, originally based on Phase 1B `feature/114-native-failfast-check`; after #116 merged to the epic branch (`c00bdf1`), PR #117 was retargeted to the epic branch (base branch name only; no live base SHA asserted), is **open and ready** (not draft), and its one plan conflict was resolved by an ancestry merge that changed no code | **PASS — gate closed 2026-11-13** — isolated `:core`/`:jda-runtime` modules, neutral command boundary and JDA 6.7.0 adapter implemented with unit tests; #117 CI passed on covered checkpoint `e607ff7`, on the docs-only `2850907`/`16247f8`/`d353113`/`988a7cd`, on `e4a9e29` (later completed green after an in-progress observation), and on `7bf5419`, the latest verified all-green checkpoint before the subsequent docs-only updates (75.0% new-code coverage, 0 new issues, 0 hotspots); a later dated snapshot of `f5f04d1` (docs-only) was **not yet green** — only Check Code Quality had concluded at 16:53:24Z — so the status of any later head is read from GitHub; the user-run staging `/jda-walkthrough` interaction succeeded on 2026-11-13. Local QA/reviewer agents satisfied the independent review criterion; no GitHub PR review submitted, and the root runtime is still Kord-based. The pass is unaffected by the #116 ancestry merge |
+| **2C** | Voice/session/player-message narrow ports; JDA `AudioSendHandler`/DAVE and lifecycle stay in the adapter | New child branch/PR based on the Phase 2B head (PR #117) after it merges — **not created yet** | **OPEN** — not started; planning next, acceptance criteria still to be written |
+| **2D** | Channel/message/locale edge adapters; move `LocalizationService` and `/locale` behind/adapted to a neutral port; keep the community-configurable guild default distinct from user/client locale and validate conversion/fallback at the adapter boundary | New child branch/PR based on the preceding subphase branch (2C) | **OPEN** — not started |
+
+**Phase 2D locale acceptance note (OPEN — intended scope, not evidence).** 2D must keep the **guild
+default locale** distinct from the **invoking user/client locale**. Legacy behaviour is that a
+non-Community guild's default language is always `en_US`; only a Discord **Community** guild can
+have its default language changed. The user/client locale describes the invoking client and must
+never be persisted as, or conflated with, the guild default. Locale conversion and fallback —
+including `unknown`, invalid or unsupported values — are validated at the Discord adapter boundary.
+This note records intended 2D scope only: the root bot's localization behaviour has **not** migrated,
+`LocalizationService` and `/locale` remain Kord-facing, and 2D stays **OPEN**.
 
 Stacking rules:
 
-- Each subsequent subphase branches from, and opens its PR against, the **immediately preceding
-  unmerged branch** — never `master` and never the epic branch directly, until the epic integration
-  step. For Phase 2B that preceding branch is Phase 1B, `feature/114-native-failfast-check`.
-- PR #115 stays the **combined Phase 1/2A checkpoint**; it is not restructured and later subphase
-  work is not pushed into it.
-- Subphase branches are **not** squashed into #115 or rebased onto `master` mid-flight.
+- Each subsequent subphase branches from, and opens its PR against, the branch that carries the
+  preceding subphase — never `master` and never the epic branch directly, until the epic integration
+  step. Phase 2B branched from Phase 1B, `feature/114-native-failfast-check`; after PR #116 merged to
+  the epic branch, PR #117 was retargeted to the epic branch.
+- PR #115 was the **combined Phase 1/2A checkpoint**; it is **squash-merged** at `5aad7c7` and was
+  never restructured. Later subphase work is not pushed into it.
+- Subphase branches are **not** squashed into an already-merged earlier PR and **not** rebased onto
+  `master` mid-flight.
 - A subphase is recorded complete only when its own gate evidence exists. **Open subphases are
   never marked complete** because an earlier checkpoint passed.
 
@@ -169,41 +241,330 @@ Stacking rules:
   stored, `setGuildLocale`/`removeGuildLocale` propagate write failures by throwing, and the
   persisted JSON shape and raw stored values are preserved.
 
+### Phase 2B — neutral command boundary + isolated JDA runtime — PASS (gate closed 2026-11-13)
+
+Phase 2B is **PASS** as of **2026-11-13**, and the pass remains valid through the #116 squash merge
+and the subsequent ancestry merge that resolved the plan conflict. The implementation is on the
+child branch `feature/114-phase-2b-command-port`, originally stacked on Phase 1B
+`feature/114-native-failfast-check`. PR #116 has since been squash-merged into the epic branch
+(`c00bdf1`), so PR #117 was retargeted to the epic branch and stays **open and ready** (not draft);
+its single conflict in this plan was resolved with a normal ancestry merge that kept the Phase 2B
+document. No code changed in that merge. #117's base is recorded here by branch name only; no live
+base SHA is asserted. Commit `fbd9f5a` is the
+**initial implementation checkpoint** and `e607ff7` the **covered implementation/CI checkpoint**.
+`7bf5419` (`Corrected Phase 2B CI status record`) is the latest **verified all-green CI checkpoint**
+before the subsequent docs-only updates: all four checks passed on 2026-11-13 — Check Code Quality
+(16:47:15Z), SonarCloud Code Analysis (16:48:52Z), Build and analyze (16:48:56Z) and SonarCloud
+(16:48:58Z) — with **75.0% Coverage on New Code**, 0 new issues and 0 hotspots. It was PR #117's head
+at that point, not afterwards: the docs-only commits that follow it, including this one, move the
+head. The earlier docs-only checkpoints `2850907` (`Recorded Phase 2B coverage gate pass`),
+`16247f8` (`Recorded passing Phase 2B docs checkpoint`), `d353113` (`Document legacy guild locale
+defaults`) and `988a7cd` (`Clarified Phase 2B CI and artifact scope`, last check at 16:38:44Z) also
+passed all four #117 checks — Check Code Quality, Build and analyze, SonarCloud Code Analysis and
+SonarCloud — as did `cd9d6db` and `e4a9e29` after its in-progress observation completed. `f5f04d1`
+(`Recorded passing Phase 2B CI runs`, docs-only) was the head in a dated snapshot observed later on
+2026-11-13 in which only **Check Code Quality** had concluded successfully (16:53:24Z), while
+**Build and analyze** was still in progress and the SonarCloud checks were not yet listed; it was
+therefore **not green at that snapshot**, and it is no longer the head. All of these
+are **historical verified checkpoints**, not a guarantee about later heads: read the GitHub check runs
+on PR #117 for whatever head is current rather than assuming green CI.
+
+#### Phase 2B CI in-progress observation — `e4a9e29`, 2026-11-13 (later completed all-green)
+
+This is a **dated in-progress observation**, not a CI verdict and not a failure, recorded so the
+earlier handoff head is not confused with the verified checkpoints above.
+
+| Item | Recorded state |
+| --- | --- |
+| Observation time | 2026-11-13 at **16:41:06Z** — the snapshot time, when PR #117 was on `e4a9e29` (`Refreshed Phase 2B CI handoff head`, docs-only). This timestamp is the observation time and the Check Code Quality completion time, **not** completion of the overall run |
+| Check Code Quality | Concluded successfully — 16:41:06Z |
+| Build and analyze | Still in progress at that moment |
+| SonarCloud Code Analysis | Not yet listed at that moment |
+| SonarCloud | Not yet listed at that moment |
+| Later outcome | All four checks **completed successfully**: SonarCloud Code Analysis 16:44:04Z, Build and analyze 16:44:09Z, SonarCloud 16:44:11Z |
+| Status now | Green, but only a **historical checkpoint** — `e4a9e29` was the head at that observation, and later docs-only commits (including this one) are newer heads |
+
+#### Phase 2B CI snapshot — `f5f04d1`, 2026-11-13 (not green at that snapshot)
+
+This is a **dated historical status snapshot**, not a failure verdict and not a statement about the
+current head.
+
+| Item | Recorded state |
+| --- | --- |
+| Observation time | 2026-11-13 at about **16:53:24Z**, while PR #117 was on `f5f04d1` (`Recorded passing Phase 2B CI runs`, docs-only) |
+| Check Code Quality | Concluded successfully — 16:53:24Z |
+| Build and analyze | In progress at that moment |
+| SonarCloud Code Analysis | Not yet listed at that moment |
+| SonarCloud | Not yet listed at that moment |
+| Snapshot verdict | **Not green at that snapshot** — two of four checks had not concluded |
+| Scope | Observed **before this docs-only follow-up**, which itself creates a newer head; GitHub is authoritative for the resulting head and its status |
+
+`988a7cd` (`Clarified Phase 2B CI and artifact scope`) remains an earlier green checkpoint: all four
+#117 checks — Check Code Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud —
+concluded successfully, the last of them at **2026-11-13 16:38:44Z**. The earlier docs-only commit
+`d353113` (`Document legacy guild locale defaults`) is **also green**: the same four checks passed,
+latest completion **2026-11-13 16:34:38Z**. None of these green checkpoints is evidence that a later
+head passes. **GitHub's live check runs on PR #117 are authoritative** for `f5f04d1`, for `7bf5419`,
+for `e4a9e29`, for `988a7cd`, for `d353113`, and for any later commit — refresh them before relying on
+CI status.
+
+The gate was closed by recorded evidence: green CI on the verified checkpoints `cd9d6db`, `988a7cd`,
+`e4a9e29` and `7bf5419` (and on the docs-only `d353113`), with 75.0% new-code coverage and no new
+issues or hotspots recorded on the covered and Sonar-gated checkpoints, local QA and reviewer agents
+passing, and a user-run staging interaction of the isolated JDA runtime on 2026-11-13 (see the staging
+evidence subsection below). Green CI on `7bf5419` reflects that checkpoint only, not a later head;
+read the live checks for any newer commit. Broader **Phase 2 remains IN PROGRESS** — subphases
+2C/2D, root Kord removal and root bootstrap wiring are still open, and the isolated runtime is
+**not** wired into the root application.
+
+What the branch contains today:
+
+- **Isolated Gradle modules.** `settings.gradle.kts` includes `:core` and `:jda-runtime`. The root
+  project adds only `implementation(project(":core"))`; it remains Kord-based (local
+  `libs/kord-*.jar`) and declares **no** JDA dependency or JDA runtime wiring. JDA 6.7.0 and
+  coroutines are declared in the version catalog and consumed only by `:jda-runtime`.
+- **`:core` is gateway-free.** It declares no Kord or JDA dependency and contains the neutral
+  `CommandContext` (`guildId`, `channelId`, `userId`, `locale`, all domain values),
+  `CommandHandler`, `CommandResponder` (at most one `defer` and one `respond`; after `defer` the
+  response edits the original and visibility stays fixed by the defer), `CommandResponse`, the pure
+  `WalkthroughCommand` handler, and the domain-owned `GuildId`/`LocaleCode` values moved out of the
+  root source set alongside the new `ChannelId` and `UserId` values introduced by `:core`.
+- **`:jda-runtime` is the only gateway adapter.** It depends on `:core` and JDA 6.7.0 and contains
+  `JdaBootstrap`, `JdaCommandRouter` (the gateway callback only identifies the handler; handler and
+  REST work run off the JDA event thread), `JdaCommandContextMapper`, the state-machine
+  `JdaCommandResponder` (a failed REST action restores the previous state so the router can fall
+  back safely) and the coroutine `RestActionBridge`.
+- **Guild-only walkthrough command.** The only registered command is `/jda-walkthrough`, upserted
+  guild-scoped from `DISCORD_DEV_GUILD_ID`; `DISCORD_BOT_TOKEN` and `DISCORD_DEV_GUILD_ID` are
+  mandatory and the isolated runtime fails fast without them. No global command is published, no
+  gateway intents are enabled, and the isolated JDA entry point is **not** wired into the root
+  runtime.
+- **Deliberately out of scope for 2B:** `/locale` and `LocalizationService` stay Kord-facing (2D),
+  voice/DAVE and session/player ports are 2C, and root bootstrap/fat-JAR wiring stays Phase 6.
+
+Phase 2B verifies the **Gradle dependency boundary** only: the root project declares no JDA
+dependency and does not wire `:jda-runtime`. That is not production-artifact validation. The formal
+**Phase 6** Linux/production fat-JAR checks — Kord-free artifact inspection, duplicate/`META-INF`
+handling, digest recording and the Temurin 21 Linux staging run — remain **OPEN** and are not closed
+by the Phase 2B PASS or by any local inspection.
+
+Unit tests exist in both modules. The last local run recorded **18 `:core` tests** and
+**62 `:jda-runtime` tests**; the root project suite recorded **380 tests with 5 pre-existing
+skips**, which is **460** tests combined. The implementation is exercised only through the isolated
+`:jda-runtime` entry point — the root application remains Kord-based and contains no JDA wiring.
+
+#### Phase 2B staging evidence — PASS (2026-11-13)
+
+User-run evidence from the isolated JDA runtime on **2026-11-13**, configured with the staging
+environment variables. This is a sanitized record: no raw log, no token, and no guild, channel, user
+or application identifiers are reproduced here or in the repository.
+
+| Check | Recorded result |
+| --- | --- |
+| Command | `./gradlew :jda-runtime:run` on `feature/114-phase-2b-command-port` |
+| JDA login | Completed |
+| WebSocket | Connected |
+| Ready state | Reached |
+| Command registration | `/jda-walkthrough` registered guild-scoped |
+| Gateway intents | Logged as **no intents enabled** |
+| Command reply | `JDA walkthrough OK` with the expected context and `locale=en-US` (guild default; see the locale interpretation below) |
+| Shutdown | User stopped the long-running process with Ctrl+C; no failure reported |
+
+Scope of this evidence:
+
+- It validates the **isolated `:jda-runtime` module only**: login, gateway connection, ready state,
+  guild-scoped command registration and one command round-trip. It does not validate the root
+  application, root bootstrap wiring, `/locale`, voice/DAVE, or any other command family — those
+  remain 2C/2D and Phase 6 work.
+- No global command was published and no gateway intents were enabled.
+- The runtime was stopped deliberately with Ctrl+C; this is a normal termination, not a failure, and
+  no error was reported.
+- Only the sanitized facts above are recorded.
+
+**Locale interpretation for this run.** The observed `locale=en-US` is the **guild default locale**
+reported by Discord for a non-Community guild, not evidence that anyone explicitly selected English
+or that a user-preferred client locale was applied. Legacy behaviour is that unless a guild is a
+Discord **Community** guild — where the default language may be changed — its default language is
+always `en_US`; the API's hyphenated `en-US` is the same default. The walkthrough context resolves
+the **guild locale first**, falling back to the user locale only when the guild locale is
+unavailable, so this observation asserts only the expected non-Community guild default. It says
+nothing about `/locale`, persisted per-guild choices, or the root bot's localization behaviour,
+which remain **2D** work and are **not** migrated by Phase 2B.
+
+#### Phase 2B coverage and CI checkpoints
+
+The checkpoint entries below span **2026-11-08** (`e607ff7`, `2850907`, `16247f8`) and
+**2026-11-13** (`cd9d6db`, `d353113`, `988a7cd`, `e4a9e29`, `7bf5419`, `f5f04d1`); they are retained to
+preserve the CI history and are superseded by the 2026-11-13 gate closure above.
+The 2B **gate** status is **PASS** on the recorded evidence; CI status for the branch head is a
+separate question, and every entry below is a dated historical checkpoint — read the live GitHub
+check runs on PR #117 for whichever head is current.
+
+- **PR #117 CI on `e607ff7` — PASS (covered implementation/CI checkpoint).** All four checks
+  concluded successfully: **Check Code Quality**, **Build and analyze**, **SonarCloud Code
+  Analysis** and **SonarCloud**. The Sonar quality gate reported **75.0% Coverage on New Code**,
+  **0** new issues and **0** hotspots. If a later docs-only commit moves the branch head, `e607ff7`
+  remains the implementation/CI checkpoint rather than the current HEAD.
+- **PR #117 CI on later docs-only `2850907` — PASS (docs-only checkpoint).** This commit changed
+  only `docs/migrations/kord-to-jda.md` and also concluded all four checks successfully: **Check
+  Code Quality**, **Build and analyze**, **SonarCloud Code Analysis** and **SonarCloud**. It is
+  recorded as a historical verified checkpoint alongside `e607ff7`, not as proof that every later
+  commit is green; read the GitHub check runs for the current head.
+- **PR #117 CI on later docs-only `16247f8` — PASS (docs-only checkpoint).** This commit
+  (`Recorded passing Phase 2B docs checkpoint`) changed only `docs/migrations/kord-to-jda.md` and
+  also passed all four checks: **Check Code Quality**, **Build and analyze**, **SonarCloud Code
+  Analysis** and **SonarCloud**. Like `e607ff7` and `2850907` it is a **historical verified
+  checkpoint**; it is not evidence that heads after it are green, so read the current GitHub check
+  runs on PR #117.
+- **PR #117 CI on `cd9d6db` (`Clarified Phase 2B CI checkpoint history`) — PASS.** All four checks
+  passed: **Check Code Quality**, **Build and analyze**, **SonarCloud Code Analysis** and
+  **SonarCloud**, with 75.0% Coverage on New Code, 0 new issues and 0 hotspots. It is an earlier
+  verified checkpoint, no longer the latest; read the check runs for any later head.
+- **PR #117 CI on the later docs-only `d353113` (`Document legacy guild locale defaults`) — PASS.**
+  All four checks concluded successfully: **Check Code Quality**, **Build and analyze**,
+  **SonarCloud Code Analysis** and **SonarCloud**, the last of them at **2026-11-13 16:34:38Z**.
+- **PR #117 CI on the later docs-only `988a7cd` (`Clarified Phase 2B CI and artifact scope`) —
+  PASS, earlier all-green checkpoint.** All four checks concluded successfully: **Check Code
+  Quality**, **Build and analyze**, **SonarCloud Code Analysis** and **SonarCloud**, the last of them
+  at **2026-11-13 16:38:44Z**. Like the other checkpoints it is historical and does not prove that a
+  later head is green; the later commits `e4a9e29`, `7bf5419` and `f5f04d1` are recorded separately
+  below.
+- **PR #117 CI on the later docs-only `e4a9e29` (`Refreshed Phase 2B CI handoff head`) — PASS,
+  completed after an in-progress observation.** At the 2026-11-13 refresh — **16:41:06Z**, the
+  observation time, not the end of the run — only **Check Code Quality** had concluded successfully,
+  with **Build and analyze** still in progress and both
+  SonarCloud checks not yet listed. All four then concluded successfully: **SonarCloud Code
+  Analysis** 16:44:04Z, **Build and analyze** 16:44:09Z and **SonarCloud** 16:44:11Z. It was green from
+  that point while it was the head; the earlier partial snapshot is retained only as dated history and
+  must not be read as a current failure or as a statement about the current head.
+- **PR #117 CI on `7bf5419` (`Corrected Phase 2B CI status record`) — PASS, latest verified all-green
+  checkpoint before the subsequent docs-only updates.** All four checks concluded successfully
+  on **2026-11-13**: **Check Code Quality** 16:47:15Z, **SonarCloud Code Analysis** 16:48:52Z,
+  **Build and analyze** 16:48:56Z and **SonarCloud** 16:48:58Z; Sonar reported **75.0% Coverage on
+  New Code**, **0** new issues and **0** hotspots. It was the head at that point; later docs-only
+  commits, including this update, move the head. This is a checkpoint, not a promise that later
+  commits are green — read the live check runs on PR #117 for any newer head.
+- **PR #117 CI snapshot on the later docs-only `f5f04d1` (`Recorded passing Phase 2B CI runs`) — NOT
+  GREEN at that snapshot (dated observation).** Observed on **2026-11-13**: only **Check Code Quality**
+  had concluded successfully (**16:53:24Z**), **Build and analyze** was still in progress and the
+  SonarCloud checks were not yet listed. That snapshot was taken **before this docs-only follow-up**,
+  which itself creates a newer head, so it is historical only and not a claim about the resulting
+  HEAD; GitHub is authoritative for the later status.
+- **Historical failure on prior head `001e722`.** There the **Check Code Quality** and **Build and
+  analyze** jobs passed, as did the separately named **SonarCloud** check, while the **SonarCloud
+  Code Analysis** check failed its Quality Gate at **0.0% Coverage on New Code** against a required
+  **>=50%**, because `:core` and `:jda-runtime` emitted **no JaCoCo XML reports**. That failure is
+  kept as history, not as current status, and must not be summarised as "SonarCloud failed" without
+  naming the check that did.
+- **Coverage wiring that fixed it.** JaCoCo `0.8.12` (from the version catalog) is applied in
+  both modules; each module's `tasks.test` finalizes its own `jacocoTestReport`, which requires XML
+  at the module-local default `build/reports/jacoco/test/jacocoTestReport.xml`; the root `sonar`
+  task depends on `:core:jacocoTestReport` and `:jda-runtime:jacocoTestReport`. Those Gradle build
+  changes passed the #117 CI run on `e607ff7`. The implementation change touched the three Gradle
+  build files plus this migration document — no root runtime, `fatJar` task or dependency change,
+  and the root `sonar` task only gained the two module report dependencies.
+- **Local QA (not CI).** Module XML reports exist; line coverage is `:core` **81.40%** (35/43),
+  `:jda-runtime` **73.63%** (148/201), combined **75.00%** (183/244), matching the CI Sonar figure.
+  Tests are unchanged at **18 `:core` / 62 `:jda-runtime` / 380 root with 5 pre-existing skips =
+  460**. The Code Quality and reviewer agents passed **locally**, which satisfies the independent
+  review criterion; no GitHub PR review has been submitted.
+- **Then-open item, now closed:** manual staging login and `/jda-walkthrough` interaction were
+  pending on 2026-11-08 and were recorded as passing on **2026-11-13**.
+
+Acceptance for closing 2B — **all criteria met, gate closed 2026-11-13**:
+
+- `:core` compiles with no Kord/JDA dependency, and the neutral boundary exposes no `dev.kord.*` /
+  `net.dv8tion.*` types. The branch carries a reflection-based unit test over the neutral types; the
+  full import rule covering all core packages remains the Phase 2 exit/CI gate and is **not** closed
+  by it.
+- The JDA responder honours the neutral contract under test: one defer, one response, deferred
+  responses edit the original with the defer visibility, and a failed REST action restores the prior
+  state so the router fallback stays reachable.
+- The bootstrap registers exactly one guild-scoped command and refuses to start without a token and
+  a development guild id; no global registration path exists. **Confirmed on staging 2026-11-13** —
+  guild-scoped `/jda-walkthrough` registered, no intents enabled, no global command published.
+- Independent final QA/review passes, and any required manual staging login plus a
+  `/jda-walkthrough` interaction are recorded. Local Code Quality and reviewer agents passed, #117 CI
+  is green on the latest verified all-green checkpoint `7bf5419` (the last verified all-green
+  checkpoint before the subsequent docs-only updates), and the staging interaction is
+  recorded above. No GitHub PR review has been submitted; that is not itself a required gate. Phase 2B
+  is therefore **PASS / closed** while broader Phase 2 remains **IN PROGRESS**.
+
 ### Checkpoint state
 
-- The epic integration branch `feature/114-migrate-to-jda-jda-ktx` remains at its base
-  `4badb92`. The active child branch is `feature/114-kord-to-jda-migration`; open draft PR #115
-  targets the epic branch.
-- Phase 1B is stacked one level deeper: `feature/114-native-failfast-check` branches from the head of
-  `feature/114-kord-to-jda-migration` and will PR back into that parent branch, not into the epic
-  branch. It carries only the negative-test packaging task, the spike runbook section and these plan
-  edits; the parent branch is not rebased or rewritten for it. Its gate is **PASS** as of
-  2026-11-08.
-- `.opencode/opencode.json`, this plan and `spikes/jda-dave/**` are **tracked** on
-  `feature/114-kord-to-jda-migration`; the Phase 1 checkpoint `8ca6242` records them in branch
-  history. They are part of the migration record and are updated as the migration proceeds.
-- The active feature branch `feature/114-kord-to-jda-migration` contains this plan, the OpenCode
-  configuration, `spikes/jda-dave/**`, and the Phase 2A source and test changes; draft PR #115
-  targets the epic integration branch. Commit status and history are read from Git and the pull
-  request, not asserted by this document.
-- PR #115 is the **agreed combined Phase 1/2A checkpoint** and is **not restructured**. Later
-  subphases land as separate child branches/PRs **based on the immediately preceding unmerged
-  branch**: Phase 1B on `feature/114-native-failfast-check` (PR targets the parent feature branch),
-  then Phase 2B as a child of Phase 1B targeting that branch, and 2C/2D chained the same way. The
-  epic branch remains the **final integration target**; `master` is merged only at migration
-  completion.
+- The epic integration branch `feature/114-migrate-to-jda-jda-ktx` is at `c00bdf1`, the **squash
+  merge of PR #116** on top of its previous tip `5aad7c7` (itself the **squash merge of PR #115** on
+  base `4badb92`). PR #115 and PR #116 are both **closed/merged**, and the former
+  `feature/114-kord-to-jda-migration` branch is deleted.
+- Phase 1B sat on `feature/114-native-failfast-check` as PR #116, which had been retargeted to the
+  **epic branch** at `5aad7c7` because the former parent branch was squash-merged and deleted. It
+  carried only the negative-test packaging task, the spike runbook section and these plan edits. Its
+  head `1b753b9` was an **ancestry-only merge** of `5aad7c7` into `49b4bc1`: the four add/add
+  conflicts were resolved by retaining the Phase 1B versions, so the resolved tree was
+  **byte-identical** to `49b4bc1` and **no content changed**. All four checks on `1b753b9` passed on
+  2026-11-13. PR #116 has since been **squash-merged** into the epic branch as `c00bdf1`. Its gate
+  is **PASS** as of 2026-11-08.
+- Phase 2B is on `feature/114-phase-2b-command-port`, which was originally stacked on Phase 1B. It
+  adds the isolated `:core`/`:jda-runtime` modules plus the root `:core` dependency and
+  version-catalog entries; the parent branches are not rebased or rewritten for it. Initial
+  implementation checkpoint
+  `fbd9f5a`; covered implementation/CI checkpoint `e607ff7`, where all four #117 checks passed
+  (75.0% new-code coverage, 0 new issues, 0 hotspots); the later docs-only checkpoints `2850907`,
+  `16247f8`, `d353113` and `988a7cd` also passed all four, as did `cd9d6db`, and `e4a9e29` later
+  completed all four checks successfully after an in-progress observation at 16:41:06Z (the
+  observation time, when only Check Code Quality had concluded). `7bf5419`
+  (`Corrected Phase 2B CI status record`) is the latest verified all-green CI checkpoint before the
+  subsequent docs-only updates: Check Code Quality 16:47:15Z, SonarCloud Code Analysis
+  16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z, with 75.0% new-code coverage, 0 new
+  issues and 0 hotspots; it was PR #117's head at that point, not afterwards. A later dated snapshot
+  of `f5f04d1` (docs-only) was **not green** — only Check Code Quality had concluded at 16:53:24Z —
+  and GitHub holds the status of the head that follows it. All are historical verified checkpoints —
+  read the GitHub check runs for any later head, because no recorded run proves a newer commit green.
+  The earlier head `001e722` passed **Check Code
+  Quality**, **Build and analyze** and the separately named **SonarCloud** check, but the **SonarCloud
+  Code Analysis** check failed its Quality Gate at 0.0% new-code coverage; the JaCoCo 0.8.12 plus root
+  `sonar` wiring fixed it. Local QA and reviewer agents satisfied the independent review criterion; no
+  GitHub PR review is submitted. The user-run staging `/jda-walkthrough` interaction on **2026-11-13**
+  closed the gate: **Phase 2B is PASS**. The root runtime is still Kord-based. After #116 merged,
+  PR #117 was retargeted to the epic branch and is now **open and ready** (not draft); it stays
+  unmerged here pending its own merge.
+- The PR #117 conflict with the epic branch was resolved by a **normal ancestry merge** of `c00bdf1`
+  into `feature/114-phase-2b-command-port`. Only `docs/migrations/kord-to-jda.md` conflicted; the
+  Phase 2B document was kept, and every non-doc path's merged tree equals the prior Phase 2B head
+  `e61f301`. **No code changed** in that merge — only this current-stack/handoff record.
+- `.opencode/opencode.json`, this plan and `spikes/jda-dave/**` are **tracked** in the epic branch
+  history: `8ca6242` recorded them on the former working branch, `5aad7c7` brought them into the
+  epic branch and `c00bdf1` carried them forward with the #116 squash merge. They are part of the
+  migration record and are updated as the migration proceeds.
+- This plan is maintained on `feature/114-phase-2b-command-port` and reaches the epic branch through
+  PR #117, which now targets the epic branch directly after #116 merged; the epic revisions
+  `5aad7c7` and `c00bdf1` are therefore behind this document. Commit status and history are read
+  from Git and the pull requests, not asserted by this document.
+- PR #115 was the **agreed combined Phase 1/2A checkpoint** and is **not restructured**; it was
+  squash-merged as `5aad7c7`. PR #116 was then squash-merged as `c00bdf1`. Later subphases land as
+  separate child branches/PRs: Phase 2B was a child of Phase 1B and, after #116 merged, PR #117 was
+  retargeted to the epic branch; 2C/2D follow the same child-branch pattern, with **2C branching from
+  the Phase 2B head once #117 merges**. The epic branch remains the **final integration target**;
+  `master` is merged only at migration completion.
 - No secrets, bot/guild/channel/user identifiers, tokens or raw logs are recorded in this plan or
   in the spike.
 
-### Handoff snapshot — 2026-11-08
+### Handoff snapshot — 2026-11-08 (historical, superseded by 2026-11-13)
+
+> Historical snapshot only. It accurately reflected the state on 2026-11-08, when Phase 2B was
+> **IN PROGRESS** and staging was pending. It is retained for the record and is **superseded** by
+> the post-merge 2026-11-13 handoff snapshot below. The branch/PR posture recorded here is itself
+> out of date: `feature/114-kord-to-jda-migration` was later squash-merged by #115 and deleted, and
+> #116 now targets the epic branch.
 
 Branch, commit and PR facts below were read from Git and GitHub; they are **not** gate evidence.
 
 | Branch / PR | Handoff state |
 | --- | --- |
 | `feature/114-migrate-to-jda-jda-ktx` (epic baseline) | Still at `4badb92`; unchanged |
-| `feature/114-kord-to-jda-migration` → draft PR #115 (base: epic) | Remote head `67802d1`. Carries the combined Phase 1/2A checkpoint: the plan/spike record and the neutral locale repository/use-case boundary. Phase 1 is **PASS** (1A + 1B recorded), Phase 2A is **partial**, Phase 2B is **OPEN — unblocked, not started** |
-| `feature/114-native-failfast-check` → draft PR #116 (base: the 2A feature branch) | Remote head `1461204` at handoff. Artifact, runbook and the pass record live here. **Phase 1B PASS — gate closed on 2026-11-08** |
+| `feature/114-kord-to-jda-migration` → draft PR #115 (base: epic) | Remote head `67802d1`. Carries the combined Phase 1/2A checkpoint: the plan/spike record and the neutral locale repository/use-case boundary. As of 2026-11-08, Phase 1 was **PASS** (1A + 1B recorded), Phase 2A was **partial**, and Phase 2B was **IN PROGRESS** on its child branch |
+| `feature/114-native-failfast-check` → draft PR #116 (base: the 2A feature branch) | Remote head `49b4bc1` (`Recorded Phase 1B fail-fast pass`); `1461204` was the earlier pre-pass-update head. Artifact, runbook and the pass record live here. **Phase 1B PASS — gate closed on 2026-11-08** |
+| `feature/114-phase-2b-command-port` → draft PR #117 (base: the Phase 1B branch, PR #116) | As of 2026-11-08: initial implementation checkpoint `fbd9f5a`; the documentation commits that recorded this handoff followed it. Carried the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests, plus JaCoCo 0.8.12 coverage for both modules wired into root `sonar`. **Phase 2B was IN PROGRESS at that date** — all four #117 checks had passed on covered implementation/CI checkpoint `e607ff7` (75.0% new-code coverage, 0 new issues, 0 hotspots) and again on the later docs-only checkpoints `2850907` and `16247f8`; all are historical verified checkpoints, so read the GitHub check runs for the current head. The earlier `001e722` history is that the SonarCloud Code Analysis check failed its Quality Gate at 0.0% new-code coverage while Check Code Quality, Build and analyze and the separately named SonarCloud check passed. Local QA/review had passed, no GitHub PR review was submitted, and manual staging interaction evidence was still pending at that date |
 
 - Phase 1B evidence, sanitized: user-run negative no-DAVE-native JAR in the Linux amd64
   `eclipse-temurin:21` container (Temurin 21.0.13), exit exactly `3` (`EXIT_NATIVE`), DAVE native
@@ -225,16 +586,90 @@ Branch, commit and PR facts below were read from Git and GitHub; they are **not*
   rerun or fix is **not** confirmed here — refresh CI for current status.
 - Branch policy: each subsequent subphase gets its **own child branch and PR based on the
   immediately preceding unmerged branch**. Phase 2B is a child of Phase 1B
-  (`feature/114-native-failfast-check`) and targets that branch; PR #115 stays the combined
+  (`feature/114-native-failfast-check`) and targets that branch; PR #115 was the combined
   Phase 1/2A checkpoint.
+
+These next actions were **superseded on 2026-11-13** and are retained only as history.
+
+### Handoff snapshot — 2026-11-13 pre-merge (historical)
+
+> Historical snapshot only. It reflected the stack **before** PR #115 was squash-merged: at that time
+> `feature/114-kord-to-jda-migration` still existed, #115 was still open, and #116 still targeted the
+> 2A branch. It is retained for the record and is **superseded** by the post-merge snapshot below.
+
+Branch, commit and PR facts below were read from Git and GitHub; they are **not** gate evidence
+beyond what is recorded above.
+
+| Branch / PR | Handoff state |
+| --- | --- |
+| `feature/114-migrate-to-jda-jda-ktx` (epic baseline) | Was at `4badb92` at that time; it has since advanced to `5aad7c7`, the squash merge of PR #115 |
+| `feature/114-kord-to-jda-migration` → draft PR #115 (base: epic) | Carried the combined Phase 1/2A checkpoint: the plan/spike record and the neutral locale repository/use-case boundary. Phase 1 is **PASS** (1A + 1B recorded), Phase 2A is **partial/IN PROGRESS**, Phase 2B is **PASS on its child branch**. PR #115 has since been **squash-merged** as `5aad7c7` and this branch **deleted**; the merge does not complete Phase 2A |
+| `feature/114-native-failfast-check` → draft PR #116 (base: the 2A feature branch at that time, since retargeted to the epic branch) | Artifact, runbook and the pass record live here. **Phase 1B PASS — gate closed on 2026-11-08**. Read the actual head from Git and PR #116 |
+| `feature/114-phase-2b-command-port` → draft PR #117 (base: the Phase 1B branch, PR #116) | Latest verified all-green CI checkpoint before the subsequent docs-only updates: `7bf5419` (`Corrected Phase 2B CI status record`, docs-only), where all four checks passed on 2026-11-13 — Check Code Quality 16:47:15Z, SonarCloud Code Analysis 16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z — with 75.0% new-code coverage, 0 new issues and 0 hotspots; it was the head at that point, not afterwards. The earlier docs-only `988a7cd` is also green (all four checks, last completed 16:38:44Z), and `e4a9e29` completed all four checks successfully after an in-progress observation at 16:41:06Z. A later dated snapshot of `f5f04d1` (docs-only) was **not green** — only Check Code Quality had concluded at 16:53:24Z, with Build and analyze running and the SonarCloud checks unlisted. These are dated checkpoints only; the current head is whatever this follow-up produced, so GitHub's live check runs on PR #117 are authoritative for it. Carries the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests, plus JaCoCo 0.8.12 coverage for both modules wired into root `sonar`. **Phase 2B PASS — gate closed 2026-11-13**: all four #117 checks passed on `7bf5419`, `e4a9e29` and `988a7cd` (and earlier on `cd9d6db`, `e607ff7`, `2850907`, `16247f8`, `d353113`; 75.0% new-code coverage, 0 new issues, 0 hotspots), local QA and reviewer agents satisfied the independent review criterion, and the user-run staging `/jda-walkthrough` interaction succeeded. No GitHub PR review is submitted; that is not itself a required gate. **Keep #117 draft and do not merge it ahead of parent PR #116** |
+
+- **Phase 2B staging evidence (2026-11-13, sanitized).** The user ran
+  `./gradlew :jda-runtime:run` on the Phase 2B branch with staging environment variables. The
+  isolated runtime completed JDA login, WebSocket connection, ready state and guild-scoped
+  `/jda-walkthrough` registration, and logged no gateway intents enabled. Invoking
+  `/jda-walkthrough` returned `JDA walkthrough OK` with the expected context and `locale=en-US`,
+  which is the expected **guild default** for a non-Community guild: unless a guild is a Discord
+  Community guild where the default language may be changed, its default is always `en_US`. It is
+  **not** evidence of an explicit English selection or of a user-preferred locale, and it does not
+  migrate the root bot's localization behaviour. The user stopped the long-running process with
+  Ctrl+C and no failure was reported. No token, raw log, or guild/channel/user/application identifier
+  is recorded.
+- **Gate posture.** Phase 2B is **PASS / closed** on 2026-11-13. Broader **Phase 2 remains IN
+  PROGRESS**: 2C and 2D are **OPEN**, root Kord removal and bootstrap wiring are not done, and the
+  Phase 2 exit criteria (including the architectural import rule) are still open. Issue #114 stays
+  **open**.
+- **No root wiring.** The root application remains Kord-based and JDA-free; only the isolated
+  `:jda-runtime` module touches JDA. Phase 2B does **not** mean JDA is wired into the root app.
+- **Test counts.** **18 `:core` / 62 `:jda-runtime` / 380 root with 5 pre-existing skips = 460.**
+
+Next actions at that time (**superseded** by the post-merge next actions below):
+
+1. Keep PR #117 draft and do not merge it ahead of parent PR #116; the coordinator updates the
+   PR #117 body. Leave #115 as the combined Phase 1/2A checkpoint.
+2. Start Phase 2C (voice/session/player-message narrow ports) on a new child branch based on the
+   Phase 2B branch head, then Phase 2D on a child of 2C.
+3. Keep the root Kord removal, root bootstrap wiring, the architectural import rule and issue #114
+   open until their own gates are satisfied.
+
+### Handoff snapshot — 2026-11-13 post-merge (current)
+
+Branch, commit and PR facts below were read from Git and GitHub, and the ancestry and tree-equality
+statements were verified against the repository; they are **not** gate evidence beyond what is
+recorded above. #117 is described by base branch name only — no live base SHA is asserted.
+
+| Branch / PR | Handoff state |
+| --- | --- |
+| `feature/114-migrate-to-jda-jda-ktx` (epic baseline) | At **`c00bdf1`**, the **squash merge of PR #116** on top of `5aad7c7` (the earlier **squash merge of PR #115** on base `4badb92`; `5aad7c7`'s tree equals the former Phase 2A head `67802d1`) |
+| PR #115 (former `feature/114-kord-to-jda-migration` → epic) | **CLOSED / MERGED by squash** as `5aad7c7`; the remote branch `feature/114-kord-to-jda-migration` was **deleted**. Phase 2A stays **IN PROGRESS / partial** — the merge completes neither 2A nor Phase 2 |
+| `feature/114-native-failfast-check` → PR #116 (base: epic) | Head **`1b753b9`**, an **ancestry-only merge** committing `5aad7c7` into `49b4bc1`. Four add/add conflicts — `docs/migrations/kord-to-jda.md`, `spikes/jda-dave/.gitignore`, `spikes/jda-dave/README.md`, `spikes/jda-dave/build.gradle.kts` — were resolved by retaining the Phase 1B versions, so the resolved tree is **byte-identical** to `49b4bc1` and **no content changed**. All four checks on `1b753b9` passed on 2026-11-13 — Check Code Quality 17:20:31Z, SonarCloud Code Analysis 17:22:32Z, Build and analyze 17:22:35Z, SonarCloud 17:22:40Z. **Phase 1B PASS — gate closed 2026-11-08.** PR #116 is **CLOSED / MERGED by squash** into the epic branch as `c00bdf1` |
+| `feature/114-phase-2b-command-port` → PR #117 (base: epic `feature/114-migrate-to-jda-jda-ktx`) | **Phase 2B PASS — gate closed 2026-11-13**, unaffected by the #116 merge. Carries the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests, plus JaCoCo 0.8.12 coverage for both modules wired into root `sonar`. CI history is recorded in the Phase 2B section; those are dated checkpoints, so read the live check runs for the current head. After #116 merged, the base was **auto-retargeted to the epic branch**; PR is **OPEN** and **READY** (not draft). Its one conflict — this plan — was resolved by a **normal ancestry merge** of `c00bdf1` that kept the Phase 2B document; every non-doc path's tree equals `e61f301` and **no code changed**. The PR is **not** merged here |
+
+- **Phase 2B staging evidence** remains the sanitized 2026-11-13 record in the Phase 2B section:
+  isolated `:jda-runtime` login, ready state, guild-scoped `/jda-walkthrough` registration, the
+  `JDA walkthrough OK` reply with the non-Community guild default `locale=en-US`, no intents enabled,
+  no global command, and a deliberate Ctrl+C shutdown. No token, raw log or identifier is recorded.
+- **Gate posture.** Phase 2B is **PASS / closed**. Broader **Phase 2 remains IN PROGRESS**: **2C is
+  not started and is still only in planning** — it has no branch and its acceptance criteria have not
+  been written; 2D follows 2C. Root Kord removal and bootstrap wiring are not done, the Phase 2 exit
+  criteria (including the architectural import rule) remain open, and issue #114 stays **open**.
+- **No root wiring.** The root application remains Kord-based and JDA-free; only the isolated
+  `:jda-runtime` module touches JDA.
+- **Test counts.** **18 `:core` / 62 `:jda-runtime` / 380 root with 5 pre-existing skips = 460.**
 
 Next actions, in order:
 
-1. Create the Phase 2B child branch from `feature/114-native-failfast-check` and open its PR against
-   that branch; leave #115 as the combined Phase 1/2A checkpoint.
-2. Implement Phase 2B's neutral command context/responder port plus the adapters that translate
-   defer/ephemeral, locales and IDs at the Discord edge.
-3. Push this Phase 1B pass record to PR #116 and refresh CI status for #115/#116.
+1. Plan **Phase 2C** (voice/session/player-message narrow ports) and write its acceptance criteria
+   before creating any branch. Do not open a 2C branch or PR yet.
+2. **Phase 2C must branch from the Phase 2B head (`feature/114-phase-2b-command-port`, PR #117)** once
+   #117 is merged; do not stack 2C ahead of it.
+3. The coordinator updates the PR bodies. Do not merge PR #117 or change its ready/draft state in
+   this handoff.
+4. Keep the root Kord removal, root bootstrap wiring, the architectural import rule and issue #114
+   open until their own gates are satisfied.
 
 ---
 
@@ -245,8 +680,8 @@ Next actions, in order:
 | Item | State |
 | --- | --- |
 | Baseline commit | Clean `master` @ `4badb92` |
-| Epic integration branch | `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; the merge baseline until PR #115 lands |
-| Working branch | `feature/114-kord-to-jda-migration`; draft PR #115 targets the epic branch, not `master` |
+| Epic integration branch | `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; now at `c00bdf1`, the squash merge of PR #116 on top of `5aad7c7` (the squash merge of PR #115), and the merge baseline for the remaining subphases |
+| Working branch (current) | `feature/114-phase-2b-command-port`, PR #117, open and ready and retargeted to the epic branch after #116 merged. The former `feature/114-kord-to-jda-migration` branch is deleted; PRs #115 and #116 are merged |
 | Assistant receive-audio | Stays separately stashed; **out of scope** for this migration |
 | Parked PRs | #106, #109, #111 — parked, ported individually **after** cutover |
 | Docker / deployment | Deployment stays a fat JAR. Do **not** add a `Dockerfile` to this repo |
@@ -396,14 +831,14 @@ A documented blocker, a "known issue", or an accepted-risk note is **not** a pas
 
 **Exit criteria**
 - The epic integration branch `feature/114-migrate-to-jda-jda-ktx` is based on `master` @
-  `4badb92`, and migration work lands on the child working branch
-  `feature/114-kord-to-jda-migration` through draft PR #115, which targets the epic branch and not
-  `master`.
-- The working branch carries migration work as checkpoint commits and proposes it to the epic
-  branch through draft PR #115. `8ca6242` records this plan, `.opencode/opencode.json` and
+  `4badb92`, and migration work landed on the child working branch
+  `feature/114-kord-to-jda-migration` through draft PR #115, which targeted the epic branch and not
+  `master`. #115 has since been **squash-merged** as `5aad7c7` and that working branch deleted.
+- The working branch carried migration work as checkpoint commits and proposed it to the epic
+  branch through draft PR #115. `8ca6242` recorded this plan, `.opencode/opencode.json` and
   `spikes/jda-dave/**` in branch history; the Phase 2A source/test changes and the matching plan
-  edits are present on `feature/114-kord-to-jda-migration`. Current Git and PR state is
-  authoritative for what is committed and pushed.
+  edits were present on `feature/114-kord-to-jda-migration` and are now in the epic branch through
+  `5aad7c7`. Current Git and PR state is authoritative for what is committed and pushed.
 - Inventory table reproduced from a clean checkout.
 - Out-of-scope items explicitly listed.
 
@@ -456,8 +891,8 @@ never folded into an already-open PR.
 
 | Subphase | Scope | Branch/PR posture | Status |
 | --- | --- | --- | --- |
-| **1A** | DAVE-enabled staging voice transport probe (protocol v1 + audible tone) | Recorded on `feature/114-kord-to-jda-migration`; draft PR #115 | **PASS** — transport subgate only |
-| **1B** | Missing-DAVE-native fail-fast simulation: negative packaging artifact plus the user-run container check | Child branch `feature/114-native-failfast-check` based on `feature/114-kord-to-jda-migration`; its PR targets the **parent feature branch**, not the epic branch and not `master` | **PASS** — recorded 2026-11-08; gate closed |
+| **1A** | DAVE-enabled staging voice transport probe (protocol v1 + audible tone) | Recorded on the former `feature/114-kord-to-jda-migration` branch through PR #115, now **squash-merged** as `5aad7c7` | **PASS** — transport subgate only |
+| **1B** | Missing-DAVE-native fail-fast simulation: negative packaging artifact plus the user-run container check | Child branch `feature/114-native-failfast-check`, originally based on the former 2A branch; after #115 was squash-merged its PR #116 **targets the epic branch**. Its head `1b753b9` is an ancestry-only merge with **no content change** | **PASS** — recorded 2026-11-08; gate closed |
 
 **1B evidence requirements** (all mandatory; only the user-run execution counts):
 
@@ -477,7 +912,9 @@ These requirements were met by the recorded run: **exit `3`**, `[dave] native li
 unavailable` with `UnsatisfiedLinkError: Required library was not found`, **zero**
 `[gateway] logging in` and **zero** `[gateway] ready` lines, and the fake placeholder token was
 never printed. **Phase 1B is PASS and its gate is closed**, so the Phase 1 stop condition no longer
-governs progression and **Phase 2B is unblocked** (not started).
+governs progression. Phase 2B was subsequently unblocked on
+`feature/114-phase-2b-command-port` and is now **PASS — gate closed 2026-11-13**; broader Phase 2
+remains **IN PROGRESS**.
 
 #### Phase 1 staging result — voice transport probe (recorded)
 
@@ -521,34 +958,66 @@ final Phase 6 artifact before promotion.
 
 ### Phase 2 — JDA bootstrap, event and command-response foundation
 
-**Status: IN PROGRESS** — the Phase 2A locale repository/use-case boundary is implemented, but
-`LocalizationService` and the `/locale` command remain Kord-facing. Bootstrap and the command layer
-are still open, so this phase is **not** complete. Remaining work is split into subphases **2B**
-(neutral command context/responders), **2C** (voice/session/player-message ports) and **2D**
-(channel/message/locale edge adapters), each with its own child branch and PR based on the
-immediately preceding unmerged branch (see the subphase plan above).
+**Status: IN PROGRESS** — the Phase 2A locale repository/use-case boundary is implemented and
+**squash-merged into the epic branch** (`5aad7c7`), but `LocalizationService` and the `/locale`
+command remain Kord-facing. Phase 2B is **PASS — gate closed
+2026-11-13**: its neutral command boundary and isolated JDA adapter are implemented with unit tests,
+green CI on its verified checkpoints and a recorded staging `/jda-walkthrough` interaction. The
+earlier handoff head `e4a9e29` later completed all four checks successfully, `7bf5419` is the latest
+verified all-green checkpoint before the subsequent docs-only updates (it was the head at that point,
+not afterwards), and CI state for any later head is read live. A later dated snapshot of `f5f04d1` was
+**not green**. The bootstrap
+and command layer are still **not** wired into the root runtime, so this phase is **not** complete.
+Remaining work is subphases **2C** (voice/session/player-message ports) and **2D**
+(channel/message/locale edge adapters), each with its own child branch and PR (see the subphase plan
+above). **2C is not started and is still only in planning** — no branch exists, its acceptance
+criteria have not been written, and it must branch from the Phase 2B head once PR #117 merges.
 
 **Gate status:** the Phase 1 missing-native fault test passed on 2026-11-08, so it no longer blocks
-this phase. No JDA runtime/bootstrap work has been started; Phase 2B is **unblocked but not
-started**.
+this phase. Phase 2B is **PASS / closed on 2026-11-13** on `feature/114-phase-2b-command-port` under
+PR #117 (base: the epic branch, after #116 merged); the user-run staging `/jda-walkthrough` interaction is
+recorded above. For CI history: the earlier head `001e722` passed Check Code Quality, Build and
+analyze and the separately named SonarCloud check, while the SonarCloud Code Analysis check failed
+its Quality Gate at 0.0% new-code coverage because the modules had no JaCoCo XML; after the JaCoCo
+0.8.12 plus root `sonar` wiring, all four #117 checks passed on covered checkpoint `e607ff7` (75.0%
+new-code coverage, 0 new issues, 0 hotspots), on the later docs-only checkpoints `2850907`,
+`16247f8`, `d353113` and `988a7cd` (last check completed 2026-11-13 16:38:44Z), on `e4a9e29` (which
+completed all four successfully at 16:44:11Z after an in-progress observation at 16:41:06Z, the
+observation time), and on `7bf5419`, the latest verified all-green checkpoint before the subsequent
+docs-only updates (all four checks, last at 16:48:58Z; the head at that point only). A later dated
+snapshot of `f5f04d1` was **not green** (only Check Code Quality concluded, at 16:53:24Z). All are
+historical verified checkpoints, not a guarantee for later commits — read the live GitHub checks for
+whatever head is current. Local QA and reviewer agents
+satisfied the independent review criterion; no GitHub PR review is submitted, which is not itself a
+required gate. **Phase 2
+remains IN PROGRESS**: the root runtime remains Kord-based and JDA-free. PR #117 is **open and ready**
+and is not merged here.
 
 - Replace Kord bootstrap with JDA lifecycle (login, shard/event wiring, shutdown).
 - Introduce neutral abstractions for IDs and locales so command code stops speaking Kord types.
   **Partially done** (Phase 2A): domain-owned `GuildId`/`LocaleCode` plus a neutral locale
-  repository and use cases. Command code still speaks Kord types.
+  repository and use cases. Phase 2B moves those values into `:core` and adds neutral command
+  ports, but production command code still speaks Kord types.
 - Establish a single command dispatch/response layer with correct deferred/replied semantics.
+  **Partially done** (Phase 2B): implemented and unit-tested in the isolated `:jda-runtime`; not
+  wired into the root runtime.
 - Apply the framework-replaceability goal from §1: commands/handlers take a neutral command
   context and responder/response port; only Discord adapter packages may touch `dev.kord.*` /
   `net.dv8tion.*`.
 
 **Exit criteria**
-- Bot connects on staging with the staging token. **OPEN**
-- Slash commands register and respond; deferred vs. immediate reply is explicit and tested. **OPEN**
+- Bot connects on staging with the staging token. **PASS for the isolated `:jda-runtime` only
+  (2026-11-13); OPEN for the root application**, which is still Kord-based.
+- Slash commands register and respond; deferred vs. immediate reply is explicit and tested.
+  **PASS for the isolated guild-scoped `/jda-walkthrough` only (2026-11-13: registered and replied
+  `JDA walkthrough OK`). OPEN for the root runtime and the remaining command families.**
 - No Kord types leak into the new abstraction boundary. **PASS for the locale repository/use-case
-  boundary only. OPEN for `LocalizationService`, `/locale`, all other commands and bootstrap.**
+  boundary and for the Phase 2B `:core` module only. OPEN for `LocalizationService`, `/locale`, all
+  other commands and bootstrap.**
 - The architectural import rule (no `dev.kord.*` / `net.dv8tion.*` outside declared Discord adapter
   packages) exists and passes as a test/CI gate. **OPEN** — required before migration completion;
-  Phase 2 exit cannot be recorded without it.
+  Phase 2 exit cannot be recorded without it. The Phase 2B reflection test covers only the neutral
+  types, not the whole import rule.
 
 ### Phase 3 — Per-guild serialized voice
 
@@ -694,20 +1163,38 @@ accepted risk, and a documented blocker does not close a gate.
 
 ## 5. Tracked and ignored local artifacts
 
-- The epic integration branch `feature/114-migrate-to-jda-jda-ktx` remains at base `4badb92`; the
-  active child branch is `feature/114-kord-to-jda-migration`, with draft PR #115 targeting the epic
-  branch rather than `master`.
+- The epic integration branch `feature/114-migrate-to-jda-jda-ktx` is at `c00bdf1`, the **squash
+  merge of PR #116** on top of `5aad7c7` (the **squash merge of PR #115** on base `4badb92`). PRs
+  #115 and #116 are **closed/merged** and the former `feature/114-kord-to-jda-migration` child branch
+  is deleted; the current child branch is `feature/114-phase-2b-command-port` (PR #117, open and
+  ready, retargeted to the epic branch).
 - `.opencode/opencode.json`, this migration plan (`docs/migrations/kord-to-jda.md`) and
-  `spikes/jda-dave/**` are **tracked** on `feature/114-kord-to-jda-migration`; the Phase 1
-  checkpoint `8ca6242` records them in branch history. They are part of the migration record and
-  are expected to be updated as the migration proceeds.
+  `spikes/jda-dave/**` are **tracked** in the epic branch history: `8ca6242` recorded them on the
+  former working branch, `5aad7c7` brought them into the epic branch and `c00bdf1` carried them
+  forward with the #116 squash merge. They are part of the migration record and are expected to be
+  updated as the migration proceeds.
 - The Phase 1B negative-test packaging (`fatJarWithoutDaveNative`, `verifyNegativeTestJar`), its
-  runbook section, the Phase 1B plan edits and the 2026-11-08 pass record are committed on the child
-  branch `feature/114-native-failfast-check`, which is based on
-  `feature/114-kord-to-jda-migration`. Its PR targets the parent feature branch. Current Git state
-  is authoritative for what is committed and pushed.
-- The Phase 2A source and test changes, and the plan edits made after `8ca6242`, are present on
-  `feature/114-kord-to-jda-migration` and proposed to the epic branch through draft PR #115.
+  runbook section, the Phase 1B plan edits and the 2026-11-08 pass record were committed on the child
+  branch `feature/114-native-failfast-check`, whose PR #116 was **squash-merged** into the epic branch
+  as `c00bdf1`; its head `1b753b9` was an **ancestry-only merge** with **no content change**. Current
+  Git state is authoritative for what is committed and pushed.
+- The Phase 2A source and test changes, and the plan edits made after `8ca6242`, were **squash-merged
+  into the epic branch** by PR #115 as `5aad7c7`; the former branch is deleted. Current Git and PR
+  state is authoritative for what is committed and pushed.
+- The Phase 2B modules `core/` and `jda-runtime/`, the root `settings.gradle.kts` /
+  `build.gradle.kts` changes and the version-catalog entries are present on
+  `feature/114-phase-2b-command-port`, originally stacked on `feature/114-native-failfast-check` and
+  proposed through PR #117 (now base: the epic branch, after #116 merged); **Phase 2B is PASS — gate closed on
+  2026-11-13**. The initial implementation checkpoint is `fbd9f5a`; the covered implementation/CI
+  checkpoint is `e607ff7`, on which all four #117 checks passed; the later docs-only checkpoints
+  `2850907`, `16247f8`, `d353113` and `988a7cd` also passed all four, as did `cd9d6db`, and
+  `e4a9e29` completed all four successfully after an in-progress observation. `7bf5419` is the latest
+  verified all-green CI checkpoint before the subsequent docs-only updates, not a later head. All are
+  historical verified checkpoints, so read the GitHub check runs for any later head. JaCoCo 0.8.12 coverage is applied in
+  `core/build.gradle.kts` and `jda-runtime/build.gradle.kts`, and root `sonar` depends on both module
+  reports. The user-run staging `/jda-walkthrough` interaction on 2026-11-13
+  is recorded in this plan as sanitized evidence only. PR #117 is **open and ready** (not draft) and
+  is not merged here; its one conflict was resolved by an ancestry merge that changed no code.
   Current Git and PR state is authoritative for what is committed and pushed.
 - `stash@{0}` — housekeeping WIP; preserved, untouched.
 - `stash@{1}` — assistant voice feature WIP (out of scope); preserved, untouched.
