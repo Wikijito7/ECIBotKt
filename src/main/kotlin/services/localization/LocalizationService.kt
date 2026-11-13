@@ -3,6 +3,8 @@ package es.wokis.services.localization
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import es.wokis.domain.locale.GetGuildLocaleUseCase
+import es.wokis.utils.toGuildId
+import es.wokis.utils.toKordLocaleOrNull
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -38,11 +40,10 @@ class LocalizationService(
         vararg arguments: Any
     ): String = getString(key, guildId, discordLocale).format(*arguments)
 
-    private suspend fun resolveLocale(guildId: Snowflake?, discordLocale: Locale?): Locale = if (guildId != null) {
-        getGuildLocaleUseCase(guildId) ?: discordLocale ?: Locale.ENGLISH_UNITED_STATES
-    } else {
-        discordLocale ?: Locale.ENGLISH_UNITED_STATES
-    }
+    private suspend fun resolveLocale(guildId: Snowflake?, discordLocale: Locale?): Locale =
+        guildId?.let { getGuildLocaleUseCase(it.toGuildId())?.toKordLocaleOrNull() }
+            ?: discordLocale
+            ?: Locale.ENGLISH_UNITED_STATES
 
     private fun getDefaultString(key: String): String =
         localizedStrings[key]?.find { it.locale == Locale.ENGLISH_UNITED_STATES }?.value

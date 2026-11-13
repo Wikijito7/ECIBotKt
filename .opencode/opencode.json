@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "references": {
+    "jda": {
+      "repository": "discord-jda/JDA",
+      "branch": "master",
+      "description": "Official JDA (Java Discord API) source reference. The configured branch is `master`, which is a moving source reference and not a pinned release. ECIBotKt's migration target is JDA 6.7.0, but that version is not yet declared in ECIBotKt's build, so this reference does not describe the version actually in use. Always verify APIs against the actual JDA dependency version resolved by the build before relying on them."
+    },
+    "jda-ktx": {
+      "repository": "MinnDevelopment/jda-ktx",
+      "branch": "master",
+      "description": "Official jda-ktx Kotlin extensions for JDA source reference. The configured branch is `master`, which currently reflects 0.15.0 sources (Kotlin 2.4.0 / JDA 6.5.0) and is therefore NOT the exact source of the proposed candidate. The proposed candidate is the published artifact jda-ktx 0.14.2 (Kotlin 2.3.10 / JDA 6.3.2). No officially declared jda-ktx/JDA 6.7.0 pairing exists, so verify API compatibility against the actual dependency versions resolved by the build before relying on it."
+    }
+  }
+}
