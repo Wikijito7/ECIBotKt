@@ -49,7 +49,7 @@ still open · **OPEN** = not started, gate still open.
 | Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS** | Phase 2A source and test changes are present on `feature/114-kord-to-jda-migration`, and draft PR #115 targets the epic branch; whether they are committed or pushed is read from Git and PR #115, not asserted here. `GuildId`/`LocaleCode` and the locale repository/use cases are **neutral**, but the Phase 2A scope itself is not finished: `LocalizationService` and `/locale` remain Kord-facing and must be moved behind/adapted in a later Phase 2 subphase (2D) |
 | Phase 2B — neutral command context + responder/response port | **PASS — gate closed (2026-11-13)** | Implementation and unit tests are present on `feature/114-phase-2b-command-port` as the initial implementation checkpoint `fbd9f5a`, stacked on Phase 1B `feature/114-native-failfast-check`; draft PR #117 targets that Phase 1B branch (PR #116), not #115, and stays draft. The branch adds isolated Gradle modules `:core` (gateway-free neutral ports and a pure walkthrough handler) and `:jda-runtime` (JDA 6.7.0 adapter, guild-only `/jda-walkthrough`); the root project depends on `:core` only and remains Kord-based and JDA-free. On head `001e722` **Check Code Quality**, **Build and analyze** and the separately named **SonarCloud** check passed, while **SonarCloud Code Analysis** failed its Quality Gate at 0.0% coverage on new code (required >=50%) because the modules emitted no JaCoCo XML; the JaCoCo 0.8.12 fix then passed CI on the covered checkpoint `e607ff7` — all four #117 checks green, including both SonarCloud checks, with 75.0% Coverage on New Code, 0 new issues and 0 hotspots. The later docs-only checkpoints `2850907` and `16247f8` also passed all four #117 checks, and the latest known head `cd9d6db` again passed all four; all are historical verified checkpoints, so CI status for any newer head must be read from the GitHub check runs. Local QA and reviewer agents satisfied the independent review criterion while no GitHub PR review has been submitted. The user ran the isolated runtime on 2026-11-13 against staging and the guild-scoped `/jda-walkthrough` replied `JDA walkthrough OK`, closing the gate. The root runtime is still Kord-based and JDA-free |
 | Phase 2C — voice/session/player message ports and adapters | **OPEN** | Not started. Planned child branch and PR based on the immediately preceding unmerged branch (2B); do not restructure #115 |
-| Phase 2D — channel/message/locale edge adapters | **OPEN** | Not started. Planned child branch and PR based on the immediately preceding unmerged branch (2C); carries the `LocalizationService` and `/locale` neutrality work |
+| Phase 2D — channel/message/locale edge adapters | **OPEN** | Not started. Planned child branch and PR based on the immediately preceding unmerged branch (2C); carries the `LocalizationService` and `/locale` neutrality work. Must preserve the guild default locale (`en_US` for non-Community guilds, community-configurable) as distinct from the user/client locale, and validate conversion/fallback at the adapter boundary. The root bot's localization behaviour is **not** migrated |
 | Phase 6 — Kord-free build, artifact and digest gates | **OPEN** | Not started |
 | Production cutover (Phase 7) | **OPEN** | Blocked by the Phase 6 and staging gates |
 
@@ -165,7 +165,16 @@ the **final integration target**, and `master` is merged only at migration compl
 | **2A** | Domain-owned `GuildId`/`LocaleCode` + neutral locale repository/use cases | On `feature/114-kord-to-jda-migration`; draft PR #115 is the agreed combined Phase 1/2A checkpoint; leave it as-is | **IN PROGRESS** — as recorded above |
 | **2B** | Neutral command context + responder/response port; adapters translate defer/ephemeral, locales and IDs | Child branch `feature/114-phase-2b-command-port`, based on the immediately preceding unmerged branch, Phase 1B `feature/114-native-failfast-check`; draft PR #117 targets that branch, not #115, and stays draft | **PASS — gate closed 2026-11-13** — isolated `:core`/`:jda-runtime` modules, neutral command boundary and JDA 6.7.0 adapter implemented with unit tests; #117 CI passed on covered checkpoint `e607ff7`, on the docs-only `2850907`/`16247f8`, and on the latest known head `cd9d6db` (75.0% new-code coverage, 0 new issues, 0 hotspots); the user-run staging `/jda-walkthrough` interaction succeeded on 2026-11-13. Local QA/reviewer agents satisfied the independent review criterion; no GitHub PR review submitted, and the root runtime is still Kord-based |
 | **2C** | Voice/session/player-message narrow ports; JDA `AudioSendHandler`/DAVE and lifecycle stay in the adapter | New child branch/PR based on the immediately preceding unmerged branch (2B) | **OPEN** — not started |
-| **2D** | Channel/message/locale edge adapters; move `LocalizationService` and `/locale` behind/adapted to a neutral port | New child branch/PR based on the immediately preceding unmerged branch (2C) | **OPEN** — not started |
+| **2D** | Channel/message/locale edge adapters; move `LocalizationService` and `/locale` behind/adapted to a neutral port; keep the community-configurable guild default distinct from user/client locale and validate conversion/fallback at the adapter boundary | New child branch/PR based on the immediately preceding unmerged branch (2C) | **OPEN** — not started |
+
+**Phase 2D locale acceptance note (OPEN — intended scope, not evidence).** 2D must keep the **guild
+default locale** distinct from the **invoking user/client locale**. Legacy behaviour is that a
+non-Community guild's default language is always `en_US`; only a Discord **Community** guild can
+have its default language changed. The user/client locale describes the invoking client and must
+never be persisted as, or conflated with, the guild default. Locale conversion and fallback —
+including `unknown`, invalid or unsupported values — are validated at the Discord adapter boundary.
+This note records intended 2D scope only: the root bot's localization behaviour has **not** migrated,
+`LocalizationService` and `/locale` remain Kord-facing, and 2D stays **OPEN**.
 
 Stacking rules:
 
@@ -254,7 +263,7 @@ or application identifiers are reproduced here or in the repository.
 | Ready state | Reached |
 | Command registration | `/jda-walkthrough` registered guild-scoped |
 | Gateway intents | Logged as **no intents enabled** |
-| Command reply | `JDA walkthrough OK` with the expected context and `locale=en-US` |
+| Command reply | `JDA walkthrough OK` with the expected context and `locale=en-US` (guild default; see the locale interpretation below) |
 | Shutdown | User stopped the long-running process with Ctrl+C; no failure reported |
 
 Scope of this evidence:
@@ -267,6 +276,16 @@ Scope of this evidence:
 - The runtime was stopped deliberately with Ctrl+C; this is a normal termination, not a failure, and
   no error was reported.
 - Only the sanitized facts above are recorded.
+
+**Locale interpretation for this run.** The observed `locale=en-US` is the **guild default locale**
+reported by Discord for a non-Community guild, not evidence that anyone explicitly selected English
+or that a user-preferred client locale was applied. Legacy behaviour is that unless a guild is a
+Discord **Community** guild — where the default language may be changed — its default language is
+always `en_US`; the API's hyphenated `en-US` is the same default. The walkthrough context resolves
+the **guild locale first**, falling back to the user locale only when the guild locale is
+unavailable, so this observation asserts only the expected non-Community guild default. It says
+nothing about `/locale`, persisted per-guild choices, or the root bot's localization behaviour,
+which remain **2D** work and are **not** migrated by Phase 2B.
 
 #### Phase 2B coverage and CI checkpoints
 
@@ -429,9 +448,13 @@ is recorded above.
   `./gradlew :jda-runtime:run` on the Phase 2B branch with staging environment variables. The
   isolated runtime completed JDA login, WebSocket connection, ready state and guild-scoped
   `/jda-walkthrough` registration, and logged no gateway intents enabled. Invoking
-  `/jda-walkthrough` returned `JDA walkthrough OK` with the expected context and `locale=en-US`. The
-  user stopped the long-running process with Ctrl+C and no failure was reported. No token, raw log,
-  or guild/channel/user/application identifier is recorded.
+  `/jda-walkthrough` returned `JDA walkthrough OK` with the expected context and `locale=en-US`,
+  which is the expected **guild default** for a non-Community guild: unless a guild is a Discord
+  Community guild where the default language may be changed, its default is always `en_US`. It is
+  **not** evidence of an explicit English selection or of a user-preferred locale, and it does not
+  migrate the root bot's localization behaviour. The user stopped the long-running process with
+  Ctrl+C and no failure was reported. No token, raw log, or guild/channel/user/application identifier
+  is recorded.
 - **Gate posture.** Phase 2B is **PASS / closed** on 2026-11-13. Broader **Phase 2 remains IN
   PROGRESS**: 2C and 2D are **OPEN**, root Kord removal and bootstrap wiring are not done, and the
   Phase 2 exit criteria (including the architectural import rule) are still open. Issue #114 stays
