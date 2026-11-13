@@ -61,7 +61,7 @@ secret is stored in this repository.
 Create a local env file outside version control, or materialize it from your deployment
 secret store for the duration of the run:
 
-```bash
+```text
 # spikes/jda-dave/spike.env  (git-ignored)
 DISCORD_BOT_TOKEN=<staging-bot-token>
 DISCORD_TEST_GUILD_ID=<numeric-test-guild-id>
@@ -144,6 +144,369 @@ The Opus and JNA natives are needed because the tone is supplied as PCM and JDA 
 with its Opus encoder before DAVE encryption. If any of these entries is missing, stop and
 fix packaging before deploying.
 
+## Negative test: missing DAVE native must fail fast (Phase 1B fail-fast gate — PASS 2026-11-08)
+
+This is a **separate, safe artifact** used only to prove the startup guard. It is not a
+voice test and it never contacts Discord. The normal staging jar above is left untouched.
+
+### Build and inspect
+
+```bash
+./gradlew -p spikes/jda-dave verifyNegativeTestJar
+```
+
+That task builds both jars and fails unless all of the following are true:
+
+- `jda-dave-spike-0.1.0-all.jar` **contains** `natives/linux-x86-64/libdave-jvm.so`.
+- `jda-dave-spike-negative-no-dave-native-0.1.0-all.jar` **does not contain** it.
+- Both jars still contain `natives/linux-x86-64/libopus.so`,
+  `com/sun/jna/linux-x86-64/libjnidispatch.so`, `spike/jdadave/MainKt.class`,
+  `moe/kyokobot/libdave/NativeDaveFactory.class` and the known JDA class
+  `net/dv8tion/jda/api/JDA.class`.
+- Every entry present in both jars has identical bytes (SHA-256 compared); a shared entry
+  that differs fails the task.
+- The negative jar differs from the normal jar **only** by the DAVE native entry.
+- `Main-Class` is `spike.jdadave.MainKt` in both jars.
+
+Artifacts:
+
+```text
+spikes/jda-dave/build/libs/jda-dave-spike-0.1.0-all.jar                                  (normal, unchanged)
+spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar           (negative test only)
+```
+
+The negative task uses `negativeTestRuntimeClasspath`, which extends the normal
+`runtimeClasspath` and excludes only `moe.kyokobot.libdave:natives-linux-x86-64:0.2.0`.
+It is reproducible (`isPreserveFileTimestamps = false`, `isReproducibleFileOrder = true`)
+and declares its own manifest with the same attributes as the normal jar (`Main-Class`,
+`Implementation-Title`, `Implementation-Version`, `Multi-Release`); it does not reuse the
+normal manifest file. The verifier checks that equality: both jars must report the same
+`Main-Class`, and the shared `META-INF/MANIFEST.MF` entry is covered by the byte-identical
+shared-entry comparison.
+
+On network access, be precise:
+
+- The **runtime** negative container makes **no Discord connection at all**: it runs with
+  `--network none`, so no gateway/HTTP path exists **inside the running container**.
+- `--network none` applies to the container only, and only once it exists. Image acquisition
+  happens earlier, on the **Docker host**: if `eclipse-temurin:21` is not already cached locally,
+  `docker run` asks the daemon to pull it over the **host's** network, which `--network none`
+  does not restrict. A fully offline run therefore requires the image to be pre-pulled on the
+  daemon host (for example `docker pull eclipse-temurin:21` while the host still has network
+  access, or `docker load` from a saved archive). If the host is offline and the image is absent,
+  `docker run` fails before any container starts; that is a "test not run" outcome, not a pass.
+- The verifier's **inspection action** makes **no Discord and no network call**: once the JARs
+  exist it only reads their entries and compares SHA-256 hashes of the entries they share.
+  That inspection step does not itself write files.
+- Invoking `./gradlew verifyNegativeTestJar` is **not** only that inspection. The task depends
+  on the `fatJar` tasks, so Gradle may re-run them, write compilation output and JARs under
+  `spikes/jda-dave/build/`, and resolve Maven dependencies or plugins over the network when
+  they are not already in the local Gradle cache. Do not claim that running the Gradle task
+  writes nothing.
+- The surrounding **Gradle build is not offline**. Gradle dependency and plugin resolution may
+  still require network access unless those artifacts are already in the local Gradle cache.
+  Do not describe the task or the build as "offline" or "offline-safe"; the correct claim is
+  "packaging-only, with dependency resolution potentially requiring network".
+
+Manual equivalent of the guard:
+
+```bash
+jar tf spikes/jda-dave/build/libs/jda-dave-spike-0.1.0-all.jar \
+  | grep -F 'natives/linux-x86-64/libdave-jvm.so'
+jar tf spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar \
+  | grep -E 'natives/linux-x86-64/(libdave-jvm|libopus)\.so'   # only libopus may match
+```
+
+### Run the negative test (`--network none` container)
+
+**Token rule:** the command below uses
+`DISCORD_BOT_TOKEN=negative-test-placeholder-not-a-real-token`. That string is a **fake
+placeholder**, not a credential. It must **never** be replaced with a real staging or
+production token for this negative test. No real token is needed and none may be used: the
+native failure must happen **before** any JDA login, so a real token would muddy the
+evidence — the run must show that the native gate trips, not that a login would have failed.
+The config parser does read the placeholder value to validate that required configuration is
+non-empty; the value is never used for a JDA login, because the process fails fast at the
+DAVE native load.
+
+Run the block exactly as written. The whole run — the `docker run` call, the `rc` capture, the
+`check` helper, every assertion, and the final PASS/FAIL verdict — is wrapped in a POSIX
+subshell `( ... )`. The fake `DISCORD_BOT_TOKEN` and `DISCORD_TEST_GUILD_ID` values, the
+`NEGATIVE_JAR` default, `LOG` and `failed` are assigned **only inside that subshell** and never
+alter the caller's environment, even when names such as `DISCORD_BOT_TOKEN` were already
+exported in the invoking shell. An externally exported `NEGATIVE_JAR` is only read as the
+override. The parent shell's variables keep their previous values.
+
+### Absolute host paths: why an earlier attempt failed with `No such file or directory`
+
+An earlier attempt redirected the run to the **relative** path
+`spikes/jda-dave/spike-negative.log` while the invoking shell's current directory was the
+user's server directory, where no `spikes/jda-dave/` exists. A shell sets up output
+redirection **before** it executes the command, so that redirection failed with
+`No such file or directory` and `docker run` never started — no container was created and no
+image was pulled. This is a current-directory/path problem, **not** a zsh-vs-Bash
+incompatibility: both shells perform redirection before `exec`, and both fail the same way
+when the target directory is absent.
+
+The same rule applies to the jar bind mount. `-v` takes a **host** path that must exist on the
+machine where the Docker daemon runs — not a path inside the container, and not a path
+relative to some other working directory. With a remote daemon or a Docker Desktop VM, only
+the configured shared paths are visible, so copy the jar there or point `NEGATIVE_JAR` at a
+shared absolute path.
+
+The block below therefore uses two absolute host paths:
+
+- `NEGATIVE_JAR` — absolute host path of
+  `jda-dave-spike-negative-no-dave-native-0.1.0-all.jar`. When the block runs from the
+  repository root it defaults to the `realpath` of
+  `$PWD/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar`
+  (`realpath` resolves symlinks in the whole path, because the Docker daemon resolves the bind
+  source, not this shell). The fallback used when `realpath` is unavailable is **weaker**:
+  `pwd -P` makes the *containing checkout directory* physical and absolute, but it does **not**
+  resolve a symlink on the jar file itself, so a symlinked jar would remain a symlink in
+  `NEGATIVE_JAR`. The default artifact here is a regular Gradle-built file under `build/libs/`,
+  not a symlink, so the fallback is adequate for the documented default; if you swap the jar for
+  a symlink, use `realpath` or pass a canonical absolute `NEGATIVE_JAR` instead.
+  Replace it with the actual file location when you run from anywhere else or when the Docker
+  daemon is remote: either `export NEGATIVE_JAR=/abs/path/to/...-all.jar` before the block or
+  edit the assignment. An explicit `NEGATIVE_JAR` is never rewritten or resolved, so it must
+  already be the absolute path **as seen by the Docker daemon host**. A preflight always
+  rejects a relative value and exits before Docker with a clear message; a missing default jar
+  is also a hard stop, while a missing override only warns, because a remote daemon may hold
+  the jar at that path even when this shell cannot see it.
+- `LOG=/tmp/spike-negative.log` — absolute host path for the process output, so host
+  redirection works regardless of the current directory. It is written by your local shell,
+  not by the container. Pick another absolute writable path (for example under `/var/tmp`)
+  if `/tmp` is unsuitable.
+
+Inside the subshell the expected-failure `docker run` is wrapped in
+`if ...; then rc=0; else rc=$?; fi`, so the non-zero Docker exit status is captured instead of
+aborting the block — this holds **even if the caller has `set -e` enabled**. All assertions
+run against `rc`; the variable is deliberately `rc` and not `status`, because `status` is a
+read-only special variable in zsh. Log capture goes to the absolute path
+`/tmp/spike-negative.log`, outside the repository, so it does not depend on the current
+directory and needs no `.gitignore` entry.
+
+The subshell uses no relative paths. The only working-directory assumption is the default
+value of `NEGATIVE_JAR`: it is built from `$PWD/spikes/...` and then passed through `realpath`
+(falling back to `pwd -P`), so it is correct only from the repository root; set `NEGATIVE_JAR`
+to an absolute path in every other case. Note that the `pwd -P` fallback only makes the
+containing directory physical and absolute — it does not resolve a symlink on the jar file
+itself. That is sufficient for the default regular Gradle-built artifact; for a symlinked jar,
+use `realpath` or supply a canonical absolute `NEGATIVE_JAR`. If the Docker host is the server
+and that server holds only the JAR, set `NEGATIVE_JAR` to the jar's absolute path **on the
+server** — from the build machine that path need not exist, and the missing-file preflight only
+warns for an explicit override. The Docker values stay inside the subshell, are passed to the
+container with `-e`, and are never `unset` — a parent shell's own values are left untouched. The
+subshell's exit status is non-zero only when a check fails, so a failing run is still reported
+to the caller without the expected `docker run` status `3` ever aborting the block.
+
+```bash
+# Run from the repository root: NEGATIVE_JAR then defaults to the resolved absolute path of
+# the in-repo artifact. From anywhere else, pass NEGATIVE_JAR as an absolute host path.
+
+# POSIX subshell: the fake values and all helper state live only in this block.
+# Nothing here is exported into, unset in, or otherwise written to the caller's shell.
+(
+  jar_from_override=0
+  if [ -n "${NEGATIVE_JAR:-}" ]; then
+    # Use the override verbatim: it names a path on the Docker daemon host, which may be a
+    # different machine, so it must not be rewritten or resolved here.
+    jar_from_override=1
+  else
+    # Repository-root default. Resolve it to a real absolute path with symlinks removed,
+    # because the bind-mount source is resolved by the Docker daemon, not by this shell.
+    default_jar="$PWD/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar"
+    NEGATIVE_JAR=$(realpath "$default_jar" 2>/dev/null \
+      || printf '%s\n' "$(pwd -P)/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar")
+  fi
+
+  # Fake placeholder only. Never substitute a real token for this negative test.
+  DISCORD_BOT_TOKEN=negative-test-placeholder-not-a-real-token
+  DISCORD_TEST_GUILD_ID=123456789012345678
+
+  # Absolute host path, written by the local shell (not by the container), so host
+  # redirection works regardless of the current directory.
+  LOG=/tmp/spike-negative.log
+
+  # Preflight before Docker: reject a relative path and stop clearly when the default jar
+  # is missing. Otherwise the failure would surface later as a confusing "No such file or
+  # directory", or as an empty directory created by `-v` for an absent bind source.
+  case "$NEGATIVE_JAR" in
+    /*) ;;
+    *)
+      printf 'FAIL  NEGATIVE_JAR must be an absolute host path, got: %s\n' "$NEGATIVE_JAR" >&2
+      echo "NEGATIVE TEST NOT RUN - Phase 1B gate stays OPEN" >&2
+      exit 1
+      ;;
+  esac
+  if [ ! -f "$NEGATIVE_JAR" ]; then
+    if [ "$jar_from_override" -eq 1 ]; then
+      # An explicit override is not required to be readable from this shell: a remote
+      # Docker daemon resolves the bind-mount source on the daemon host.
+      printf 'WARN  NEGATIVE_JAR is not readable from this shell: %s\n' "$NEGATIVE_JAR" >&2
+      echo "Continuing: the Docker daemon host must hold the jar at exactly that absolute path." >&2
+    else
+      printf 'FAIL  negative jar not found: %s\n' "$NEGATIVE_JAR" >&2
+      echo "Point NEGATIVE_JAR at the actual jar on the Docker host and re-run; Docker was not started." >&2
+      echo "NEGATIVE TEST NOT RUN - Phase 1B gate stays OPEN" >&2
+      exit 1
+    fi
+  fi
+
+  # The expected non-zero exit is captured, never raised: `docker run` is the whole
+  # `if` condition, so this block stays safe even when the caller has `set -e` enabled.
+  # `rc` (not `status`) avoids zsh's read-only special variable.
+  # No --restart flag here: Docker's default restart policy is already `no`, and `--rm`
+  # cannot be combined with an explicit restart policy (Docker rejects the pair).
+  if docker run --rm \
+    --name jda-dave-spike-negative \
+    --platform linux/amd64 \
+    --network none \
+    -e DISCORD_BOT_TOKEN="$DISCORD_BOT_TOKEN" \
+    -e DISCORD_TEST_GUILD_ID="$DISCORD_TEST_GUILD_ID" \
+    -v "$NEGATIVE_JAR:/app/jda-dave-spike-negative.jar:ro" \
+    eclipse-temurin:21 \
+    java -jar /app/jda-dave-spike-negative.jar > "$LOG" 2>&1
+  then
+    rc=0
+  else
+    rc=$?
+  fi
+
+  failed=0
+  check() {
+    label="$1"
+    shift
+    if "$@"; then
+      printf 'PASS  %s\n' "$label"
+    else
+      printf 'FAIL  %s\n' "$label"
+      failed=1
+    fi
+  }
+
+  check "exit code is exactly 3 (EXIT_NATIVE), got $rc" test "$rc" -eq 3
+  check "[dave] native library is unavailable" grep -qF '[dave] native library is unavailable' "$LOG"
+  check "native load error names UnsatisfiedLinkError or Required library was not found" \
+    grep -qE 'UnsatisfiedLinkError|Required library was not found' "$LOG"
+  check "zero [gateway] logging in lines" test "$(grep -cF '[gateway] logging in' "$LOG")" -eq 0
+  check "zero [gateway] ready lines" test "$(grep -cF '[gateway] ready' "$LOG")" -eq 0
+  check "placeholder token never printed" test "$(grep -cF 'negative-test-placeholder-not-a-real-token' "$LOG")" -eq 0
+
+  if [ "$failed" -ne 0 ]; then
+    echo "NEGATIVE TEST FAILED - Phase 1B gate stays OPEN; inspect $LOG"
+    exit 1
+  fi
+  echo "NEGATIVE TEST PASSED - exit=3 with zero gateway lines; keep $LOG as Phase 1B evidence"
+)
+```
+
+- `--network none` guarantees no gateway/HTTP path exists **for the running container**. It
+  does not cover image acquisition: pulling `eclipse-temurin:21` when it is not cached uses
+  the Docker **host's** network before the container starts. Keep the host disconnected from
+  Discord for this test, but note that a fully offline run requires the image to be pre-pulled.
+- There is no `--restart` flag. Docker's **default** restart policy is `no`, which is exactly
+  the behaviour this test needs: the expected failure must not be retried. `--rm` cannot be
+  combined with an explicit restart policy — `docker run --rm --restart=no` is rejected with
+  `Conflicting options: --restart and --rm` — so the flag is omitted rather than restated.
+- `--platform linux/amd64` and `eclipse-temurin:21` pin the supported Linux x86-64 runtime;
+  the DAVE native in this candidate is Linux x86-64 only.
+- `NEGATIVE_JAR` is an absolute **host** path, mounted **read-only** (`:ro`) at
+  `/app/jda-dave-spike-negative.jar`; the negative jar writes no data. When unset, it is the
+  `realpath` of
+  `$PWD/spikes/jda-dave/build/libs/jda-dave-spike-negative-no-dave-native-0.1.0-all.jar`
+  (or, if `realpath` is unavailable, `$(pwd -P)/spikes/...`, which makes the containing
+  directory physical but does not resolve a symlink on the jar itself), so the default is
+  correct only from the repository root. The default artifact is a regular Gradle-built file,
+  not a symlink; if you substitute a symlinked jar, use `realpath` or pass a canonical
+  absolute `NEGATIVE_JAR`. A relative value stops the preflight with `NEGATIVE TEST NOT RUN`
+  before Docker is invoked — that outcome neither passes nor fails the gate; it means the test
+  did not run. A missing default jar is also a hard stop; a missing explicit override only
+  warns, because the jar may live on a remote daemon host.
+- `LOG=/tmp/spike-negative.log` is written by the local shell on the host. It is not inside
+  the repo, so no `.gitignore` entry is needed, and it is absolute, so the current directory
+  cannot break redirection.
+- The numeric `DISCORD_TEST_GUILD_ID` is a placeholder too; it only has to pass config
+  validation, because the process exits before guild lookup.
+
+Expected result: **exit code exactly `3`** (`EXIT_NATIVE`) and output that stops at the DAVE
+load. This expected result was observed in the recorded 2026-11-08 run (see below). The sample
+below is illustrative — the loader/JDK wording varies — but the structure
+(exit `3`, no `[gateway]` line) must hold:
+
+```text
+JDA/DAVE staging transport probe (test-only, not production)
+[env] java=... jda=6.7.0 os=Linux arch=amd64
+[config] SpikeConfig(testGuildId=<numeric-id>, keepOnline=false, ...)
+[dave] loading native library for linux-x86-64
+Native library dave-jvm: loading with filter null
+Native library dave-jvm: loading failed.
+java.lang.UnsatisfiedLinkError: Required library was not found
+...
+[dave] native library is unavailable: java.lang.UnsatisfiedLinkError: Required library was not found
+...
+```
+
+The exact loader wording may vary by lava-common/JDK/slf4j version, so the assertion does
+**not** require the literal phrase `Required library was not found`. The required signals are:
+
+- `[dave] native library is unavailable` (exact text, required), and
+- a native-load error matching **either** `UnsatisfiedLinkError` **or**
+  `Required library was not found` — asserted as
+  `grep -qE 'UnsatisfiedLinkError|Required library was not found' "$LOG"`
+  (ordinary `grep`, no bash-only `[[ ... ]]`, so it runs in both bash and zsh), plus
+- exit `3`, and **zero** `[gateway] logging in` and **zero** `[gateway] ready` lines.
+
+The token is never logged; `[config]` omits it.
+
+If any check prints `FAIL`, the run is a **failure**: the negative artifact still had a
+usable DAVE native, the wrong jar/command was used, or a login was attempted. Exit `2` is
+also a failure for this test (config or platform rejection, not the native gate); exit `0`
+or `1` is never expected.
+
+### Recorded result — PASS (2026-11-08)
+
+The user ran the negative test on 2026-11-08. Sanitized record only; no token, identifier or raw log
+is stored in this repository.
+
+| Check | Result |
+| --- | --- |
+| Host / runtime | Linux amd64, Temurin **21.0.13** (`eclipse-temurin:21`) |
+| Artifact | Negative no-DAVE-native JAR (DAVE native entry deliberately absent) |
+| Container exit code | exactly **`3`** (`EXIT_NATIVE`) |
+| DAVE native | Unavailable — `UnsatisfiedLinkError: Required library was not found` |
+| `[gateway] logging in` lines | **zero** |
+| `[gateway] ready` lines | **zero** |
+| Placeholder token | fake placeholder; **never printed** |
+
+Notes on what this run does and does not prove:
+
+- The **container** ran with `--network none`, so the running process had no gateway/HTTP path and
+  exited at the DAVE native load, before any login attempt. That is the guard behaviour under test.
+- The `eclipse-temurin:21` image was **pulled by the Docker host before** that container run. The
+  pull used the host's network and was **not** isolated by `--network none`. Do not describe this
+  result as a fully offline, end-to-end network-isolated verification.
+- The fake placeholder token was supplied only to pass config validation and was never printed.
+
+### Scope of this evidence
+
+**The gate is closed.** The 2026-11-08 user-run execution above satisfies the Phase 1B evidence
+requirements: Linux amd64 `eclipse-temurin:21` container, `--network none` for the running process,
+the fake placeholder token, exit `3` (`EXIT_NATIVE`), the `[dave] native library is unavailable`
+line together with `UnsatisfiedLinkError` / `Required library was not found`, and **zero**
+`[gateway] logging in` **and zero** `[gateway] ready` lines.
+
+Building or verifying the JARs alone never closed this gate. `verifyNegativeTestJar` proves
+packaging only: it reads JAR entries and shared-entry hashes, and it makes no network or Discord
+call of its own (running the Gradle task can still write build output and resolve dependencies over
+the network — see above). The recorded container execution is what closed it.
+
+A successful negative test proves only that the probe **fails fast when the DAVE native is
+absent**, before any gateway login. It does **not** replace the successful audible DAVE
+voice test recorded in `docs/migrations/kord-to-jda.md`. The audible run remains the
+transport evidence; this negative artifact is a guard check only.
+
 ## Deploy and run on the external Temurin 21 container
 
 The target must be Linux **x86_64/amd64** with glibc (`eclipse-temurin:21` is suitable).
@@ -200,11 +563,15 @@ Audio System successfully setup!
 [probe] waiting for /voice-test ...
 ```
 
-The process prints no token. For evidence, redirect the run to a file (for example append
-`> spike.log 2>&1` to the `docker run` command) and keep that log with the staging notes.
-`spike.log` is git-ignored: never add it to Git or attach it unredacted. It contains the
-staging guild and channel names/IDs (and the bot's own ID), so redact those identifiers
-before pasting the log into an issue, PR, or chat.
+The process prints no token. For evidence, redirect the run to a file — for example append
+`> /tmp/spike.log 2>&1` (an absolute path) or `> spikes/jda-dave/spike.log 2>&1` when the
+current directory is the repository root — and keep that log with the staging notes.
+`spikes/jda-dave/spike.log` is git-ignored; the negative test writes
+`/tmp/spike-negative.log` outside the repo. Never add either log to Git or attach it
+unredacted. They contain the staging guild and channel names/IDs (and the bot's own ID), so
+redact those identifiers before pasting a log into an issue, PR, or chat. A relative redirect
+target fails with `No such file or directory` when its parent directory does not exist in the
+current directory, and then Docker never runs.
 
 ## Run `/voice-test`
 
@@ -328,7 +695,7 @@ Capture the full container stdout/stderr. A pass requires **all** of the followi
 Useful grep for evidence collection:
 
 ```bash
-grep -E '\[dave\]|\[voice\]|\[tone\]|\[command\]|DAVE Init|Transition executed|MLS Failure|Native library dave-jvm' spike.log
+grep -E '\[dave\]|\[voice\]|\[tone\]|\[command\]|DAVE Init|Transition executed|MLS Failure|Native library dave-jvm' spikes/jda-dave/spike.log
 ```
 
 Also record `docker inspect --format '{{.State.ExitCode}}' jda-dave-spike` when the
