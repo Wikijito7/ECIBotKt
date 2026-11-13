@@ -14,6 +14,11 @@ repositories {
 dependencies {
     implementation(project(":core"))
     implementation(libs.jda)
+    implementation(libs.libdaveV2Api)
+    implementation(libs.libdaveV2ImplJni)
+    implementation(libs.libdaveV2AdapterJda)
+    runtimeOnly(libs.libdaveV2NativesDarwin)
+    runtimeOnly(libs.libdaveV2NativesLinuxX64)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.slf4j.simple)
 

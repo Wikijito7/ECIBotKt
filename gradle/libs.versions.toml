@@ -19,6 +19,7 @@ idea-ext = "1.1.10"
 junit-parametized = "5.13.0"
 libdave = "0.1.2"
 libdave-natives = "0.1.3"
+libdaveV2 = "0.2.0"
 jda = "6.7.0"
 kotlin-coroutines = "1.10.1"
 
@@ -60,6 +61,11 @@ libdave-natives-darwin = { module = "moe.kyokobot.libdave:natives-darwin", versi
 libdave-natives-linuxX64 = { module = "moe.kyokobot.libdave:natives-linux-x86-64", version.ref = "libdave-natives" }
 libdave-natives-linuxAarch64 = { module = "moe.kyokobot.libdave:natives-linux-aarch64", version.ref = "libdave-natives" }
 libdave-natives-winX64 = { module = "moe.kyokobot.libdave:natives-win-x86-64", version.ref = "libdave-natives" }
+libdaveV2Api = { module = "moe.kyokobot.libdave:api", version.ref = "libdaveV2" }
+libdaveV2ImplJni = { module = "moe.kyokobot.libdave:impl-jni", version.ref = "libdaveV2" }
+libdaveV2AdapterJda = { module = "moe.kyokobot.libdave:adapter-jda", version.ref = "libdaveV2" }
+libdaveV2NativesDarwin = { module = "moe.kyokobot.libdave:natives-darwin", version.ref = "libdaveV2" }
+libdaveV2NativesLinuxX64 = { module = "moe.kyokobot.libdave:natives-linux-x86-64", version.ref = "libdaveV2" }
 jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
 
