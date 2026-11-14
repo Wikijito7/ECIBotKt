@@ -1,5 +1,6 @@
 package es.wokis.jda.command
 
+import es.wokis.domain.locale.DiscordLocaleCatalog
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.ChannelId
 import es.wokis.domain.model.GuildId
@@ -11,6 +12,8 @@ import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.DiscordLocale
+import net.dv8tion.jda.api.interactions.commands.OptionMapping
+import net.dv8tion.jda.api.interactions.commands.OptionType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -37,6 +40,8 @@ class JdaCommandContextMapperTest {
         assertEquals(ChannelId(20uL), context.channelId)
         assertEquals(UserId(30uL), context.userId)
         assertEquals(LocaleCode("es-ES"), context.locale)
+        assertEquals(LocaleCode("es-ES"), context.guildLocale)
+        assertEquals(LocaleCode("de"), context.userLocale)
     }
 
     @Test
@@ -54,6 +59,51 @@ class JdaCommandContextMapperTest {
         // Then
         assertEquals(GuildId(10uL), context.guildId)
         assertEquals(LocaleCode("de"), context.locale)
+        assertNull(context.guildLocale)
+        assertEquals(LocaleCode("de"), context.userLocale)
+    }
+
+    @Test
+    fun `Given Arabic and Hebrew locales When mapped Then expose the canonical neutral tags`() {
+        // Given
+        val event = event(
+            guildId = 10L,
+            guildLocale = DiscordLocale.ARABIC,
+            userLocale = DiscordLocale.HEBREW,
+        )
+
+        // When
+        val context = mapper.map(event)
+
+        // Then
+        assertEquals(LocaleCode("ar"), context.guildLocale)
+        assertEquals(LocaleCode("he"), context.userLocale)
+        assertEquals(LocaleCode("ar"), context.locale)
+    }
+
+    @Test
+    fun `Given every real JDA locale When mapped Then use the canonical tag and detect catalog drift`() {
+        // Given
+        val realLocales = DiscordLocale.values().filter { it != DiscordLocale.UNKNOWN }
+
+        // Then the JDA enum and the neutral catalog describe the same 34 canonical tags
+        assertEquals(34, realLocales.size)
+        assertEquals(
+            realLocales.map { it.locale }.toSet(),
+            DiscordLocaleCatalog.supportedLocales.map { it.value }.toSet(),
+        )
+
+        // And every real locale maps through its canonical string
+        realLocales.forEach { locale ->
+            assertEquals(LocaleCode(locale.locale), locale.toLocaleCodeOrNull(), locale.name)
+        }
+    }
+
+    @Test
+    fun `Given JDA UNKNOWN When mapped Then produce null instead of the unknown marker`() {
+        // Then
+        assertNull(DiscordLocale.UNKNOWN.toLocaleCodeOrNull())
+        assertNull((null as DiscordLocale?).toLocaleCodeOrNull())
     }
 
     @Test
@@ -70,6 +120,8 @@ class JdaCommandContextMapperTest {
 
         // Then
         assertNull(context.locale)
+        assertNull(context.guildLocale)
+        assertNull(context.userLocale)
     }
 
     @Test
@@ -88,6 +140,8 @@ class JdaCommandContextMapperTest {
         assertEquals(ChannelId(20uL), context.channelId)
         assertEquals(UserId(30uL), context.userId)
         assertEquals(LocaleCode("es-419"), context.locale)
+        assertNull(context.guildLocale)
+        assertEquals(LocaleCode("es-419"), context.userLocale)
     }
 
     @Test
@@ -104,6 +158,32 @@ class JdaCommandContextMapperTest {
         // Then
         assertNull(context.guildId)
         assertNull(context.locale)
+        assertNull(context.guildLocale)
+        assertNull(context.userLocale)
+    }
+
+    @Test
+    fun `Given string and non-string options When mapped Then expose only string options`() {
+        // Given
+        val stringOption = mockk<OptionMapping> {
+            every { type } returns OptionType.STRING
+            every { name } returns "locale"
+            every { asString } returns "es-ES"
+        }
+        val integerOption = mockk<OptionMapping> {
+            every { type } returns OptionType.INTEGER
+            every { name } returns "count"
+        }
+        val event = event(
+            guildId = 10L,
+            options = listOf(stringOption, integerOption),
+        )
+
+        // When
+        val context = mapper.map(event)
+
+        // Then
+        assertEquals(mapOf("locale" to "es-ES"), context.stringOptions)
     }
 
     @Test
@@ -131,6 +211,7 @@ class JdaCommandContextMapperTest {
         channelId: Long = 20L,
         userId: Long = 30L,
         commandName: String = "jda-walkthrough",
+        options: List<OptionMapping> = emptyList(),
     ): SlashCommandInteractionEvent {
         val guild = guildId?.let { id ->
             mockk<Guild> {
@@ -151,6 +232,7 @@ class JdaCommandContextMapperTest {
             every { event.channel } returns channel
             every { event.user } returns user
             every { event.userLocale } returns userLocale
+            every { event.options } returns options
         }
     }
 }

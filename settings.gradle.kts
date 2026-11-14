@@ -9,4 +9,5 @@ plugins {
 rootProject.name = "ECIBotKt"
 
 include(":core")
+include(":locale-persistence")
 include(":jda-runtime")

@@ -2,6 +2,7 @@ package utils
 
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
+import es.wokis.domain.locale.DiscordLocaleCatalog
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.GuildId
 import es.wokis.utils.DISCORD_LOCALE_MAP
@@ -9,9 +10,12 @@ import es.wokis.utils.orDefaultLocale
 import es.wokis.utils.toGuildId
 import es.wokis.utils.toKordLocaleOrNull
 import es.wokis.utils.toLocaleCode
+import es.wokis.utils.toLocaleCodeOrNull
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -180,5 +184,62 @@ class LocaleExtensionsTest {
         assertTrue(DISCORD_LOCALE_MAP.isNotEmpty())
         assertFalse(DISCORD_LOCALE_MAP.containsKey("not-a-locale"))
         assertTrue(Locale.ALL.all { DISCORD_LOCALE_MAP.values.contains(it) })
+    }
+
+    @Test
+    fun `Given the neutral catalog When the Kord map is built Then it contains exactly every canonical tag`() {
+        // Then
+        assertEquals(
+            DiscordLocaleCatalog.supportedLocales.map { it.value }.toSet(),
+            DISCORD_LOCALE_MAP.keys,
+        )
+        assertEquals(34, DISCORD_LOCALE_MAP.size)
+        assertFalse(DISCORD_LOCALE_MAP.containsKey("unknown"))
+        assertFalse(DISCORD_LOCALE_MAP.containsKey("UNKNOWN"))
+    }
+
+    @Test
+    fun `Given Arabic and Hebrew When mapped to Kord Then they remain selectable and round-trip safely`() {
+        // Then
+        assertEquals(Locale("ar"), DISCORD_LOCALE_MAP["ar"])
+        assertEquals(Locale("he"), DISCORD_LOCALE_MAP["he"])
+        assertEquals(LocaleCode("ar"), DISCORD_LOCALE_MAP.getValue("ar").toLocaleCode())
+        assertEquals(LocaleCode("he"), DISCORD_LOCALE_MAP.getValue("he").toLocaleCode())
+    }
+
+    @Test
+    fun `Given every catalog locale When converted to Kord and back Then preserve the canonical tag`() {
+        // When / Then
+        DiscordLocaleCatalog.supportedLocales.forEach { code ->
+            val kordLocale = code.toKordLocaleOrNull()
+            assertNotNull(kordLocale, "Missing Kord mapping for ${code.value}")
+            val mapped = requireNotNull(kordLocale)
+            assertEquals(code, mapped.toLocaleCode(), code.value)
+            assertEquals(code, DISCORD_LOCALE_MAP.getValue(code.value).toLocaleCode(), code.value)
+        }
+    }
+
+    @Test
+    fun `Given a format-valid but non-catalog tag When converted Then reject it`() {
+        // Given: Kord can parse this format, but Discord never exposes it as a locale
+        val foreign = Locale("xx", "YY")
+        val foreignCode = LocaleCode("xx-YY")
+
+        // Then
+        assertNull(foreign.toLocaleCodeOrNull())
+        assertNull(foreignCode.toKordLocaleOrNull())
+        assertThrows<IllegalArgumentException> { foreign.toLocaleCode() }
+
+        // And a non-canonical case is rejected as well
+        assertNull(LocaleCode("es-es").toKordLocaleOrNull())
+        assertNull(Locale("es", "es").toLocaleCodeOrNull())
+    }
+
+    @Test
+    fun `Given a locale with a country variant When converted Then require the canonical tag`() {
+        // Then
+        assertNull(Locale("ar", "SA").toLocaleCodeOrNull())
+        assertEquals(LocaleCode("en-US"), Locale("en", "US").toLocaleCode())
+        assertEquals(LocaleCode("es-419"), Locale("es", "419").toLocaleCode())
     }
 }

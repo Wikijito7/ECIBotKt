@@ -1,6 +1,8 @@
 package es.wokis.jda.command
 
+import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.neutral.CommandDefinition
+import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.GuildId
 import io.mockk.every
 import io.mockk.mockk
@@ -8,9 +10,13 @@ import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
+import net.dv8tion.jda.api.interactions.DiscordLocale
 import net.dv8tion.jda.api.interactions.commands.Command
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
+import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import net.dv8tion.jda.api.requests.ErrorResponse
@@ -144,6 +150,76 @@ class JdaGuildCommandRegistrarTest {
         verify(exactly = 0) { jda.getGuildById(any<String>()) }
         verify(exactly = 0) { jda.upsertCommand(any<CommandData>()) }
     }
+
+    @Test
+    fun `Given the locale definition When registering Then publish an admin guild command with a required autocomplete option`() =
+        runTest {
+            // Given
+            val guildId = GuildId(1234567890123456789uL)
+            val jdaGuildId = 1234567890123456789L
+            val command = LocaleCommandHandler.definition(
+                description = "Set the preferred locale for this guild",
+                optionDescription = "Locale to set (use autocomplete to see available options)",
+                descriptionLocalizations = mapOf(
+                    LocaleCode("en-US") to "Set the preferred locale for this guild",
+                    LocaleCode("es-ES") to "Establecer el idioma preferido para este servidor",
+                    LocaleCode("xx-YY") to "not a Discord locale",
+                    LocaleCode("unknown") to "not a Discord locale",
+                ),
+                optionDescriptionLocalizations = mapOf(
+                    LocaleCode("en-US") to "Locale to set (use autocomplete to see available options)",
+                    LocaleCode("es-ES") to
+                        "Idioma a establecer (usa el autocompletado para ver las opciones disponibles)",
+                    LocaleCode("xx-YY") to "not a Discord locale",
+                    LocaleCode("unknown") to "not a Discord locale",
+                ),
+            )
+            val published = slot<SlashCommandData>()
+            val upsertAction = successfulUpsertAction()
+            every { jda.getGuildById(jdaGuildId) } returns guild
+            every { guild.upsertCommand(capture(published)) } returns upsertAction
+
+            // When
+            JdaGuildCommandRegistrar(jda).register(guildId, command)
+
+            // Then the command is published only in the configured guild
+            verify(exactly = 1) { jda.getGuildById(jdaGuildId) }
+            verify(exactly = 1) { guild.upsertCommand(any<CommandData>()) }
+            verify(exactly = 0) { jda.upsertCommand(any<CommandData>()) }
+
+            val data = published.captured
+            assertEquals("locale", data.name)
+            assertEquals("Set the preferred locale for this guild", data.description)
+            assertEquals(
+                DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR),
+                data.defaultPermissions,
+            )
+
+            val option = data.options.single()
+            assertEquals(OptionType.STRING, option.type)
+            assertEquals("locale", option.name)
+            assertEquals("Locale to set (use autocomplete to see available options)", option.description)
+            assertTrue(option.isRequired)
+            assertTrue(option.isAutoComplete)
+
+            // Canonical neutral tags become JDA locales at the edge, and unknown tags are dropped
+            assertEquals(
+                mapOf(
+                    DiscordLocale.ENGLISH_US to "Set the preferred locale for this guild",
+                    DiscordLocale.SPANISH to "Establecer el idioma preferido para este servidor",
+                ),
+                data.descriptionLocalizations.toMap(),
+            )
+            assertEquals(
+                mapOf(
+                    DiscordLocale.ENGLISH_US to
+                        "Locale to set (use autocomplete to see available options)",
+                    DiscordLocale.SPANISH to
+                        "Idioma a establecer (usa el autocompletado para ver las opciones disponibles)",
+                ),
+                option.descriptionLocalizations.toMap(),
+            )
+        }
 
     private fun successfulUpsertAction(): RestAction<Command> {
         val action: RestAction<Command> = mockk()

@@ -134,6 +134,37 @@ class LocalizationServiceTest {
     }
 
     @Test
+    fun `Given Arabic or Hebrew When getString is called Then fall back to US English`() = runTest {
+        // Given
+        val key = "test_command_description"
+        val expected = "test in junit tests"
+
+        // When / Then: both tags exist in the canonical catalog but have no translation file
+        listOf(Locale("ar"), Locale("he")).forEach { locale ->
+            assertEquals(expected, localizationService.getString(key, discordLocale = locale), locale.toString())
+        }
+    }
+
+    @Test
+    fun `Given a persisted Arabic locale When getString is called Then keep the valid locale and fall back per key`() = runTest {
+        // Given
+        val key = "test_command_description"
+        val guildId = Snowflake(123)
+        val expected = "test in junit tests"
+        coEvery { getGuildLocaleUseCase(GuildId(123uL)) } returns LocaleCode("ar")
+
+        // When
+        val actual = localizationService.getString(
+            key,
+            guildId = guildId,
+            discordLocale = Locale.SPANISH_SPAIN,
+        )
+
+        // Then: the persisted valid locale wins over the guild default, then the key falls back
+        assertEquals(expected, actual)
+    }
+
+    @Test
     fun `Given key When getLocalizations is called Then return all localized string`() {
         // Given
         val key = "test_command_description"

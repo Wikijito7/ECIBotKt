@@ -1,12 +1,20 @@
 package es.wokis.jda
 
+import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.neutral.GuildCommandRegistrar
 import es.wokis.commands.voicewalkthrough.JdaVoiceWalkthroughCommand
 import es.wokis.commands.walkthrough.WalkthroughCommand
+import es.wokis.domain.locale.GetGuildLocaleUseCase
+import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.jda.command.JdaCommandRouter
 import es.wokis.jda.command.JdaGuildCommandRegistrar
+import es.wokis.jda.command.JdaLocaleAutocompleteListener
 import es.wokis.jda.voice.JdaVoiceSessionPort
 import es.wokis.jda.voice.OpusPacketFrameSource
+import es.wokis.localization.GuildLocalizationService
+import es.wokis.localization.LocaleMessageKeys
+import es.wokis.repositories.locale.LocalJsonLocaleRepository
+import es.wokis.repositories.locale.LocaleJson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDA
@@ -23,8 +31,8 @@ private const val EXIT_FAILURE = 1
  *
  * It performs the DAVE native/protocol preflight **before** creating the gateway client,
  * enables only the non-privileged `GUILD_VOICE_STATES` intent and the voice-state cache, and
- * registers both diagnostics guild-scoped. No global command and no privileged intent is
- * used. The root Kord runtime is not involved.
+ * registers the diagnostics plus the guild-scoped `/locale` command. No global command and no
+ * privileged intent is used. The root Kord runtime is not involved.
  *
  * The process exits with a non-zero code when configuration, DAVE or startup fails. Even then,
  * every applicable cleanup step is attempted independently after startup completes or fails
@@ -90,9 +98,16 @@ internal fun runBootstrap(
             voiceSession = JdaVoiceSessionPort(client),
             frameSourceFactory = { OpusPacketFrameSource.fromResource() },
         )
-        val commandRouter = JdaCommandRouter(listOf(walkthrough, voiceWalkthrough))
+        val localeRepository = LocalJsonLocaleRepository(LocaleJson.json)
+        val localizationService = GuildLocalizationService(GetGuildLocaleUseCase(localeRepository))
+        val localeCommand = LocaleCommandHandler(
+            setGuildLocaleUseCase = SetGuildLocaleUseCase(localeRepository),
+            localizationService = localizationService,
+        )
+        val commandRouter = JdaCommandRouter(listOf(walkthrough, voiceWalkthrough, localeCommand))
         router = commandRouter
         client.addEventListener(commandRouter)
+        client.addEventListener(JdaLocaleAutocompleteListener())
 
         shutdownHook = Thread({ client.shutdown() }, "jda-shutdown").also {
             Runtime.getRuntime().addShutdownHook(it)
@@ -104,13 +119,15 @@ internal fun runBootstrap(
             val registrar = JdaGuildCommandRegistrar(client)
             registerWalkthroughCommand(registrar, config, walkthrough)
             registerVoiceWalkthroughCommand(registrar, config, voiceWalkthrough)
+            registerLocaleCommand(registrar, config, localizationService)
         }
 
         LOG.info(
-            "JDA ready as {}; guild-scoped /{} and /{} registered; intents=[GUILD_VOICE_STATES]",
+            "JDA ready as {}; guild-scoped /{}, /{} and /{} registered; intents=[GUILD_VOICE_STATES]",
             client.selfUser.name,
             walkthrough.name,
             voiceWalkthrough.name,
+            localeCommand.name,
         )
 
         client.awaitShutdown()
@@ -235,4 +252,28 @@ internal suspend fun registerVoiceWalkthroughCommand(
     voiceWalkthrough: JdaVoiceWalkthroughCommand,
 ) {
     voiceWalkthrough.registerIn(registrar, config.guildId)
+}
+
+/**
+ * Registers the guild-scoped `/locale` command through [registrar] using validated [config].
+ *
+ * Descriptions use the shared catalog's default (`en-US`) strings plus every translation the catalog
+ * actually provides (currently `es-ES`). The definition is admin-only, has one required
+ * autocomplete string option, and is only ever published into the configured guild. Global
+ * command-registration parity remains a Phase 6 requirement.
+ */
+internal suspend fun registerLocaleCommand(
+    registrar: GuildCommandRegistrar,
+    config: JdaRuntimeConfig,
+    localizationService: GuildLocalizationService,
+) {
+    val descriptionKey = LocaleMessageKeys.LOCALE_COMMAND_DESCRIPTION
+    val optionDescriptionKey = LocaleMessageKeys.LOCALE_COMMAND_INPUT_DESCRIPTION
+    val definition = LocaleCommandHandler.definition(
+        description = localizationService.getDefaultString(descriptionKey),
+        optionDescription = localizationService.getDefaultString(optionDescriptionKey),
+        descriptionLocalizations = localizationService.getLocalizations(descriptionKey),
+        optionDescriptionLocalizations = localizationService.getLocalizations(optionDescriptionKey),
+    )
+    registrar.register(config.guildId, definition)
 }

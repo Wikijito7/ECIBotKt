@@ -1,10 +1,18 @@
 package es.wokis.commands.neutral
 
+import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.walkthrough.WalkthroughCommand
+import es.wokis.domain.locale.DiscordLocaleCatalog
+import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.LocaleCode
+import es.wokis.domain.locale.LocaleRepository
+import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.domain.model.ChannelId
 import es.wokis.domain.model.GuildId
 import es.wokis.domain.model.UserId
+import es.wokis.localization.GuildLocalizationService
+import es.wokis.localization.LocaleMessageKeys
+import es.wokis.localization.LocalizationCatalog
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -24,6 +32,14 @@ class NeutralCommandPortsTest {
         ChannelId::class.java,
         UserId::class.java,
         LocaleCode::class.java,
+        DiscordLocaleCatalog::class.java,
+        LocaleRepository::class.java,
+        GetGuildLocaleUseCase::class.java,
+        SetGuildLocaleUseCase::class.java,
+        GuildLocalizationService::class.java,
+        LocalizationCatalog::class.java,
+        LocaleMessageKeys::class.java,
+        LocaleCommandHandler::class.java,
     )
 
     private val gatewayPrefixes = listOf(

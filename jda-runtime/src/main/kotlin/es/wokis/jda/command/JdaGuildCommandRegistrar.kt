@@ -2,10 +2,16 @@ package es.wokis.jda.command
 
 import es.wokis.commands.neutral.CommandDefinition
 import es.wokis.commands.neutral.GuildCommandRegistrar
+import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.GuildId
 import es.wokis.jda.awaitRestActionCompletion
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.interactions.DiscordLocale
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
+import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
+import net.dv8tion.jda.api.interactions.commands.build.OptionData
 
 /**
  * [GuildCommandRegistrar] backed by a live JDA client.
@@ -24,10 +30,43 @@ internal class JdaGuildCommandRegistrar(
                 "The bot is not a member of guild $guildId, so /${command.name} cannot be registered",
             )
 
-        guild.upsertCommand(Commands.slash(command.name, command.description))
+        val commandData = Commands.slash(command.name, command.description)
+        command.descriptionLocalizations.toJdaLocalizationsOrNull()?.let { localizations ->
+            commandData.setDescriptionLocalizations(localizations)
+        }
+
+        command.stringOption?.let { option ->
+            val optionData = OptionData(OptionType.STRING, option.name, option.description)
+                .setRequired(option.required)
+                .setAutoComplete(option.autocomplete)
+            option.descriptionLocalizations.toJdaLocalizationsOrNull()?.let { localizations ->
+                optionData.setDescriptionLocalizations(localizations)
+            }
+            commandData.addOptions(optionData)
+        }
+
+        if (command.adminOnly) {
+            commandData.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
+        }
+
+        guild.upsertCommand(commandData)
             .awaitRestActionCompletion()
     }
 }
+
+/**
+ * Maps neutral canonical tags to JDA locales only at the registration edge.
+ *
+ * Translations that do not correspond to a real JDA/Discord locale are dropped instead of being
+ * fabricated or sent as custom tags. An empty result means the definition carries no metadata
+ * beyond its base description.
+ */
+private fun Map<LocaleCode, String>.toJdaLocalizationsOrNull(): Map<DiscordLocale, String>? =
+    mapNotNull { (localeCode, value) ->
+        DiscordLocale.from(localeCode.value)
+            .takeIf { it != DiscordLocale.UNKNOWN }
+            ?.let { it to value }
+    }.toMap().takeIf { it.isNotEmpty() }
 
 /**
  * Converts the unsigned neutral [GuildId] into JDA's signed 64-bit guild id.

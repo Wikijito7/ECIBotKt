@@ -3,11 +3,14 @@ package commands.locale
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
+import dev.kord.rest.builder.interaction.ChatInputCreateBuilder
+import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import es.wokis.commands.locale.LocaleCommand
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.domain.model.GuildId
 import es.wokis.exceptions.BotException
+import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.toGuildId
 import io.mockk.coEvery
@@ -31,6 +34,33 @@ class LocaleCommandTest {
         localizationService = localizationService,
         setGuildLocaleUseCase = setGuildLocaleUseCase
     )
+
+    @Test
+    fun `Given localizations ordered with Spanish first When registering Then default command and option descriptions use en-US`() {
+        // Given: an iteration order where the translated value appears before the default
+        every {
+            localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_DESCRIPTION)
+        } returns linkedMapOf(
+            Locale.SPANISH_SPAIN to "Establecer el idioma preferido para este servidor",
+            Locale.ENGLISH_UNITED_STATES to "Set the preferred locale for this guild",
+        )
+        every {
+            localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION)
+        } returns linkedMapOf(
+            Locale.SPANISH_SPAIN to "Idioma a establecer",
+            Locale.ENGLISH_UNITED_STATES to "Locale to set",
+        )
+        val commandBuilder = GlobalMultiApplicationCommandBuilder()
+
+        // When
+        localeCommand.onRegisterCommand(commandBuilder)
+
+        // Then both defaults are the en-US values, not the first map values
+        val registered = commandBuilder.commands.single() as ChatInputCreateBuilder
+        assertEquals("Set the preferred locale for this guild", registered.description)
+        val option = requireNotNull(registered.options).single()
+        assertEquals("Locale to set", option.description)
+    }
 
     @Test
     fun `Given valid locale When onExecute is called Then set guild locale`() = runTest {

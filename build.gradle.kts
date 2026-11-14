@@ -28,6 +28,8 @@ repositories {
 dependencies {
     // Neutral domain/command boundary shared with the isolated JDA runtime.
     implementation(project(":core"))
+    // Shared JSON locale persistence used by both the Kord and JDA runtimes.
+    implementation(project(":locale-persistence"))
 
     // Kord - Local SNAPSHOT JARs (voice encryption branch)
     // TODO: Switch back to version catalog when Kord merges voice encryption to main (kord#1063)
@@ -131,7 +133,7 @@ sonar {
 
 tasks.named("sonar") {
     // Ensure each module produces its XML coverage report before analysis
-    dependsOn(":core:jacocoTestReport", ":jda-runtime:jacocoTestReport")
+    dependsOn(":core:jacocoTestReport", ":locale-persistence:jacocoTestReport", ":jda-runtime:jacocoTestReport")
 }
 
 kotlin {
@@ -142,7 +144,7 @@ tasks.register("generateLangClass") {
     description = "Generates LocalizationKeys content from lang.yml keys"
     group = "lang"
     doLast {
-        val baseLangFile = file("src/main/resources/lang/lang.yml")
+        val baseLangFile = file("core/src/main/resources/lang/lang.yml")
         val outputFile = file("src/main/kotlin/localization/LocalizationKeys.kt")
 
         val fileContent = buildString {
