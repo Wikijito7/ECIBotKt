@@ -1,5 +1,6 @@
 package es.wokis.commands.locale
 
+import dev.kord.common.Locale
 import dev.kord.common.entity.Choice
 import dev.kord.common.entity.Permission
 import dev.kord.common.entity.Permissions
@@ -14,10 +15,11 @@ import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.Autocomplete
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
-import es.wokis.data.locale.RESET_LOCALE_VALUE
+import es.wokis.domain.locale.RESET_LOCALE_VALUE
 import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.exceptions.BotException
 import es.wokis.localization.LocalizationKeys
+import es.wokis.localization.NoLocalizationFoundException
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.DISCORD_LOCALE_MAP
 import es.wokis.utils.toGuildId
@@ -25,24 +27,36 @@ import es.wokis.utils.toLocaleCode
 
 private const val ARGUMENT_LOCALE = "locale"
 
+/**
+ * Deterministically selects the canonical default (`en-US`) description from the catalog map.
+ *
+ * Map iteration order must not decide the base command text. A catalog that lacks the default
+ * entry is reported instead of silently publishing another locale's string.
+ */
+private fun Map<Locale, String>.defaultDescription(key: String): String =
+    this[Locale.ENGLISH_UNITED_STATES] ?: throw NoLocalizationFoundException(key)
+
 class LocaleCommand(
     private val localizationService: LocalizationService,
     private val setGuildLocaleUseCase: SetGuildLocaleUseCase
 ) : Command, Autocomplete {
 
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
+        val commandDescriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_DESCRIPTION)
+        val optionDescriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION)
+
         commandBuilder.apply {
             input(
                 name = CommandName.Locale.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_DESCRIPTION).values.first()
+                description = commandDescriptionLocalizations.defaultDescription(LocalizationKeys.LOCALE_COMMAND_DESCRIPTION)
             ) {
-                descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_DESCRIPTION)
+                this.descriptionLocalizations = commandDescriptionLocalizations
                 defaultMemberPermissions = Permissions(Permission.Administrator)
                 string(
                     name = ARGUMENT_LOCALE,
-                    description = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION).values.first()
+                    description = optionDescriptionLocalizations.defaultDescription(LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION)
                 ) {
-                    descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION)
+                    this.descriptionLocalizations = optionDescriptionLocalizations
                     required = true
                     autocomplete = true
                 }

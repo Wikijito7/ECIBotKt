@@ -2,6 +2,7 @@ package es.wokis.utils
 
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
+import es.wokis.domain.locale.DiscordLocaleCatalog
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.GuildId
 
@@ -17,34 +18,42 @@ fun Locale?.orDefaultLocale(): Locale = this ?: Locale.ENGLISH_UNITED_STATES
 fun Snowflake.toGuildId(): GuildId = GuildId(value)
 
 /**
- * Map of Discord locale codes to Kord Locale objects.
- * Source: https://discord.com/developers/docs/reference#locales
+ * Map of canonical Discord locale tags to Kord Locale objects.
+ *
+ * The tags come from the neutral [DiscordLocaleCatalog], so entries that Kord itself does not
+ * model in `Locale.ALL` — notably `ar` and `he` — are still selectable and persisting them is safe.
  */
-val DISCORD_LOCALE_MAP: Map<String, Locale> = Locale.ALL.associateBy {
-    listOfNotNull(it.language, it.country).joinToString("-")
+val DISCORD_LOCALE_MAP: Map<String, Locale> = DiscordLocaleCatalog.supportedLocales.associate { localeCode ->
+    localeCode.value to localeCode.toKordLocale()
 }
 
 /**
- * Reverse map to convert a Kord Locale back to its Discord locale code.
+ * Converts a Kord [Locale] to its neutral [LocaleCode] representation.
+ *
+ * @throws IllegalArgumentException when the locale is not part of the canonical Discord catalog.
  */
-private val LOCALE_TO_CODE_MAP: Map<Locale, String> = DISCORD_LOCALE_MAP.entries.associate { it.value to it.key }
+fun Locale.toLocaleCode(): LocaleCode = toLocaleCodeOrNull()
+    ?: throw IllegalArgumentException("Unknown locale: $this")
 
 /**
- * Converts a Kord [Locale] to its neutral [LocaleCode] representation.
+ * Converts a Kord [Locale] to its neutral [LocaleCode] representation, or `null` when the locale
+ * is not part of the canonical Discord catalog.
  */
-fun Locale.toLocaleCode(): LocaleCode = LocaleCode(toDiscordCode())
+fun Locale.toLocaleCodeOrNull(): LocaleCode? = DiscordLocaleCatalog.find(toDiscordTag())
 
 /**
  * Converts a neutral [LocaleCode] to a Kord [Locale].
  *
+ * The code must be a canonical catalog tag. This rejects format-valid but non-Discord tags such
+ * as `xx-YY` instead of treating them as supported locales.
+ *
  * @return the matching locale, or null when the stored code is not a known Discord locale
  */
-fun LocaleCode.toKordLocaleOrNull(): Locale? = try {
-    Locale.fromString(value)
-} catch (e: Exception) {
-    Log.error("Failed to parse locale '$value'", e)
-    null
+fun LocaleCode.toKordLocaleOrNull(): Locale? = DiscordLocaleCatalog.find(value)?.toKordLocale()
+
+private fun LocaleCode.toKordLocale(): Locale {
+    val parts = value.split("-", limit = 2)
+    return Locale(language = parts.first(), country = parts.getOrNull(1))
 }
 
-private fun Locale.toDiscordCode(): String = LOCALE_TO_CODE_MAP[this]
-    ?: throw IllegalArgumentException("Unknown locale: $this")
+private fun Locale.toDiscordTag(): String = listOfNotNull(language, country).joinToString("-")

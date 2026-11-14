@@ -275,6 +275,7 @@ class JdaCommandRouterFailurePathsTest {
             every { slashEvent.channel } returns channel
             every { slashEvent.user } returns user
             every { slashEvent.userLocale } returns DiscordLocale.ENGLISH_US
+            every { slashEvent.options } returns emptyList()
         }
     }
 

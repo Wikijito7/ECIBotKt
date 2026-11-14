@@ -13,6 +13,8 @@ repositories {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":locale-persistence"))
+    implementation(libs.kotlinx.serialization)
     implementation(libs.jda)
     implementation(libs.libdaveV2Api)
     implementation(libs.libdaveV2ImplJni)

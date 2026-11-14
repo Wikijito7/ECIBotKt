@@ -3,35 +3,43 @@ package es.wokis.services.localization
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import es.wokis.domain.locale.GetGuildLocaleUseCase
+import es.wokis.localization.GuildLocalizationService
+import es.wokis.localization.LocalizationCatalog
 import es.wokis.utils.toGuildId
 import es.wokis.utils.toKordLocaleOrNull
-import java.net.URI
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import kotlin.io.path.nameWithoutExtension
+import es.wokis.utils.toLocaleCodeOrNull
 
-private const val LANG_PATH = "/lang"
-private val LANG_RESOURCE = {}::class.java.getResource(LANG_PATH)
-
+/**
+ * Kord-facing localization adapter.
+ *
+ * The catalog, fallback rules and guild-locale resolution live in the neutral
+ * [GuildLocalizationService] in `:core`; this class only converts Kord [Snowflake] and [Locale]
+ * values at the edge and keeps the legacy public signatures used by the root runtime.
+ */
 class LocalizationService(
-    private val getGuildLocaleUseCase: GetGuildLocaleUseCase
+    getGuildLocaleUseCase: GetGuildLocaleUseCase,
 ) {
 
-    private val localizedStrings: Map<String, List<LocalizedString>> = loadLanguages()
+    private val delegate = GuildLocalizationService(
+        getGuildLocaleUseCase = getGuildLocaleUseCase,
+        catalog = LocalizationCatalog.load(),
+    )
 
-    fun getLocalizations(key: String): MutableMap<Locale, String> = localizedStrings[key]?.associate { it.locale to it.value }?.toMutableMap()
-        ?: throw NoLocalizationFoundException(key)
+    fun getLocalizations(key: String): MutableMap<Locale, String> =
+        delegate.getLocalizations(key)
+            .mapNotNull { (localeCode, value) -> localeCode.toKordLocaleOrNull()?.let { it to value } }
+            .toMap()
+            .toMutableMap()
 
     suspend fun getString(
         key: String,
         guildId: Snowflake? = null,
-        discordLocale: Locale? = null
-    ): String {
-        val effectiveLocale = resolveLocale(guildId, discordLocale)
-        return localizedStrings[key]?.find { it.locale == effectiveLocale }?.value ?: getDefaultString(key)
-    }
+        discordLocale: Locale? = null,
+    ): String = delegate.getString(
+        key = key,
+        guildId = guildId?.toGuildId(),
+        guildDefaultLocale = discordLocale?.toLocaleCodeOrNull(),
+    )
 
     suspend fun getStringFormat(
         key: String,
@@ -39,61 +47,12 @@ class LocalizationService(
         discordLocale: Locale? = null,
         vararg arguments: Any
     ): String = getString(key, guildId, discordLocale).format(*arguments)
-
-    private suspend fun resolveLocale(guildId: Snowflake?, discordLocale: Locale?): Locale =
-        guildId?.let { getGuildLocaleUseCase(it.toGuildId())?.toKordLocaleOrNull() }
-            ?: discordLocale
-            ?: Locale.ENGLISH_UNITED_STATES
-
-    private fun getDefaultString(key: String): String =
-        localizedStrings[key]?.find { it.locale == Locale.ENGLISH_UNITED_STATES }?.value
-            ?: throw NoLocalizationFoundException(key)
-
-    // Localization should follow Discord locale definition or else it will crash
-    // https://discord.com/developers/docs/reference#locales
-    private fun loadLanguages(): Map<String, List<LocalizedString>> {
-        val localizationMap = getLocalizations()
-        return localizationMap.map { it.key to it.value.toList() }.toMap()
-    }
-
-    private fun getLocalizations(): Map<String, MutableList<LocalizedString>> {
-        if (LANG_RESOURCE == null) throw LocalizationFolderNotFoundException()
-        val uri = LANG_RESOURCE.toURI()
-        val paths = getPaths(uri)
-        return readAllLocalizations(paths)
-    }
-
-    private fun getPaths(uri: URI): List<Path> = if (uri.scheme == "jar") {
-        val fs = FileSystems.newFileSystem(uri, emptyMap<String, Any>())
-        val folderPath = fs.getPath(LANG_PATH)
-        Files.list(folderPath).toList()
-    } else {
-        Files.list(Paths.get(uri)).toList()
-    }
-
-    private fun readAllLocalizations(paths: List<Path>): Map<String, MutableList<LocalizedString>> {
-        val localizations: MutableMap<String, MutableList<LocalizedString>> = mutableMapOf()
-        paths.forEach { path ->
-            val locale = path.nameWithoutExtension.split("_").getOrNull(1)?.let { Locale.fromString(it) }
-                ?: Locale.ENGLISH_UNITED_STATES
-            Files.newBufferedReader(path).use { it.readLines() }.forEach { line ->
-                val lineSplit = line.replace("\\n", "\n").split(": ")
-                localizations[lineSplit.first()] = (localizations[lineSplit.first()] ?: mutableListOf()).apply {
-                    add(LocalizedString(locale, lineSplit[1]))
-                }
-            }
-        }
-        return localizations.toMap()
-    }
 }
 
-data class LocalizedString(
-    val locale: Locale,
-    val value: String
-)
-
-class LocalizationFolderNotFoundException : Exception("There is an error finding the localization folder")
-
-class NoLocalizationFileFoundException : Exception("There are no localization files inside localization folder")
-
-class NoLocalizationFoundException(key: String) : Exception("There are no localization for key $key")
+/**
+ * Compatibility aliases for the pre-extraction exception names used by the root test suite and
+ * error-handling code. The actual exceptions are now owned by `:core`.
+ */
+typealias LocalizationFolderNotFoundException = es.wokis.localization.LocalizationFolderNotFoundException
+typealias NoLocalizationFileFoundException = es.wokis.localization.NoLocalizationFileFoundException
+typealias NoLocalizationFoundException = es.wokis.localization.NoLocalizationFoundException
