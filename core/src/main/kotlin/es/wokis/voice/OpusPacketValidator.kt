@@ -53,6 +53,7 @@ object OpusPacketValidator {
         val samplesPerFrame = samplesPerFrame(toc ushr CONFIG_SHIFT)
         val frameCount = when (toc and CODE_MASK) {
             CODE_ONE_FRAME -> 1
+
             CODE_TWO_CBR_FRAMES -> {
                 val frameBytes = payload.size - 1
                 require(frameBytes % 2 == 0) {
@@ -60,6 +61,7 @@ object OpusPacketValidator {
                 }
                 2
             }
+
             CODE_TWO_VBR_FRAMES -> {
                 val (firstLength, headerBytes) = readFrameLength(payload, 1, payload.size)
                 val secondLength = payload.size - 1 - headerBytes - firstLength
@@ -69,6 +71,7 @@ object OpusPacketValidator {
                 }
                 2
             }
+
             else -> parseCodeThreeFrameCount(payload)
         }
 
@@ -170,10 +173,12 @@ object OpusPacketValidator {
             2 -> SAMPLES_40_MS
             else -> SAMPLES_60_MS
         }
+
         config < CELT_CONFIG_LIMIT -> when (config and 0x01) {
             0 -> SAMPLES_10_MS
             else -> SAMPLES_20_MS
         }
+
         else -> when (config and 0x03) {
             0 -> SAMPLES_2_5_MS
             1 -> SAMPLES_5_MS

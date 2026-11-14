@@ -274,7 +274,9 @@ class OpusPacketFrameSourceTest {
 
         val frameCount = when (code) {
             0 -> 1
+
             1, 2 -> 2
+
             else -> {
                 assertTrue(packet.size >= 2, "a code-3 packet needs a frame count byte")
                 packet[1].toInt() and 0x3F

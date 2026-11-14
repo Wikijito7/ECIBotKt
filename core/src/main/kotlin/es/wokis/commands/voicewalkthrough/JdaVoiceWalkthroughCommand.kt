@@ -76,11 +76,17 @@ class JdaVoiceWalkthroughCommand(
 
         is VoicePlaybackResult.Rejected -> when (reason) {
             VoiceRequestRejection.DIRECT_MESSAGE -> "This command must be used in a guild voice channel."
+
             VoiceRequestRejection.USER_NOT_IN_VOICE -> "Join a regular voice channel first, then try again."
+
             VoiceRequestRejection.STAGE_CHANNEL -> "Stage channels are not supported; use a regular voice channel."
+
             VoiceRequestRejection.UNSUPPORTED_CHANNEL -> "That channel type is not supported; use a regular voice channel."
+
             VoiceRequestRejection.OTHER_GUILD -> "Join a voice channel in this guild."
+
             VoiceRequestRejection.PLAYBACK_IN_PROGRESS -> "A voice walkthrough is already running. Wait for it to finish."
+
             VoiceRequestRejection.VOICE_SESSION_ALREADY_ACTIVE ->
                 "The bot already has an active voice session in this guild. Wait for it to end and try again."
         }
@@ -90,10 +96,15 @@ class JdaVoiceWalkthroughCommand(
                 "The bot is missing permission to join or speak in that voice channel."
 
             VoiceFailureReason.CONNECT_TIMEOUT -> "Timed out waiting for the voice connection."
+
             VoiceFailureReason.CONNECTION_LOST -> "The voice connection was lost before playback completed."
+
             VoiceFailureReason.TONE_TIMEOUT -> "Timed out waiting for the tone to finish."
+
             VoiceFailureReason.INCOMPLETE_PLAYBACK -> "Not all tone frames were handed to the voice connection."
+
             VoiceFailureReason.DISCONNECT_UNCONFIRMED -> "The voice connection did not close cleanly."
+
             VoiceFailureReason.CLEANUP_FAILED ->
                 "The voice session could not be cleaned up completely after the walkthrough."
 

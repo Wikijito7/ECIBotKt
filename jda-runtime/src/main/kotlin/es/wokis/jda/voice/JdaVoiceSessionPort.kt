@@ -74,6 +74,7 @@ internal class JdaVoiceSessionPort(
         try {
             return when (val target = resolveTarget(context)) {
                 is Target.Rejected -> VoicePlaybackResult.Rejected(target.reason)
+
                 is Target.Ready -> withContext(Dispatchers.IO) {
                     connectAndPlay(target.guild, target.channel, source)
                 }
@@ -525,7 +526,9 @@ internal class JdaVoiceSessionPort(
             val collected = failures
             return when (collected.size) {
                 0 -> null
+
                 1 -> collected.single()
+
                 else -> collected.first().also { primary ->
                     collected.drop(1).forEach(primary::addSuppressed)
                 }

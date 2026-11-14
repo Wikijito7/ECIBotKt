@@ -395,33 +395,33 @@ internal class JdaAudioSendHandler(
      * (`Error` or a source-signalled [CancellationException]) is rethrown after it has released
      * this wait, so the session port can preserve its fatal precedence and still run cleanup.
      */
-    suspend fun awaitCompletionCancellable(timeoutMillis: Long): Boolean {
-        return try {
-            when {
-                completion.isDone -> {
-                    completion.awaitCancellable()
-                    true
-                }
-                timeoutMillis <= 0 -> false
-                else -> withTimeoutOrNull(timeoutMillis) {
-                    completion.awaitCancellable()
-                    true
-                } ?: false
+    suspend fun awaitCompletionCancellable(timeoutMillis: Long): Boolean = try {
+        when {
+            completion.isDone -> {
+                completion.awaitCancellable()
+                true
             }
-        } catch (cancellation: CancellationException) {
-            // A source may fail with a CancellationException of its own and an actual coroutine
-            // cancellation reaches this catch too; both are fatal and must propagate instead of
-            // being reported as an ordinary incomplete playback. A fatal failure recorded under
-            // [stateLock] outranks the generic cancellation of the completion future, so it is
-            // rethrown rather than masked.
-            throw (recordedFatalFailure() ?: cancellation)
-        } catch (error: Error) {
-            throw error
-        } catch (_: Exception) {
-            // A stopped or otherwise failed future is not a completion: a fatal source failure
-            // recorded before the termination keeps its precedence over the ordinary stop.
-            recordedFatalFailure()?.let { throw it }
-            false
+
+            timeoutMillis <= 0 -> false
+
+            else -> withTimeoutOrNull(timeoutMillis) {
+                completion.awaitCancellable()
+                true
+            } ?: false
         }
+    } catch (cancellation: CancellationException) {
+        // A source may fail with a CancellationException of its own and an actual coroutine
+        // cancellation reaches this catch too; both are fatal and must propagate instead of
+        // being reported as an ordinary incomplete playback. A fatal failure recorded under
+        // [stateLock] outranks the generic cancellation of the completion future, so it is
+        // rethrown rather than masked.
+        throw (recordedFatalFailure() ?: cancellation)
+    } catch (error: Error) {
+        throw error
+    } catch (_: Exception) {
+        // A stopped or otherwise failed future is not a completion: a fatal source failure
+        // recorded before the termination keeps its precedence over the ordinary stop.
+        recordedFatalFailure()?.let { throw it }
+        false
     }
 }

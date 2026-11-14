@@ -25,11 +25,16 @@ commit — not a squash — at `255893abcef31554e13ae1713086a9b7c1217c60`, whose
 `c00bdf1` and the Phase 2B head `7d8661d`. The merge tree is identical to `7d8661d`, so the epic tip
 now carries the Phase 2B pass unchanged. Phase 2B is **PASS — gate closed on 2026-11-13** (see the
 Phase 2B section below). The next subphase is **Phase 2C**, which is now
-**IN PROGRESS — implementation with local tests**: its acceptance criteria and branch/base posture are
-recorded in the Phase 2C section, and its local branch `feature/114-phase-2c-voice-ports` was created
-from the fetched epic head `255893a`. Its production implementation and unit tests exist as
-**uncommitted local working-tree changes** and pass locally (see the Phase 2C section), but **no 2C PR
-has been opened (no #118 yet), and no CI run or staging result exists**. Broader
+**IN PROGRESS — implementation pushed, CI mixed, gate open**: its acceptance criteria and branch/base
+posture are recorded in the Phase 2C section. Its branch `feature/114-phase-2c-voice-ports` was created
+from the fetched epic head `255893a`, the implementation is pushed, and **draft PR #118 (base: the epic
+branch) is open** on head `c893567`. The verified checks on that head are **mixed, not green**:
+**Check Code Quality failed** in its ktlint step on formatting findings, while **Build and analyze**,
+**SonarCloud Code Analysis** and **SonarCloud** succeeded. The matching ktlint repairs exist only in
+the **local working tree** — they are **not committed or pushed**, and no CI run exists for the
+patched head — and **no staging evidence exists**, so the gate stays open. The only GitHub review on
+PR #118 is the automated `github-actions[bot]` **COMMENTED** review carrying ktlint annotations; no
+human review has been submitted. Broader
 **Phase 2 remains IN PROGRESS**: subphases 2C/2D, root Kord removal/bootstrap wiring and the overall
 Phase 2 exit criteria are still open. `7bf5419` (`Corrected Phase 2B CI status record`) is the latest
 **verified all-green CI checkpoint** before the subsequent docs-only updates: all four #117 checks
@@ -64,8 +69,8 @@ not a standing guarantee: read the GitHub check runs for any later head. Local Q
 satisfied the independent review criterion; no GitHub PR review has been submitted, which is not itself
 a required gate. PR #117 is **merged** into the epic branch at `255893a`; it is not modified here.
 Issue #114 stays open because broader Phase 2 (2C/2D, root Kord removal and bootstrap wiring) is
-unfinished; **Phase 2C implementation is in progress with local working-tree tests only** on
-`feature/114-phase-2c-voice-ports`.
+unfinished; **Phase 2C is in progress on `feature/114-phase-2c-voice-ports` under open draft PR #118**,
+with mixed CI on head `c893567` and no staging evidence yet.
 
 > **This is a plan, not implementation.** Nothing below is proven until the gate it belongs to
 > produces recorded evidence. "Fact" = verified against the repository or upstream sources today.
@@ -84,10 +89,10 @@ still open · **OPEN** = not started, gate still open.
 | Phase 1B — missing-DAVE-native fail-fast simulation | **PASS — gate closed (2026-11-08)** | User-run negative container on Linux amd64, Temurin 21.0.13 (`eclipse-temurin:21`), negative no-DAVE-native JAR: exit exactly `3` (`EXIT_NATIVE`), DAVE native unavailable with `UnsatisfiedLinkError: Required library was not found`, **zero** `[gateway] logging in` and **zero** `[gateway] ready` lines, fake placeholder token never printed. The host pre-pulled the image, so the image pull was not itself isolated; the container ran with `--network none`. Sanitized record only |
 | R1 — `jda-ktx 0.14.2` + JDA 6.7.0 pairing | **IN PROGRESS — transport subgate PASS only** | Candidate resolved and exercised for voice transport; still not an upstream-declared combination and not yet re-verified on the final Phase 6 artifact |
 | R2 — `adapter-jda` 0.2.0 vs JDA 6.7.0 ABI | **IN PROGRESS — transport subgate PASS only** | DAVE negotiated and played through JDA; published metadata still does not declare or test 6.7.0, and the ABI is not yet re-verified on the final Phase 6 artifact |
-| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork **landed on the epic branch** through the squash merge of PR #115 (`5aad7c7`, tree identical to the former 2A head `67802d1`); Phase 2A itself remains **partial**, not complete. Phase 2B is **PASS — gate closed 2026-11-13**: its neutral command boundary and isolated JDA runtime exist with unit tests on child branch `feature/114-phase-2b-command-port`, JaCoCo coverage is wired for both isolated modules, CI passed on the verified all-green checkpoints `988a7cd` and `7bf5419` (the latest verified all-green checkpoint before the subsequent docs-only updates; all of these are historical checkpoints, so read the live checks for later heads), and the user-run staging `/jda-walkthrough` interaction succeeded (sanitized evidence in the Phase 2B section). Nothing is wired into the root runtime, and the command layer plus locale service/command neutrality remain **OPEN**. Remaining work is subphases 2C and 2D (see Phase 2); **2C is IN PROGRESS — implementation with local tests**: its acceptance criteria are written in the Phase 2C section and its local branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a`; implementation and unit tests exist as uncommitted local working-tree changes and pass locally, but there is no 2C PR (no #118), no CI run and no staging evidence yet. PR #116 was **squash-merged** into the epic branch (`c00bdf1`); PR #117 was then **merged** into the epic branch by a regular merge commit at `255893a` (parents `c00bdf1` and `7d8661d`, merge tree identical to the Phase 2B head) |
+| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork **landed on the epic branch** through the squash merge of PR #115 (`5aad7c7`, tree identical to the former 2A head `67802d1`); Phase 2A itself remains **partial**, not complete. Phase 2B is **PASS — gate closed 2026-11-13**: its neutral command boundary and isolated JDA runtime exist with unit tests on child branch `feature/114-phase-2b-command-port`, JaCoCo coverage is wired for both isolated modules, CI passed on the verified all-green checkpoints `988a7cd` and `7bf5419` (the latest verified all-green checkpoint before the subsequent docs-only updates; all of these are historical checkpoints, so read the live checks for later heads), and the user-run staging `/jda-walkthrough` interaction succeeded (sanitized evidence in the Phase 2B section). Nothing is wired into the root runtime, and the command layer plus locale service/command neutrality remain **OPEN**. Remaining work is subphases 2C and 2D (see Phase 2); **2C is IN PROGRESS — implementation pushed, PR #118 open, CI mixed**: its acceptance criteria are written in the Phase 2C section and its branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a`; the implementation and unit tests are pushed on head `c893567`, where **Check Code Quality failed** its ktlint step while **Build and analyze** and both SonarCloud checks succeeded (90.1% new-code coverage, 11 new issues, 0 security hotspots). The local ktlint repairs are uncommitted and unpushed, no CI run exists for the patched head, and **no staging evidence exists**, so the gate remains open. PR #116 was **squash-merged** into the epic branch (`c00bdf1`); PR #117 was then **merged** into the epic branch by a regular merge commit at `255893a` (parents `c00bdf1` and `7d8661d`, merge tree identical to the Phase 2B head) |
 | Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS / partial** | Phase 2A source and test changes were **squash-merged** into the epic branch by PR #115 as `5aad7c7`; that commit's tree equals the former 2A head `67802d1`, and the former `feature/114-kord-to-jda-migration` branch is deleted. The merge brings the groundwork in but does **not** complete 2A: `GuildId`/`LocaleCode` and the locale repository/use cases are **neutral**, while `LocalizationService` and `/locale` remain Kord-facing and must be moved behind/adapted in a later Phase 2 subphase (2D) |
 | Phase 2B — neutral command context + responder/response port | **PASS — gate closed (2026-11-13)** | Implementation and unit tests are present on `feature/114-phase-2b-command-port` as the initial implementation checkpoint `fbd9f5a`, originally stacked on Phase 1B `feature/114-native-failfast-check`. PR #116 has since been **squash-merged** into the epic branch (`c00bdf1`), so PR #117 was retargeted to the epic branch and was later **merged** into it by the regular merge commit `255893a`; its only conflict — this plan — was resolved by an ancestry merge that changed no code. The branch adds isolated Gradle modules `:core` (gateway-free neutral ports and a pure walkthrough handler) and `:jda-runtime` (JDA 6.7.0 adapter, guild-only `/jda-walkthrough`); the root project depends on `:core` only and remains Kord-based and JDA-free. On head `001e722` **Check Code Quality**, **Build and analyze** and the separately named **SonarCloud** check passed, while **SonarCloud Code Analysis** failed its Quality Gate at 0.0% coverage on new code (required >=50%) because the modules emitted no JaCoCo XML; the JaCoCo 0.8.12 fix then passed CI on the covered checkpoint `e607ff7` — all four #117 checks green, including both SonarCloud checks, with 75.0% Coverage on New Code, 0 new issues and 0 hotspots. The later docs-only checkpoints `2850907`, `16247f8` and `d353113` also passed all four #117 checks, as did `988a7cd` (last check completed 2026-11-13 16:38:44Z), and `e4a9e29` was observed in progress at 16:41:06Z (the observation time, when only Check Code Quality had concluded successfully) and later completed all four checks successfully (last at 16:44:11Z). `7bf5419` (`Corrected Phase 2B CI status record`) is the latest verified all-green checkpoint before the subsequent docs-only updates: all four checks passed on 2026-11-13 — Check Code Quality 16:47:15Z, SonarCloud Code Analysis 16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z — with 75.0% Coverage on New Code, 0 new issues and 0 hotspots; it was the head at that point, not afterwards. The later docs-only `f5f04d1` (`Recorded passing Phase 2B CI runs`) was the head in a dated snapshot observed on 2026-11-13 in which only Check Code Quality had concluded successfully (16:53:24Z), Build and analyze was still in progress and the SonarCloud checks were not yet listed — so it was **not green at that snapshot**; GitHub holds the status of the head after this docs-only follow-up. All of these are historical verified checkpoints, not a guarantee for later commits, so CI status for any newer head must be read from the GitHub check runs. Local QA and reviewer agents satisfied the independent review criterion while no GitHub PR review has been submitted. The user ran the isolated runtime on 2026-11-13 against staging and the guild-scoped `/jda-walkthrough` replied `JDA walkthrough OK`, closing the gate. PR #117 was subsequently **merged** into the epic branch by a regular merge commit at `255893a`, so the Phase 2B pass is now on the epic integration branch. The root runtime is still Kord-based and JDA-free |
-| Phase 2C — voice/session/player message ports and adapters | **IN PROGRESS — implementation + local tests** | Acceptance criteria and branch/base posture are recorded in the Phase 2C section. Local branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a` (the regular merge commit that brought PR #117 into the epic branch), and its plan commit is pushed to the same branch name. The neutral voice/audio/player-message ports, their JDA adapters, the DAVE 0.2.0 wiring and `/jda-voice-walkthrough` exist as uncommitted local working-tree changes with unit tests. Latest **local working-tree** run: `:core:test` 81 tests, `:jda-runtime:test` 224 tests and the root suite 380 tests (5 pre-existing skips) all pass with 0 failures/errors — **685 cases total (680 executed + 5 skips)**; local JaCoCo **module** line coverage is `:core` **207/219 = 94.52%** (branch **108/115 = 93.91%**) and `:jda-runtime` **869/947 = 91.76%** (branch **342/418 = 81.82%**), and the full `./gradlew build` passed cleanly. All coverage figures here are **local module JaCoCo report readings only — not Sonar, new-code or CI evidence**. Phase 2C is **not CI-verified**: no 2C PR has been opened (no #118), no CI run exists and user-run staging playback has not been done, so the accepted playback gate stays open. `master` is untouched |
+| Phase 2C — voice/session/player message ports and adapters | **IN PROGRESS — implementation pushed, CI mixed, gate open** | Acceptance criteria and branch/base posture are recorded in the Phase 2C section. Local branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a` (the regular merge commit that brought PR #117 into the epic branch). The neutral voice/audio/player-message ports, their JDA adapters, the DAVE 0.2.0 wiring, `/jda-voice-walkthrough` and the unit tests are **committed and pushed** on head `c893567` (`Added DAVE-backed JDA voice adapters`), open as **draft PR #118** against the epic branch. Verified CI on `c893567` (checks completed 2026-11-13 23:37–23:42Z) is **mixed, not green**: **Check Code Quality FAILED** in its ktlint step on 25 formatting findings (`blank-line-between-when-conditions` plus one `function-expression-body`); **Build and analyze** succeeded; **SonarCloud Code Analysis** succeeded with **90.1% new-code coverage, 11 new issues and 0 security hotspots** (no zero-issue claim); **SonarCloud** succeeded. Latest **local** run on the current **formatted** working tree (formatting-only repairs applied, still uncommitted): `:core:test` 81 tests, `:jda-runtime:test` 224 tests and the root suite 380 tests (5 pre-existing skips) all pass with 0 failures/errors — **685 cases total (680 executed + 5 skips)**; local JaCoCo **module** line coverage is `:core` **207/219 = 94.52%** (branch **108/115 = 93.91%**) and `:jda-runtime` **870/948 = 91.77%** (branch **342/418 = 81.82%**), and the full `./gradlew build` passed locally. All coverage figures here are **local module JaCoCo report readings only — not Sonar, new-code or CI evidence**. Phase 2C is **not accepted**: PR #118 is a draft whose CI is mixed (Check Code Quality failed), the six-file ktlint repairs are uncommitted/unpushed so **no CI run exists for the patched head**, the only GitHub review is the automated `github-actions[bot]` COMMENTED review with ktlint annotations (no human review), and user-run staging playback has not been done, so the accepted playback gate stays open. `master` is untouched |
 | Phase 2D — channel/message/locale edge adapters | **OPEN** | Not started. Planned child branch and PR based on the immediately preceding unmerged branch (2C); carries the `LocalizationService` and `/locale` neutrality work. Must preserve the guild default locale (`en_US` for non-Community guilds, community-configurable) as distinct from the user/client locale, and validate conversion/fallback at the adapter boundary. The root bot's localization behaviour is **not** migrated |
 | Phase 6 — Kord-free build, artifact and digest gates | **OPEN** | Not started |
 | Production cutover (Phase 7) | **OPEN** | Blocked by the Phase 6 and staging gates |
@@ -201,11 +206,14 @@ epic branch at `5aad7c7`; the former `feature/114-kord-to-jda-migration` branch 
 is restructured in place. Phase 2B branched from the Phase 1B branch
 `feature/114-native-failfast-check`; PR #116 was then **squash-merged** into the epic branch at
 `c00bdf1`, after which PR #117 targeted the epic branch and was later **merged** there by a regular
-merge commit at `255893a`. **2C is IN PROGRESS — implementation with local tests**: its acceptance
+merge commit at `255893a`. **2C is IN PROGRESS — implementation pushed, CI mixed**: its acceptance
 criteria are written below and its branch `feature/114-phase-2c-voice-ports` was created from the
-fetched epic head `255893a`, because the Phase 2B pass is contained in that merge tree; its
-implementation and unit tests exist as uncommitted local working-tree changes and pass locally, but no
-2C PR (no #118), CI run or staging evidence exists yet. The epic branch
+fetched epic head `255893a`, because the Phase 2B pass is contained in that merge tree. The
+implementation and unit tests are pushed and open as **draft PR #118** (base: the epic branch) on head
+`c893567`, where **Check Code Quality failed** its ktlint step while **Build and analyze** and both
+SonarCloud checks passed; the formatting-only ktlint repairs are uncommitted, no CI run exists for the
+patched head, the only GitHub review is the automated `github-actions[bot]` COMMENTED review (no human
+review), and no staging evidence exists. The epic branch
 `feature/114-migrate-to-jda-jda-ktx` remains the
 **final integration target**, and `master` is merged only at migration completion.
 
@@ -213,7 +221,7 @@ implementation and unit tests exist as uncommitted local working-tree changes an
 | --- | --- | --- | --- |
 | **2A** | Domain-owned `GuildId`/`LocaleCode` + neutral locale repository/use cases | **Squash-merged** into the epic branch by PR #115 as `5aad7c7`; the former `feature/114-kord-to-jda-migration` branch is deleted and the checkpoint is not restructured | **IN PROGRESS / partial** — merged groundwork does not complete 2A; see above |
 | **2B** | Neutral command context + responder/response port; adapters translate defer/ephemeral, locales and IDs | Child branch `feature/114-phase-2b-command-port`, originally based on Phase 1B `feature/114-native-failfast-check`; after #116 merged to the epic branch (`c00bdf1`), PR #117 was retargeted to the epic branch (base branch name only; no live base SHA asserted) and later **merged** there by the regular merge commit `255893a`; its one plan conflict was resolved by an ancestry merge that changed no code | **PASS — gate closed 2026-11-13** — isolated `:core`/`:jda-runtime` modules, neutral command boundary and JDA 6.7.0 adapter implemented with unit tests; #117 CI passed on covered checkpoint `e607ff7`, on the docs-only `2850907`/`16247f8`/`d353113`/`988a7cd`, on `e4a9e29` (later completed green after an in-progress observation), and on `7bf5419`, the latest verified all-green checkpoint before the subsequent docs-only updates (75.0% new-code coverage, 0 new issues, 0 hotspots); a later dated snapshot of `f5f04d1` (docs-only) was **not yet green** — only Check Code Quality had concluded at 16:53:24Z — so the status of any later head is read from GitHub; the user-run staging `/jda-walkthrough` interaction succeeded on 2026-11-13. Local QA/reviewer agents satisfied the independent review criterion; no GitHub PR review submitted, and the root runtime is still Kord-based. The pass is unaffected by the #116 ancestry merge |
-| **2C** | Voice/session/player-message narrow ports; JDA `AudioSendHandler`/DAVE and lifecycle stay in the adapter | Local branch `feature/114-phase-2c-voice-ports`, created from the fetched epic head `255893a` — the regular merge commit that contains PR #117's Phase 2B pass. Branch is pushed with the plan commit; implementation and tests are uncommitted local working-tree changes; **no PR is opened yet (no #118)** | **IN PROGRESS — implementation + local tests.** Acceptance criteria and branch/base posture are recorded in the Phase 2C section. Latest local working-tree run: 685 cases (680 executed + 5 pre-existing skips), all pass with 0 failures/errors; local JaCoCo module line coverage `:core` 207/219 = 94.52% (branch 108/115 = 93.91%), `:jda-runtime` 869/947 = 91.76% (branch 342/418 = 81.82%) — local module JaCoCo only, not Sonar/new-code CI evidence. **Not CI-verified**, no 2C PR (no #118), no CI run, no staging result |
+| **2C** | Voice/session/player-message narrow ports; JDA `AudioSendHandler`/DAVE and lifecycle stay in the adapter | Local branch `feature/114-phase-2c-voice-ports`, created from the fetched epic head `255893a` — the regular merge commit that contains PR #117's Phase 2B pass. Plan and implementation are pushed; **draft PR #118 is open** (base: the epic branch) at head `c893567` | **IN PROGRESS — implementation pushed, CI mixed, gate open.** Acceptance criteria and branch/base posture are recorded in the Phase 2C section. Latest **local** run on the current **formatted** working tree (formatting-only repairs applied but uncommitted): 685 cases (680 executed + 5 pre-existing skips), all pass with 0 failures/errors; local JaCoCo module line coverage `:core` 207/219 = 94.52% (branch 108/115 = 93.91%), `:jda-runtime` 870/948 = 91.77% (branch 342/418 = 81.82%) — local module JaCoCo only, not Sonar/new-code CI evidence. On `c893567`, **Check Code Quality failed** (ktlint, 25 formatting findings), **Build and analyze** passed, **SonarCloud Code Analysis** passed with 90.1% new-code coverage, 11 new issues and 0 security hotspots, and **SonarCloud** passed. The ktlint repairs are uncommitted/unpushed, so no CI run exists for the patched head; the only GitHub review is the automated `github-actions[bot]` COMMENTED review (no human review); no staging result |
 | **2D** | Channel/message/locale edge adapters; move `LocalizationService` and `/locale` behind/adapted to a neutral port; keep the community-configurable guild default distinct from user/client locale and validate conversion/fallback at the adapter boundary | New child branch/PR based on the preceding subphase branch (2C) | **OPEN** — not started |
 
 **Phase 2D locale acceptance note (OPEN — intended scope, not evidence).** 2D must keep the **guild
@@ -503,14 +511,19 @@ Acceptance for closing 2B — **all criteria met, gate closed 2026-11-13**:
   recorded above. No GitHub PR review has been submitted; that is not itself a required gate. Phase 2B
   is therefore **PASS / closed** while broader Phase 2 remains **IN PROGRESS**.
 
-### Phase 2C — voice/session/player-message ports and adapters — IN PROGRESS (implementation; local tests only)
+### Phase 2C — voice/session/player-message ports and adapters — IN PROGRESS (pushed under draft PR #118; CI mixed; no staging evidence)
 
-**Status: IN PROGRESS — implementation with local working-tree tests.** This section records the
-agreed acceptance criteria, scope limits, branch/base posture and the latest local test/coverage
-status for Phase 2C. The acceptance criteria below are the gate; they are **not** evidence of a pass.
-The implementation and its unit tests exist as **uncommitted local working-tree changes** and pass
-locally, but **no 2C PR has been opened (no #118 yet), and no CI run or staging result exists**.
-Nothing here closes 2C or broader Phase 2.
+**Status: IN PROGRESS — implementation pushed, CI mixed, gate open.** This section records the
+agreed acceptance criteria, scope limits, branch/base posture and the latest local and CI status for
+Phase 2C. The acceptance criteria below are the gate; they are **not** evidence of a pass.
+The implementation, unit tests and tone resource are **committed and pushed** on
+`feature/114-phase-2c-voice-ports`, and **draft PR #118 (base: the epic branch) is open** on head
+`c893567`. Its verified CI is **mixed, not green**: **Check Code Quality failed** in its ktlint step,
+while **Build and analyze** and both SonarCloud checks succeeded. The matching ktlint repairs exist
+**only in the local working tree** — they are not committed or pushed, and no CI run exists for the
+patched head — and **no staging result exists**. The only GitHub review is the automated
+`github-actions[bot]` **COMMENTED** review with ktlint annotations; no human review has been
+submitted. Nothing here closes 2C or broader Phase 2.
 
 #### Branch and base posture
 
@@ -522,14 +535,19 @@ Nothing here closes 2C or broader Phase 2.
 - The correct 2C base is therefore the **fetched remote epic head `255893a`**. It is **not** the stale
   local `4badb92` (that is `master`), and it is not the old Phase 2B branch.
 - Phase 2C branch: **`feature/114-phase-2c-voice-ports`**, created from the fetched
-  `origin/feature/114-migrate-to-jda-jda-ktx` at `255893a`. The plan commit is pushed to the same
-  branch name; the implementation and unit tests are present only in the **local working tree** at
-  this checkpoint (they are not committed here). **No 2C PR exists**, and the intended PR targets the
-  epic branch only after the CI and staging gates exist.
+  `origin/feature/114-migrate-to-jda-jda-ktx` at `255893a`. The plan commit, implementation, unit
+  tests and tone resource are **committed and pushed** on head `c893567` (`Added DAVE-backed JDA
+  voice adapters`). **PR #118 is open as a draft** against the **epic branch**; it is not merged. The
+  GitHub review list does hold **one automated review** — `github-actions[bot]`, state **COMMENTED**,
+  carrying the ktlint annotations produced by the failed check. That is a **bot review, not a human
+  review**, and **no human GitHub review** has been submitted. The ktlint formatting repairs for the
+  six affected files are the only 2C changes still **uncommitted** in the local working tree; they are
+  not pushed, so **no CI run exists yet for the patched head** — the last completed CI remains the
+  mixed run on `c893567` recorded below.
 - PR #117 stays **closed / merged** and is not modified. `master` stays untouched, and the root
   runtime stays Kord-based and JDA-free during 2C.
 
-#### Implementation checkpoint — implemented in the working tree, tested locally
+#### Implementation checkpoint — pushed at `c893567`, tested locally, CI mixed
 
 - `:core` gains neutral outgoing-audio values/ports (`AudioFrame`, `AudioFrameFormat`,
   `AudioFrameSource`, `VoiceSessionPort` and its result types), a text-only `PlayerMessagePort`, and a
@@ -537,8 +555,8 @@ Nothing here closes 2C or broader Phase 2.
 - `:jda-runtime` gains the JDA `AudioSendHandler`, the voice connection/lifecycle adapter, the
   text-only player-message adapter, DAVE 0.2.0 configuration and the pre-encoded 20 ms Opus tone
   source. The tone is a generated bare-packet resource in
-  `jda-runtime/src/main/resources` — present in the working tree, not yet committed at this
-  checkpoint — produced by `jda-runtime/tools/generate-walkthrough-tone.py` (Python stdlib + macOS
+  `jda-runtime/src/main/resources` — committed and pushed with the rest of the implementation at
+  `c893567` — produced by `jda-runtime/tools/generate-walkthrough-tone.py` (Python stdlib + macOS
   `afconvert` only), with exactly 75 packets, every packet's 20 ms duration derived from its Opus TOC
   byte and every packet at or below the 1275-byte limit. The `api`, `impl-jni`, `adapter-jda`,
   `natives-darwin` and `natives-linux-x86-64` 0.2.0 modules are confined to this module; the root
@@ -546,17 +564,33 @@ Nothing here closes 2C or broader Phase 2.
 - The isolated bootstrap enables only `GUILD_VOICE_STATES` plus `CacheFlag.VOICE_STATE`, performs the
   DAVE native/protocol preflight before gateway login, and registers both guild-scoped diagnostics
   through the existing registrar. No global command and no privileged intent is introduced.
-- **Latest local working-tree result (not CI):** `:core:test` **81** tests and `:jda-runtime:test`
-  **224** tests pass with 0 failures and 0 skips, and the root suite is **380** tests (5
-  pre-existing skips) with 0 failures/errors — **685 cases total (680 executed + 5 skips)**. Local
-  JaCoCo **module** line coverage is `:core` **207/219 = 94.52%** (branch **108/115 = 93.91%**) and
-  `:jda-runtime` **869/947 = 91.76%** (branch **342/418 = 81.82%**). Those are **local module
-  JaCoCo report readings only** — independently reproducible per module, **not** Sonar's new-code
-  metric and not CI evidence; no aggregate changed-lines coverage figure is claimed for Phase 2C.
-  The clean full `./gradlew build` passed locally.
-- This checkpoint is **not** a pass: local tests and the local build are green, but the source, tests
-  and tone resource are **uncommitted working-tree changes**, and **no 2C PR (no #118), no CI run and
-  no staging evidence exist**, so the 2C gate remains open.
+- **Latest local result (local only, not CI):** on the **current formatted working tree** — that is,
+  after the six-file ktlint formatting repairs were applied locally but still uncommitted —
+  `:core:test` **81** tests and `:jda-runtime:test` **224** tests passed with 0 failures and 0 skips,
+  and the root suite was **380** tests (5 pre-existing skips) with 0 failures/errors — **685 cases
+  total (680 executed + 5 skips)**. Local JaCoCo **module** line coverage is `:core`
+  **207/219 = 94.52%** (branch **108/115 = 93.91%**) and `:jda-runtime` **870/948 = 91.77%** (branch
+  **342/418 = 81.82%**). Those are **local module JaCoCo report readings only** — independently
+  reproducible per module, **not** Sonar's new-code metric and not CI evidence; no aggregate
+  changed-lines coverage figure is claimed for Phase 2C. The clean full `./gradlew build` passed
+  locally on that same formatted tree.
+- **CI on the pushed head `c893567` is mixed, not green** (checks completed 2026-11-13
+  23:37–23:42Z): **Check Code Quality FAILED** in its ktlint step with exactly the expected
+  formatting diagnostics — 25 findings, `blank-line-between-when-conditions` plus one
+  `function-expression-body` — while **Build and analyze**, **SonarCloud Code Analysis** and
+  **SonarCloud** all succeeded. Sonar reported **90.1% Coverage on New Code**, **11 new issues** and
+  **0 security hotspots**; no zero-issue claim is made for 2C.
+- **The ktlint repairs are local only.** Formatting-only repairs for the six affected files are present
+  in the local working tree but are **not committed or pushed**. They address exactly the 24
+  `standard:blank-line-between-when-conditions` and 1 `standard:function-expression-body` diagnostics
+  reported on `c893567` and change no behaviour. Because they are uncommitted, **no CI result exists
+  for the patched head**: the only completed 2C CI run is the mixed one on `c893567` above. The 2C
+  branch is therefore **not lint-green in CI**, and **no staging evidence exists**, so the 2C gate
+  remains open.
+- **Local QA/reviewer agents (not GitHub review).** The local Code Quality and reviewer agents report
+  **PASS** on the current formatted working tree. That satisfies the internal review criterion only;
+  the sole GitHub review on PR #118 is the automated `github-actions[bot]` **COMMENTED** review with
+  ktlint annotations, and **no human GitHub review** has been submitted.
 
 #### Scope
 
@@ -607,12 +641,17 @@ an overall migration requirement.
    **text-only message port**, and **bootstrap guild-only registration**. Pause/resume preservation is
    **not** part of this criterion — it is deferred to Phase 3 real-player integration (see below).
 6. **Build and quality.** Full module and root build must pass, and the PR's CI must be green with
-   **Sonar new-code coverage >= 50% (target >= 75%)**, no new issues and no hotspots. Local status at
-   this checkpoint: the clean full `./gradlew build` passed locally and local module JaCoCo reports
-   `:core` line coverage 207/219 = 94.52% (branch 108/115 = 93.91%) and `:jda-runtime` line coverage
-   869/947 = 91.76% (branch 342/418 = 81.82%); those are **local module JaCoCo reports only, not
-   Sonar/new-code coverage or CI evidence**, and **no 2C CI run exists yet**, so the CI-side >= 50%
-   Sonar new-code check is not met.
+   **Sonar new-code coverage >= 50% (target >= 75%)**, no new issues and no hotspots. Local status:
+   the clean full `./gradlew build` passed locally on the current **formatted** working tree, and
+   local module JaCoCo reports `:core` line coverage 207/219 = 94.52% (branch 108/115 = 93.91%) and
+   `:jda-runtime` line coverage 870/948 = 91.77% (branch 342/418 = 81.82%); those are **local module
+   JaCoCo reports only, not Sonar/new-code coverage or CI evidence**. CI **has run** on the pushed
+   head `c893567`: Sonar reports **90.1% Coverage on New Code** — above both the >= 50% requirement and
+   the >= 75% target — with **0 security hotspots**, but it also reports **11 new issues**, and
+   **Check Code Quality failed** its ktlint step on 25 formatting diagnostics. The criterion is
+   therefore **not met yet**: that CI is not green, the no-new-issues condition is not satisfied, and
+   the formatting-only repairs are still uncommitted, so **no CI run exists yet for the patched head**
+   to replace the failed ktlint result.
 7. **User-run staging gate (sanitized evidence only).** Bot login and ready state; the walkthrough
    command is available **guild-scoped only**; DAVE native and protocol initialize; **all 75 20 ms
    Opus frames are supplied to JDA's `AudioSendHandler`/send loop** — the reported frame count proves
@@ -620,8 +659,8 @@ an overall migration requirement.
    tone**, which is the **actual delivery proof**; the bot **disconnects cleanly**; and **no receive
    path** is exercised. Record sanitized facts only — no token, raw log, or
    guild/channel/user/application identifier. **Status at this checkpoint: not yet
-   run** — no user-run staging playback has been performed, so this accepted playback gate remains
-   open.
+   run** — no user-run staging playback has been performed and no staging evidence exists, so this
+   accepted playback gate remains open.
 8. **Phase boundary.** Passing 2C does **not** close broader Phase 2: **2D** (channel/message/locale
    edge adapters), the **root runtime migration**, and the **architectural import rule** remain open.
    **Phase 6** JDK 21 / fat-JAR / native artifact validation also remains open.
@@ -645,10 +684,16 @@ default locale stays distinct from the invoking user/client locale; 2D behaviour
 
 Only sanitized evidence is recorded in this plan. No secrets, bot/guild/channel/user identifiers,
 tokens or raw logs are added. The earlier plan checkpoint changed **only this migration plan**. The
-current working tree also contains the uncommitted 2C implementation, test and resource files plus
-the module build/catalog edits recorded in the implementation checkpoint; this document update
-itself modifies **no source, build, test or asset file and no PR metadata**. The local test,
-coverage and build numbers above are **working-tree results**, not committed or CI evidence.
+2C implementation, test and resource files plus the module build/catalog edits recorded above are now
+committed and pushed at `c893567`. At this handoff the working tree additionally holds **only** the
+ktlint formatting repairs in six 2C source/test files, which are uncommitted and unpushed; this
+document update itself modifies **no source, build, test or asset file and no PR metadata**. The
+local test, coverage and build numbers above are **local results** on the current formatted working
+tree, not committed or CI evidence; the CI figures come from the completed check runs on `c893567`,
+and **no check run exists for the formatted but unpushed tree**. The only GitHub review on PR #118 is
+the automated `github-actions[bot]` COMMENTED review carrying ktlint annotations — not a human
+review. Any **detekt** migration is a future separate task: 2C uses the existing ktlint quality gate
+only, and no detekt configuration or dependency is added on this branch.
 
 ### Checkpoint state
 
@@ -692,14 +737,19 @@ coverage and build numbers above are **working-tree results**, not committed or 
 - **Phase 2C** is on `feature/114-phase-2c-voice-ports`, created from the fetched epic head
   `255893a` — the correct base, not the stale local `4badb92` (that is `master`) and not the old Phase
   2B branch. Its first pushed commit was **plan-only** (this document); the neutral ports, JDA
-  adapters, DAVE 0.2.0 wiring, tone resource and unit tests exist as **uncommitted local
-  working-tree changes** and pass locally (685 cases: `:core` 81 + `:jda-runtime` 224 + root 380 with
-  5 pre-existing skips = 680 executed + 5 skips, 0 failures/errors; local module JaCoCo line coverage
-  `:core` 207/219 = 94.52% (branch 108/115 = 93.91%) and `:jda-runtime` 869/947 = 91.76% (branch
+  adapters, DAVE 0.2.0 wiring, tone resource and unit tests are now **committed and pushed** on head
+  `c893567`, open as **draft PR #118** against the epic branch. Latest local results on the current
+  **formatted** working tree: 685 cases (`:core` 81 + `:jda-runtime` 224 + root 380 with 5 pre-existing
+  skips = 680 executed + 5 skips, 0 failures/errors; local module JaCoCo line coverage `:core`
+  207/219 = 94.52% (branch 108/115 = 93.91%) and `:jda-runtime` 870/948 = 91.77% (branch
   342/418 = 81.82%) — local module reports only, not Sonar/new-code CI evidence; the clean full
-  `./gradlew build` passed locally). **No 2C PR has been opened (no #118), no CI run exists and no
-  staging result exists**; its acceptance criteria and scope are recorded in the Phase 2C section, and
-  `master` is untouched.
+  `./gradlew build` passed locally on that tree). CI **has run** on `c893567` and is **mixed**:
+  **Check Code Quality failed** its ktlint step (25 formatting findings), while Build and analyze and
+  both SonarCloud checks passed (90.1% new-code coverage, 11 new issues, 0 hotspots). The six-file
+  ktlint repairs are **uncommitted and unpushed**, so **no CI run exists for the patched head**; the
+  only GitHub review is the automated `github-actions[bot]` COMMENTED review with ktlint annotations,
+  and **no human review** has been submitted. **No staging result exists**; its acceptance criteria and
+  scope are recorded in the Phase 2C section, and `master` is untouched.
 - The PR #117 conflict with the epic branch was resolved by a **normal ancestry merge** of `c00bdf1`
   into `feature/114-phase-2b-command-port`. Only `docs/migrations/kord-to-jda.md` conflicted; the
   Phase 2B document was kept, and every non-doc path's merged tree equals the prior Phase 2B head
@@ -709,9 +759,9 @@ coverage and build numbers above are **working-tree results**, not committed or 
   epic branch and `c00bdf1` carried them forward with the #116 squash merge. They are part of the
   migration record and are updated as the migration proceeds.
 - This plan is now maintained on `feature/114-phase-2c-voice-ports`. The epic head `255893a` contains
-  the Phase 2B version of this document through the #117 merge; the Phase 2C plan and current-status
-  edits are on the 2C branch (the status update itself is uncommitted at this checkpoint) and do
-  **not** reach the epic branch until a 2C PR exists and is merged. Commit status and history are read
+  the Phase 2B version of this document through the #117 merge; the Phase 2C plan is committed and
+  pushed on the 2C branch, while **this current-status update is uncommitted**, so it does **not**
+  reach the epic branch until it is pushed and PR #118 is merged. Commit status and history are read
   from Git and the pull requests, not asserted by this document.
 - PR #115 was the **agreed combined Phase 1/2A checkpoint** and is **not restructured**; it was
   squash-merged as `5aad7c7`. PR #116 was then squash-merged as `c00bdf1`, and PR #117 was merged as
@@ -808,7 +858,7 @@ Next actions at that time (**superseded** by the post-merge next actions below):
 3. Keep the root Kord removal, root bootstrap wiring, the architectural import rule and issue #114
    open until their own gates are satisfied.
 
-### Handoff snapshot — 2026-11-13 post-merge (current)
+### Handoff snapshot — 2026-11-13 post-merge (current; 2C status updated 2026-11-14)
 
 Branch, commit and PR facts below were read from Git and GitHub, and the ancestry and tree-equality
 statements were verified against the repository; they are **not** gate evidence beyond what is
@@ -820,39 +870,46 @@ recorded above. #117's merge is recorded by commit SHAs; no live PR base SHA is 
 | PR #115 (former `feature/114-kord-to-jda-migration` → epic) | **CLOSED / MERGED by squash** as `5aad7c7`; the remote branch `feature/114-kord-to-jda-migration` was **deleted**. Phase 2A stays **IN PROGRESS / partial** — the merge completes neither 2A nor Phase 2 |
 | `feature/114-native-failfast-check` → PR #116 (base: epic) | Head **`1b753b9`**, an **ancestry-only merge** committing `5aad7c7` into `49b4bc1`. Four add/add conflicts — `docs/migrations/kord-to-jda.md`, `spikes/jda-dave/.gitignore`, `spikes/jda-dave/README.md`, `spikes/jda-dave/build.gradle.kts` — were resolved by retaining the Phase 1B versions, so the resolved tree is **byte-identical** to `49b4bc1` and **no content changed**. All four checks on `1b753b9` passed on 2026-11-13 — Check Code Quality 17:20:31Z, SonarCloud Code Analysis 17:22:32Z, Build and analyze 17:22:35Z, SonarCloud 17:22:40Z. **Phase 1B PASS — gate closed 2026-11-08.** PR #116 is **CLOSED / MERGED by squash** into the epic branch as `c00bdf1` |
 | `feature/114-phase-2b-command-port` → PR #117 (base: epic `feature/114-migrate-to-jda-jda-ktx`) | **Phase 2B PASS — gate closed 2026-11-13**, unaffected by the #116 merge. Carried the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests, plus JaCoCo 0.8.12 coverage for both modules wired into root `sonar`. CI history is recorded in the Phase 2B section; those are dated checkpoints, not a statement about any later head. After #116 merged, the base was **auto-retargeted to the epic branch**; the PR was later **CLOSED / MERGED** into the epic branch by the regular merge commit `255893a`. Its one conflict — this plan — had been resolved earlier by a **normal ancestry merge** of `c00bdf1` that kept the Phase 2B document; every non-doc path's tree equalled `e61f301` and **no code changed** |
-| `feature/114-phase-2c-voice-ports` (no PR yet) | **IN PROGRESS — implementation + local tests.** Created from the fetched epic head `255893a` — the correct 2C base, not the stale local `4badb92` (`master`) and not the old Phase 2B branch. Its first pushed commit was **plan-only** (this document); the neutral voice/audio/player-message ports, their JDA adapters, DAVE 0.2.0 wiring, tone resource and unit tests are present as **uncommitted local working-tree changes**. Latest local run: 685 cases (680 executed + 5 pre-existing skips, 0 failures/errors) all pass; local module JaCoCo line coverage `:core` 207/219 = 94.52% (branch 108/115 = 93.91%) and `:jda-runtime` 869/947 = 91.76% (branch 342/418 = 81.82%) — local module reports only, not Sonar/new-code CI evidence — and the clean full `./gradlew build` passed locally. **Not committed and not CI-verified**; no 2C PR (no #118), no CI run and no staging result exist, so the accepted playback gate stays open; `master` is untouched |
+| `feature/114-phase-2c-voice-ports` → PR #118 (draft, base: epic) | **IN PROGRESS — implementation pushed, CI mixed, gate open.** Created from the fetched epic head `255893a` — the correct 2C base, not the stale local `4badb92` (`master`) and not the old Phase 2B branch. The plan, neutral voice/audio/player-message ports, their JDA adapters, DAVE 0.2.0 wiring, tone resource and unit tests are **committed and pushed**; **PR #118 is open as a draft** on head `c893567` (`Added DAVE-backed JDA voice adapters`). CI on `c893567` is **mixed, not green**: **Check Code Quality FAILED** in its ktlint step on 25 formatting findings (`blank-line-between-when-conditions` plus one `function-expression-body`); **Build and analyze** succeeded; **SonarCloud Code Analysis** succeeded with 90.1% new-code coverage, 11 new issues and 0 security hotspots; **SonarCloud** succeeded. The ktlint repairs exist only in the local working tree (six files, formatting-only, uncommitted/unpushed), so **no CI run exists for the patched head**; the last completed CI is that mixed run on `c893567`. The GitHub review list holds **one automated review only** — `github-actions[bot]`, state **COMMENTED**, with the ktlint annotations — and **no human review**. Local results on the current **formatted** working tree remain local-only: 685 cases (680 executed + 5 pre-existing skips, 0 failures/errors) all passing; local module JaCoCo line coverage `:core` 207/219 = 94.52% (branch 108/115 = 93.91%) and `:jda-runtime` 870/948 = 91.77% (branch 342/418 = 81.82%) — local module reports only, not Sonar/new-code CI evidence — and the clean full `./gradlew build` passed locally. Local QA/reviewer agents report PASS; that is internal review, not a GitHub review. **No staging result exists**, so the accepted playback gate stays open; `master` is untouched |
 
 - **Phase 2B staging evidence** remains the sanitized 2026-11-13 record in the Phase 2B section:
   isolated `:jda-runtime` login, ready state, guild-scoped `/jda-walkthrough` registration, the
   `JDA walkthrough OK` reply with the non-Community guild default `locale=en-US`, no intents enabled,
   no global command, and a deliberate Ctrl+C shutdown. No token, raw log or identifier is recorded.
 - **Gate posture.** Phase 2B is **PASS / closed**. Broader **Phase 2 remains IN PROGRESS**: **2C is
-  IN PROGRESS — implementation with local tests** — acceptance criteria are written, the branch exists,
-  and the implementation plus unit tests pass locally (685 cases, 680 executed + 5 pre-existing skips,
-  0 failures/errors; local module JaCoCo line coverage `:core` 207/219 = 94.52% with branch
-  108/115 = 93.91%, `:jda-runtime` 869/947 = 91.76% with branch 342/418 = 81.82% — local module
-  reports only, not Sonar/new-code CI evidence),
-  but there is **no 2C PR (no #118)**, **no 2C CI run** and
-  **no staging result**, so the 2C gate — including the accepted user-run playback gate — remains
-  open; 2D follows 2C. Root Kord removal and bootstrap wiring are
-  not done, the Phase 2 exit criteria (including the architectural import rule) remain open, and issue
-  #114 stays **open**.
+  IN PROGRESS — implementation pushed under open draft PR #118, CI mixed, no staging evidence**.
+  Acceptance criteria are written, the branch exists and the implementation plus unit tests are
+  pushed on `c893567`; local results on the current **formatted** working tree are 685 cases (680
+  executed + 5 pre-existing skips, 0 failures/errors; local module JaCoCo line coverage `:core`
+  207/219 = 94.52% with branch 108/115 = 93.91%, `:jda-runtime` 870/948 = 91.77% with branch
+  342/418 = 81.82% — local module reports only, not Sonar/new-code CI evidence). CI **has run** on
+  `c893567` and is **not green**: **Check Code Quality failed** its ktlint step, while Build and
+  analyze and both SonarCloud checks passed (90.1% new-code coverage, 11 new issues, 0 hotspots). The
+  six-file formatting repairs are uncommitted and unpushed, so **no CI run exists yet for the patched
+  head**; the only GitHub review is the automated `github-actions[bot]` COMMENTED review (no human
+  review), and **no staging result exists**, so the 2C gate — including the accepted user-run playback
+  gate — remains open; 2D follows 2C. Root Kord removal and bootstrap
+  wiring are not done, the Phase 2 exit criteria (including the architectural import rule) remain
+  open, and issue #114 stays **open**.
 - **No root wiring.** The root application remains Kord-based and JDA-free; only the isolated
   `:jda-runtime` module touches JDA. 2C keeps the root Kord runtime, root dependency graph and
   `fatJar` untouched.
 - **Test counts.** Phase 2B's recorded baseline is **18 `:core` / 62 `:jda-runtime` / 380 root with 5
-  pre-existing skips = 460** (kept in the Phase 2B coverage section). The latest **local 2C
-  working-tree** results are higher: `:core` **81** (0 skips), `:jda-runtime` **224** (0 skips) and
-  root **380** (5 pre-existing skips) = **685 cases, 680 executed + 5 skips, all passing with 0
-  failures/errors**. These are local working-tree results only — the 2C source, tests and tone
-  resource are uncommitted and not CI-verified at this checkpoint.
+  pre-existing skips = 460** (kept in the Phase 2B coverage section). The latest **local 2C**
+  results are higher: `:core` **81** (0 skips), `:jda-runtime` **224** (0 skips) and root **380**
+  (5 pre-existing skips) = **685 cases, 680 executed + 5 skips, all passing with 0
+  failures/errors**. These are **local** results from the current **formatted** working tree; the 2C
+  source, tests and tone resource are pushed at `c893567`, but its CI is mixed (Check Code Quality
+  failed) and the six-file lint repair is still uncommitted.
 
 Next actions, in order:
 
-1. Commit the **Phase 2C** implementation, tests and tone resource on `feature/114-phase-2c-voice-ports`
-   against the recorded acceptance criteria, then open the 2C PR against the **epic branch**; do not
-   touch PR #117 and do not modify `master`.
-2. Get **2C CI green** (Sonar new-code coverage >= 50%, target >= 75%, no new issues or hotspots).
+1. Commit and push the local **ktlint formatting repairs** (six files) on
+   `feature/114-phase-2c-voice-ports`, then rerun CI on **draft PR #118** (base: the epic branch); do
+   not touch PR #117 and do not modify `master`.
+2. Get **2C CI fully green** — head `c893567` fails only **Check Code Quality** (ktlint formatting),
+   and Sonar reports **11 new issues** that need addressing; the target remains Sonar new-code
+   coverage >= 50% (target >= 75%) with no new issues and no hotspots.
 3. Run the **user-run staging gate** and record sanitized evidence only — bot login/ready, guild-scoped
    walkthrough, DAVE init, all 75 20 ms frames supplied to JDA's `AudioSendHandler`/send loop (a
    hand-off count, not confirmed network delivery), a second client hears the tone (the actual
@@ -871,7 +928,7 @@ Next actions, in order:
 | --- | --- |
 | Baseline commit | Clean `master` @ `4badb92` |
 | Epic integration branch | `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; now at `255893a`, the regular merge commit of PR #117 whose parents are `c00bdf1` (squash merge of PR #116 on top of `5aad7c7`, the squash merge of PR #115) and `7d8661d` (Phase 2B head). It is the merge baseline for the remaining subphases |
-| Working branch (current) | `feature/114-phase-2c-voice-ports`, created from the fetched epic head `255893a`; in progress — implementation with uncommitted local working-tree tests at this checkpoint, no PR open (no #118). The former `feature/114-kord-to-jda-migration` branch is deleted; PRs #115, #116 and #117 are merged |
+| Working branch (current) | `feature/114-phase-2c-voice-ports`, created from the fetched epic head `255893a`; implementation, tests and tone resource are pushed at `c893567` with **draft PR #118** open against the epic branch — CI on `c893567` is mixed (Check Code Quality failed on ktlint formatting; Build and analyze and both SonarCloud checks passed) and the six-file formatting repair is still local, so no CI run exists for the patched head; the only GitHub review is the automated `github-actions[bot]` COMMENTED review (no human review). The former `feature/114-kord-to-jda-migration` branch is deleted; PRs #115, #116 and #117 are merged |
 | Assistant receive-audio | Stays separately stashed; **out of scope** for this migration |
 | Parked PRs | #106, #109, #111 — parked, ported individually **after** cutover |
 | Docker / deployment | Deployment stays a fat JAR. Do **not** add a `Dockerfile` to this repo |
@@ -1161,14 +1218,18 @@ not afterwards), and CI state for any later head is read live. A later dated sna
 and command layer are still **not** wired into the root runtime, so this phase is **not** complete.
 Remaining work is subphases **2C** (voice/session/player-message ports) and **2D**
 (channel/message/locale edge adapters), each with its own branch and PR (see the subphase plan
-above). **2C is IN PROGRESS — implementation with local tests**: its acceptance criteria and
-branch/base posture are recorded in the Phase 2C section, and its branch
-`feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a`; implementation and
-unit tests exist as uncommitted local working-tree changes and pass locally (685 cases, 680 executed +
-5 pre-existing skips; local module JaCoCo line coverage `:core` 207/219 = 94.52% with branch
-108/115 = 93.91% and `:jda-runtime` 869/947 = 91.76% with branch 342/418 = 81.82% — local module
-reports only, not Sonar/new-code CI evidence), with no 2C PR (no #118), no CI run and no staging
-result yet.
+above). **2C is IN PROGRESS — implementation pushed under draft PR #118, CI mixed**: its acceptance
+criteria and branch/base posture are recorded in the Phase 2C section, and its branch
+`feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a`; implementation,
+unit tests and the tone resource are pushed on head `c893567`, where **Check Code Quality failed**
+its ktlint step while **Build and analyze** and both SonarCloud checks passed (90.1% new-code
+coverage, 11 new issues, 0 security hotspots). Local results on the current **formatted** working
+tree are 685 cases (680 executed + 5 pre-existing skips; local module JaCoCo line coverage `:core`
+207/219 = 94.52% with branch 108/115 = 93.91% and `:jda-runtime` 870/948 = 91.77% with branch
+342/418 = 81.82% — local module reports only, not Sonar/new-code CI evidence). The six-file
+formatting repairs are uncommitted and unpushed, so **no CI run exists for the patched head**; the
+only GitHub review is the automated `github-actions[bot]` COMMENTED review (no human review), and no
+staging result exists.
 
 **Gate status:** the Phase 1 missing-native fault test passed on 2026-11-08, so it no longer blocks
 this phase. Phase 2B is **PASS / closed on 2026-11-13** on `feature/114-phase-2b-command-port` under
@@ -1185,13 +1246,16 @@ observation time), and on `7bf5419`, the latest verified all-green checkpoint be
 docs-only updates (all four checks, last at 16:48:58Z; the head at that point only). A later dated
 snapshot of `f5f04d1` was **not green** (only Check Code Quality concluded, at 16:53:24Z). All are
 historical verified checkpoints, not a guarantee for later commits — read the live GitHub checks for
-whatever head is current. Local QA and reviewer agents
-satisfied the independent review criterion; no GitHub PR review is submitted, which is not itself a
-required gate. **Phase 2
+whatever head is current. For Phase 2B, local QA and reviewer agents satisfied the independent review
+criterion and no human GitHub review was submitted, which is not itself a required gate; for 2C the
+local QA/reviewer agents also report PASS, while the only GitHub review on PR #118 is the automated
+`github-actions[bot]` COMMENTED review — not a human review. **Phase 2
 remains IN PROGRESS**: the root runtime remains Kord-based and JDA-free. PR #117 is **merged**
-(regular merge commit `255893a`); Phase 2C is in progress on `feature/114-phase-2c-voice-ports` with
-uncommitted implementation and passing local working-tree tests (not CI-verified), and no 2C PR has
-been opened (no #118).
+(regular merge commit `255893a`); Phase 2C is in progress on `feature/114-phase-2c-voice-ports` under
+open **draft PR #118**, with mixed CI on head `c893567` (Check Code Quality failed; the other three
+checks passed), a formatting-only ktlint repair still local and unpushed — so **no CI run exists for
+the patched head** — the automated `github-actions[bot]` COMMENTED review as the only GitHub review
+(no human review), and no staging evidence.
 
 - Replace Kord bootstrap with JDA lifecycle (login, shard/event wiring, shutdown).
 - Introduce neutral abstractions for IDs and locales so command code stops speaking Kord types.
@@ -1370,8 +1434,10 @@ accepted risk, and a documented blocker does not close a gate.
   `c00bdf1` and `7d8661d`, tree identical to `7d8661d`). PRs
   #115, #116 and #117 are **closed/merged** and the former `feature/114-kord-to-jda-migration` child
   branch is deleted; the current child branch is `feature/114-phase-2c-voice-ports`, created from the
-  fetched epic head `255893a`. It is **in progress — implementation with uncommitted local
-  working-tree tests** at this checkpoint; no 2C PR has been opened (no #118).
+  fetched epic head `255893a`. It is **in progress**: the implementation, tests and tone resource are
+  pushed at `c893567` with **draft PR #118** open against the epic branch, CI is mixed (Check Code
+  Quality failed; the other three checks passed), and the ktlint repairs remain uncommitted and
+  unpushed.
 - `.opencode/opencode.json`, this migration plan (`docs/migrations/kord-to-jda.md`) and
   `spikes/jda-dave/**` are **tracked** in the epic branch history: `8ca6242` recorded them on the
   former working branch, `5aad7c7` brought them into the epic branch and `c00bdf1` carried them
@@ -1401,15 +1467,21 @@ accepted risk, and a documented blocker does not close a gate.
   the regular merge commit `255893a` (parents `c00bdf1` and `7d8661d`, merge tree identical to
   `7d8661d`); its one earlier conflict had been resolved by an ancestry merge that changed no code.
   Current Git and PR state is authoritative for what is committed and pushed.
-- Phase 2C is **in progress — implementation with local working-tree tests** at this checkpoint: the
-  plan was committed first on `feature/114-phase-2c-voice-ports`, created from the fetched epic head
-  `255893a`, and the neutral ports, JDA adapters, DAVE 0.2.0 wiring, tone resource and unit tests exist
-  as **uncommitted local working-tree changes**. Latest local run: `:core` 81, `:jda-runtime` 224 and
-  root 380 tests (5 pre-existing skips) — 685 cases, 680 executed + 5 skips, 0 failures/errors, all
-  passing; local module JaCoCo line coverage `:core` 207/219 = 94.52% (branch 108/115 = 93.91%) and
-  `:jda-runtime` 869/947 = 91.76% (branch 342/418 = 81.82%) — local module reports only, not
-  Sonar/new-code CI evidence — and the clean full `./gradlew build` passed locally. There is
-  **no 2C PR (no #118), no 2C CI run and no staging result**, and `master` is untouched.
+- Phase 2C is **in progress — implementation pushed, CI mixed, gate open**: the plan was committed
+  first on `feature/114-phase-2c-voice-ports`, created from the fetched epic head `255893a`; the
+  neutral ports, JDA adapters, DAVE 0.2.0 wiring, tone resource and unit tests are pushed on head
+  `c893567`, and **draft PR #118** is open against the epic branch. CI on `c893567` is **mixed**:
+  **Check Code Quality failed** in its ktlint step (25 formatting findings), while Build and analyze,
+  SonarCloud Code Analysis (90.1% new-code coverage, 11 new issues, 0 security hotspots) and
+  SonarCloud **passed**. Local results on the current **formatted** working tree: `:core` 81,
+  `:jda-runtime` 224 and root 380 tests (5 pre-existing skips) — 685 cases, 680 executed + 5 skips,
+  0 failures/errors, all passing; local module JaCoCo line coverage `:core` 207/219 = 94.52% (branch
+  108/115 = 93.91%) and `:jda-runtime` 870/948 = 91.77% (branch 342/418 = 81.82%) — local module
+  reports only, not Sonar/new-code CI evidence — and the clean full `./gradlew build` passed locally on
+  that tree. The formatting-only ktlint repairs in six files are **uncommitted and unpushed**, so **no
+  CI run exists for the patched head**; the only GitHub review is the automated
+  `github-actions[bot]` COMMENTED review with ktlint annotations (no human review), and there is **no
+  staging result**; `master` is untouched.
 - `stash@{0}` — housekeeping WIP; preserved, untouched.
 - `stash@{1}` — assistant voice feature WIP (out of scope); preserved, untouched.
 - Ignored caches and user data (for example `.gradle/`, `build/`, `data/`, `.idea/`, `.memory/`,

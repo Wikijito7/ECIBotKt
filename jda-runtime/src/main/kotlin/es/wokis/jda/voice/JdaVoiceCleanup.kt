@@ -35,6 +35,7 @@ internal fun disconnectVoiceConnections(jda: JDA) {
 
     when {
         failures.isEmpty() -> Unit
+
         else -> {
             // Prefer a fatal failure as the primary so an Error is never buried under a normal
             // exception with the rest attached as suppressed.
