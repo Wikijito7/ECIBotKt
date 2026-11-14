@@ -1,11 +1,14 @@
 # Kord → JDA 6.7 Migration Plan
 
 Tracking issue: [#114](https://github.com/Wikijito7/ECIBotKt/issues/114) — *Migrate to JDA / jda-ktx*
-Epic integration branch: `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; it is
-now at `5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`, the **regular merge commit of PR #118** on top of
-`255893a` (the regular merge commit of PR #117), which in turn carried the **squash merge of PR #116**
-at `c00bdf1` over `5aad7c7` (the **squash merge of PR #115**). It remains the merge baseline for this
-epic. Phase 2A working branch
+Epic integration branch: `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`. Its
+history includes `5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85` on top of `255893a` (the regular merge
+commit of PR #117), which in turn carried the **squash merge of PR #116** at `c00bdf1` over `5aad7c7`
+(the **squash merge of PR #115**). `5fa9c63` is the PR #118 merge commit; the Phase 2C staging
+evidence was then recorded by the docs-only commit `269acc1`, which was the epic tip when this
+documentation update began. This doc-only commit will advance the tip beyond `269acc1`, so readers
+should fetch and consult live Git/GitHub for the current epic head when a base is needed. The epic
+remains the merge baseline for this migration. Phase 2A working branch
 `feature/114-kord-to-jda-migration` **no longer exists**: PR
 [#115](https://github.com/Wikijito7/ECIBotKt/pull/115) was **squash-merged** into the epic branch as
 `5aad7c7` and the remote branch was deleted. Phase 2A stays **IN PROGRESS / partial** — the merge is
@@ -108,7 +111,7 @@ still open · **OPEN** = not started, gate still open.
 | Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS / partial** | Phase 2A source and test changes were **squash-merged** into the epic branch by PR #115 as `5aad7c7`; that commit's tree equals the former 2A head `67802d1`, and the former `feature/114-kord-to-jda-migration` branch is deleted. The merge brings the groundwork in but does **not** complete 2A: `GuildId`/`LocaleCode` and the locale repository/use cases are **neutral**, while `LocalizationService` and `/locale` remain Kord-facing and must be moved behind/adapted in a later Phase 2 subphase (2D) |
 | Phase 2B — neutral command context + responder/response port | **PASS — gate closed (2026-11-13)** | Implementation and unit tests are present on `feature/114-phase-2b-command-port` as the initial implementation checkpoint `fbd9f5a`, originally stacked on Phase 1B `feature/114-native-failfast-check`. PR #116 has since been **squash-merged** into the epic branch (`c00bdf1`), so PR #117 was retargeted to the epic branch and was later **merged** into it by the regular merge commit `255893a`; its only conflict — this plan — was resolved by an ancestry merge that changed no code. The branch adds isolated Gradle modules `:core` (gateway-free neutral ports and a pure walkthrough handler) and `:jda-runtime` (JDA 6.7.0 adapter, guild-only `/jda-walkthrough`); the root project depends on `:core` only and remains Kord-based and JDA-free. On head `001e722` **Check Code Quality**, **Build and analyze** and the separately named **SonarCloud** check passed, while **SonarCloud Code Analysis** failed its Quality Gate at 0.0% coverage on new code (required >=50%) because the modules emitted no JaCoCo XML; the JaCoCo 0.8.12 fix then passed CI on the covered checkpoint `e607ff7` — all four #117 checks green, including both SonarCloud checks, with 75.0% Coverage on New Code, 0 new issues and 0 hotspots. The later docs-only checkpoints `2850907`, `16247f8` and `d353113` also passed all four #117 checks, as did `988a7cd` (last check completed 2026-11-13 16:38:44Z), and `e4a9e29` was observed in progress at 16:41:06Z (the observation time, when only Check Code Quality had concluded successfully) and later completed all four checks successfully (last at 16:44:11Z). `7bf5419` (`Corrected Phase 2B CI status record`) is the latest verified all-green checkpoint before the subsequent docs-only updates: all four checks passed on 2026-11-13 — Check Code Quality 16:47:15Z, SonarCloud Code Analysis 16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z — with 75.0% Coverage on New Code, 0 new issues and 0 hotspots; it was the head at that point, not afterwards. The later docs-only `f5f04d1` (`Recorded passing Phase 2B CI runs`) was the head in a dated snapshot observed on 2026-11-13 in which only Check Code Quality had concluded successfully (16:53:24Z), Build and analyze was still in progress and the SonarCloud checks were not yet listed — so it was **not green at that snapshot**; GitHub holds the status of the head after this docs-only follow-up. All of these are historical verified checkpoints, not a guarantee for later commits, so CI status for any newer head must be read from the GitHub check runs. Local QA and reviewer agents satisfied the independent review criterion while no GitHub PR review has been submitted. The user ran the isolated runtime on 2026-11-13 against staging and the guild-scoped `/jda-walkthrough` replied `JDA walkthrough OK`, closing the gate. PR #117 was subsequently **merged** into the epic branch by a regular merge commit at `255893a`, so the Phase 2B pass is now on the epic integration branch. The root runtime is still Kord-based and JDA-free |
 | Phase 2C — voice/session/player message ports and adapters | **PASS — gate closed (2026-11-14)** | Acceptance criteria, scope limits and sanitized staging evidence are recorded in the Phase 2C section. Branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a` (the regular merge commit that brought PR #117 into the epic branch). The neutral voice/audio/player-message ports, their JDA adapters, the DAVE 0.2.0 wiring, `/jda-voice-walkthrough` and the unit tests were merged into the epic branch through PR #118 by the regular merge commit `5fa9c63` (PR head `3e50248`); the implementation head is `8eb0349` (`Fixed ktlint violations in Phase 2C`). All four checks on that head **succeeded** — Check Code Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud — and the Sonar Quality Gate **passed** with **90.1% new-code coverage, 11 new issues (10 major, 1 critical), 0 security hotspots and 0.0% duplication** (no zero-issue claim). The earlier head `c893567` is kept as history: **Check Code Quality failed** there on 25 ktlint formatting findings while the other three checks passed with the same Sonar figures; the formatting-only repairs were committed and pushed as `8eb0349`. The docs-only `9fd1826` (`Recorded Phase 2C CI checkpoint`) is a **dated historical green checkpoint** too: all four checks succeeded on 2026-11-14 — Check Code Quality 08:28:21Z, SonarCloud Code Analysis 08:31:00Z, Build and analyze 08:31:04Z, SonarCloud 08:31:05Z — with the Sonar Quality Gate passed at 90.1% Coverage on New Code, 11 new issues, 0 security hotspots and 0.0% duplication. Those checkpoints are historical; the merged PR head `3e50248` also passed all four checks, and later epic heads are read live from GitHub. Latest **local** run on the formatted tree: `:core:test` 81 tests, `:jda-runtime:test` 224 tests and the root suite 380 tests (5 pre-existing skips) all pass with 0 failures/errors — **685 cases total (680 executed + 5 skips)**; local JaCoCo **module** line coverage is `:core` **207/219 = 94.52%** (branch **108/115 = 93.91%**) and `:jda-runtime` **870/948 = 91.77%** (branch **342/418 = 81.82%**), and the full `./gradlew build` passed locally. All coverage figures here are **local module JaCoCo report readings only — not Sonar, new-code or CI evidence**. Phase 2C is **PASS — gate closed (2026-11-14)** on the recorded user-run staging playback evidence (sanitized in the Phase 2C section); the 11 Sonar new issues remain recorded as **tracked follow-up debt** rather than being described as resolved or zero, because under the **owner-approved 2026-11-14 interpretation** the repository's configured Quality Gate is the criterion and it passed. `master` is untouched |
-| Phase 2D — channel/message/locale edge adapters | **OPEN** | Not started; **planning is the next step**. Because 2C is merged into the epic branch at `5fa9c63`, the 2D child branch and PR are based on that epic head. Carries the `LocalizationService` and `/locale` neutrality work. Must preserve the guild default locale (`en_US` for non-Community guilds, community-configurable) as distinct from the user/client locale, and validate conversion/fallback at the adapter boundary. The root bot's localization behaviour is **not** migrated |
+| Phase 2D — channel/message/locale edge adapters | **OPEN** | Not started; **planning is the next step**. Because 2C is merged into the epic branch, the 2D child branch and PR are based on the **live epic tip read from Git/GitHub and verified when 2D starts** — not on a hardcoded SHA such as `5fa9c63` or `269acc1`. Carries the `LocalizationService` and `/locale` neutrality work. Must preserve the guild default locale (`en_US` for non-Community guilds, community-configurable) as distinct from the user/client locale, and validate conversion/fallback at the adapter boundary. The root bot's localization behaviour is **not** migrated |
 | Phase 6 — Kord-free build, artifact and digest gates | **OPEN** | Not started |
 | Production cutover (Phase 7) | **OPEN** | Blocked by the Phase 6 and staging gates |
 
@@ -240,7 +243,7 @@ remains.** The epic branch `feature/114-migrate-to-jda-jda-ktx` remains the
 | **2A** | Domain-owned `GuildId`/`LocaleCode` + neutral locale repository/use cases | **Squash-merged** into the epic branch by PR #115 as `5aad7c7`; the former `feature/114-kord-to-jda-migration` branch is deleted and the checkpoint is not restructured | **IN PROGRESS / partial** — merged groundwork does not complete 2A; see above |
 | **2B** | Neutral command context + responder/response port; adapters translate defer/ephemeral, locales and IDs | Child branch `feature/114-phase-2b-command-port`, originally based on Phase 1B `feature/114-native-failfast-check`; after #116 merged to the epic branch (`c00bdf1`), PR #117 was retargeted to the epic branch (base branch name only; no live base SHA asserted) and later **merged** there by the regular merge commit `255893a`; its one plan conflict was resolved by an ancestry merge that changed no code | **PASS — gate closed 2026-11-13** — isolated `:core`/`:jda-runtime` modules, neutral command boundary and JDA 6.7.0 adapter implemented with unit tests; #117 CI passed on covered checkpoint `e607ff7`, on the docs-only `2850907`/`16247f8`/`d353113`/`988a7cd`, on `e4a9e29` (later completed green after an in-progress observation), and on `7bf5419`, the latest verified all-green checkpoint before the subsequent docs-only updates (75.0% new-code coverage, 0 new issues, 0 hotspots); a later dated snapshot of `f5f04d1` (docs-only) was **not yet green** — only Check Code Quality had concluded at 16:53:24Z — so the status of any later head is read from GitHub; the user-run staging `/jda-walkthrough` interaction succeeded on 2026-11-13. Local QA/reviewer agents satisfied the independent review criterion; no GitHub PR review submitted, and the root runtime is still Kord-based. The pass is unaffected by the #116 ancestry merge |
 | **2C** | Voice/session/player-message narrow ports; JDA `AudioSendHandler`/DAVE and lifecycle stay in the adapter | Branch `feature/114-phase-2c-voice-ports`, created from the fetched epic head `255893a` — the regular merge commit that contains PR #117's Phase 2B pass. PR #118 (base: `feature/114-migrate-to-jda-jda-ktx`) was **merged** into the epic branch by the regular merge commit `5fa9c63` (PR head `3e50248`) | **PASS — gate closed (2026-11-14).** Acceptance criteria, scope limits and the user-run staging playback evidence are recorded in the Phase 2C section — sanitized facts only. All four checks succeeded on the implementation head `8eb0349` and on the merged head `3e50248`; the Sonar Quality Gate passed with 90.1% new-code coverage, 11 new issues (10 major, 1 critical), 0 security hotspots and 0.0% duplication, recorded as-is with no zero-issue claim. Latest **local** run on the formatted tree: 685 cases (680 executed + 5 pre-existing skips), all pass with 0 failures/errors; local JaCoCo module line coverage `:core` 207/219 = 94.52% (branch 108/115 = 93.91%), `:jda-runtime` 870/948 = 91.77% (branch 342/418 = 81.82%) — local module JaCoCo only, not Sonar/new-code CI evidence. Only outgoing playback was proven; receive-audio, root runtime wiring and Phase 6 artifact validation remain out of scope |
-| **2D** | Channel/message/locale edge adapters; move `LocalizationService` and `/locale` behind/adapted to a neutral port; keep the community-configurable guild default distinct from user/client locale and validate conversion/fallback at the adapter boundary | New child branch/PR based on the **epic head `5fa9c63`**, because 2C is merged into the epic branch rather than left unmerged | **OPEN** — not started; planning is the next step |
+| **2D** | Channel/message/locale edge adapters; move `LocalizationService` and `/locale` behind/adapted to a neutral port; keep the community-configurable guild default distinct from user/client locale and validate conversion/fallback at the adapter boundary | New child branch/PR based on the **live epic tip**, read from Git/GitHub and verified when 2D starts (not a hardcoded SHA such as `5fa9c63` or `269acc1`), because 2C is merged into the epic branch rather than left unmerged | **OPEN** — not started; planning is the next step |
 
 **Phase 2D locale acceptance note (OPEN — intended scope, not evidence).** 2D must keep the **guild
 default locale** distinct from the **invoking user/client locale**. Legacy behaviour is that a
@@ -248,6 +251,9 @@ non-Community guild's default language is always `en_US`; only a Discord **Commu
 have its default language changed. The user/client locale describes the invoking client and must
 never be persisted as, or conflated with, the guild default. Locale conversion and fallback —
 including `unknown`, invalid or unsupported values — are validated at the Discord adapter boundary.
+**Phase 2C did not exercise locale selection** and returned no locale value; its acceptance only
+preserves this guild-default versus user/client-locale distinction for 2D, and the recorded
+`locale=en-US` observation comes from Phase 2B's `/jda-walkthrough`, not from 2C.
 This note records intended 2D scope only: the root bot's localization behaviour has **not** migrated,
 `LocalizationService` and `/locale` remain Kord-facing, and 2D stays **OPEN**.
 
@@ -261,8 +267,9 @@ Stacking rules:
   branches from the epic head `255893a`** rather than from the old Phase 2B branch. This is the
   documented exception to the child-branch rule: the preceding subphase is already integrated, and
   the epic head is its carrier. The same exception now applies to **2D**: 2C was merged into the epic
-  branch at `5fa9c63` and no open Phase 2C PR remains, so **2D branches from that epic head** rather
-  than from a 2C branch.
+  branch and no open Phase 2C PR remains, so **2D branches from the live epic tip** — fetched and
+  verified from Git/GitHub at the moment 2D starts — rather than from a 2C branch or a hardcoded SHA
+  such as `5fa9c63` or `269acc1`.
 - PR #115 was the **combined Phase 1/2A checkpoint**; it is **squash-merged** at `5aad7c7` and was
   never restructured. Later subphase work is not pushed into it.
 - Subphase branches are **not** squashed into an already-merged earlier PR and **not** rebased onto
@@ -773,9 +780,11 @@ log, or guild/channel/user/application identifier is reproduced here or in the r
 | Gateway intents | Only **`GUILD_VOICE_STATES`** |
 | Voice | `/jda-voice-walkthrough` connected to the invoking user's regular voice channel |
 | DAVE init | DAVE protocol 1 initialized on the connection |
-| Frame hand-off | Reported `handed 75/75 frames to JDA's send loop` — a **hand-off count only** |
+| Command reply | `/jda-voice-walkthrough` replied `Voice walkthrough OK \| handed 75/75 frames to JDA's send loop (delivery not confirmed)` — the **Phase 2C** response, distinct from Phase 2B's `JDA walkthrough OK` |
+| Frame hand-off | That reply reports `handed 75/75 frames to JDA's send loop` — a **hand-off count only**, and the reply itself states delivery was not confirmed |
 | Audible playback | The **invoking user's own Discord client**, separate from the bot, reported hearing the beep — **this is the delivery evidence**, a distinct observation from the frame hand-off |
 | Cleanup | The command's completion path confirms disconnect cleanup |
+| Locale selection | **Not exercised** by `/jda-voice-walkthrough`, which returned no locale value; the `locale=en-US` observation belongs to the Phase 2B `/jda-walkthrough` run on 2026-11-13, not to 2C |
 | Shutdown | The user stopped the still-running JDA process with Ctrl+C; no failure reported |
 | Receive audio | Not exercised |
 
@@ -787,9 +796,14 @@ Scope of this evidence:
 - The `75/75` frame count is **not** network-delivery proof. The **audible beep, heard on the
   invoking user's own Discord client separate from the bot, is the delivery evidence**; that audible
   observation is distinct from the 75-frame hand-off, and no other account is claimed as independently
-  verified.
+  verified. The `Voice walkthrough OK` prefix is the 2C diagnostic's own reply and does **not** itself
+  confirm delivery — the reply carries `(delivery not confirmed)`, and the audible beep remains the
+  delivery evidence. This Phase 2C reply is **not** the Phase 2B `JDA walkthrough OK` response.
 - It does **not** validate receive-audio, the assistant voice feature, the root application, root
   bootstrap wiring, `/locale` or any other command family.
+- It did **not** exercise locale selection: `/jda-voice-walkthrough` returned no locale value, and the
+  recorded `locale=en-US` observation belongs to the Phase 2B `/jda-walkthrough` run on 2026-11-13.
+  2C only preserves the guild-default versus user/client-locale distinction for **2D**.
 - The run was on **local macOS arm64**, not on the Linux x86_64 staging container, and it used **no
   Phase 6 artifact**: root runtime wiring and Phase 6 packaging/artifact/digest validation remain
   **OPEN**.
@@ -806,11 +820,12 @@ as covering pause/resume, and do not treat the deferral as dropping the requirem
 #### Inherited caveat from Phase 2B
 
 The Phase 2B locale caveat still applies: a non-Community guild's default language is `en_US`, and the
-observed `locale=en-US` is that guild default, not an explicit or user-selected locale. The guild
-default locale stays distinct from the invoking user/client locale; 2D behaviour is out of scope for
-2C and no localization behaviour is migrated here. The **2026-11-14** staging run does **not** change
-this interpretation: `en-US` is still read as the non-Community guild default `en_US`, **not** as the
-user/client locale, and no locale selection was exercised or recorded.
+`locale=en-US` observation recorded in the Phase 2B `/jda-walkthrough` evidence is that guild default,
+not an explicit or user-selected locale. **That observation came from the Phase 2B `/jda-walkthrough`
+response, not from Phase 2C.** The Phase 2C `/jda-voice-walkthrough` did not exercise locale selection
+and returned no locale value; its acceptance only preserves the distinction between the guild default
+locale and the invoking user/client locale for **2D**, which owns that behaviour. No localization
+behaviour is migrated here, and no locale selection was exercised or recorded by 2C.
 
 #### Recording rules
 
@@ -829,14 +844,17 @@ this branch.
 
 ### Checkpoint state
 
-- The epic integration branch `feature/114-migrate-to-jda-jda-ktx` is at
+- The epic integration branch `feature/114-migrate-to-jda-jda-ktx` contains
   `5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`, the **regular merge commit of PR #118** whose parents are
   `255893abcef31554e13ae1713086a9b7c1217c60` (the regular merge commit of PR #117) and
-  `3e50248446a5ce65ea2a1f648576523fb5b25c6a` (the final Phase 2C PR head), so the epic tip now carries
-  both the Phase 2B and Phase 2C passes. The earlier #117 merge had parents `c00bdf1` (squash merge of
-  PR #116 on top of `5aad7c7`, itself the squash merge of PR #115 on base `4badb92`) and `7d8661d`
-  (the Phase 2B head), with a tree identical to `7d8661d`. PRs #115, #116, #117 and #118 are all
-  **closed/merged**, and the former `feature/114-kord-to-jda-migration` branch is deleted.
+  `3e50248446a5ce65ea2a1f648576523fb5b25c6a` (the final Phase 2C PR head), so that merge carries
+  both the Phase 2B and Phase 2C passes. The Phase 2C staging evidence was then recorded by the
+  docs-only commit `269acc1`, which was the epic tip when this documentation update began. This
+  doc-only commit will advance the tip beyond `269acc1`, so **the live epic tip is read from fetched
+  Git/GitHub** rather than from any SHA recorded here. The earlier #117 merge had parents `c00bdf1`
+  (squash merge of PR #116 on top of `5aad7c7`, itself the squash merge of PR #115 on base `4badb92`)
+  and `7d8661d` (the Phase 2B head), with a tree identical to `7d8661d`. PRs #115, #116, #117 and #118
+  are all **closed/merged**, and the former `feature/114-kord-to-jda-migration` branch is deleted.
 - Phase 1B sat on `feature/114-native-failfast-check` as PR #116, which had been retargeted to the
   **epic branch** at `5aad7c7` because the former parent branch was squash-merged and deleted. It
   carried only the negative-test packaging task, the spike runbook section and these plan edits. Its
@@ -891,8 +909,9 @@ this branch.
   the **user-run staging evidence recorded on 2026-11-14** in the Phase 2C section: local macOS arm64,
   DAVE 0.2.0 native loaded with protocol version 1, JDA login/WebSocket/ready, guild-scoped
   `/jda-walkthrough` and `/jda-voice-walkthrough` registered with only `GUILD_VOICE_STATES`,
-  `/jda-voice-walkthrough` connected to the invoking user's regular voice channel, `handed 75/75 frames
-  to JDA's send loop` (a hand-off count only, not delivery proof), the invoking user's own Discord
+  `/jda-voice-walkthrough` connected to the invoking user's regular voice channel and replied
+  `Voice walkthrough OK | handed 75/75 frames to JDA's send loop (delivery not confirmed)` — a
+  hand-off count only, not delivery proof — then the invoking user's own Discord
   client — separate from the bot — reported hearing the beep (the delivery evidence, distinct from the
   hand-off), completion-path disconnect cleanup, and a deliberate Ctrl+C stop. No
   receive-audio, no root wiring and no Phase 6 artifact validation were exercised. `master` is
@@ -905,17 +924,20 @@ this branch.
   history: `8ca6242` recorded them on the former working branch, `5aad7c7` brought them into the
   epic branch and `c00bdf1` carried them forward with the #116 squash merge. They are part of the
   migration record and are updated as the migration proceeds.
-- This plan is now maintained on the epic branch `feature/114-migrate-to-jda-jda-ktx`: PR #118 merged
-  the Phase 2C plan and this current-status update into it at `5fa9c63`. The earlier epic head
-  `255893a` contained the Phase 2B version of this document through the #117 merge. Commit status and
-  history are read from Git and the pull requests, not asserted by this document.
+- This plan is maintained on the epic branch `feature/114-migrate-to-jda-jda-ktx`: `5fa9c63` is the
+  PR #118 merge commit that brought the Phase 2C plan into it, and the docs-only `269acc1` then
+  recorded the Phase 2C staging pass — that was the epic tip when this documentation update began.
+  This later doc-only commit will advance the tip beyond `269acc1`, so the live tip is read from Git
+  and the pull requests rather than asserted here. The earlier epic head `255893a` contained the
+  Phase 2B version of this document through the #117 merge.
 - PR #115 was the **agreed combined Phase 1/2A checkpoint** and is **not restructured**; it was
   squash-merged as `5aad7c7`. PR #116 was then squash-merged as `c00bdf1`, PR #117 was merged as the
   regular merge commit `255893a`, and PR #118 was merged as the regular merge commit `5fa9c63`. Later
   subphases land as separate branches/PRs: **2C branched from the epic head `255893a`** because it
-  carried the Phase 2B pass, and **2D branches from the epic head `5fa9c63`** because 2C is now merged
-  and no open 2C PR remains. The epic branch remains the **final integration target**; `master` is
-  merged only at migration completion.
+  carried the Phase 2B pass, and **2D branches from the live epic tip**, fetched from Git/GitHub and
+  verified at the moment 2D starts — not a hardcoded `5fa9c63` or `269acc1` — because 2C is merged and
+  no open 2C PR remains. The epic branch remains the **final integration target**; `master` is merged
+  only at migration completion.
 - No secrets, bot/guild/channel/user identifiers, tokens or raw logs are recorded in this plan or
   in the spike.
 
@@ -1017,11 +1039,11 @@ snapshot.
 
 | Branch / PR | Handoff state |
 | --- | --- |
-| `feature/114-migrate-to-jda-jda-ktx` (epic baseline) | At **`5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`**, the **regular merge commit of PR #118**. Parents: `255893abcef31554e13ae1713086a9b7c1217c60` (the regular merge commit of PR #117) and `3e50248446a5ce65ea2a1f648576523fb5b25c6a` (the final Phase 2C PR head), so the epic tip carries both the Phase 2B and Phase 2C passes. The earlier #117 merge had parents `c00bdf1` (the **squash merge of PR #116** on top of `5aad7c7`, itself the **squash merge of PR #115** on base `4badb92`; `5aad7c7`'s tree equals the former Phase 2A head `67802d1`) and `7d8661d` (the Phase 2B head), with a merge tree **identical** to `7d8661d` |
+| `feature/114-migrate-to-jda-jda-ktx` (epic baseline) | Contains **`5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`**, the **regular merge commit of PR #118**. Parents: `255893abcef31554e13ae1713086a9b7c1217c60` (the regular merge commit of PR #117) and `3e50248446a5ce65ea2a1f648576523fb5b25c6a` (the final Phase 2C PR head), so that merge carries both the Phase 2B and Phase 2C passes. The Phase 2C staging pass was then recorded by the docs-only `269acc1` (`Recorded Phase 2C staging pass and gate decision`), which was the epic tip when this documentation update began; **the live tip is read from fetched Git/GitHub**, because this doc-only commit will advance it beyond `269acc1`, so no SHA recorded here is asserted as the current head. The earlier #117 merge had parents `c00bdf1` (the **squash merge of PR #116** on top of `5aad7c7`, itself the **squash merge of PR #115** on base `4badb92`; `5aad7c7`'s tree equals the former Phase 2A head `67802d1`) and `7d8661d` (the Phase 2B head), with a merge tree **identical** to `7d8661d` |
 | PR #115 (former `feature/114-kord-to-jda-migration` → epic) | **CLOSED / MERGED by squash** as `5aad7c7`; the remote branch `feature/114-kord-to-jda-migration` was **deleted**. Phase 2A stays **IN PROGRESS / partial** — the merge completes neither 2A nor Phase 2 |
 | `feature/114-native-failfast-check` → PR #116 (base: epic) | Head **`1b753b9`**, an **ancestry-only merge** committing `5aad7c7` into `49b4bc1`. Four add/add conflicts — `docs/migrations/kord-to-jda.md`, `spikes/jda-dave/.gitignore`, `spikes/jda-dave/README.md`, `spikes/jda-dave/build.gradle.kts` — were resolved by retaining the Phase 1B versions, so the resolved tree is **byte-identical** to `49b4bc1` and **no content changed**. All four checks on `1b753b9` passed on 2026-11-13 — Check Code Quality 17:20:31Z, SonarCloud Code Analysis 17:22:32Z, Build and analyze 17:22:35Z, SonarCloud 17:22:40Z. **Phase 1B PASS — gate closed 2026-11-08.** PR #116 is **CLOSED / MERGED by squash** into the epic branch as `c00bdf1` |
 | `feature/114-phase-2b-command-port` → PR #117 (base: epic `feature/114-migrate-to-jda-jda-ktx`) | **Phase 2B PASS — gate closed 2026-11-13**, unaffected by the #116 merge. Carried the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests, plus JaCoCo 0.8.12 coverage for both modules wired into root `sonar`. CI history is recorded in the Phase 2B section; those are dated checkpoints, not a statement about any later head. After #116 merged, the base was **auto-retargeted to the epic branch**; the PR was later **CLOSED / MERGED** into the epic branch by the regular merge commit `255893a`. Its one conflict — this plan — had been resolved earlier by a **normal ancestry merge** of `c00bdf1` that kept the Phase 2B document; every non-doc path's tree equalled `e61f301` and **no code changed** |
-| `feature/114-phase-2c-voice-ports` → PR #118 (base: epic) | **PASS — gate closed (2026-11-14); CLOSED / MERGED.** Created from the fetched epic head `255893a` — the correct 2C base, not the stale local `4badb92` (`master`) and not the old Phase 2B branch. The plan, neutral voice/audio/player-message ports, their JDA adapters, DAVE 0.2.0 wiring, tone resource, unit tests and formatting-only ktlint repairs were merged into the epic branch by the regular merge commit `5fa9c63` (parents `255893a` and PR head `3e50248`); the implementation head is `8eb0349c4f65997d0dd69ffdc2b245268c207074` (`Fixed ktlint violations in Phase 2C`). All four checks on `8eb0349` **succeeded** — Check Code Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud — and the Sonar Quality Gate **passed** with 90.1% new-code coverage, 11 new issues (10 major, 1 critical), 0 security hotspots and 0.0% duplication. Under the **owner-approved 2026-11-14 interpretation** the repository's configured Quality Gate is the criterion, so those 11 maintainability issues are **tracked follow-up debt**, not a failed gate. The earlier `c893567` is kept as history: **Check Code Quality FAILED** there on 25 formatting findings while the other three checks succeeded with the same Sonar figures; the formatting-only repairs were committed and pushed as `8eb0349`. The docs-only `9fd1826` (`Recorded Phase 2C CI checkpoint`) and the final PR head `3e50248` (`Recorded passing Phase 2C CI checkpoint`) also passed all four checks on 2026-11-14. Local results on the formatted tree remain local-only: 685 cases (680 executed + 5 pre-existing skips, 0 failures/errors) all passing; local module JaCoCo line coverage `:core` 207/219 = 94.52% (branch 108/115 = 93.91%) and `:jda-runtime` 870/948 = 91.77% (branch 342/418 = 81.82%) — local module reports only, not Sonar/new-code CI evidence — and the clean full `./gradlew build` passed locally. Local QA/reviewer agents report PASS; that is internal review, not a GitHub review, and no human review is recorded here. The gate was closed by the **sanitized 2026-11-14 staging run recorded in the Phase 2C section** — local macOS arm64 with the DAVE 0.2.0 native loaded and protocol version 1, only `GUILD_VOICE_STATES`, guild-scoped `/jda-walkthrough` and `/jda-voice-walkthrough`, voice connect to the invoking user's channel, `handed 75/75 frames to JDA's send loop` (a hand-off count, not delivery proof), an audible beep reported by the invoking user's own Discord client, separate from the bot (the delivery evidence, distinct from the hand-off), completion-path disconnect cleanup and a deliberate Ctrl+C stop; no receive path, root wiring or Phase 6 artifact was exercised. `master` is untouched |
+| `feature/114-phase-2c-voice-ports` → PR #118 (base: epic) | **PASS — gate closed (2026-11-14); CLOSED / MERGED.** Created from the fetched epic head `255893a` — the correct 2C base, not the stale local `4badb92` (`master`) and not the old Phase 2B branch. The plan, neutral voice/audio/player-message ports, their JDA adapters, DAVE 0.2.0 wiring, tone resource, unit tests and formatting-only ktlint repairs were merged into the epic branch by the regular merge commit `5fa9c63` (parents `255893a` and PR head `3e50248`); the implementation head is `8eb0349c4f65997d0dd69ffdc2b245268c207074` (`Fixed ktlint violations in Phase 2C`). All four checks on `8eb0349` **succeeded** — Check Code Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud — and the Sonar Quality Gate **passed** with 90.1% new-code coverage, 11 new issues (10 major, 1 critical), 0 security hotspots and 0.0% duplication. Under the **owner-approved 2026-11-14 interpretation** the repository's configured Quality Gate is the criterion, so those 11 maintainability issues are **tracked follow-up debt**, not a failed gate. The earlier `c893567` is kept as history: **Check Code Quality FAILED** there on 25 formatting findings while the other three checks succeeded with the same Sonar figures; the formatting-only repairs were committed and pushed as `8eb0349`. The docs-only `9fd1826` (`Recorded Phase 2C CI checkpoint`) and the final PR head `3e50248` (`Recorded passing Phase 2C CI checkpoint`) also passed all four checks on 2026-11-14. Local results on the formatted tree remain local-only: 685 cases (680 executed + 5 pre-existing skips, 0 failures/errors) all passing; local module JaCoCo line coverage `:core` 207/219 = 94.52% (branch 108/115 = 93.91%) and `:jda-runtime` 870/948 = 91.77% (branch 342/418 = 81.82%) — local module reports only, not Sonar/new-code CI evidence — and the clean full `./gradlew build` passed locally. Local QA/reviewer agents report PASS; that is internal review, not a GitHub review, and no human review is recorded here. The gate was closed by the **sanitized 2026-11-14 staging run recorded in the Phase 2C section** — local macOS arm64 with the DAVE 0.2.0 native loaded and protocol version 1, only `GUILD_VOICE_STATES`, guild-scoped `/jda-walkthrough` and `/jda-voice-walkthrough`, voice connect to the invoking user's channel, the Phase 2C reply `Voice walkthrough OK \| handed 75/75 frames to JDA's send loop (delivery not confirmed)` (a hand-off count, not delivery proof), an audible beep reported by the invoking user's own Discord client, separate from the bot (the delivery evidence, distinct from the hand-off), completion-path disconnect cleanup and a deliberate Ctrl+C stop; no receive path, root wiring or Phase 6 artifact was exercised. `master` is untouched |
 
 - **Phase 2B staging evidence** remains the sanitized 2026-11-13 record in the Phase 2B section:
   isolated `:jda-runtime` login, ready state, guild-scoped `/jda-walkthrough` registration, the
@@ -1059,9 +1081,10 @@ Next actions, in order:
 
 1. **Plan Phase 2D** (channel/message/locale edge adapters): move `LocalizationService` and `/locale`
    behind/adapted to a neutral port, keep the guild default locale distinct from the user/client
-   locale, and validate conversion/fallback at the adapter boundary. Branch from the epic head
-   `5fa9c63` and open the 2D PR against the epic branch. 2D is **OPEN** and its planning is the next
-   step.
+   locale, and validate conversion/fallback at the adapter boundary. Before branching, fetch and
+   verify the **live epic tip** — do not hardcode `5fa9c63` or `269acc1` — then branch from that
+   verified tip and open the 2D PR against the epic branch. 2D is **OPEN** and its planning is the
+   next step.
 2. Record per-issue dispositions and owners for the **11 Sonar new issues** (10 major, 1
    critical-severity code smell) as **tracked follow-up debt** under the owner-approved 2026-11-14
    interpretation: the repository's configured Quality Gate is the criterion and it passed, so these
@@ -1084,8 +1107,8 @@ Next actions, in order:
 | Item | State |
 | --- | --- |
 | Baseline commit | Clean `master` @ `4badb92` |
-| Epic integration branch | `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; now at `5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`, the regular merge commit of PR #118 whose parents are `255893a` (the regular merge commit of PR #117, whose parents are `c00bdf1` — squash merge of PR #116 on top of `5aad7c7`, the squash merge of PR #115 — and `7d8661d`, the Phase 2B head) and `3e50248` (the final Phase 2C PR head). It carries the Phase 2B and Phase 2C passes and is the merge baseline for the remaining subphases |
-| Working branch (current) | **No open working branch for 2C**: `feature/114-phase-2c-voice-ports` was merged into the epic branch by PR #118 at `5fa9c63`, so **no open Phase 2C PR remains**. The merged work was pushed at `8eb0349c4f65997d0dd69ffdc2b245268c207074` with the docs-only `9fd1826` and final PR head `3e50248`; all four checks succeeded on those heads (Check Code Quality, Build and analyze, SonarCloud Code Analysis, SonarCloud) and the Sonar Quality Gate passed with 90.1% new-code coverage, 11 new issues, 0 security hotspots and 0.0% duplication; the earlier `c893567` failed only Check Code Quality on 25 formatting findings. These are dated historical checkpoints, so read the live GitHub check runs for any later epic head. **Phase 2C is PASS — gate closed (2026-11-14)** on the sanitized user-run staging evidence. The former `feature/114-kord-to-jda-migration` branch is deleted; PRs #115, #116, #117 and #118 are merged. The next subphase, **2D**, branches from the epic head `5fa9c63` |
+| Epic integration branch | `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; it contains `5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`, the regular merge commit of PR #118 whose parents are `255893a` (the regular merge commit of PR #117, whose parents are `c00bdf1` — squash merge of PR #116 on top of `5aad7c7`, the squash merge of PR #115 — and `7d8661d`, the Phase 2B head) and `3e50248` (the final Phase 2C PR head), plus the docs-only `269acc1` that recorded the Phase 2C staging pass and was the epic tip when this documentation update began. That merge carries the Phase 2B and Phase 2C passes, and this doc-only commit will advance the tip beyond `269acc1`, so the live tip is read from fetched Git/GitHub and no SHA recorded here is asserted as the current head |
+| Working branch (current) | **No open working branch for 2C**: `feature/114-phase-2c-voice-ports` was merged into the epic branch by PR #118 at `5fa9c63`, so **no open Phase 2C PR remains**. The merged work was pushed at `8eb0349c4f65997d0dd69ffdc2b245268c207074` with the docs-only `9fd1826` and final PR head `3e50248`; all four checks succeeded on those heads (Check Code Quality, Build and analyze, SonarCloud Code Analysis, SonarCloud) and the Sonar Quality Gate passed with 90.1% new-code coverage, 11 new issues, 0 security hotspots and 0.0% duplication; the earlier `c893567` failed only Check Code Quality on 25 formatting findings. These are dated historical checkpoints, so read the live GitHub check runs for any later epic head. **Phase 2C is PASS — gate closed (2026-11-14)** on the sanitized user-run staging evidence. The former `feature/114-kord-to-jda-migration` branch is deleted; PRs #115, #116, #117 and #118 are merged. The next subphase, **2D**, branches from the **live epic tip**, fetched and verified when 2D starts — not from a hardcoded `5fa9c63` or `269acc1` |
 | Assistant receive-audio | Stays separately stashed; **out of scope** for this migration |
 | Parked PRs | #106, #109, #111 — parked, ported individually **after** cutover |
 | Docker / deployment | Deployment stays a fat JAR. Do **not** add a `Dockerfile` to this repo |
@@ -1386,8 +1409,9 @@ Quality Gate is the criterion), not zero. The earlier `c893567` failed only Chec
 formatting findings. The staging run was user-run on **local macOS arm64** with the DAVE 0.2.0
 `natives-darwin`
 native, protocol version 1, only `GUILD_VOICE_STATES`, guild-scoped `/jda-walkthrough` and
-`/jda-voice-walkthrough`, voice connect, `handed 75/75 frames to JDA's send loop` (a hand-off count,
-not delivery proof), an audible beep reported by the invoking user's own Discord client, separate from
+`/jda-voice-walkthrough`, voice connect, the reply
+`Voice walkthrough OK | handed 75/75 frames to JDA's send loop (delivery not confirmed)` (a hand-off
+count, not delivery proof), an audible beep reported by the invoking user's own Discord client, separate from
 the bot (the delivery evidence, a distinct observation from the hand-off), completion-path disconnect
 cleanup and a deliberate Ctrl+C stop; no receive path, root wiring or Phase 6 artifact validation was
 exercised. Local results on the formatted tree are 685 cases (680 executed +
@@ -1439,8 +1463,10 @@ repository's configured Quality Gate is the criterion — so they are not a fail
   application**, which is still Kord-based.
 - Slash commands register and respond; deferred vs. immediate reply is explicit and tested.
   **PASS for the isolated guild-scoped `/jda-walkthrough` and `/jda-voice-walkthrough` only
-  (2026-11-13: registered and replied `JDA walkthrough OK`; 2026-11-14: both registered with only
-  `GUILD_VOICE_STATES` and the voice walkthrough played an audible beep). OPEN for the root runtime
+  (2026-11-13 Phase 2B: registered and replied `JDA walkthrough OK`; 2026-11-14 Phase 2C: both
+  registered with only `GUILD_VOICE_STATES`, and `/jda-voice-walkthrough` replied
+  `Voice walkthrough OK | handed 75/75 frames to JDA's send loop (delivery not confirmed)` and played
+  an audible beep). OPEN for the root runtime
   and the remaining command families.**
 - No Kord types leak into the new abstraction boundary. **PASS for the locale repository/use-case
   boundary and for the Phase 2B and Phase 2C `:core` modules only (including the 2C voice/audio and
@@ -1597,11 +1623,14 @@ accepted risk, and a documented blocker does not close a gate.
 
 ## 5. Tracked and ignored local artifacts
 
-- The epic integration branch `feature/114-migrate-to-jda-jda-ktx` is at
+- The epic integration branch `feature/114-migrate-to-jda-jda-ktx` contains
   `5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`, the **regular merge commit of PR #118** (parents
-  `255893a`, the regular merge commit of PR #117, and `3e50248`, the final Phase 2C PR head). PRs
-  #115, #116, #117 and #118 are **closed/merged** and the former `feature/114-kord-to-jda-migration`
-  child branch is deleted; no open Phase 2C branch/PR remains. The merged 2C work (implementation,
+  `255893a`, the regular merge commit of PR #117, and `3e50248`, the final Phase 2C PR head), plus the
+  docs-only `269acc1` that recorded the Phase 2C staging pass and was the epic tip when this
+  documentation update began. This doc-only commit will advance the tip beyond `269acc1`, so the live
+  tip is read from fetched Git/GitHub. PRs #115, #116, #117 and #118 are **closed/merged** and the
+  former `feature/114-kord-to-jda-migration` child branch is deleted; no open Phase 2C branch/PR
+  remains. The merged 2C work (implementation,
   tests, tone resource and formatting-only ktlint repairs) was pushed at `8eb0349`, followed by the
   docs-only `9fd1826` and the final PR head `3e50248`; all four checks succeeded on the recorded heads
   and the Sonar Quality Gate passed with 90.1% new-code coverage, 11 new issues, 0 security hotspots
@@ -1658,8 +1687,9 @@ accepted risk, and a documented blocker does not close a gate.
   Sonar/new-code CI evidence — and the clean full `./gradlew build` passed locally. The recorded
   checkpoints are dated historical evidence; read the live GitHub check runs for any later epic head.
   The gate was closed by the sanitized **user-run 2026-11-14 staging record** in the Phase 2C section
-  (local macOS arm64 with the `natives-darwin` DAVE 0.2.0 native, only `GUILD_VOICE_STATES`,
-  `handed 75/75 frames to JDA's send loop` as a hand-off count, an audible beep reported by the
+  (local macOS arm64 with the `natives-darwin` DAVE 0.2.0 native, only `GUILD_VOICE_STATES`, the reply
+  `Voice walkthrough OK | handed 75/75 frames to JDA's send loop (delivery not confirmed)` with the
+  frame count as a hand-off only, an audible beep reported by the
   invoking user's own Discord client, separate from the bot, as the delivery evidence (a distinct
   observation from the hand-off), completion-path disconnect cleanup, deliberate Ctrl+C, no receive
   path). There is
