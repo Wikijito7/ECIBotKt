@@ -14,13 +14,20 @@ head `8c20a1f` which was fully green at the recorded 2026-11-14 snapshot, and th
 `feature/114-migrate-to-jda-jda-ktx`** by the regular merge commit
 `f56d2252506617ae282c50a3cc95fb830c644424`, whose two parents are the base `1304aa6` and the final head
 `0b365aa`; the merge was recorded on 2026-11-14 and the epic branch advanced to `f56d225` at that
-recorded snapshot. **`f56d225` was the epic tip before this documentation update**, not a claim about
-the tip after it; the live tip is read from fetched Git/GitHub. The epic remains the merge baseline
+recorded snapshot. **`f56d225` was the epic tip before the earlier documentation update**, not a claim
+about the tip after it; the later documentation-only `38bdba1` (`Recorded Phase 2D merge and next
+steps`) was the epic tip **before this documentation-only edit**, verified live at the start of this
+update. The live tip is read from fetched Git/GitHub. The epic remains the merge baseline
 for this migration. Phase 2A working branch
 `feature/114-kord-to-jda-migration` **no longer exists on the remote**: PR
 [#115](https://github.com/Wikijito7/ECIBotKt/pull/115) was **squash-merged** into the epic branch as
-`5aad7c7` and the remote branch was deleted; a stale local ref may remain. Phase 2A stays **IN PROGRESS / partial** — the merge is
-not a 2A completion and does not complete Phase 2.
+`5aad7c7` and the remote branch was deleted; a stale local ref may remain. Phase 2A is **PASS — gate
+closed (owner scope decision 2026-11-14)** for its neutral-value/locale-persistence scope; that closure
+does **not** complete Phase 2, which stays **IN PROGRESS only because the scoped architectural
+import-rule CI gate is open** — 2A–2D are **PASS** and the isolated-runtime criteria already have
+recorded evidence. The root `LocalizationService` and root `/locale` are intentionally
+Kord-facing (already refactored in 2D while remaining Kord-based); their root code/build switch
+belongs to **Phase 6** (production deployment is Phase 7), not to Phase 2A.
 Phase 1B subphase branch: `feature/114-native-failfast-check`; its PR
 [#116](https://github.com/Wikijito7/ECIBotKt/pull/116) had targeted the **epic branch**, because the
 former 2A branch was merged and its remote ref deleted (a stale local ref may remain). Its negative fail-fast test **passed** on 2026-11-08 (see the
@@ -57,13 +64,14 @@ ktlint repairs that fixed the
 earlier `c893567` failure are part of the merged implementation. The gate was closed by the
 **user-run staging evidence recorded on 2026-11-14** (sanitized in the Phase 2C section), not by CI
 alone. No human GitHub review is recorded here; read the PR for its live review state. Broader
-**Phase 2 remains IN PROGRESS**: the root runtime migration, the architectural import rule and the
-overall Phase 2 exit criteria are still open, and **Phase 6** packaging/artifact validation is still
+**Phase 2 remains IN PROGRESS only because the scoped architectural import-rule CI gate is still
+open**; its isolated-runtime criteria are already satisfied by the 2A–2D evidence. The root Kord runtime is **not** migrated by Phase 2: the root code/build switch and
+the Kord dependency/JAR removal belong to **Phase 6**, whose packaging/artifact validation is still
 **OPEN**. **Phase 2D is PASS — gate closed (2026-11-14)**: the live remote epic tip was fetched and
 verified as `1304aa6` (`Clarified Phase 2C staging provenance`) before branching, and the child branch
 `feature/114-phase-2d-locale-edge-adapters` was created from that tip, not from `master` (`4badb92`)
-or a stale SHA. `master` remains untouched. 2C and 2D are **PASS**; Phase 6 and the root production
-runtime migration remain **OPEN**; issue #114 remains open. Final local 2D QA on **2026-11-14** passed
+or a stale SHA. `master` remains untouched. 2C and 2D are **PASS**; Phase 6 — including the root
+code/build switch and Kord removal — remains **OPEN** (Phase 7 deploys the verified artifact); issue #114 remains open. Final local 2D QA on **2026-11-14** passed
 the clean full build and recorded **758 test cases: 753 executed, 5 skipped (pre-existing), 0
 failures/errors**, with local module JaCoCo readings and a local ktlint check scoped to changed files:
 **0 findings**. The `a4bc1ae` time-qualified green snapshot has all four checks green, the Sonar
@@ -73,7 +81,7 @@ fully green (all four checks); the final merged head `0b365aa` also had all four
 (2026-11-14; see the merged-head CI snapshot in the Phase 2D section), and live GitHub checks remain
 authoritative for any later commit. PR #119 is **merged** into the epic branch by the regular merge
 commit `f56d225` and is no longer open. Pause/resume preservation stays
-deferred to Phase 3. `7bf5419` (`Corrected Phase 2B CI status record`) is the latest
+deferred to Phase 3 and remains a **required** migration outcome, not optional. `7bf5419` (`Corrected Phase 2B CI status record`) is the latest
 **verified all-green CI checkpoint** before the subsequent docs-only updates: all four #117 checks
 passed on **2026-11-13** — Check Code Quality (16:47:15Z), SonarCloud Code Analysis (16:48:52Z),
 Build and analyze (16:48:56Z) and SonarCloud (16:48:58Z) — and Sonar reported **75.0% Coverage on New
@@ -105,9 +113,10 @@ analyze, SonarCloud Code Analysis and SonarCloud. All of these are **historical 
 not a standing guarantee: read the GitHub check runs for any later head. Local QA and reviewer agents
 satisfied the independent review criterion; no GitHub PR review has been submitted, which is not itself
 a required gate. PR #117 is **merged** into the epic branch at `255893a`; it is not modified here.
-Issue #114 stays open because broader Phase 2 is unfinished: the root runtime
-migration and the architectural import rule remain open, and Phase 6 packaging/artifact validation is
-also open. **Phase 2C is PASS — gate closed (2026-11-14)** on the recorded user-run staging evidence,
+Issue #114 stays open because broader Phase 2 is unfinished: **only the scoped architectural
+import-rule CI gate remains open** (2A–2D are **PASS** and their isolated-runtime evidence already
+exists); the root code/build switch belongs to Phase 6 (production deployment is Phase 7), whose
+packaging/artifact validation is also open. **Phase 2C is PASS — gate closed (2026-11-14)** on the recorded user-run staging evidence,
 and PR #118 is **merged** into the epic branch by the regular merge commit `5fa9c63`, so **no open
 Phase 2C PR remains**.
 
@@ -122,19 +131,29 @@ Phase 2C PR remains**.
 Status labels: **PASS** = recorded evidence, gate closed · **IN PROGRESS** = work started, gate
 still open · **OPEN** = not started, gate still open.
 
+**Phase ownership (current model).** Root production stays on **Kord through Phases 2–5**. Phase **6**
+switches the root code/build to the JDA lifecycle and removes Kord; Phase **7** deploys the exact
+Phase 6-verified artifact. Phases 2–5 therefore deliver and prove an **isolated** JDA implementation in
+`:core` + `:jda-runtime` while the root Kord bot keeps serving production. Code already delivered in
+2B/2C/2D is isolated-runtime work; remaining Phase 3/4 work is *not* yet delivered.
+
 | Item | Status | Recorded |
 | --- | --- | --- |
 | Phase 1 — dependency and DAVE transport feasibility | **PASS** (staging spike) | Subphase **1A** passed on staging (protocol v1 + audible tone) and subphase **1B** passed on 2026-11-08 (exit `3` `EXIT_NATIVE` with no gateway login); every Phase 1 exit criterion now has recorded evidence. Root dependency alignment and root fat-JAR checks remain **Phase 6**, not Phase 1 |
 | Phase 1B — missing-DAVE-native fail-fast simulation | **PASS — gate closed (2026-11-08)** | User-run negative container on Linux amd64, Temurin 21.0.13 (`eclipse-temurin:21`), negative no-DAVE-native JAR: exit exactly `3` (`EXIT_NATIVE`), DAVE native unavailable with `UnsatisfiedLinkError: Required library was not found`, **zero** `[gateway] logging in` and **zero** `[gateway] ready` lines, fake placeholder token never printed. The host pre-pulled the image, so the image pull was not itself isolated; the container ran with `--network none`. Sanitized record only |
-| R1 — `jda-ktx 0.14.2` + JDA 6.7.0 pairing | **IN PROGRESS — transport subgate PASS only** | Candidate resolved and exercised for voice transport; still not an upstream-declared combination and not yet re-verified on the final Phase 6 artifact |
+| R1 — `jda-ktx 0.14.2` + JDA 6.7.0 pairing | **IN PROGRESS — transport subgate PASS only** | Candidate resolved and exercised for voice transport; still not an upstream-declared combination and not yet re-verified on the final Phase 6 artifact. **Conditional:** only applies if jda-ktx is the selected path; direct JDA + coroutine bridge requires no jda-ktx gate |
 | R2 — `adapter-jda` 0.2.0 vs JDA 6.7.0 ABI | **IN PROGRESS — transport subgate PASS only** | DAVE negotiated and played through JDA; published metadata still does not declare or test 6.7.0, and the ABI is not yet re-verified on the final Phase 6 artifact |
-| Phase 2 — JDA bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork **landed on the epic branch** through the squash merge of PR #115 (`5aad7c7`, tree identical to the former 2A head `67802d1`); Phase 2A itself remains **partial**, not complete. Phase 2B is **PASS — gate closed 2026-11-13**: its neutral command boundary and isolated JDA runtime exist with unit tests on child branch `feature/114-phase-2b-command-port`, JaCoCo coverage is wired for both isolated modules, CI passed on the verified all-green checkpoints `988a7cd` and `7bf5419` (the latest verified all-green checkpoint before the subsequent docs-only updates; all of these are historical checkpoints, so read the live checks for later heads), and the user-run staging `/jda-walkthrough` interaction succeeded (sanitized evidence in the Phase 2B section). Nothing is wired into the root runtime. **2D is PASS — gate closed (2026-11-14)** on the `a4bc1ae` time-qualified green snapshot (all four checks green and Sonar Quality Gate OK) plus sanitized user-run staging evidence in the Phase 2D section; PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (merge recorded 2026-11-14; head `0b365aa`, base `1304aa6`). The root runtime migration remains to come (see Phase 2). **2C is PASS — gate closed (2026-11-14)**: its acceptance criteria and sanitized staging evidence are recorded in the Phase 2C section; its branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a`, and PR #118 is **merged** into the epic branch by the regular merge commit `5fa9c63` (parents `255893a` and PR head `3e50248`), whose four checks succeeded; the Sonar gate reported 90.1% coverage on new code with 11 new issues (10 major, 1 critical), 0 hotspots and 0.0% duplication — recorded as-is, not zero. The implementation head `8eb0349`, the docs-only `9fd1826` and the merged head `3e50248` are dated historical checkpoints; read the live checks for any later epic head. PR #116 was **squash-merged** into the epic branch (`c00bdf1`); PR #117 was then **merged** into the epic branch by a regular merge commit at `255893a` (parents `c00bdf1` and `7d8661d`, merge tree identical to the Phase 2B head) |
-| Phase 2A — domain-owned ID/locale values + locale persistence refactor | **IN PROGRESS / partial** | Phase 2A source and test changes were **squash-merged** into the epic branch by PR #115 as `5aad7c7`; that commit's tree equals the former 2A head `67802d1`, and the remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain). The merge brings the groundwork in but does **not** complete 2A: `GuildId`/`LocaleCode` and the locale repository/use cases are **neutral**. Neutral locale contracts/catalog/shared persistence and the isolated JDA `/locale` were completed in **Phase 2D**; the **root** `LocalizationService` and **root** `/locale` remain Kord-facing until Phase 6 |
-| Phase 2B — neutral command context + responder/response port | **PASS — gate closed (2026-11-13)** | Implementation and unit tests are present on `feature/114-phase-2b-command-port` as the initial implementation checkpoint `fbd9f5a`, originally stacked on Phase 1B `feature/114-native-failfast-check`. PR #116 has since been **squash-merged** into the epic branch (`c00bdf1`), so PR #117 was retargeted to the epic branch and was later **merged** into it by the regular merge commit `255893a`; its only conflict — this plan — was resolved by an ancestry merge that changed no code. The branch adds isolated Gradle modules `:core` (gateway-free neutral ports and a pure walkthrough handler) and `:jda-runtime` (JDA 6.7.0 adapter, guild-only `/jda-walkthrough`); the root project depends on `:core` only and remains Kord-based and JDA-free. On head `001e722` **Check Code Quality**, **Build and analyze** and the separately named **SonarCloud** check passed, while **SonarCloud Code Analysis** failed its Quality Gate at 0.0% coverage on new code (required >=50%) because the modules emitted no JaCoCo XML; the JaCoCo 0.8.12 fix then passed CI on the covered checkpoint `e607ff7` — all four #117 checks green, including both SonarCloud checks, with 75.0% Coverage on New Code, 0 new issues and 0 hotspots. The later docs-only checkpoints `2850907`, `16247f8` and `d353113` also passed all four #117 checks, as did `988a7cd` (last check completed 2026-11-13 16:38:44Z), and `e4a9e29` was observed in progress at 16:41:06Z (the observation time, when only Check Code Quality had concluded successfully) and later completed all four checks successfully (last at 16:44:11Z). `7bf5419` (`Corrected Phase 2B CI status record`) is the latest verified all-green checkpoint before the subsequent docs-only updates: all four checks passed on 2026-11-13 — Check Code Quality 16:47:15Z, SonarCloud Code Analysis 16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z — with 75.0% Coverage on New Code, 0 new issues and 0 hotspots; it was the head at that point, not afterwards. The later docs-only `f5f04d1` (`Recorded passing Phase 2B CI runs`) was the head in a dated snapshot observed on 2026-11-13 in which only Check Code Quality had concluded successfully (16:53:24Z), Build and analyze was still in progress and the SonarCloud checks were not yet listed — so it was **not green at that snapshot**; GitHub holds the status of the head after this docs-only follow-up. All of these are historical verified checkpoints, not a guarantee for later commits, so CI status for any newer head must be read from the GitHub check runs. Local QA and reviewer agents satisfied the independent review criterion while no GitHub PR review has been submitted. The user ran the isolated runtime on 2026-11-13 against staging and the guild-scoped `/jda-walkthrough` replied `JDA walkthrough OK`, closing the gate. PR #117 was subsequently **merged** into the epic branch by a regular merge commit at `255893a`, so the Phase 2B pass is now on the epic integration branch. The root runtime is still Kord-based and JDA-free |
+| Phase 2 — isolated JDA runtime: bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork **landed on the epic branch** through the squash merge of PR #115 (`5aad7c7`, tree identical to the former 2A head `67802d1`); **2A is PASS — gate closed (owner scope decision 2026-11-14)** for its neutral-value/locale-persistence scope. Phase 2 as a whole stays **IN PROGRESS only on the scoped architectural import-rule CI gate** — 2A, 2B, 2C and 2D are all **PASS**, and the isolated-runtime criteria are already satisfied by their recorded evidence; the root Kord `LocalizationService`, root `/locale` and the root code/build switch are **Phase 6** scope. Phase 2B is **PASS — gate closed 2026-11-13**: its neutral command boundary and isolated JDA runtime exist with unit tests on child branch `feature/114-phase-2b-command-port`, JaCoCo coverage is wired for both isolated modules, CI passed on the verified all-green checkpoints `988a7cd` and `7bf5419` (the latest verified all-green checkpoint before the subsequent docs-only updates; all of these are historical checkpoints, so read the live checks for later heads), and the user-run staging `/jda-walkthrough` interaction succeeded (sanitized evidence in the Phase 2B section). No JDA runtime is wired into the root runtime (the 2D root locale refactor stays Kord-based and is not JDA wiring). **2D is PASS — gate closed (2026-11-14)** on the `a4bc1ae` time-qualified green snapshot (all four checks green and Sonar Quality Gate OK) plus sanitized user-run staging evidence in the Phase 2D section; PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (merge recorded 2026-11-14; head `0b365aa`, base `1304aa6`). Root Kord production is **not cut over** through Phase 2 (and through Phase 5); the root gateway/runtime cutover is **Phase 6**. **2C is PASS — gate closed (2026-11-14)**: its acceptance criteria and sanitized staging evidence are recorded in the Phase 2C section; its branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a`, and PR #118 is **merged** into the epic branch by the regular merge commit `5fa9c63` (parents `255893a` and PR head `3e50248`), whose four checks succeeded; the Sonar gate reported 90.1% coverage on new code with 11 new issues (10 major, 1 critical), 0 hotspots and 0.0% duplication — recorded as-is, not zero. The implementation head `8eb0349`, the docs-only `9fd1826` and the merged head `3e50248` are dated historical checkpoints; read the live checks for any later epic head. PR #116 was **squash-merged** into the epic branch (`c00bdf1`); PR #117 was then **merged** into the epic branch by a regular merge commit at `255893a` (parents `c00bdf1` and `7d8661d`, merge tree identical to the Phase 2B head) |
+| Phase 2A — domain-owned ID/locale values + locale persistence refactor | **PASS — gate closed (owner scope decision 2026-11-14)** | Phase 2A source and test changes were **squash-merged** into the epic branch by PR #115 as `5aad7c7`; that commit's tree equals the former 2A head `67802d1`, and the remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain). The delivered scope is closed as **PASS**: `GuildId`/`LocaleCode` as domain-owned values, the neutral locale repository and use cases, and preserved `guild_locales` JSON compatibility. Neutral locale contracts/catalog/shared persistence and the isolated JDA `/locale` were completed in **Phase 2D**. The **root** `LocalizationService` and **root** `/locale` stay Kord-facing (2D refactored them — DI, resources, module deps — without cutting the gateway over) and the **gateway/runtime cutover** is **Phase 6** scope — not a Phase 2A blocker |
+| Phase 2B — neutral command context + responder/response port | **PASS — gate closed (2026-11-13)** | Implementation and unit tests are present on `feature/114-phase-2b-command-port` as the initial implementation checkpoint `fbd9f5a`, originally stacked on Phase 1B `feature/114-native-failfast-check`. PR #116 has since been **squash-merged** into the epic branch (`c00bdf1`), so PR #117 was retargeted to the epic branch and was later **merged** into it by the regular merge commit `255893a`; its only conflict — this plan — was resolved by an ancestry merge that changed no code. The branch adds isolated Gradle modules `:core` (gateway-free neutral ports and a pure walkthrough handler) and `:jda-runtime` (JDA 6.7.0 adapter, guild-only `/jda-walkthrough`); **at the Phase 2B snapshot** the root project depended on `:core` only and remained Kord-based and JDA-free. **Phase 2D later added the shared `:locale-persistence` module to both the root project and `:jda-runtime`**, so that 2B dependency statement is historical and does not describe the current graph. On head `001e722` **Check Code Quality**, **Build and analyze** and the separately named **SonarCloud** check passed, while **SonarCloud Code Analysis** failed its Quality Gate at 0.0% coverage on new code (required >=50%) because the modules emitted no JaCoCo XML; the JaCoCo 0.8.12 fix then passed CI on the covered checkpoint `e607ff7` — all four #117 checks green, including both SonarCloud checks, with 75.0% Coverage on New Code, 0 new issues and 0 hotspots. The later docs-only checkpoints `2850907`, `16247f8` and `d353113` also passed all four #117 checks, as did `988a7cd` (last check completed 2026-11-13 16:38:44Z), and `e4a9e29` was observed in progress at 16:41:06Z (the observation time, when only Check Code Quality had concluded successfully) and later completed all four checks successfully (last at 16:44:11Z). `7bf5419` (`Corrected Phase 2B CI status record`) is the latest verified all-green checkpoint before the subsequent docs-only updates: all four checks passed on 2026-11-13 — Check Code Quality 16:47:15Z, SonarCloud Code Analysis 16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z — with 75.0% Coverage on New Code, 0 new issues and 0 hotspots; it was the head at that point, not afterwards. The later docs-only `f5f04d1` (`Recorded passing Phase 2B CI runs`) was the head in a dated snapshot observed on 2026-11-13 in which only Check Code Quality had concluded successfully (16:53:24Z), Build and analyze was still in progress and the SonarCloud checks were not yet listed — so it was **not green at that snapshot**; GitHub holds the status of the head after this docs-only follow-up. All of these are historical verified checkpoints, not a guarantee for later commits, so CI status for any newer head must be read from the GitHub check runs. Local QA and reviewer agents satisfied the independent review criterion while no GitHub PR review has been submitted. The user ran the isolated runtime on 2026-11-13 against staging and the guild-scoped `/jda-walkthrough` replied `JDA walkthrough OK`, closing the gate. PR #117 was subsequently **merged** into the epic branch by a regular merge commit at `255893a`, so the Phase 2B pass is now on the epic integration branch. The root runtime is still Kord-based and JDA-free |
 | Phase 2C — voice/session/player message ports and adapters | **PASS — gate closed (2026-11-14)** | Acceptance criteria, scope limits and sanitized staging evidence are recorded in the Phase 2C section. Branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a` (the regular merge commit that brought PR #117 into the epic branch). The neutral voice/audio/player-message ports, their JDA adapters, the DAVE 0.2.0 wiring, `/jda-voice-walkthrough` and the unit tests were merged into the epic branch through PR #118 by the regular merge commit `5fa9c63` (PR head `3e50248`); the implementation head is `8eb0349` (`Fixed ktlint violations in Phase 2C`). All four checks on that head **succeeded** — Check Code Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud — and the Sonar Quality Gate **passed** with **90.1% new-code coverage, 11 new issues (10 major, 1 critical), 0 security hotspots and 0.0% duplication** (no zero-issue claim). The earlier head `c893567` is kept as history: **Check Code Quality failed** there on 25 ktlint formatting findings while the other three checks passed with the same Sonar figures; the formatting-only repairs were committed and pushed as `8eb0349`. The docs-only `9fd1826` (`Recorded Phase 2C CI checkpoint`) is a **dated historical green checkpoint** too: all four checks succeeded on 2026-11-14 — Check Code Quality 08:28:21Z, SonarCloud Code Analysis 08:31:00Z, Build and analyze 08:31:04Z, SonarCloud 08:31:05Z — with the Sonar Quality Gate passed at 90.1% Coverage on New Code, 11 new issues, 0 security hotspots and 0.0% duplication. Those checkpoints are historical; the merged PR head `3e50248` also passed all four checks, and later epic heads are read live from GitHub. Latest **local** run on the formatted tree: `:core:test` 81 tests, `:jda-runtime:test` 224 tests and the root suite 380 tests (5 pre-existing skips) all pass with 0 failures/errors — **685 cases total (680 executed + 5 skips)**; local JaCoCo **module** line coverage is `:core` **207/219 = 94.52%** (branch **108/115 = 93.91%**) and `:jda-runtime` **870/948 = 91.77%** (branch **342/418 = 81.82%**), and the full `./gradlew build` passed locally. All coverage figures here are **local module JaCoCo report readings only — not Sonar, new-code or CI evidence**. Phase 2C is **PASS — gate closed (2026-11-14)** on the recorded user-run staging playback evidence (sanitized in the Phase 2C section); the 11 Sonar new issues remain recorded as **tracked follow-up debt** rather than being described as resolved or zero, because under the **owner-approved 2026-11-14 interpretation** the repository's configured Quality Gate is the criterion and it passed. `master` is untouched |
-| Phase 2D — channel/message/locale edge adapters | **PASS — gate closed (2026-11-14)** | Branch `feature/114-phase-2d-locale-edge-adapters` was created from the **live remote epic tip verified at branch creation**: `1304aa6` (`Clarified Phase 2C staging provenance`), not from `master` (`4badb92`) and not from a stale/hardcoded SHA such as `5fa9c63` or `269acc1`. The worktree was clean and on the epic branch before branching; no 2D branch existed locally or remotely. 2C remains **PASS**; Phase 6/root production runtime migration remain **OPEN**; issue #114 remains open. The implementation in this branch moves the locale port, use cases and catalog into `:core`, extracts the JSON persistence adapter into the shared `:locale-persistence` module, moves the unchanged `lang.yml`/`lang_es-ES.yml` resources onto the shared runtime classpath, and adds a guild-scoped JDA `/locale` command with neutral command/locale boundaries. **2D is PASS — gate closed (2026-11-14)**: the tested code/test snapshot `4ff8167` is pushed, the `a4bc1ae` time-qualified green snapshot has all four checks green and the Sonar Quality Gate OK, and the sanitized user-run staging/restart evidence is recorded in the Phase 2D section. Final local QA recorded **758 test cases: 753 executed, 5 skipped (pre-existing), 0 failures/errors**, with a clean local build, local module JaCoCo readings and a local ktlint check scoped to changed files showing **0 findings**. One new MAJOR `kotlin:S6524` Sonar code smell is disclosed as tracked follow-up debt under the configured gate criterion. The root runtime stays Kord-based; no Phase 6 wiring. PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` on 2026-11-14 (head `0b365aa`, base `1304aa6`). Details, accepted scope and gate evidence are recorded in the Phase 2D section |
-| Phase 6 — Kord-free build, artifact and digest gates | **OPEN** | Not started |
-| Production cutover (Phase 7) | **OPEN** | Blocked by the Phase 6 and staging gates |
+| Phase 2D — channel/message/locale edge adapters | **PASS — gate closed (2026-11-14)** | Branch `feature/114-phase-2d-locale-edge-adapters` was created from the **live remote epic tip verified at branch creation**: `1304aa6` (`Clarified Phase 2C staging provenance`), not from `master` (`4badb92`) and not from a stale/hardcoded SHA such as `5fa9c63` or `269acc1`. The worktree was clean and on the epic branch before branching; no 2D branch existed locally or remotely. 2C remains **PASS**; Phase 6 — root code/build switch plus artifact/digest gates — remains **OPEN**; issue #114 remains open. The implementation in this branch moves the locale port, use cases and catalog into `:core`, extracts the JSON persistence adapter into the shared `:locale-persistence` module, moves the unchanged `lang.yml`/`lang_es-ES.yml` resources onto the shared runtime classpath, and adds a guild-scoped JDA `/locale` command with neutral command/locale boundaries. **2D is PASS — gate closed (2026-11-14)**: the tested code/test snapshot `4ff8167` is pushed, the `a4bc1ae` time-qualified green snapshot has all four checks green and the Sonar Quality Gate OK, and the sanitized user-run staging/restart evidence is recorded in the Phase 2D section. Final local QA recorded **758 test cases: 753 executed, 5 skipped (pre-existing), 0 failures/errors**, with a clean local build, local module JaCoCo readings and a local ktlint check scoped to changed files showing **0 findings**. One new MAJOR `kotlin:S6524` Sonar code smell is disclosed as tracked follow-up debt under the configured gate criterion. The root runtime stays Kord-based; no Phase 6 wiring. PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` on 2026-11-14 (head `0b365aa`, base `1304aa6`). Details, accepted scope and gate evidence are recorded in the Phase 2D section |
+| Phase 3 — per-guild serialized voice (isolated JDA real-player slice) | **OPEN** | Starts only after the Phase 2 exit criteria are met. Operates on the isolated `:jda-runtime` slice while root production stays Kord; owns the per-guild actor/mailbox, enqueue-only Lavaplayer callbacks, real-player integration/serialization, and required pause/resume/reconnect/disconnect behaviour. Pause/resume testable semantics must be approved before implementation. Reuses the Phase 2C `JdaAudioSendHandler`; no new handler |
+| Phase 4 — commands, components, messages, channels, locales | **OPEN** | Starts after Phase 3 exit. Ports the remaining command groups and component IDs into neutral `:core` contracts plus JDA adapters in the isolated `:jda-runtime`. Root Kord commands remain production until Phase 6 |
+| Phase 5 — test/staging gate on the full isolated JDA implementation | **OPEN** | Starts after Phases 3–4 exit. Tests and stages the complete isolated JDA implementation while the Kord dependency and the untouched root Kord suite are still present. Not the root production cutover |
+| Phase 6 — root Kord→JDA code/build switch, Kord removal, repo-wide import rule, artifact gates | **OPEN** | Not started. Owns the root code/build switch, removal of Kord dependencies/local Kord JARs, the **same custom import scanner** extended repo-wide on the Kord-free tree, and the JDK 21 / packaging / digest / staging gates; Phase 7 deploys the verified artifact. Conditional jda-ktx gate (not required if direct JDA is selected) |
+| Phase 7 — production deployment of the Phase 6-verified artifact | **OPEN** | Blocked by the Phase 6 gates. Deploys the exact Phase 6-verified artifact with the same digest verification |
+| Phase 8 — port parked PRs #106/#109/#111 (post-migration follow-up) | **OPEN** | Not started. Runs after Phase 7. Ports each parked PR individually from a new child branch off the verified live epic tip (reviewed cherry-pick or reimplementation, regular merge commit), without rebasing or rewriting the parked branches. **Not** a prerequisite for Phase 2, Phase 6 or issue #114 closure |
 
 ### Phase 1 DAVE transport subgate — PASS (Phase 1 now PASS overall)
 
@@ -198,17 +217,26 @@ longer blocks Phase 2. Phase 2B was subsequently implemented on
 `feature/114-phase-2b-command-port` and is now **PASS — gate closed 2026-11-13** (see the Phase 2B
 section); broader Phase 2 remains **IN PROGRESS**.
 
-### Phase 2A — domain-owned ID/locale values and locale persistence — IN PROGRESS
+### Phase 2A — domain-owned ID/locale values and locale persistence — PASS (owner scope decision 2026-11-14)
+
+**Status: PASS — gate closed (owner scope decision 2026-11-14)** for the scope Phase 2A actually
+delivered: domain-owned `GuildId`/`LocaleCode`, the neutral locale repository and use cases, and
+preserved `guild_locales` JSON compatibility. The root `LocalizationService` and root `/locale` remain
+Kord-facing while **already having been refactored in Phase 2D** (DI, resources, module dependencies);
+that is a permitted non-cutover refactor, and the **root code/build switch** belongs to **Phase 6** (deployment is Phase 7).
+They are **not** a Phase 2A blocker and were never part of the 2A acceptance scope. **Scope limitation
+(explicit):** this PASS is the **owner-approved scope decision** and asserts only the neutral values /
+locale-persistence scope; it does **not** assert that the root Kord `LocalizationService` or root
+`/locale` are migrated. That exclusion is intentional and assigned to **Phase 6** — it is not a partial
+result, a rollback, or a reason to reopen 2A.
 
 This plan, `.opencode/opencode.json`, `spikes/jda-dave/**` and the Phase 2A source and test changes
 were carried on `feature/114-kord-to-jda-migration` and **squash-merged** into the epic integration
 branch by PR #115 as `5aad7c7`; the merged tree is identical to the former Phase 2A head `67802d1`.
-That branch's remote ref was deleted after the merge; a stale local ref may remain. The merge makes the 2A groundwork part of the epic branch; it
-does **not** complete Phase 2A, which stays **IN PROGRESS / partial**. At 2A closure the root
-`LocalizationService` and root `/locale` command were still Kord-facing; they remain so until the
-Phase 6 root-runtime migration. The neutral/shared locale contracts and the isolated JDA `/locale`
-adapter were completed in Phase 2D and passed on 2026-11-14. Read Git and the pull request for commit
-history; this document asserts no head beyond the recorded merge commit.
+That branch's remote ref was deleted after the merge; a stale local ref may remain. The neutral/shared
+locale contracts and the isolated JDA `/locale` adapter were completed in Phase 2D and passed on
+2026-11-14. Read Git and the pull request for commit history; this document asserts no head beyond the
+recorded merge commit.
 
 - `GuildId(ULong)` now lives in `es.wokis.domain.model` and `LocaleCode` in
   `es.wokis.domain.locale`; both are **domain-owned**, platform-neutral values.
@@ -216,10 +244,10 @@ history; this document asserts no head beyond the recorded merge commit.
   `GetGuildLocaleUseCase`, `SetGuildLocaleUseCase`) speak only those domain values.
 - **Root** `LocalizationService` is **not** neutral: its public signatures still take Kord
   `Snowflake` / `Locale` and convert to the domain values internally, and the **root** `/locale`
-  command is Kord-facing. That is the remaining Phase 6 root-runtime scope. **Phase 2A was a
-  neutral-values/persistence checkpoint, not the endpoint.** The neutral/shared locale contracts and
-  the isolated JDA `/locale` adapter were completed in **Phase 2D** and passed on 2026-11-14; the root
-  Kord service/command migration remains for Phase 6.
+  command is Kord-facing. That is intentionally **Phase 6** scope, not 2A scope. **Phase 2A was a
+  neutral-values/persistence checkpoint, and its scope is now closed as PASS.** The neutral/shared
+  locale contracts and the isolated JDA `/locale` adapter were completed in **Phase 2D** and passed on
+  2026-11-14; the root Kord service/command migration remains for Phase 6.
 - Kord conversions stay at the existing Kord edge (`utils/LocaleExtensions.kt` and the
   Kord-facing service/command), not in the repository or use cases.
 - The persisted `guild_locales` JSON shape is preserved
@@ -232,22 +260,26 @@ history; this document asserts no head beyond the recorded merge commit.
   0 failures, 0 errors, 5 pre-existing skips**.
 - Repository tests now use a JUnit-managed temporary file instead of reading or writing the real
   `./data` directory; the production constructor still resolves `./data/guild_locales.json`.
-- Phase 2A remains **IN PROGRESS** and is **not** marked complete: it records only the neutral
-  `GuildId`/`LocaleCode` and locale persistence boundary. At 2A closure, JDA bootstrap, shard/event
-  wiring, the command dispatch/response layer, and locale service/command neutrality were **open**.
-  Dispatch/response was addressed in **Phase 2B**; neutral/shared locale contracts and the isolated
-  JDA `/locale` adapter were completed in **Phase 2D**, which **passed on 2026-11-14**. Root runtime
-  migration remains for Phase 6.
+- Phase 2A is **PASS — gate closed (owner scope decision 2026-11-14)** and records exactly the neutral
+  `GuildId`/`LocaleCode` and locale persistence boundary. JDA bootstrap, shard/event wiring and the
+  command dispatch/response layer were **open at 2A closure** and were addressed by the isolated
+  **Phase 2B** runtime; neutral/shared locale contracts and the isolated JDA `/locale` adapter were
+  completed in **Phase 2D**, which **passed on 2026-11-14**. The root code/build switch and the
+  Kord-facing root locale service/command belong to **Phase 6**; 2A closure does not close Phase 2,
+  which remains open only on the scoped import-rule gate.
 
-#### Phase 2 subphase plan and stacked branches
+#### Phase 2 subphase plan and stacking policy
 
-Phase 2 is delivered in subphases. Each subsequent subphase gets its **own child branch and PR**, based
-on the branch that carries the immediately preceding subphase; it is not folded into an already-open
-earlier PR. Phase 2A's combined Phase 1/2A checkpoint landed as PR #115, **squash-merged** into the
-epic branch at `5aad7c7`; the remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain) and nothing
+Phase 2 is delivered in subphases. Each subsequent subphase gets its **own child branch and PR** and is
+not folded into an already-open earlier PR. The **current stacking policy (owner decision 2026-11-14,
+see "Stacking rules" below)** is to fetch and verify the **live epic tip** and branch from it, opening
+the PR against the epic integration branch; the earlier "branch from the preceding subphase's branch"
+pattern is **historical**. Phase 2A's combined Phase 1/2A checkpoint landed as PR #115,
+**squash-merged** into the epic branch at `5aad7c7` (historical exception); the remote
+`feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain) and nothing
 is restructured in place. Phase 2B branched from the Phase 1B branch
 `feature/114-native-failfast-check`; PR #116 was then **squash-merged** into the epic branch at
-`c00bdf1`, after which PR #117 targeted the epic branch and was later **merged** there by a regular
+`c00bdf1` (historical exception), after which PR #117 targeted the epic branch and was later **merged** there by a regular
 merge commit at `255893a`. **2C is PASS — gate closed (2026-11-14)**: its acceptance criteria and
 sanitized staging evidence are written below, and its branch `feature/114-phase-2c-voice-ports` was
 created from the fetched epic head `255893a`, because the Phase 2B pass is contained in that merge
@@ -264,10 +296,10 @@ remains.** The epic branch `feature/114-migrate-to-jda-jda-ktx` remains the
 
 | Subphase | Scope | Branch/PR posture | Status |
 | --- | --- | --- | --- |
-| **2A** | Domain-owned `GuildId`/`LocaleCode` + neutral locale repository/use cases | **Squash-merged** into the epic branch by PR #115 as `5aad7c7`; the remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain) and the checkpoint is not restructured | **IN PROGRESS / partial** — merged groundwork does not complete 2A; see above |
+| **2A** | Domain-owned `GuildId`/`LocaleCode` + neutral locale repository/use cases + preserved `guild_locales` JSON | **Squash-merged** into the epic branch by PR #115 as `5aad7c7`; the remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain) and the checkpoint is not restructured | **PASS — gate closed (owner scope decision 2026-11-14)** for the delivered neutral-value/locale-persistence scope; the root Kord `LocalizationService`/`/locale` are Phase 6 scope, not a 2A blocker |
 | **2B** | Neutral command context + responder/response port; adapters translate defer/ephemeral, locales and IDs | Child branch `feature/114-phase-2b-command-port`, originally based on Phase 1B `feature/114-native-failfast-check`; after #116 merged to the epic branch (`c00bdf1`), PR #117 was retargeted to the epic branch (base branch name only; no live base SHA asserted) and later **merged** there by the regular merge commit `255893a`; its one plan conflict was resolved by an ancestry merge that changed no code | **PASS — gate closed 2026-11-13** — isolated `:core`/`:jda-runtime` modules, neutral command boundary and JDA 6.7.0 adapter implemented with unit tests; #117 CI passed on covered checkpoint `e607ff7`, on the docs-only `2850907`/`16247f8`/`d353113`/`988a7cd`, on `e4a9e29` (later completed green after an in-progress observation), and on `7bf5419`, the latest verified all-green checkpoint before the subsequent docs-only updates (75.0% new-code coverage, 0 new issues, 0 hotspots); a later dated snapshot of `f5f04d1` (docs-only) was **not yet green** — only Check Code Quality had concluded at 16:53:24Z — so the status of any later head is read from GitHub; the user-run staging `/jda-walkthrough` interaction succeeded on 2026-11-13. Local QA/reviewer agents satisfied the independent review criterion; no GitHub PR review submitted, and the root runtime is still Kord-based. The pass is unaffected by the #116 ancestry merge |
 | **2C** | Voice/session/player-message narrow ports; JDA `AudioSendHandler`/DAVE and lifecycle stay in the adapter | Branch `feature/114-phase-2c-voice-ports`, created from the fetched epic head `255893a` — the regular merge commit that contains PR #117's Phase 2B pass. PR #118 (base: `feature/114-migrate-to-jda-jda-ktx`) was **merged** into the epic branch by the regular merge commit `5fa9c63` (PR head `3e50248`) | **PASS — gate closed (2026-11-14).** Acceptance criteria, scope limits and the user-run staging playback evidence are recorded in the Phase 2C section — sanitized facts only. All four checks succeeded on the implementation head `8eb0349` and on the merged head `3e50248`; the Sonar Quality Gate passed with 90.1% new-code coverage, 11 new issues (10 major, 1 critical), 0 security hotspots and 0.0% duplication, recorded as-is with no zero-issue claim. Latest **local** run on the formatted tree: 685 cases (680 executed + 5 pre-existing skips), all pass with 0 failures/errors; local JaCoCo module line coverage `:core` 207/219 = 94.52% (branch 108/115 = 93.91%), `:jda-runtime` 870/948 = 91.77% (branch 342/418 = 81.82%) — local module JaCoCo only, not Sonar/new-code CI evidence. Only outgoing playback was proven; receive-audio, root runtime wiring and Phase 6 artifact validation remain out of scope |
-| **2D** | Channel/message/locale edge adapters; neutral locale port/use cases/catalog in `:core`; shared JSON persistence module; shared unchanged language resources; minimal `/locale` command/message boundaries | Branch `feature/114-phase-2d-locale-edge-adapters`, created from the **live remote epic tip verified at branch creation** (`1304aa6`, `Clarified Phase 2C staging provenance`), not from `master` (`4badb92`) or a hardcoded SHA. Tested code/test snapshot `4ff8167` is pushed; **PR #119 is MERGED** into the epic branch by the regular merge commit `f56d225` (merge recorded 2026-11-14; head `0b365aa`, base `1304aa6`) | **PASS — gate closed (2026-11-14).** Implementation checkpoint complete; final local QA passed **758 test cases: 753 executed, 5 skipped (pre-existing), 0 failures/errors** with clean build, local module JaCoCo readings and local changed-file ktlint **0 findings**. The `a4bc1ae` time-qualified green snapshot has all four checks green; Sonar Quality Gate OK with 91.5% new-code coverage, 0.0% new duplication, 100% hotspots reviewed, 0 bugs/vulnerabilities/security hotspots, and 1 new MAJOR maintainability code smell `kotlin:S6524` disclosed as tracked follow-up debt. Sanitized user-run staging/restart evidence is recorded in the Phase 2D section. PR #119 is merged at `f56d225`; root runtime stays Kord-based and Phase 6 remains OPEN |
+| **2D** | Channel/message/locale edge adapters; neutral locale port/use cases/catalog in `:core`; shared JSON persistence module; shared unchanged language resources; minimal `/locale` command/message boundaries | Branch `feature/114-phase-2d-locale-edge-adapters`, created from the **live remote epic tip verified at branch creation** (`1304aa6`, `Clarified Phase 2C staging provenance`), not from `master` (`4badb92`) or a hardcoded SHA. Tested code/test snapshot `4ff8167` is pushed; **PR #119 is MERGED** into the epic branch by the regular merge commit `f56d225` (merge recorded 2026-11-14; head `0b365aa`, base `1304aa6`) | **PASS — gate closed (2026-11-14).** Implementation checkpoint complete; final local QA passed **758 test cases: 753 executed, 5 skipped (pre-existing), 0 failures/errors** with clean build, local module JaCoCo readings and local changed-file ktlint **0 findings**. The `a4bc1ae` time-qualified green snapshot has all four checks green; Sonar Quality Gate OK with 91.5% new-code coverage, 0.0% new duplication, 100% hotspots reviewed, 0 bugs/vulnerabilities/security hotspots, and 1 new MAJOR maintainability code smell `kotlin:S6524` disclosed as tracked follow-up debt. Sanitized user-run staging/restart evidence is recorded in the Phase 2D section. PR #119 is merged at `f56d225`; the root runtime stays Kord-based through Phase 5 and the Phase 6 root code/build switch remains OPEN |
 
 **Phase 2D locale acceptance note (accepted scope, PASS — evidence recorded).** 2D keeps the
 **guild default locale** distinct from the **invoking user/client locale**. Legacy behaviour is that
@@ -291,25 +323,29 @@ tests/build/JaCoCo/ktlint-diff checks passed, the `a4bc1ae` time-qualified green
 green with a passing Sonar Quality Gate, and the sanitized user-run staging/restart checks in the
 Phase 2D section are recorded.
 
-Stacking rules:
+**Phase 2 exit status after 2D:** Phase 2A, 2B, 2C and 2D are all **PASS**, so the isolated-runtime
+criteria already have recorded evidence. Phase 2 remains **IN PROGRESS only because the scoped
+import-rule CI gate** (exact scanner in the Phase 2 section) is still open. Root Kord production is
+**not cut over** and no Kord removal happens before Phase 6.
 
-- Each subsequent subphase branches from, and opens its PR against, the branch that carries the
-  preceding subphase — never `master` and never the epic branch directly, until the epic integration
-  step. Phase 2B branched from Phase 1B, `feature/114-native-failfast-check`; after PR #116 merged to
-  the epic branch, PR #117 was retargeted to the epic branch. Because #117 was then **merged** into
-  the epic branch at `255893a`, that merge commit is now what carries the Phase 2B pass, so **2C
-  branches from the epic head `255893a`** rather than from the old Phase 2B branch. This is the
-  documented exception to the child-branch rule: the preceding subphase is already integrated, and
-  the epic head is its carrier. The same exception applied to **2D**: 2C was merged into the epic
-  branch and no open Phase 2C PR remained, so **2D branched from the live epic tip** — fetched and
-  verified from Git/GitHub at the moment 2D started — rather than from a 2C branch or a hardcoded SHA
-  such as `5fa9c63` or `269acc1`. PR #119 was then **merged** into the epic branch by the regular
-  merge commit `f56d225` on 2026-11-14, so the epic branch now carries the 2D pass at that recorded
-  snapshot.
-- PR #115 was the **combined Phase 1/2A checkpoint**; it is **squash-merged** at `5aad7c7` and was
-  never restructured. Later subphase work is not pushed into it.
+Stacking rules (current policy, owner decision 2026-11-14):
+
+- For any future phase or subphase work: **fetch and verify the live epic tip first**, then branch
+  **from that tip** and open the PR **against the epic integration branch**
+  `feature/114-migrate-to-jda-jda-ktx`. Base your branch on the fetched SHA, not on a hardcoded or
+  stale one (`4badb92` is `master`; `255893a`, `5fa9c63`, `1304aa6` and `269acc1` are historical
+  bases). Phase 2B branched from Phase 1B and 2C/2D each branched from the live epic tip; that pattern
+  is now the rule for every later phase.
+- Landing is by **regular merge commit** — no squash and no rebase — so the branch's own commits stay
+  in the epic history.
+- **Historical exceptions:** PR #115 and PR #116 were **squash-merged** into the epic branch (`5aad7c7`
+  and `c00bdf1`). Those are recorded as historical exceptions, not as precedent: they are not
+  restructured, and later work is not pushed into them.
 - Subphase branches are **not** squashed into an already-merged earlier PR and **not** rebased onto
   `master` mid-flight.
+- The preserved ancestry is historical fact: #117 merged at `255893a` (parents `c00bdf1` + `7d8661d`),
+  #118 at `5fa9c63` (parents `255893a` + `3e50248`), #119 at `f56d225` (parents `1304aa6` +
+  `0b365aa`). Do not rewrite it.
 - A subphase is recorded complete only when its own gate evidence exists. **Open subphases are
   never marked complete** because an earlier checkpoint passed.
 
@@ -397,9 +433,11 @@ The gate was closed by recorded evidence: green CI on the verified checkpoints `
 issues or hotspots recorded on the covered and Sonar-gated checkpoints, local QA and reviewer agents
 passing, and a user-run staging interaction of the isolated JDA runtime on 2026-11-13 (see the staging
 evidence subsection below). Green CI on `7bf5419` reflects that checkpoint only, not a later head;
-read the live checks for any newer commit. Broader **Phase 2 remains IN PROGRESS** — the root
-runtime migration and the architectural import rule are still open, and the isolated runtime
-is **not** wired into the root application. Phase 2C and Phase 2D have since closed on 2026-11-14;
+read the live checks for any newer commit. Broader **Phase 2 remains IN PROGRESS** — at 2B closure the
+root runtime migration and the architectural import rule were still open, and the isolated runtime
+is **not** wired into the root application. *(Under the owner decision of 2026-11-14 the root runtime
+migration is **Phase 6** scope; with 2A–2D **PASS**, Phase 2's only open item is the scoped
+import-rule CI gate.)* Phase 2C and Phase 2D have since closed on 2026-11-14;
 PR #118 is merged into the epic branch at `5fa9c63`, and Phase 2D PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (2026-11-14).
 
 What the branch contained at the Phase 2B snapshot (historical layout):
@@ -571,8 +609,8 @@ Acceptance for closing 2B — **all criteria met, gate closed 2026-11-13**:
 
 - `:core` compiles with no Kord/JDA dependency, and the neutral boundary exposes no `dev.kord.*` /
   `net.dv8tion.*` types. The branch carries a reflection-based unit test over the neutral types; the
-  full import rule covering all core packages remains the Phase 2 exit/CI gate and is **not** closed
-  by it.
+  full scoped import rule (exact custom scanner matrix under Phase 2) remains the Phase 2 exit/CI gate
+  and is **not** closed by it.
 - The JDA responder honours the neutral contract under test: one defer, one response, deferred
   responses edit the original with the defer visibility, and a failed REST action restores the prior
   state so the router fallback stays reachable.
@@ -809,10 +847,11 @@ an overall migration requirement.
    the record does **not** identify or claim another, separately verified account. The `75/75` frame
    count is **not** recorded as network-delivery proof.
 8. **Phase boundary (historical at 2C closure).** Passing 2C did **not** close broader Phase 2 at
-   the time: **2D** (channel/message/locale edge adapters), the **root runtime migration**, and the
-   **architectural import rule** remained open then. **Phase 2D subsequently closed PASS on
-   2026-11-14**; this criterion preserves the 2C-closure perspective only. **Phase 6** JDK 21 /
-   fat-JAR / native artifact validation also remains open.
+   the time: **2D** (channel/message/locale edge adapters) and the **architectural import rule**
+   remained open then, and the **root runtime migration** was recorded as open under the older
+   placement wording; it is now **Phase 6** scope under the owner decision of 2026-11-14.
+   **Phase 2D subsequently closed PASS on 2026-11-14**; this criterion preserves the 2C-closure
+   perspective only. **Phase 6** JDK 21 / fat-JAR / native artifact validation also remains open.
 
 #### Phase 2C staging evidence — PASS (2026-11-14)
 
@@ -893,9 +932,12 @@ this branch.
 ### Phase 2D — channel/message/locale edge adapters — PASS — gate closed (2026-11-14)
 
 **Status: PASS — gate closed (2026-11-14).** Phase 2C remains **PASS — gate closed (2026-11-14)**. Phase 2
-overall remains **IN PROGRESS**; **Phase 6** packaging/artifact validation and the root production
-runtime migration remain **OPEN**; issue #114 remains open. Pause/resume preservation remains
-deferred to Phase 3, and detekt remains a separate future tooling task.
+overall remains **IN PROGRESS only because the scoped import-rule CI gate is open** — 2A–2D are
+**PASS** and the isolated-runtime evidence is recorded;
+**Phase 6** — root code/build switch, Kord removal plus packaging/artifact validation — remains **OPEN**;
+issue #114 remains open. Pause/resume preservation remains
+deferred to Phase 3 and is a required Phase 3 outcome with semantics approved before implementation;
+detekt remains a separate future tooling task.
 
 #### Branch and base posture
 
@@ -956,8 +998,9 @@ deferred to Phase 3, and detekt remains a separate future tooling task.
   command-registration parity is an explicit **Phase 6** production requirement. There is no generic
   JDA facade and no generic channel/message facade; only the narrow command/responder/autocomplete
   boundaries needed by `/locale` are added.
-- **Root runtime unchanged.** The root runtime stays Kord-based and JDA-free. No Phase 6 wiring or
-  artifact changes are part of 2D.
+- **Root gateway/runtime not cut over.** The root runtime stays Kord-based and JDA-free, even though
+  2D refactored the root Kord-facing locale service/command, resources, DI and module dependencies.
+  No Phase 6 wiring or artifact changes are part of 2D.
 - **Test ownership.** Production files and resources are changed in this implementation pass. The
   **Test Agent has added/moved the Phase 2D test sources**; this pass did not modify any test source
   or test resource.
@@ -1127,8 +1170,9 @@ All Phase 2D acceptance criteria have recorded evidence; the gate is **closed**.
    green (2026-11-14). **Phase 2D is PASS — gate closed (2026-11-14)**.
 
 The Phase 2D gate evidence is recorded above; 2D does not close broader Phase 2. The root Kord
-runtime's localization behaviour is not migrated. The 2C/2D PASS records, the root production runtime
-migration, Phase 6 and issue #114 remain governed by their own gates.
+runtime's localization behaviour is not migrated in 2D — it is part of the **Phase 6** root code/build switch.
+The 2C/2D PASS records, the Phase 6 root code/build switch and artifact gates, and issue #114 remain governed by
+their own gates.
 
 #### Phase 2D staging evidence — PASS (2026-11-14)
 
@@ -1165,8 +1209,10 @@ test, and it does not validate the root runtime, Phase 6 artifacts, or any recei
   its tested implementation snapshot `4ff8167` and the `a4bc1ae` time-qualified green snapshot were pushed;
   PR #119 was **merged** into the epic branch by the regular merge commit `f56d225` on 2026-11-14
   (head `0b365aa`, base `1304aa6`), and the epic branch advanced to `f56d225` at that recorded
-  snapshot. **`f56d225` was the epic tip before this documentation update.** **The live epic tip is
-  read from fetched Git/GitHub** rather than from any SHA recorded here. The earlier #117 merge had parents `c00bdf1`
+  snapshot. **`f56d225` was the epic tip before the earlier documentation update**, and the later
+  documentation-only `38bdba1` (`Recorded Phase 2D merge and next steps`) was the epic tip **before
+  this documentation-only edit**. **The live epic tip is read from fetched Git/GitHub** rather than
+  from any SHA recorded here. The earlier #117 merge had parents `c00bdf1`
   (squash merge of PR #116 on top of `5aad7c7`, itself the squash merge of PR #115 on base `4badb92`)
   and `7d8661d` (the Phase 2B head), with a tree identical to `7d8661d`. PRs #115, #116, #117, #118 and #119
   are all **closed/merged**, and the remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain).
@@ -1246,17 +1292,19 @@ test, and it does not validate the root runtime, Phase 6 artifacts, or any recei
   tip `1304aa6`; its tested implementation snapshot `4ff8167` and the `a4bc1ae` time-qualified green snapshot were
   pushed, and PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` on
   2026-11-14 (head `0b365aa`, base `1304aa6`), so the epic branch advanced to `f56d225` at that
-  recorded snapshot. **`f56d225` was the epic tip before this documentation update**; the live tip is
-  read from Git and the pull requests rather than asserted here.
+  recorded snapshot. **`f56d225` was the epic tip before the earlier documentation update**; the
+  later documentation-only `38bdba1` was the epic tip before this documentation-only edit; the live
+  tip is read from Git and the pull requests rather than asserted here.
   The earlier epic head `255893a` contained the Phase 2B version of this document through the #117
   merge.
 - PR #115 was the **agreed combined Phase 1/2A checkpoint** and is **not restructured**; it was
   squash-merged as `5aad7c7`. PR #116 was then squash-merged as `c00bdf1`, PR #117 was merged as the
-  regular merge commit `255893a`, and PR #118 was merged as the regular merge commit `5fa9c63`. Later
-  subphases land as separate branches/PRs: **2C branched from the epic head `255893a`** because it
-  carried the Phase 2B pass, and **2D branches from the live epic tip**, fetched from Git/GitHub and
-  verified at the moment 2D starts — not a hardcoded `5fa9c63` or `269acc1` — because 2C is merged and
-  no open 2C PR remains. The epic branch remains the **final integration target**; `master` is merged
+  regular merge commit `255893a`, PR #118 as `5fa9c63`, and PR #119 as `f56d225`. **Historical
+  exceptions:** those two squash merges (#115/#116) are recorded as history, not precedent. The
+  current **stacking policy (owner decision 2026-11-14)** is: fetch and verify the **live epic tip**,
+  branch **from that tip**, open the PR **against the epic integration branch**, and land with a
+  **regular merge commit** (no squash, no rebase). 2C and 2D already followed the branch-from-live-tip
+  part of that rule. The epic branch remains the **final integration target**; `master` is merged
   only at migration completion.
 - No secrets, bot/guild/channel/user identifiers, tokens or raw logs are recorded in this plan or
   in the spike.
@@ -1307,7 +1355,8 @@ These next actions were **superseded on 2026-11-13** and are retained only as hi
 
 > Historical snapshot only. It reflected the stack **before** PR #115 was squash-merged: at that time
 > `feature/114-kord-to-jda-migration` still existed, #115 was still open, and #116 still targeted the
-> 2A branch. It is retained for the record and is **superseded** by the post-merge snapshot below.
+> 2A branch. It is retained for the record and is **superseded** by the **2026-11-14 post-merge**
+> snapshot below.
 
 Branch, commit and PR facts below were read from Git and GitHub; they are **not** gate evidence
 beyond what is recorded above.
@@ -1315,9 +1364,9 @@ beyond what is recorded above.
 | Branch / PR | Handoff state |
 | --- | --- |
 | `feature/114-migrate-to-jda-jda-ktx` (epic baseline) | Was at `4badb92` at that time; it has since advanced to `5aad7c7`, the squash merge of PR #115 |
-| `feature/114-kord-to-jda-migration` → draft PR #115 (base: epic) | Carried the combined Phase 1/2A checkpoint: the plan/spike record and the neutral locale repository/use-case boundary. Phase 1 is **PASS** (1A + 1B recorded), Phase 2A is **partial/IN PROGRESS**, Phase 2B is **PASS on its child branch**. PR #115 has since been **squash-merged** as `5aad7c7` and this branch's remote ref **deleted** (a stale local ref may remain); the merge does not complete Phase 2A |
+| `feature/114-kord-to-jda-migration` → draft PR #115 (base: epic) | Carried the combined Phase 1/2A checkpoint: the plan/spike record and the neutral locale repository/use-case boundary. Phase 1 is **PASS** (1A + 1B recorded), Phase 2A is **partial/IN PROGRESS** *(as at 2026-11-13; superseded by the owner scope decision of 2026-11-14, which closed 2A as PASS for its delivered scope)*, Phase 2B is **PASS on its child branch**. PR #115 has since been **squash-merged** as `5aad7c7` and this branch's remote ref **deleted** (a stale local ref may remain); the merge does not complete Phase 2 |
 | `feature/114-native-failfast-check` → draft PR #116 (base: the 2A feature branch at that time, since retargeted to the epic branch) | Artifact, runbook and the pass record live here. **Phase 1B PASS — gate closed on 2026-11-08**. Read the actual head from Git and PR #116 |
-| `feature/114-phase-2b-command-port` → draft PR #117 (base: the Phase 1B branch, PR #116) | Latest verified all-green CI checkpoint before the subsequent docs-only updates: `7bf5419` (`Corrected Phase 2B CI status record`, docs-only), where all four checks passed on 2026-11-13 — Check Code Quality 16:47:15Z, SonarCloud Code Analysis 16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z — with 75.0% new-code coverage, 0 new issues and 0 hotspots; it was the head at that point, not afterwards. The earlier docs-only `988a7cd` is also green (all four checks, last completed 16:38:44Z), and `e4a9e29` completed all four checks successfully after an in-progress observation at 16:41:06Z. A later dated snapshot of `f5f04d1` (docs-only) was **not green** — only Check Code Quality had concluded at 16:53:24Z, with Build and analyze running and the SonarCloud checks unlisted. These are dated checkpoints only; the current head is whatever this follow-up produced, so GitHub's live check runs on PR #117 are authoritative for it. Carries the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests, plus JaCoCo 0.8.12 coverage for both modules wired into root `sonar`. **Phase 2B PASS — gate closed 2026-11-13**: all four #117 checks passed on `7bf5419`, `e4a9e29` and `988a7cd` (and earlier on `cd9d6db`, `e607ff7`, `2850907`, `16247f8`, `d353113`; 75.0% new-code coverage, 0 new issues, 0 hotspots), local QA and reviewer agents satisfied the independent review criterion, and the user-run staging `/jda-walkthrough` interaction succeeded. No GitHub PR review is submitted; that is not itself a required gate. **Keep #117 draft and do not merge it ahead of parent PR #116** |
+| `feature/114-phase-2b-command-port` → draft PR #117 (base: the Phase 1B branch, PR #116) | Latest verified all-green CI checkpoint before the subsequent docs-only updates: `7bf5419` (`Corrected Phase 2B CI status record`, docs-only), where all four checks passed on 2026-11-13 — Check Code Quality 16:47:15Z, SonarCloud Code Analysis 16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z — with 75.0% new-code coverage, 0 new issues and 0 hotspots; it was the head at that point, not afterwards. The earlier docs-only `988a7cd` is also green (all four checks, last completed 16:38:44Z), and `e4a9e29` completed all four checks successfully after an in-progress observation at 16:41:06Z. A later dated snapshot of `f5f04d1` (docs-only) was **not green** — only Check Code Quality had concluded at 16:53:24Z, with Build and analyze running and the SonarCloud checks unlisted. These are dated checkpoints only; the current head is whatever this follow-up produced, so GitHub's live check runs on PR #117 are authoritative for it. Carries the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests, plus JaCoCo 0.8.12 coverage for both modules wired into root `sonar`. **Phase 2B PASS — gate closed 2026-11-13**: all four #117 checks passed on `7bf5419`, `e4a9e29` and `988a7cd` (and earlier on `cd9d6db`, `e607ff7`, `2850907`, `16247f8`, `d353113`; 75.0% new-code coverage, 0 new issues, 0 hotspots), local QA and reviewer agents satisfied the independent review criterion, and the user-run staging `/jda-walkthrough` interaction succeeded. No GitHub PR review is submitted; that is not itself a required gate. **Historical instruction at that date: keep #117 draft and do not merge it ahead of parent PR #116.** It was later marked ready and **merged** into the epic branch by the regular merge commit `255893a` (Phase 2B PASS) |
 
 - **Phase 2B staging evidence (2026-11-13, sanitized).** The user ran
   `./gradlew :jda-runtime:run` on the Phase 2B branch with staging environment variables. The
@@ -1335,40 +1384,47 @@ beyond what is recorded above.
   done, and the Phase 2 exit criteria (including the architectural import rule) were still open. Issue
   #114 stays **open**. 2C has since closed on **2026-11-14**, and **Phase 2D is PASS — gate closed
   (2026-11-14)** on the `a4bc1ae` time-qualified green snapshot and the sanitized staging evidence;
-  PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (2026-11-14). The
-  root wiring, the import rule and Phase 6 remain open.
+  PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (2026-11-14). At that
+  date the root wiring, the import rule and Phase 6 all remained open. *(Superseded on 2026-11-14: 2C/2D
+  are PASS, and only the **scoped import-rule** gate remains open in Phase 2; the root code/build
+  switch is Phase 6, and production deployment is Phase 7.)*
 - **No root wiring.** The root application remains Kord-based and JDA-free; only the isolated
   `:jda-runtime` module touches JDA. Phase 2B does **not** mean JDA is wired into the root app.
 - **Test counts.** **18 `:core` / 62 `:jda-runtime` / 380 root with 5 pre-existing skips = 460.**
 
 Next actions at that time (**superseded** by the post-merge next actions below):
 
-1. Keep PR #117 draft and do not merge it ahead of parent PR #116; the coordinator updates the
-   PR #117 body. Leave #115 as the combined Phase 1/2A checkpoint.
+1. **Historical instruction (2026-11-13):** keep PR #117 draft and do not merge it ahead of parent
+   PR #116; the coordinator updates the PR #117 body. Leave #115 as the combined Phase 1/2A
+   checkpoint. This was later superseded: #117 was marked ready and **merged** into the epic branch at
+   `255893a`, and #115 was squash-merged as `5aad7c7`.
 2. Start Phase 2C (voice/session/player-message narrow ports) on a new child branch based on the
    Phase 2B branch head, then Phase 2D on a child of 2C.
 3. Keep the root Kord removal, root bootstrap wiring, the architectural import rule and issue #114
    open until their own gates are satisfied.
 
-### Handoff snapshot — 2026-11-14 post-merge (current)
+### Handoff snapshot — 2026-11-14 post-merge (current; edited on the later docs-only tip)
 
 Branch, commit and PR facts below were read from Git and GitHub, and the ancestry and tree-equality
 statements were verified against the repository; they are **not** gate evidence beyond what is
 recorded above. The #117, #118 and #119 merges are recorded by commit SHAs and verified parents; no
 live PR base SHA is asserted. This handoff update itself changes **only**
 `docs/migrations/kord-to-jda.md` — no source, test, build or asset file and no PR metadata. The
-earlier 2026-11-13 post-merge snapshot recorded **2C as IN PROGRESS with draft PR #118 open and no
-staging evidence**; that was accurate at that date and is **historical only**, superseded by this
-snapshot.
+earlier **2026-11-13 pre-merge** historical snapshot (the "Handoff snapshot — 2026-11-13 pre-merge
+(historical)" section above) predates the #115/#116 merges and is retained only as history; it is
+**superseded** by this snapshot. Phase 2C and 2D have since closed **PASS** on 2026-11-14. The
+**owner decision of 2026-11-14** recorded in §1 and §3 is reflected here: root Kord
+production is preserved through Phase 5, Phase 6 switches the root code/build and removes Kord, and Phase 7
+deploys the exact Phase 6-verified artifact.
 
 | Branch / PR | Handoff state |
 | --- | --- |
-| `feature/114-migrate-to-jda-jda-ktx` (epic baseline) | Contains **`5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`**, the **regular merge commit of PR #118**. Parents: `255893abcef31554e13ae1713086a9b7c1217c60` (the regular merge commit of PR #117) and `3e50248446a5ce65ea2a1f648576523fb5b25c6a` (the final Phase 2C PR head), so that merge carries both the Phase 2B and Phase 2C passes. The Phase 2C staging pass was then recorded by the documentation-only `269acc1` (`Recorded Phase 2C staging pass and gate decision`); it was the epic tip when that earlier documentation update was written, which is **historical**. The Phase 2D child branch was based on the later epic tip `1304aa6`; its tested implementation snapshot `4ff8167` and the `a4bc1ae` time-qualified green snapshot were pushed, and PR #119 is **MERGED** into the epic branch by the regular merge commit `f56d2252506617ae282c50a3cc95fb830c644424`, whose parents are `1304aa6` (base) and `0b365aa` (final head). The merge was recorded on 2026-11-14 and the epic branch advanced to `f56d225` at that recorded snapshot; **`f56d225` was the epic tip before this documentation update**. **The live tip is read from fetched Git/GitHub**, and no SHA recorded here is asserted as the current head. The earlier #117 merge had parents `c00bdf1` (the **squash merge of PR #116** on top of `5aad7c7`, itself the **squash merge of PR #115** on base `4badb92`; `5aad7c7`'s tree equals the former Phase 2A head `67802d1`) and `7d8661d` (the Phase 2B head), with a merge tree **identical** to `7d8661d` |
-| PR #115 (former `feature/114-kord-to-jda-migration` → epic) | **CLOSED / MERGED by squash** as `5aad7c7`; the remote branch `feature/114-kord-to-jda-migration` was **deleted**. Phase 2A stays **IN PROGRESS / partial** — the merge completes neither 2A nor Phase 2 |
+| `feature/114-migrate-to-jda-jda-ktx` (epic baseline) | Contains **`5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`**, the **regular merge commit of PR #118**. Parents: `255893abcef31554e13ae1713086a9b7c1217c60` (the regular merge commit of PR #117) and `3e50248446a5ce65ea2a1f648576523fb5b25c6a` (the final Phase 2C PR head), so that merge carries both the Phase 2B and Phase 2C passes. The Phase 2C staging pass was then recorded by the documentation-only `269acc1` (`Recorded Phase 2C staging pass and gate decision`); it was the epic tip when that earlier documentation update was written, which is **historical**. The Phase 2D child branch was based on the later epic tip `1304aa6`; its tested implementation snapshot `4ff8167` and the `a4bc1ae` time-qualified green snapshot were pushed, and PR #119 is **MERGED** into the epic branch by the regular merge commit `f56d2252506617ae282c50a3cc95fb830c644424`, whose parents are `1304aa6` (base) and `0b365aa` (final head). The merge was recorded on 2026-11-14 and the epic branch advanced to `f56d225` at that recorded snapshot; **`f56d225` was the epic tip before the earlier documentation update**, and the documentation-only `38bdba1` (`Recorded Phase 2D merge and next steps`) was the epic tip **before this documentation-only edit**, verified live at the start of this update. **The live tip is read from fetched Git/GitHub**, and no SHA recorded here is asserted as the current head. The earlier #117 merge had parents `c00bdf1` (the **squash merge of PR #116** on top of `5aad7c7`, itself the **squash merge of PR #115** on base `4badb92`; `5aad7c7`'s tree equals the former Phase 2A head `67802d1`) and `7d8661d` (the Phase 2B head), with a merge tree **identical** to `7d8661d` |
+| PR #115 (former `feature/114-kord-to-jda-migration` → epic) | **CLOSED / MERGED by squash** as `5aad7c7`; the remote branch `feature/114-kord-to-jda-migration` was **deleted**. Phase 2A is **PASS — gate closed (owner scope decision 2026-11-14)** for the neutral-value/locale-persistence scope it delivered; it does not close Phase 2 and does not perform the Phase 6 root code/build switch |
 | `feature/114-native-failfast-check` → PR #116 (base: epic) | Head **`1b753b9`**, an **ancestry-only merge** committing `5aad7c7` into `49b4bc1`. Four add/add conflicts — `docs/migrations/kord-to-jda.md`, `spikes/jda-dave/.gitignore`, `spikes/jda-dave/README.md`, `spikes/jda-dave/build.gradle.kts` — were resolved by retaining the Phase 1B versions, so the resolved tree is **byte-identical** to `49b4bc1` and **no content changed**. All four checks on `1b753b9` passed on 2026-11-13 — Check Code Quality 17:20:31Z, SonarCloud Code Analysis 17:22:32Z, Build and analyze 17:22:35Z, SonarCloud 17:22:40Z. **Phase 1B PASS — gate closed 2026-11-08.** PR #116 is **CLOSED / MERGED by squash** into the epic branch as `c00bdf1` |
 | `feature/114-phase-2b-command-port` → PR #117 (base: epic `feature/114-migrate-to-jda-jda-ktx`) | **Phase 2B PASS — gate closed 2026-11-13**, unaffected by the #116 merge. Carried the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests, plus JaCoCo 0.8.12 coverage for both modules wired into root `sonar`. CI history is recorded in the Phase 2B section; those are dated checkpoints, not a statement about any later head. After #116 merged, the base was **auto-retargeted to the epic branch**; the PR was later **CLOSED / MERGED** into the epic branch by the regular merge commit `255893a`. Its one conflict — this plan — had been resolved earlier by a **normal ancestry merge** of `c00bdf1` that kept the Phase 2B document; every non-doc path's tree equalled `e61f301` and **no code changed** |
 | `feature/114-phase-2c-voice-ports` → PR #118 (base: epic) | **PASS — gate closed (2026-11-14); CLOSED / MERGED.** Created from the fetched epic head `255893a` — the correct 2C base, not the stale local `4badb92` (`master`) and not the old Phase 2B branch. The plan, neutral voice/audio/player-message ports, their JDA adapters, DAVE 0.2.0 wiring, tone resource, unit tests and formatting-only ktlint repairs were merged into the epic branch by the regular merge commit `5fa9c63` (parents `255893a` and PR head `3e50248`); the implementation head is `8eb0349c4f65997d0dd69ffdc2b245268c207074` (`Fixed ktlint violations in Phase 2C`). All four checks on `8eb0349` **succeeded** — Check Code Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud — and the Sonar Quality Gate **passed** with 90.1% new-code coverage, 11 new issues (10 major, 1 critical), 0 security hotspots and 0.0% duplication. Under the **owner-approved 2026-11-14 interpretation** the repository's configured Quality Gate is the criterion, so those 11 maintainability issues are **tracked follow-up debt**, not a failed gate. The earlier `c893567` is kept as history: **Check Code Quality FAILED** there on 25 formatting findings while the other three checks succeeded with the same Sonar figures; the formatting-only repairs were committed and pushed as `8eb0349`. The docs-only `9fd1826` (`Recorded Phase 2C CI checkpoint`) and the final PR head `3e50248` (`Recorded passing Phase 2C CI checkpoint`) also passed all four checks on 2026-11-14. Local results on the formatted tree remain local-only: 685 cases (680 executed + 5 pre-existing skips, 0 failures/errors) all passing; local module JaCoCo line coverage `:core` 207/219 = 94.52% (branch 108/115 = 93.91%) and `:jda-runtime` 870/948 = 91.77% (branch 342/418 = 81.82%) — local module reports only, not Sonar/new-code CI evidence — and the clean full `./gradlew build` passed locally. Local QA/reviewer agents report PASS; that is internal review, not a GitHub review, and no human review is recorded here. The gate was closed by the **sanitized 2026-11-14 staging run recorded in the Phase 2C section** — local macOS arm64 with the DAVE 0.2.0 native loaded and protocol version 1, only `GUILD_VOICE_STATES`, guild-scoped `/jda-walkthrough` and `/jda-voice-walkthrough`, voice connect to the invoking user's channel, the Phase 2C reply `Voice walkthrough OK \| handed 75/75 frames to JDA's send loop (delivery not confirmed)` (a hand-off count, not delivery proof), an audible beep reported by the invoking user's own Discord client, separate from the bot (the delivery evidence, distinct from the hand-off), completion-path disconnect cleanup and a deliberate Ctrl+C stop; no receive path, root wiring or Phase 6 artifact was exercised. `master` is untouched |
-| `feature/114-phase-2d-locale-edge-adapters` → PR #119 (base: epic) | **PASS — gate closed (2026-11-14); CLOSED / MERGED.** Created from the fetched epic tip `1304aa6`; the tested code/test snapshot `4ff8167`, the `a4bc1ae` time-qualified green snapshot, the docs-only `8c20a1f` and the final head `0b365aa` (`Finalized Phase 2D gate record`) were pushed. PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (parents `1304aa6` and `0b365aa`; merge recorded 2026-11-14 16:38:21Z). All four checks on `0b365aa` were green on 2026-11-14 — Check Code Quality 16:14:50Z, SonarCloud Code Analysis 16:17:23Z, Build and analyze 16:17:25Z, SonarCloud 16:17:29Z; the `a4bc1ae` snapshot's Sonar Quality Gate was OK with 91.5% new-code coverage, 0.0% duplication, 100% hotspots reviewed and **1 new MAJOR `kotlin:S6524`** code smell recorded as tracked follow-up debt. Final local QA: **758 cases (753 executed + 5 pre-existing skips), 0 failures/errors**, with local changed-file ktlint **0 findings**. The remote 2D branch was **deleted** after the merge; a local ref remains at `0b365aa`. The root runtime stays Kord-based and Phase 6 remains **OPEN** |
+| `feature/114-phase-2d-locale-edge-adapters` → PR #119 (base: epic) | **PASS — gate closed (2026-11-14); CLOSED / MERGED.** Created from the fetched epic tip `1304aa6`; the tested code/test snapshot `4ff8167`, the `a4bc1ae` time-qualified green snapshot, the docs-only `8c20a1f` and the final head `0b365aa` (`Finalized Phase 2D gate record`) were pushed. PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (parents `1304aa6` and `0b365aa`; merge recorded 2026-11-14 16:38:21Z). All four checks on `0b365aa` were green on 2026-11-14 — Check Code Quality 16:14:50Z, SonarCloud Code Analysis 16:17:23Z, Build and analyze 16:17:25Z, SonarCloud 16:17:29Z; the `a4bc1ae` snapshot's Sonar Quality Gate was OK with 91.5% new-code coverage, 0.0% duplication, 100% hotspots reviewed and **1 new MAJOR `kotlin:S6524`** code smell recorded as tracked follow-up debt. Final local QA: **758 cases (753 executed + 5 pre-existing skips), 0 failures/errors**, with local changed-file ktlint **0 findings**. The remote 2D branch was **deleted** after the merge; a local ref remains at `0b365aa`. The root runtime stays Kord-based through Phase 5 and the root code/build switch (Phase 6) and production deployment (Phase 7) remain **OPEN** |
 
 - **Phase 2B staging evidence** remains the sanitized 2026-11-13 record in the Phase 2B section:
   isolated `:jda-runtime` login, ready state, guild-scoped `/jda-walkthrough` registration, the
@@ -1378,9 +1434,12 @@ snapshot.
   (2026-11-14)** on the `a4bc1ae` time-qualified green snapshot and the sanitized staging/restart evidence;
   PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (2026-11-14;
   head `0b365aa`, base `1304aa6`), and the recorded final head `0b365aa` had all four checks green.
-  Broader **Phase 2 remains IN PROGRESS** because the root
-  runtime migration and the architectural import rule are still open, and **Phase 6** packaging/artifact
-  validation is still OPEN. The 2C acceptance
+  Broader **Phase 2 remains IN PROGRESS only because the scoped import-rule CI gate is still open**;
+  2A–2D are **PASS** and their isolated-runtime evidence is recorded. **Phase 6**
+  packaging/artifact validation is still OPEN. The root gateway/runtime is **not cut over** through
+  Phase 5; the root code/build switch, Kord removal and the repo-wide import rule belong to **Phase 6**; Phase 7 deploys the artifact.
+  **Phase 2A is PASS — gate closed (owner scope decision 2026-11-14)** for its delivered
+  neutral-value/locale-persistence scope, so 2A no longer keeps Phase 2 open. The 2C acceptance
   criteria, scope limits and sanitized staging evidence are recorded in the Phase 2C section; the
   recorded Sonar result is 90.1% new-code coverage, 11 new issues (10 major, 1 critical), 0 hotspots
   and 0.0% duplication, and those 11 maintainability issues remain recorded **tracked follow-up
@@ -1389,11 +1448,13 @@ snapshot.
   Local results on the formatted tree are 685 cases (680 executed + 5 pre-existing skips, 0
   failures/errors; local module JaCoCo line coverage `:core` 207/219 = 94.52% with branch 108/115 =
   93.91%, `:jda-runtime` 870/948 = 91.77% with branch 342/418 = 81.82% — local module reports only,
-  not Sonar/new-code CI evidence). Root Kord removal and bootstrap wiring are not done, the Phase 2
-  exit criteria (including the architectural import rule) remain open, and issue #114 stays **open**.
-- **No root wiring.** The root application remains Kord-based and JDA-free; only the isolated
-  `:jda-runtime` module touches JDA. 2C keeps the root Kord runtime, root dependency graph and
-  `fatJar` untouched.
+  not Sonar/new-code CI evidence). Root Kord removal, root bootstrap wiring and the root code/build switch are
+  **Phase 6** work and are not done; **only the scoped import-rule CI gate** remains open in Phase 2,
+  and issue #114 stays **open**.
+- **No root JDA wiring.** The root application remains Kord-based and JDA-free **through Phase 5**;
+  only the isolated `:jda-runtime` module touches JDA. 2C kept the root Kord runtime, root dependency
+  graph and `fatJar` untouched; 2D later added the shared `:locale-persistence` module dependency to
+  the root project and refactored the root Kord locale service while keeping Kord as the root gateway.
 - **Test counts.** Phase 2B's recorded baseline is **18 `:core` / 62 `:jda-runtime` / 380 root with 5
   pre-existing skips = 460** (kept in the Phase 2B coverage section). The latest **local 2C**
   results are higher: `:core` **81** (0 skips), `:jda-runtime` **224** (0 skips) and root **380**
@@ -1407,23 +1468,32 @@ snapshot.
 
 Next actions, in order:
 
-1. **Phase 2D is merged — gate closed (2026-11-14).** PR #119 is **merged** into the epic branch by
-   the regular merge commit `f56d225` (head `0b365aa`, base `1304aa6`); `f56d225` was the epic tip
-   before this documentation update. **Before starting the root Kord→JDA runtime migration, resolve
-   the conflicting placement of that migration in this plan.** The Phase 2 task bullets and exit
-   criteria describe replacing the root Kord bootstrap with the JDA lifecycle and recording
-   root-runtime staging, while the standing requirement recorded for Phase 2B/2C/2D and Phase 6 keeps
-   the root runtime Kord-based and JDA-free until Phase 6 performs the root dependency replacement,
-   the Kord-free build and the artifact gates. Both cannot be current: settle which phase owns the
-   root runtime switch and reconcile the affected bullets and exit criteria before that
-   implementation starts. **No Phase 2E is defined**, and none should be invented to carry it.
-2. The **architectural import rule** (no `dev.kord.*` / `net.dv8tion.*` outside declared Discord
-   adapter packages, as a test/CI gate) remains **OPEN** and is still required before migration
-   completion; the Phase 2B reflection test covers only the neutral types, not the whole rule.
-3. **Phase 3** work (per-guild serialization and the real player) comes **after the Phase 2 exit
-   work**, not before it. **Pause/resume preservation** stays deferred to **Phase 3** real-player
-   integration and remains a migration requirement, not a 2C gate.
-4. Record explicit per-issue dispositions for the **11 Phase 2C Sonar new issues** (10 major, 1
+1. **Phase 2D merged — gate closed (2026-11-14).** PR #119 is **merged** into the epic branch by
+   the regular merge commit `f56d225` (head `0b365aa`, base `1304aa6`). The former placement conflict
+   is **settled (owner decision 2026-11-14)**: root production stays **Kord through Phase 5**; **Phase
+   6** performs the root code/build switch and Kord removal; **Phase 7** deploys the exact
+   Phase 6-verified artifact. Do not start a root JDA bootstrap/cutover in Phase 2. **No Phase 2E is
+   defined**, and none should be invented to carry it. Non-cutover root refactors that preserve Kord
+   remain permitted where already accepted (2D already did some).
+2. Close the **only remaining Phase 2 gate**: implement and land the **custom import-declaration
+   scanner** exactly as specified in "Phase 2 scoped architectural import rule", using only existing
+   JDK/Kotlin/Gradle APIs (no new dependency), and make it **green in CI**. Criteria 1–3 are already
+   satisfied by the 2A–2D evidence; criterion 4 is not. Root Kord stays grandfathered until Phase 6.
+   The Phase 2B reflection test is complementary only; it is not the CI gate and does not establish a
+   public-signature guarantee.
+3. **Phase 3** (isolated JDA real-player slice, per-guild actor/mailbox, enqueue-only Lavaplayer
+   callbacks, real player integration/serialization) starts **only after Phase 2 exit**, while root
+   production stays Kord. It **reuses** the existing Phase 2C `JdaAudioSendHandler` and adds no new
+   handler. **Pause/resume preservation** is a **required** Phase 3 outcome, and its testable
+   semantics must be **approved before implementation** (see the Phase 3 prerequisite). Module
+   placement for the real player is a Phase 3 design decision; do not invent a new module/dependency
+   without approval.
+4. **Phase 4** starts after Phase 3 and ports the remaining command groups and component IDs into
+   neutral `:core` contracts plus JDA adapters in the isolated `:jda-runtime`; root Kord stays
+   production. **Phase 5** (after Phases 3–4) tests and stages the full isolated JDA implementation,
+   **retaining the root Kord app and its Kord-root tests** until Phase 6 — it is **not** the root
+   production cutover.
+5. Record explicit per-issue dispositions for the **11 Phase 2C Sonar new issues** (10 major, 1
    critical-severity code smell) plus the **single Phase 2D `kotlin:S6524`** MAJOR maintainability
    code smell. The Phase 2D finding is **SCM auto-assigned to Wikijito7** but has **no explicit
    disposition recorded**; do not describe it as unassigned or silently waived. All remain
@@ -1431,12 +1501,14 @@ Next actions, in order:
    configured Quality Gate is the criterion and it passed, so they do not keep 2C/2D open, but they
    must not be described as zero or dropped. Individual dispositions are not recorded in this
    document yet.
-5. Keep the root runtime Kord-based until the conflicting placement above is resolved and Phase 6
-   performs the root dependency replacement. Keep Phase 6 packaging/artifact validation and issue
-   #114 **open** until their own gates are satisfied; no root wiring, receive-audio or Phase 6
-   artifact validation is claimed by the 2C or 2D pass.
-6. Any **detekt** migration remains a separate future tooling task; 2C and 2D use the existing ktlint
-   quality gate only.
+6. Keep the **root gateway/runtime on Kord through Phase 5** — no root code/build switch and no Kord removal before
+   Phase 6. Keep Phase 6 packaging/artifact validation and issue **#114 open** until their own gates
+   are satisfied; no root wiring, receive-audio or Phase 6 artifact validation is claimed by the 2C or
+   2D pass.
+7. For every future phase/subphase: fetch and verify the **live epic tip**, branch from it, PR
+   against the epic integration branch, and land with a **regular merge commit**.
+8. Any **detekt** migration remains a separate future tooling task; 2C and 2D use the existing ktlint
+   quality gate only. The import scanner is **not** Detekt and must not pull it in.
 
 ---
 
@@ -1447,10 +1519,10 @@ Next actions, in order:
 | Item | State |
 | --- | --- |
 | Baseline commit | Clean `master` @ `4badb92` |
-| Epic integration branch | `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; it contains `5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`, the regular merge commit of PR #118 whose parents are `255893a` (the regular merge commit of PR #117, whose parents are `c00bdf1` — squash merge of PR #116 on top of `5aad7c7`, the squash merge of PR #115 — and `7d8661d`, the Phase 2B head) and `3e50248` (the final Phase 2C PR head), plus the documentation-only `269acc1` that recorded the Phase 2C staging pass and was the epic tip when the earlier documentation update was written. That merge carries the Phase 2B and Phase 2C passes; the `269acc1` tip statement is **historical**. The Phase 2D child branch was based on `1304aa6`; its tested implementation snapshot `4ff8167` and the `a4bc1ae` time-qualified green snapshot were pushed, and PR #119 is **MERGED** into the epic branch by the regular merge commit `f56d2252506617ae282c50a3cc95fb830c644424` (parents `1304aa6` and `0b365aa`) on 2026-11-14, so the epic branch advanced to `f56d225` at that recorded snapshot; **`f56d225` was the epic tip before this documentation update**. The live tip is read from fetched Git/GitHub, and no SHA recorded here is asserted as the current head |
-| Working branch (current) | The **epic branch** `feature/114-migrate-to-jda-jda-ktx`, checked out at `f56d225` for this documentation-only handoff update; the Phase 2D branch `feature/114-phase-2d-locale-edge-adapters` is preserved locally at `0b365aa` and its remote ref was deleted after the merge. **2D is PASS — gate closed (2026-11-14)**; PR #119 is **merged** by the regular merge commit `f56d225` (head `0b365aa`, base `1304aa6`). Final local QA on 2026-11-14 recorded **758 test cases: 753 executed, 5 skipped (pre-existing), 0 failures/errors**, a clean local build, local module JaCoCo readings and local changed-file ktlint **0 findings**; the `a4bc1ae` time-qualified green snapshot has all four checks green and Sonar Quality Gate OK, the merged head `0b365aa` also had all four checks green (2026-11-14), and the sanitized staging/restart evidence is recorded in the Phase 2D section. 2C remains **PASS — gate closed (2026-11-14)** and merged into the epic branch by PR #118 at `5fa9c63`; no open 2C PR remains. The remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain); PRs #115, #116, #117, #118 and #119 are merged. `master` (`4badb92`) is untouched. The root runtime stays Kord-based and JDA-free, and Phase 6 remains open |
+| Epic integration branch | `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; it contains `5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`, the regular merge commit of PR #118 whose parents are `255893a` (the regular merge commit of PR #117, whose parents are `c00bdf1` — squash merge of PR #116 on top of `5aad7c7`, the squash merge of PR #115 — and `7d8661d`, the Phase 2B head) and `3e50248` (the final Phase 2C PR head), plus the documentation-only `269acc1` that recorded the Phase 2C staging pass and was the epic tip when the earlier documentation update was written. That merge carries the Phase 2B and Phase 2C passes; the `269acc1` tip statement is **historical**. The Phase 2D child branch was based on `1304aa6`; its tested implementation snapshot `4ff8167` and the `a4bc1ae` time-qualified green snapshot were pushed, and PR #119 is **MERGED** into the epic branch by the regular merge commit `f56d2252506617ae282c50a3cc95fb830c644424` (parents `1304aa6` and `0b365aa`) on 2026-11-14, so the epic branch advanced to `f56d225` at that recorded snapshot; **`f56d225` was the epic tip before that earlier documentation update**. A later documentation-only commit `38bdba1` (`Recorded Phase 2D merge and next steps`) was the epic tip **before this documentation-only edit**, verified live at the start of this update. The live tip is read from fetched Git/GitHub, and no SHA recorded here is asserted as the current head |
+| Working branch (current) | The **epic branch** `feature/114-migrate-to-jda-jda-ktx`, checked out at `38bdba1604794b13efeb0cdfc7920552f94a8588` for this documentation-only update (verified clean and in sync with `origin` before the edit; `master` `4badb92` untouched); the Phase 2D branch `feature/114-phase-2d-locale-edge-adapters` is preserved locally at `0b365aa` and its remote ref was deleted after the merge. **2D is PASS — gate closed (2026-11-14)**; PR #119 is **merged** by the regular merge commit `f56d225` (head `0b365aa`, base `1304aa6`). Final local QA on 2026-11-14 recorded **758 test cases: 753 executed, 5 skipped (pre-existing), 0 failures/errors**, a clean local build, local module JaCoCo readings and local changed-file ktlint **0 findings**; the `a4bc1ae` time-qualified green snapshot has all four checks green and Sonar Quality Gate OK, the merged head `0b365aa` also had all four checks green (2026-11-14), and the sanitized staging/restart evidence is recorded in the Phase 2D section. 2C remains **PASS — gate closed (2026-11-14)** and merged into the epic branch by PR #118 at `5fa9c63`; no open 2C PR remains. The remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain); PRs #115, #116, #117, #118 and #119 are merged. `master` (`4badb92`) is untouched. The root gateway/runtime stays Kord-based through Phase 5; the root code/build switch is Phase 6 and production deployment is Phase 7, both still open |
 | Assistant receive-audio | Stays separately stashed; **out of scope** for this migration |
-| Parked PRs | #106, #109, #111 — parked, ported individually **after** cutover |
+| Parked PRs | #106, #109, #111 remain **parked and untouched**; Phase 8 (post-Phase 7 follow-up) ports each individually from a new child branch off the verified live epic tip, without rebasing or rewriting the parked branches. Not a prerequisite for Phase 2, Phase 6 or issue #114 closure |
 | Docker / deployment | Deployment stays a fat JAR. Do **not** add a `Dockerfile` to this repo |
 | Target environment | Linux x86_64 MVP, user's external `eclipse-temurin:21` image |
 
@@ -1480,11 +1552,18 @@ These decisions were made by the user and are not open for re-litigation during 
 | Cutover disruption | A **brief outage** is acceptable |
 | Feature bar | **Full current-`master` parity**, including the three button-routing fixes with tests |
 | Assistant receive-audio | **Excluded** from this migration |
-| Parked PRs | #106, #109, #111 stay **parked**, ported individually after cutover |
+| Parked PRs | #106, #109, #111 stay **parked**, ported individually in Phase 8 after Phase 7 via new child branches from the verified live epic tip (reviewed cherry-pick or reimplementation, regular merge commits; no rebase/rewrite). Not a prerequisite for Phase 2, Phase 6 or issue #114 closure |
 | Artifact | Linux x86_64 **fat JAR**; no `Dockerfile` is added to this repo |
 | Staging | Separate **staging bot/token** and the **full staging matrix** before production |
 | Concurrency | **Per-guild serialization** via a narrow actor/mailbox |
 | jda-ktx | **Optional**; if 0.14.2 + JDA 6.7.0 fails, fall back to direct JDA + coroutine bridge |
+| **Phase ownership (owner decision 2026-11-14)** | **Preserve root Kord through Phase 5; Phase 6 root code/build switch; Phase 7 production deployment.** Phases 2–5 build and prove an isolated JDA implementation while root production stays Kord. Phase 6 switches the root code/build, stages the JDA artifact and removes Kord; Phase 7 deploys the exact Phase 6-verified artifact |
+| Root refactors before Phase 6 (owner decision 2026-11-14) | **No root gateway/runtime cutover (no root code/build switch that replaces Kord) and no Kord removal until Phase 6.** Non-cutover root refactors that preserve Kord are permitted where already accepted — Phase 2D already refactored the root Kord-facing `LocalizationService`/root `/locale`, shared language resources, DI and module dependencies |
+| Phase 2A scope (owner decision 2026-11-14) | **PASS** for neutral `GuildId`/`LocaleCode`, locale repository/use cases and JSON compatibility. Root Kord `LocalizationService`/`/locale` are **Phase 6** scope, not a 2A blocker |
+| Phase 5 vs cutover | Phase 5 is **test/staging only**; it is **not** the root production cutover, and it retains the root Kord app and its Kord tests |
+| Phase dependency chain | Phase 3 after Phase 2 exit; Phase 4 after Phase 3; Phase 5 after Phases 3–4; Phase 6 after Phase 5; Phase 7 after Phase 6 |
+| Import rule (owner decision 2026-11-14) | **Custom import-declaration scanner using only existing JDK/Kotlin/Gradle APIs — no Konsist, ArchUnit, Detekt or new dependency.** Phase 2 matrix forbids Kord/JDA/jda-ktx/libdave in `:core`/`:locale-persistence`, forbids JDA/jda-ktx/libdave in the root while allowing Kord as grandfathered legacy, and allows JDA/jda-ktx/libdave in `:jda-runtime` only within the declared adapter package boundaries. Phase 6 removes the root Kord exception and applies it repo-wide on the Kord-free tree. **There is no separate reflection-based public-signature gate or requirement to add one (owner decision 2026-11-14)**: the scanner is import-declaration-only and does not detect fully qualified references without imports or inspect API signatures; `VoiceBoundaryReflectionTest`/neutral-port reflection tests are complementary limited tests, not a repo-wide signature guarantee. Exact definition under Phase 2 |
+| Branching and landing (owner decision 2026-11-14) | Future phase/subphase work fetches and verifies the **live epic tip**, branches from it, and PRs **against the epic integration branch**; landing uses **regular merge commits** (no squash/rebase). #115/#116 squash merges are **historical exceptions** |
 
 ### Delivery and rollback posture
 
@@ -1505,12 +1584,13 @@ These decisions were made by the user and are not open for re-litigation during 
 
 - Align **all** `libdave` modules — `api`, `impl-jni`, `adapter-jda`, and the `natives-*`
   artifacts — at **0.2.0**, Linux x86_64 native. Do not mix versions across modules.
-- **`adapter-jda` is a new dependency.** It is **not** present in the root version catalog today
-  (`libdave = "0.1.2"`, `libdave-natives = "0.1.3"`, and no `adapter-jda` entry). The isolated
-  spike declares and proves the 0.2.0 module set with spike-local versions. Adding `adapter-jda`
-  to `gradle/libs.versions.toml` and bumping the root `libdave` / `libdave-natives` references to
+- **`adapter-jda` is not yet part of the root production dependency set.** The version catalog does
+  contain `libdaveV2` / `adapter-jda` aliases, but that alias is currently **consumed by the isolated
+  `:jda-runtime`**; the **root production dependency set does not include `adapter-jda`**, and the root
+  still carries the **Kord-era `libdave` / `libdave-natives` dependencies**. Adding `adapter-jda` to
+  the root production dependency set and bumping the root `libdave` / `libdave-natives` references to
   `0.2.0` is **deferred to the final root dependency replacement stage (Phase 6)**; Phase 1 does
-  **not** change the root catalog, which still carries the Kord-era versions.
+  **not** change the root production dependency set.
 - **Adapter evidence, qualified:** the upstream `libdave` source build catalog declares
   `compileOnly` **JDA 6.3.1**. The published `adapter-jda` artifact metadata does **not** declare
   or test against JDA **6.7.0**. ABI compatibility with 6.7.0 is therefore **inferred, not
@@ -1544,10 +1624,25 @@ completion**, not an optional aspiration.
 - Use only the ports the business logic actually needs. Do **not** build a generic facade over every
   JDA API — that would re-couple the domain to one library's shape.
 
-**Enforcement gate:** before migration completion, an **architectural test/CI rule** must forbid
-`dev.kord.*` and `net.dv8tion.*` imports outside explicitly declared Discord adapter packages.
-Tests and core code must mock the **neutral ports**, not Kord/JDA types. Without that rule in
-place and passing, the replaceability criterion is **not** met.
+**Enforcement gate (two scopes; exact rule defined under Phase 2).** An **architectural test/CI
+rule** forbids the vendor imports `dev.kord.`, `net.dv8tion.`, `dev.minn.jda.ktx.` and
+`moe.kyokobot.libdave.` outside the declared adapter packages. It is a **custom import-declaration
+scanner built only on existing JDK/Kotlin/Gradle APIs — no Konsist, ArchUnit, Detekt or new
+dependency** (exact mechanism, scope, matrix and package-boundary match in
+"Phase 2 scoped architectural import rule — exact scanner definition").
+
+- **Phase 2 scope:** the rule runs in CI and requires `:core` and `:locale-persistence` to be
+  **gateway-free**, the root's **source imports** free of JDA/jda-ktx/libdave, and JDA/jda-ktx/libdave confined to the
+  declared `:jda-runtime` adapter packages. Root Kord packages are **grandfathered legacy until
+  Phase 6** and are outside this scoped rule; this is why Phase 2 does not switch the root runtime.
+- **Phase 6 scope:** the same scanner becomes **repo-wide on the Kord-free tree**, once the root Kord
+  code and dependency are gone.
+
+Tests and core code must mock the **neutral ports**, not Kord/JDA types. Without the scoped Phase 2
+rule in place and **passing**, Phase 2 cannot exit; without the repo-wide Phase 6 rule passing, the
+replaceability criterion is **not** met. An import-declaration scanner is not a full Kotlin type-use
+parser; the existing reflection-based neutrality tests remain **complementary only** and do not
+establish a public-signature guarantee.
 
 ### Architecture guardrail
 
@@ -1561,9 +1656,10 @@ actor/mailbox** that serializes:
 Rules that follow from this:
 
 - Lavaplayer callbacks may only **enqueue** work; they must never block.
-- JDA's `AudioSendHandler` must consume **exactly one Opus frame per send cycle**, preserve pause
-  behaviour, and never block the audio thread. Pause/resume preservation is verified in **Phase 3**
-  real-player integration — it was explicitly deferred from 2C and remains a migration requirement.
+- JDA's `AudioSendHandler` must consume **exactly one Opus frame per send cycle**, preserve the
+  **approved** pause behaviour, and never block the audio thread. Pause/resume preservation is
+  verified in **Phase 3** real-player integration against semantics approved before implementation —
+  it was explicitly deferred from 2C and remains a migration requirement.
 
 ---
 
@@ -1589,6 +1685,13 @@ Each phase exits only on its objective criteria, and every gate is **go/no-go**.
 start its exit review while a prior gate is open. An unsuccessful gate is a **stop condition**:
 progression pauses until it is resolved and re-tested or the user approves a defined alternative.
 A documented blocker, a "known issue", or an accepted-risk note is **not** a pass.
+
+**Phase dependency chain (owner decision 2026-11-14).** Phases are sequential:
+**Phase 3 starts after Phase 2 exit → Phase 4 after Phase 3 → Phase 5 after Phases 3–4 →
+Phase 6 after Phase 5 → Phase 7 after Phase 6 → Phase 8 after Phase 7.** Phase 8 is post-migration
+follow-up and is **not** a prerequisite for Phase 2, Phase 6 or issue #114 closure. Phases 2–5 validate
+the **isolated JDA runtime** only; root Kord production remains in service through Phase 5, and only
+Phase 6 switches the root code/build and removes Kord (Phase 7 deploys the verified artifact).
 
 ### Phase 0 — Baseline and scope
 
@@ -1619,12 +1722,15 @@ dependency alignment and final-artifact checks belong to the Kord-free build pha
 Phase 1.
 
 - Resolve `jda-ktx 0.14.2` against explicit `jda 6.7.0` in the isolated spike; record the resolved
-  dependency graph there.
+  dependency graph there. **jda-ktx remains optional:** the spike records this candidate, and the
+  direct-JDA fallback stays permitted; no later phase is required to keep jda-ktx.
 - Compile a throwaway slice that registers one slash command and answers one interaction.
 - Align DAVE at 0.2.0 across **all** modules (`api`, `impl-jni`, `adapter-jda`, Linux x86_64
-  natives) **in the isolated spike**. The root version catalog, which still carries the Kord-era
-  versions, is aligned only at the final root dependency replacement stage (Phase 6); Phase 1 does
-  not change it.
+  natives) **in the isolated spike**. The root production dependency set still carries the Kord-era
+  `libdave` / `libdave-natives` dependencies and is aligned only at the final root dependency
+  replacement stage (Phase 6); Phase 1 does not change it. Version-catalog aliases already used by
+  isolated modules (e.g. `libdaveV2` / `adapter-jda` for `:jda-runtime`) are additive and not part of
+  the root production set.
 - Build the **spike** fat JAR; root fat-JAR build, duplicate handling, OkHttp, JNA,
   `META-INF/services` and root JNI-extraction checks are **Phase 6** work, not Phase 1.
 
@@ -1648,14 +1754,15 @@ Phase 1.
 **Stop condition:** a documented blocker is **not** a pass. If native loading or DAVE-enabled
 voice playback fails, Phase 1 fails and migration progression pauses until the failure is resolved
 and re-tested or the user approves a defined alternative. This Phase 1 gate is now closed, so it no
-longer defers the JDA runtime/bootstrap and production integration portion of Phase 2; neutral
-Phase 2A groundwork may still proceed in parallel (see Phase 2).
+longer defers the isolated JDA runtime/bootstrap work of Phase 2; root production integration and the
+root code/build switch remain **Phase 6** scope (production deployment is Phase 7; see the resolved phase placement in Phase 2).
 
 #### Phase 1 subphase plan and stacked branches
 
-Phase 1 follows the same branch-per-subphase strategy as Phase 2: each subphase gets its **own child
-branch and PR based on the immediately preceding unmerged branch**, never on `master`, and it is
-never folded into an already-open PR.
+Phase 1 followed a branch-per-subphase strategy: each subphase got its **own child
+branch and PR based on the immediately preceding unmerged branch**, never on `master`, and it was
+never folded into an already-open PR. *(Historical posture; future work follows the live-epic-tip
+stacking policy recorded under Phase 2's "Stacking rules".)*
 
 | Subphase | Scope | Branch/PR posture | Status |
 | --- | --- | --- | --- |
@@ -1724,23 +1831,31 @@ the vendor caveats above into certified support: the pairing is still undeclared
 `adapter-jda` still does not declare or test JDA 6.7.0, and both must be re-verified against the
 final Phase 6 artifact before promotion.
 
-### Phase 2 — JDA bootstrap, event and command-response foundation
+### Phase 2 — isolated JDA bootstrap, event and command-response foundation
 
-**Status: IN PROGRESS** — the Phase 2A locale repository/use-case boundary is implemented and
-**squash-merged into the epic branch** (`5aad7c7`), but the **root Kord** `LocalizationService` and
-**root Kord** `/locale` command remain Kord-facing until Phase 6. Phase 2B is **PASS — gate closed
+**Status: IN PROGRESS — the scoped architectural import rule is the only open Phase 2 exit gate.**
+Phase 2A is implemented, **squash-merged into the epic branch** (`5aad7c7`), and **PASS — gate closed
+(owner scope decision 2026-11-14)** for its delivered neutral-value/locale-persistence scope. The
+**root Kord** `LocalizationService`, **root Kord** `/locale` command, resources, DI wiring and module
+dependencies were already refactored in **Phase 2D** while remaining Kord-based; those are **not**
+Phase 2 blockers and are not a cutover. Phase 2B is **PASS — gate closed
 2026-11-13**: its neutral command boundary and isolated JDA adapter are implemented with unit tests,
 green CI on its verified checkpoints and a recorded staging `/jda-walkthrough` interaction. The
 earlier handoff head `e4a9e29` later completed all four checks successfully, `7bf5419` is the latest
 verified all-green checkpoint before the subsequent docs-only updates (it was the head at that point,
 not afterwards), and CI state for any later head is read live. A later dated snapshot of `f5f04d1` was
 **not green**. The bootstrap
-and command layer are still **not** wired into the root runtime, so this phase is **not** complete.
+and command layer live in the **isolated** `:jda-runtime` and are deliberately **not** wired into the
+root runtime. Phase 2A, 2B, 2C and 2D are all **PASS**: criterion 1 has recorded staging evidence,
+criteria 2–3 are design-reviewed and tested (complementary, not an automated signature guarantee), so
+Phase 2 stays **IN PROGRESS only because criterion 4's scoped import-rule CI gate is still open**
+(exact definition in "Phase 2 scoped architectural import rule" below), **not** because of the root
+code/build switch — that is Phase 6.
 **2D is PASS — gate closed (2026-11-14)** on the `a4bc1ae` time-qualified green snapshot (all four checks green,
 Sonar gate OK) and the sanitized staging evidence in the Phase 2D section; PR #119 is **merged** into
 the epic branch by the regular merge commit `f56d225` on 2026-11-14 (head `0b365aa`, base `1304aa6`).
-Remaining work is the root runtime
-migration and the architectural import rule (see the subphase plan above). **2C is PASS — gate closed
+Remaining work is the scoped import rule only (see the subsection below and the subphase plan above).
+**2C is PASS — gate closed
 (2026-11-14)**: its acceptance criteria and sanitized staging evidence are recorded in the Phase 2C
 section, and its branch `feature/114-phase-2c-voice-ports` (created from the fetched epic head
 `255893a`) was **merged** into the epic branch by the regular merge commit `5fa9c63` (PR head
@@ -1770,13 +1885,19 @@ a clean local build, local module JaCoCo readings and local changed-file ktlint 
 CI/Sonar snapshot is time-qualified to `a4bc1ae`; PR #119 is **merged** into the epic branch by the
 regular merge commit `f56d225` on 2026-11-14 (head `0b365aa`, base `1304aa6`).
 
-**Placement conflict to resolve before implementation.** This section's "Replace Kord bootstrap with
-JDA lifecycle" task and the root-runtime staging exit criteria below describe switching the root
-runtime to JDA during Phase 2, while the standing requirement recorded for Phase 2B/2C/2D and Phase 6
-keeps the root runtime Kord-based and JDA-free until Phase 6 performs the root dependency
-replacement, the Kord-free build and the artifact gates. Those statements are not both current:
-settle which phase owns the root runtime switch and reconcile the affected bullets and exit criteria
-before that implementation starts. No Phase 2E is defined.
+**Resolved phase placement (owner decision 2026-11-14).** Phase 2 targets an **isolated** JDA
+implementation in `:core` + `:jda-runtime`. The root runtime is **not** switched in Phase 2: root
+production stays on Kord through Phases 2–5, and **Phase 6** owns the root code/build switch to the JDA lifecycle
+and the Kord dependency/JAR removal. Phase **7** deploys the exact Phase 6-verified artifact.
+The earlier "replace the root Kord bootstrap in Phase 2" wording is superseded; no Phase 2E is defined,
+and none should be invented to carry the root code/build switch.
+
+**Root refactors are not forbidden before Phase 6.** The constraint is **no root gateway/runtime
+cutover and no removal of Kord until Phase 6** — not "no root code/build changes". Non-cutover root
+refactors that preserve Kord are permitted where already accepted; Phase 2D in fact refactored the
+root Kord-facing `LocalizationService` and root `/locale`, moved the shared language resources, and
+adjusted DI and module dependencies while keeping Kord as the root gateway. Such refactors must keep
+the root runtime Kord-based and must not add root JDA wiring.
 
 **Gate status:** the Phase 1 missing-native fault test passed on 2026-11-08, so it no longer blocks
 this phase. Phase 2B is **PASS / closed on 2026-11-13** on `feature/114-phase-2b-command-port` under
@@ -1798,103 +1919,418 @@ criterion and no human GitHub review was submitted, which is not itself a requir
 local QA/reviewer agents also report PASS, and no human GitHub review is recorded here. **Phase 2C is
 PASS — gate closed (2026-11-14)** and its PR #118 is **merged** into the epic branch (regular merge
 commit `5fa9c63`); the sanitized user-run staging record is in the Phase 2C section. **Phase 2
-remains IN PROGRESS** because Phase 2A remains partial, and the root runtime migration and the
-architectural import rule remain open. **Phase 2D is PASS — gate closed (2026-11-14)** and is not
+remains IN PROGRESS only because the scoped architectural import rule is still open** — its other
+isolated-runtime exit criteria are satisfied by the recorded 2B/2C/2D evidence, Phase 2A is **PASS**
+for its delivered scope, and the root code/build switch is **Phase 6** (deployment is Phase 7), not a Phase 2 item. **Phase 2D is PASS — gate closed (2026-11-14)** and is not
 listed as open. **Phase 6** remains separately **OPEN**. The 11 new Sonar issues stay
 recorded as **tracked follow-up debt** under the owner-approved 2026-11-14 interpretation — the
 repository's configured Quality Gate is the criterion — so they are not a failed gate and not zero.
 
-- Replace Kord bootstrap with JDA lifecycle (login, shard/event wiring, shutdown).
+- Deliver the JDA bootstrap lifecycle (login, shard/event wiring, shutdown) **inside `:jda-runtime`**.
+  Root Kord/bootstrap replacement is **Phase 6**, not Phase 2.
 - Introduce neutral abstractions for IDs and locales so command code stops speaking Kord types.
-  **Partially done** (Phase 2A): domain-owned `GuildId`/`LocaleCode` plus a neutral locale
-  repository and use cases. Phase 2B moves those values into `:core` and adds neutral command
-  ports, but production command code still speaks Kord types.
+  **Done in the neutral boundary** (Phase 2A + 2D): domain-owned `GuildId`/`LocaleCode` plus a neutral
+  locale repository and use cases, and neutral/shared locale contracts in `:core`. Phase 2B moves those
+  values into `:core` and adds neutral command ports; the **root** Kord command code still speaks Kord
+  types and is converted in **Phase 6**.
 - Establish a single command dispatch/response layer with correct deferred/replied semantics.
-  **Partially done** (Phase 2B): implemented and unit-tested in the isolated `:jda-runtime`; not
-  wired into the root runtime.
-- Apply the framework-replaceability goal from §1: commands/handlers take a neutral command
-  context and responder/response port; only Discord adapter packages may touch `dev.kord.*` /
-  `net.dv8tion.*`.
+  **Implemented and unit-tested in the isolated `:jda-runtime`** (Phase 2B/2C/2D); root dispatch stays
+  Kord until **Phase 6**.
+- Apply the framework-replaceability goal from §1 to the **neutral contracts and the isolated JDA
+  adapter**: commands/handlers take a neutral command context and responder/response port; JDA types
+  stay in declared `:jda-runtime` adapter packages. **Root Kord packages are explicitly grandfathered
+  legacy until Phase 6** and are outside this phase's rule scope.
+- Do **not** add root JDA bootstrap, the root code/build switch or a Kord-dependency removal to Phase 2.
 
 **Exit criteria**
-- Bot connects on staging with the staging token. **PASS for the isolated `:jda-runtime` only
-  (2026-11-13 `/jda-walkthrough`, 2026-11-14 `/jda-voice-walkthrough`); OPEN for the root
-  application**, which is still Kord-based.
-- Slash commands register and respond; deferred vs. immediate reply is explicit and tested.
-  **PASS for the isolated guild-scoped `/jda-walkthrough` and `/jda-voice-walkthrough` only
-  (2026-11-13 Phase 2B: registered and replied `JDA walkthrough OK`; 2026-11-14 Phase 2C: both
-  registered with only `GUILD_VOICE_STATES`, and `/jda-voice-walkthrough` replied
-  `Voice walkthrough OK | handed 75/75 frames to JDA's send loop (delivery not confirmed)` and played
-  an audible beep). OPEN for the root runtime
-  and the remaining command families.**
-- No Kord types leak into the new abstraction boundary. **PASS for the locale repository/use-case
-  boundary and for the Phase 2B/2C/2D `:core` modules, including the neutral/shared locale contracts
-  and the isolated JDA `/locale` adapter (Phase 2D passed 2026-11-14). OPEN only for the root Kord
-  `LocalizationService`, root `/locale`, all other root commands and root bootstrap/Phase 6.**
-- The architectural import rule (no `dev.kord.*` / `net.dv8tion.*` outside declared Discord adapter
-  packages) exists and passes as a test/CI gate. **OPEN** — required before migration completion;
-  Phase 2 exit cannot be recorded without it. The Phase 2B reflection test covers only the neutral
-  types, not the whole import rule.
+1. **Isolated staging bot connects and its commands respond — SATISFIED by 2B/2C/2D evidence.** The
+   criterion is about the **isolated `:jda-runtime`** bot only: connect on staging with the staging
+   token and register/respond with explicit, tested deferred-vs-immediate semantics. Recorded:
+   `/jda-walkthrough` (2026-11-13), `/jda-voice-walkthrough` (2026-11-14) and the isolated `/locale`
+   (Phase 2D, 2026-11-14). **Root staging behaviour, root command behaviour and root Kord removal are
+   not Phase 2 criteria** — they belong to Phase 6.
+2. **Neutral contracts do not expose Discord-library types — design principle, reviewed (not
+   independently automated).** As a design principle, `:core` and `:locale-persistence` neutral ports
+   and contracts must not expose `dev.kord.*`, `net.dv8tion.*`, jda-ktx or libdave types, and the neutral
+   ports stay gateway-free. Phase 2B/2C/2D review and the existing neutral-boundary/reflection tests are
+   **complementary evidence only**. The **automated Phase 2 gate for imports is criterion 4**; it checks
+   import declarations only and does not detect fully qualified references or inspect compiled public
+   signatures. **Root Kord packages are explicitly grandfathered legacy until Phase 6** — they are not a
+   leak and do not fail this criterion. Tests are only isolated-runtime/neutral-boundary tests; no
+   root-stage test is required here.
+3. **Adapter containment — design principle, reviewed (not independently automated).** As a design
+   principle, JDA (`net.dv8tion.*`), jda-ktx, libdave and DAVE implementation belongs only in
+   `:jda-runtime` and its declared adapter packages. Root Kord usage is grandfathered legacy until
+   Phase 6 and is excluded from this scoped rule. The **automated Phase 2 gate is criterion 4's
+   import-declaration matrix**, which checks source imports only and does not prove that no vendor type
+   appears in compiled signatures or via fully qualified references.
+4. **Scoped architectural import rule passes in CI — OPEN; the only remaining Phase 2 gate.** A
+   **passing** CI boundary rule must enforce the exact matrix defined in the next subsection: `:core`
+   and `:locale-persistence` gateway-free, the root's **source imports** free of JDA/jda-ktx/libdave, and JDA/jda-ktx/
+   libdave confined to the declared `:jda-runtime` adapter packages. Written but not green does not
+   pass. **Phase 6 later extends the same scanner repo-wide on the Kord-free tree.** The earlier
+   Phase 2B reflection tests remain **complementary only**; they are not the CI gate and do not
+   establish a public-signature guarantee.
 
-### Phase 3 — Per-guild serialized voice
+#### Phase 2 scoped architectural import rule — exact scanner definition (owner decision 2026-11-14)
+
+This is the rule Phase 2 exit criterion 4 requires and Phase 6 reuses. It is specified here; building
+the task is separate implementation work.
+
+**Mechanism — no new dependency.** A Gradle/Kotlin test or verification task implemented using only
+the **existing JDK, Kotlin and Gradle APIs**. No Konsist, ArchUnit, Detekt, annotation processor,
+extra plugin or any other new dependency is added. The task fails the build on any violation and is
+wired into the repository's existing check/CI gate (the ktlint/Sonar jobs or the build task), so it is
+green in CI, not merely described.
+
+**Scan scope (Phase 2).** The scanner **parses imports only in the explicitly configured source roots**:
+`<root>/src/main/kotlin/**/*.kt`, `<root>/src/test/kotlin/**/*.kt`,
+`core/src/main/kotlin/**/*.kt`, `core/src/test/kotlin/**/*.kt`,
+`locale-persistence/src/main/kotlin/**/*.kt`, `locale-persistence/src/test/kotlin/**/*.kt`,
+`jda-runtime/src/main/kotlin/**/*.kt` and `jda-runtime/src/test/kotlin/**/*.kt`.
+A **separate source-root completeness check** (below) independently enumerates the Kotlin **source
+files ending in `.kt`** under the Gradle Kotlin source sets of the configured projects (and the optional
+spike source sets when retained), and fails on unclassified roots; it does not parse imports in build
+output. **Gradle Kotlin DSL/build scripts (`*.gradle.kts` and any other `*.kts`) are not part of this
+import scanner's source-file universe**; if build-script imports ever need enforcement, that would be a
+separate rule. The Phase 2 scanner configuration explicitly **excludes** the separately built
+`spikes/jda-dave`, all `**/build/**` outputs and `.gradle/**`. There is **no unspecified
+generated-directory glob**: any new Kotlin source root must be **explicitly added to the scanner
+configuration** before its imports are checked.
+
+**What is scanned — actual top-level Kotlin file-header imports only.** The scanner must not
+string-match arbitrary lines. A **candidate import** is only a real top-level Kotlin **file-header
+import declaration**: at the start of the file after an optional UTF-8 BOM, optional whitespace and
+comments, optional `@file:` annotations (including annotation arguments with balanced parentheses,
+brackets, braces and nested annotations), and an optional `package` directive, **before the first
+top-level declaration**. Both **aliased imports** (`import a.b.C as D`) and **wildcard imports**
+(`import a.b.*`) are candidates. This definition is **deterministic**: the lexer recognizes header
+structure purely from the lexical states below, ignoring comments and literals, and tracking balanced
+delimiters **only in code state**; there is no heuristic mode or line-shape matching.
+
+**Lexical rule — no compiler parser, PSI or new dependency.** The scanner must use a small
+lexer/state machine built only on the existing JDK/Kotlin/Gradle APIs; a full Kotlin PSI/compiler
+parser is **not** permitted as a dependency. The lexer must track at least:
+
+- **code** state,
+- **line comment** (`// ...`),
+- **block comment** (`/* ... */`) with **nested block comments**,
+- **regular string literal** (`"..."`, including escapes),
+- **character literal** (`'...'`, including escaped quote/backslash chars),
+- **raw/triple-quoted string** (`"""..."""`),
+- **balanced delimiters** inside `@file:` annotation arguments and the header regions.
+
+Only an `import` keyword encountered in **code state while still inside the file-header import region**
+counts as a candidate. Text inside line comments, block/nested block comments, string literals,
+character literals or raw strings is never treated as an import, even when it occupies its own line and
+begins with `import`. The lexer must not fall back to matching arbitrary lines.
+
+**Deterministic gate condition.** Phase 2 exit remains **open unless the scanner passes all specified
+acceptance fixtures and the source-root completeness check below**. The rule must not be weakened to
+line-based or regex-only matching, and no parser dependency may be added to compensate; if a candidate
+implementation cannot pass the fixtures, scanner implementation design is deferred and the Phase 2 gate
+stays open.
+
+**Scanner acceptance tests.** The scanner's own tests must include **all** of these fixtures:
+
+- **False-positive fixtures (must not be flagged):** fake forbidden-import-looking text inside
+  **line comments**, **normal and escaped regular string literals**, **triple-quoted raw strings**,
+  **block comments** and **nested block comments**. In regular escaped strings, `\n` denotes two source
+  characters (backslash + `n`), not an actual new line, and must be handled as a string escape. A
+  character literal cannot contain a full fake import line; character-literal lexing is covered by the
+  escaped-character annotation fixture below.
+- **Header-termination fixture:** once a top-level declaration (class/function/property/etc.) has begun,
+  text resembling a forbidden import later in the file — including in an invalid fixture or inside any
+  literal/comment — is **not** treated as a header import.
+- **Source-root completeness fixture:** introducing a Kotlin source file under an unclassified source
+  root causes the gate to **fail** until that root is explicitly categorized in the active scanner mode.
+- **Delimiter robustness fixtures:** delimiter-looking `)`, `]` and `}` inside comments and inside
+  regular/raw strings must **not** terminate an annotation or the header region.
+- **Annotation-header fixtures:** nested/balanced `@file:` annotation arguments (parentheses, brackets,
+  braces and nested annotations), plus comments between the `package` directive and imports and between
+  imports, must not break header recognition.
+- **Real-import fixtures (must be flagged):** real header imports after an `@file:` annotation and a
+  `package` directive, **aliased imports** and **wildcard imports**.
+- **Escaped-character annotation fixture:** a synthetic `@file:` annotation argument containing a
+  **valid escaped character literal** (for example an escaped quote or escaped backslash, such as
+  `'\''` or `'\\'` in scanner-input form), followed by a real vendor import, must be lexed without
+  losing header state and the following import must be flagged. The fixture is **scanner input** and
+  need not compile if it uses a test-only annotation.
+
+No comment, string or character-literal content may produce a false positive. A fake import cannot be
+placed inside a character literal because a `Char` cannot contain one; the escaped-character annotation
+fixture above covers character-literal lexing in the header instead. This remains an
+**import-declaration scanner, not a full Kotlin type-use or fully-qualified-reference parser**:
+fully-qualified references used without an `import`, reflection string targets, and any import-like
+text outside the lexical rules above remain outside its guarantee unless this plan is explicitly
+extended. Per the **owner decision (2026-11-14)**, there is **no separate reflection-based
+public-signature gate and no requirement to add one**. The existing `VoiceBoundaryReflectionTest` and
+neutral-port reflection tests stay in place as **complementary, limited tests only**; they do **not**
+fulfill or establish a repo-wide public-signature policy or guarantee.
+
+**Forbidden vendor prefixes** (matched against the imported name): `dev.kord.`, `net.dv8tion.`,
+`dev.minn.jda.ktx.`, `moe.kyokobot.libdave.`
+
+**Import-path normalization.** Each candidate import must be parsed into **identifier segments**: separate
+any `as Alias` clause from the target, preserve a trailing wildcard marker (`*`), and **remove Kotlin
+backticks from identifier segments** before matching. Compare at **package-segment boundaries**, never
+by raw-string prefix. Fixtures such as ``import dev.`kord`.core.SomeType as Alias`` and
+`import net.dv8tion.jda.api.*` must be caught; a raw prefix check that misses backticked segments is not
+acceptable.
+
+**Phase 2 matrix**
+
+| Source set | Kord (`dev.kord.*`) | JDA (`net.dv8tion.*`) | jda-ktx | libdave |
+| --- | --- | --- | --- | --- |
+| root main + test | **allowed** (grandfathered legacy until Phase 6) | **forbidden** | **forbidden** | **forbidden** |
+| `:core` main + test | **forbidden** | **forbidden** | **forbidden** | **forbidden** |
+| `:locale-persistence` main + test | **forbidden** | **forbidden** | **forbidden** | **forbidden** |
+| `:jda-runtime` main + test | **forbidden** | **allowed only in declared adapter packages** | **allowed only in declared adapter packages** | **allowed only in declared adapter packages** |
+
+**Matrix scope is imports, not dependencies.** The root row forbids **source imports** of JDA, jda-ktx and
+libdave; it does **not** clear the root dependency graph. The root **production dependency graph still
+uses the Kord-era `libdave` / `libdave-natives` dependencies** until the Phase 6 dependency
+replacement, and a catalog or build dependency entry alone does not violate this import scanner. Root
+JDA dependencies and root JDA wiring remain forbidden throughout Phase 2.
+
+**Declared JDA adapter packages (package-boundary match).** The allowance for `:jda-runtime` applies
+only when the **file's `package` declaration** is exactly one of
+`es.wokis.jda`, `es.wokis.jda.command`, `es.wokis.jda.player`, `es.wokis.jda.voice`, **or a
+subpackage of one of them**. The match is a **package boundary**, i.e.
+`pkg == allowed || pkg.startsWith("$allowed.")`, never a plain string prefix — so `es.wokis.jdaextra`
+is **not** an allowed package. A file with no `package` declaration is not in an allowed adapter
+package. The allowance never applies to Kord: `dev.kord.*` stays forbidden in `:jda-runtime`
+main and test.
+
+**Phase 6 matrix — same scanner on the Kord-free tree.** Remove the **root Kord exception** and extend
+the scanner to **all projects included in the root Gradle build** — the current root project, `:core`,
+`:locale-persistence`, `:jda-runtime`, and any future projects included by the root build —
+`src/main/kotlin/**/*.kt` and `src/test/kotlin/**/*.kt` in each. It still excludes all `**/build/**`
+outputs and `.gradle/**`; there is **no unspecified generated-directory glob**, and any new source root
+must be **explicitly added to the scanner configuration**. Inclusion in the root Gradle build does
+**not** grant vendor-import permission; the module-specific allowlist is the Phase 6 matrix below.
+**`spikes/jda-dave` is a separate build, not
+part of the root Gradle build**: if retained, it appears only in the separate optional row below
+(`spikes/jda-dave/src/main/kotlin/**/*.kt` and `spikes/jda-dave/src/test/kotlin/**/*.kt`), and the
+production adapter allowlist never applies to it.
+
+**Phase 6 matrix**
+
+| Scan root | Kord (`dev.kord.*`) | JDA (`net.dv8tion.*`) | jda-ktx (`dev.minn.jda.ktx.*`) | libdave (`moe.kyokobot.libdave.*`) |
+| --- | --- | --- | --- | --- |
+| Root project source (main + test) | **forbidden** | **forbidden** | **forbidden** | **forbidden** |
+| `:core` / `:locale-persistence` (main + test) | **forbidden** | **forbidden** | **forbidden** | **forbidden** |
+| `:jda-runtime` (main + test) | **forbidden** | **allowed only in declared `es.wokis.jda.*` adapter packages** | **allowed only in declared `es.wokis.jda.*` adapter packages** | **allowed only in declared `es.wokis.jda.*` adapter packages** |
+| `spikes/jda-dave` (separate build; main + test) **only if retained** | **forbidden** | **allowed only in non-production package `spike.jdadave` and its subpackages** | **allowed only in non-production package `spike.jdadave` and its subpackages** | **allowed only in non-production package `spike.jdadave` and its subpackages** |
+
+**Root imports are denied regardless of package.** The root project source forbids all four vendor
+prefixes even when a root file declares `package es.wokis.jda` (or any other declared-adapter-looking
+package); **a package name alone never authorizes root imports**. Only `:jda-runtime` may import
+JDA/jda-ktx/libdave, and only inside the declared `es.wokis.jda...` adapter packages. The
+`spikes/jda-dave` row keeps its separate non-production `spike.jdadave` exception.
+
+The `spikes/jda-dave` row is a **non-production spike exception**, not part of the production adapter
+allowlist; its package-boundary rule is `spike.jdadave` and its subpackages only, and the production
+adapter packages (`es.wokis.jda`, `.command`, `.player`, `.voice`) never authorize spike imports.
+**If the spike is deleted before Phase 6, that row disappears.** All other vendor imports are denied
+everywhere. The gate must be green **repo-wide** on the Kord-free tree before the Phase 6 artifact is
+produced (see Phase 6).
+
+**`spikes/jda-dave` is non-production:** before Phase 6 it is either **deleted**, or retained and
+covered by the explicit `spike.jdadave`-only row above. It is never treated as production source, and
+its allowance must not admit vendor imports into production modules. That spike choice is deliberately
+not fixed here; it must be decided before the Phase 6 import gate runs.
+
+**Root-to-adapter boundary (Phase 6).** Root `Main`/application code may call a **narrow
+lifecycle/entrypoint exposed by `:jda-runtime`**, but **root source must not import JDA/DAVE types**
+(import gate). As a **design principle**, root-facing runtime API must avoid exposing JDA/DAVE types,
+and JDA/DAVE implementation stays confined to the `es.wokis.jda.*` adapter packages. This does not
+prescribe a generic facade and does not fix the final entrypoint/API name; the package matrix above
+remains authoritative.
+
+**Import-scanner limitation for that boundary.** The source-import scanner is **import-declaration-only**:
+it does **not** detect fully qualified JDA/DAVE type references used without an import, and it does
+**not** inspect public API signatures. **Owner decision (2026-11-14): no separate reflection-based
+public-signature gate is required** for Phase 6 or architecture enforcement, and there is **no
+requirement to add one**; the custom source-import scanner is the enforcement mechanism. Root-facing
+runtime API is designed to avoid vendor types, but
+that design property is **not automatically verified** and no automated signature guarantee is claimed.
+The existing `VoiceBoundaryReflectionTest`/neutral-port reflection tests are complementary limited
+tests, not a public-signature policy.
+
+**Table-driven allowlist acceptance fixtures.** These fixtures test the allowlist matrix itself, not
+only lexing. Each cell is an asserted expected outcome for an import resolved to that row:
+
+| Mode | Source / package | Kord (`dev.kord.*`) | JDA (`net.dv8tion.*`) | jda-ktx (`dev.minn.jda.ktx.*`) | libdave (`moe.kyokobot.libdave.*`) |
+| --- | --- | --- | --- | --- | --- |
+| Phase 2 | Root project main/test | **allowed** (grandfathered) | **denied** | **denied** | **denied** |
+| Phase 2 | `:core` main/test | **denied** | **denied** | **denied** | **denied** |
+| Phase 2 | `:locale-persistence` main/test | **denied** | **denied** | **denied** | **denied** |
+| Phase 2 | `:jda-runtime` in `es.wokis.jda` or a declared subpackage (`es.wokis.jda.command`, `es.wokis.jda.player`, `es.wokis.jda.voice` and their subpackages) | **denied** | **allowed** | **allowed** | **allowed** |
+| Phase 2 | `:jda-runtime` outside declared packages, including `es.wokis.jdaextra` | **denied** | **denied** | **denied** | **denied** |
+| Phase 2 | `:jda-runtime` with no `package` declaration | **denied** (fail closed) | **denied** (fail closed) | **denied** (fail closed) | **denied** (fail closed) |
+| Phase 2 | `spikes/jda-dave` path | **excluded** | **excluded** | **excluded** | **excluded** |
+| Phase 6 | Root project source (main/test), **any package including `es.wokis.jda`** | **denied** | **denied** | **denied** | **denied** |
+| Phase 6 | `:core` / `:locale-persistence` (main/test) | **denied** | **denied** | **denied** | **denied** |
+| Phase 6 | `:jda-runtime` (main/test) in a declared `es.wokis.jda.*` adapter package | **denied** | **allowed** | **allowed** | **allowed** |
+| Phase 6 | `:jda-runtime` (main/test) outside declared packages or with no `package` declaration | **denied** | **denied** | **denied** | **denied** |
+| Phase 6 | Retained `spikes/jda-dave` in non-production `spike.jdadave` or its subpackages | **denied** | **allowed** | **allowed** | **allowed** |
+| Phase 6 | Retained `spikes/jda-dave` outside `spike.jdadave` | **denied** | **denied** | **denied** | **denied** |
+
+These fixtures must also exercise **aliased imports**, **wildcard imports** and **backtick-normalized
+package segments**, each resolving into the rows above. For example
+``import dev.`kord`.core.SomeType as Alias`` is a Kord import (allowed in the Phase 2 root row, denied
+elsewhere), and `import net.dv8tion.jda.api.*` is a JDA import (denied in the root row, allowed only in
+declared adapter packages). The Phase 2 spike path remains **excluded**, not denied-by-policy, because
+it is not scanned in Phase 2 mode. **Phase 6 must include a root-project fixture whose file declares
+`package es.wokis.jda` and imports `net.dv8tion...`; the expected outcome is denied** — package name
+alone never grants root imports.
+
+**Source-root completeness (both phases — active-mode classification).** The scanner runs in exactly one
+**active mode** at a time: **Phase 2 mode** or **Phase 6 mode**. In the active mode, every Kotlin
+**source file ending in `.kt`** under the configured Gradle Kotlin source sets (and the optional spike
+source sets when retained) must be classified **exactly once in that mode's scanner configuration**;
+otherwise the gate fails. **`*.gradle.kts` and any other `*.kts` build scripts are outside this
+scanner's source-file universe** and are not enumerated by this rule; build-script import enforcement
+would be a separate rule.
+
+- **Phase 2 mode** uses the Phase 2 project roots listed above (`<root>`, `core`,
+  `locale-persistence`, `jda-runtime` main/test Kotlin roots) and explicitly **excludes**
+  `spikes/jda-dave`.
+- **Phase 6 mode** uses the Kotlin roots of all projects included in the root Gradle build, plus the
+  explicit optional `spikes/jda-dave` row when retained.
+
+A shared physical root appears in the Phase 2 and Phase 6 mode lists, but within one active mode it
+belongs to **only one category** — it cannot be both scanned and excluded in the same mode. **Unknown or
+unclassified roots fail closed:** the gate fails until the root is explicitly categorized in the active
+mode. There is **no vague generated-directory glob**; only explicit output exclusions (`**/build/**`,
+`.gradle/**`, or a reviewed explicit addition) are permitted.
+
+### Phase 3 — Per-guild serialized voice (isolated JDA real-player slice)
+
+**Ownership:** root production remains on **Kord** throughout Phase 3. This phase targets an
+**isolated JDA real-player slice** (`:core` neutral ports + `:jda-runtime` adapters); it does **not**
+switch root production or remove Kord.
+
+**Depends on:** Phase 2 exit. Phase 3 starts **only after the Phase 2 exit criteria are met** (isolated
+staging bot/commands plus the scoped CI boundary rule per the Phase 2 exit criteria above).
 
 - Implement the per-guild actor/mailbox for player creation, queue/track transitions, and voice
   lifecycle.
-- Implement `AudioSendHandler` with one Opus frame per cycle, pause preserved, non-blocking.
-  Pause/resume preservation was **explicitly deferred from Phase 2C** to this phase's real-player
-  integration and is a required migration outcome, not optional.
-- Make Lavaplayer callbacks enqueue-only.
+- Integrate the **real Lavaplayer player** behind the neutral voice/player ports for the isolated JDA
+  slice.
+- **Reuse the existing `JdaAudioSendHandler`** delivered in **Phase 2C**. Do not reimplement it and do
+  not add a second handler. Phase 3 owns **real player integration and per-guild serialization**,
+  verified through that existing handler and the real-player path.
+- Make Lavaplayer callbacks **enqueue-only**; they may never block.
+- **Module placement for the real player is a Phase 3 design decision** unless it is settled earlier.
+  Do not invent a new module, dependency or artifact without approval; this plan does not commit to
+  one here.
+
+**Pause/resume semantics prerequisite.** Pause/resume preservation is a **required** Phase 3 outcome,
+but its exact **testable semantics must be specified and approved before Phase 3 implementation**
+starts. The specification must at least define whether paused playback advances the track position and
+what position/semantics resume uses, so Phase 3 tests can assert a concrete approved behaviour. This
+plan **does not choose that policy** and invents no final product behaviour; the owner approves the
+semantics, and Phase 3 then implements and tests exactly those.
 
 **Exit criteria**
 - Concurrent play/queue/skip/disconnect per guild produce a single deterministic state order.
-- Pause/resume, reconnect and disconnect behave correctly under load.
+- **Pause/resume** follows the approved testable semantics, and reconnect and disconnect behave
+  correctly under load. Pause/resume preservation was explicitly deferred from Phase 2C to this phase
+  and is a **required** migration outcome, not optional.
 - No blocking call observed on the audio send path.
+- The slice runs on the isolated JDA runtime while root production continues on Kord.
 
-### Phase 4 — Commands, components, messages, channels, locales
+### Phase 4 — Commands, components, messages, channels, locales (isolated JDA adapters)
 
-- Port all 13 command groups and all 18 component IDs.
-- Port message sending/editing, player-channel management, and locale persistence.
+**Ownership:** root production remains on **Kord** throughout Phase 4. The port lands in neutral
+`:core` contracts plus JDA adapters in the isolated `:jda-runtime`; the **root Kord implementation
+stays the production implementation until Phase 6**.
+
+**Depends on:** Phase 3 exit.
+
+- Port the remaining command groups and all 18 component IDs into **neutral `:core` contracts** with
+  **JDA adapters in `:jda-runtime`**.
+- Port message sending/editing, player-channel management, and locale persistence behind the same
+  neutral ports (locale persistence contracts and isolated JDA `/locale` already landed in Phase 2D).
 - Land the three button-routing fixes with tests.
 
 **Exit criteria**
-- Every command family and every component ID reachable and behaving as on `master`.
-- Hidden/obfuscated channels work end-to-end.
+- Every command family and every component ID is reachable and behaves as on `master` **in the
+  isolated JDA implementation**; root Kord parity remains the production baseline until Phase 6.
+- Hidden/obfuscated channels work end-to-end in the isolated implementation.
 - Locale selection persists across restarts and is applied per guild.
 - Routing-fix tests pass and would fail against the pre-fix routing.
 
-### Phase 5 — Test and staging gate
+### Phase 5 — Test and staging gate (full isolated JDA implementation)
 
-- Run the full suite on the JDA implementation. **Migrate and rewrite** the Kord-shaped mocks
-  and tests to JDA; do **not** retire Kord-only test scaffolding at this phase. The Kord
-  dependency and Kord JARs are still present here, so removing Kord scaffolding is Phase 6
+**Ownership:** Phase 5 tests and stages the **full isolated JDA implementation** while the Kord
+dependency, the **root Kord application** and the **Kord-root test suite** remain in place. It is
+**not** the root production cutover; the root code/build switch and Kord removal are **Phase 6**.
+
+**Depends on:** Phases 3–4 exit.
+
+- Test and stage the **isolated JDA runtime**. Do **not** rewrite, disable or delete the **root Kord
+  tests that exercise the production Kord runtime** before the cutover — they remain the production
+  regression suite until Phase 6.
+- Only **new** neutral/JDA tests must avoid Kord APIs. Existing root Kord tests stay Kord-based and
+  keep running as-is.
+- Do **not** retire Kord-only test scaffolding or the Kord dependency at this phase; that is Phase 6
   work, not Phase 5 work.
-- Execute the full staging matrix on the separate staging bot/token.
+- Execute the full staging matrix on the separate staging bot/token, against the isolated JDA
+  implementation.
 
 **Exit criteria**
-- Full test suite green on the JDA implementation **with the Kord dependency still present** —
-  the Phase 5 test gate is allowed to pass while Kord remains on the dependency graph.
-- Kord-shaped mocks and tests have been migrated/rewritten to JDA equivalents, with no test
-  still asserting against Kord-only APIs.
+- Full suite green on the JDA implementation **with the Kord dependency and the untouched root Kord
+  suite still present** — the Phase 5 test gate is allowed to pass while Kord remains on the
+  dependency graph.
+- New neutral/JDA tests assert no Kord-only APIs; no root production-runtime Kord test was rewritten
+  or disabled before Phase 6.
 - Staging matrix covers: hidden/obfuscated channels, deferred interactions, all command
   families, all components, message and player-channel management, locale persistence, voice
   pause/reconnect/disconnect, DAVE-enabled real playback.
 - Known-issue list signed off as "acceptable for cutover" **only** for items that are not gate
   criteria. Any parity gap or any matrix/DAVE failure is a stop condition, not an accepted risk.
+- **Not a cutover gate:** a Phase 5 pass is staging evidence for the isolated JDA implementation.
+  Root production remains Kord; the root code/build switch happens in Phase 6 and deployment in Phase 7.
 
-### Phase 6 — Kord-free implementation and artifact (pre-cutover)
+### Phase 6 — Root Kord→JDA code/build switch, Kord removal and artifact (pre-deployment)
 
-Cleanup and the promotable artifact are completed **before** the production switch, not after it.
+Phase 6 owns the **root code/build switch**: this is where the root gateway/runtime is replaced in code
+and build, and Kord is removed. Root Kord production keeps running through Phases 2–5; Phase 6 does
+**not** deploy to production. Phase 6 **produces, tests, stages and verifies** the JDA artifact, and the
+actual **production cutover/deployment** of that exact verified artifact is **Phase 7**. Non-cutover
+root refactors that preserve Kord were already permitted earlier (for example Phase 2D); Phase 6 is the
+point where the root runtime code/build itself changes.
 
+**Depends on:** Phase 5 exit.
+
+- Switch the **root runtime code/build** to the tested JDA lifecycle (login, shard/event wiring, shutdown) and
+  replace the root Kord-facing services and commands. Root `Main`/application code may call a narrow
+  `:jda-runtime` lifecycle/entrypoint but must not import JDA/DAVE types. Per the owner decision
+  (2026-11-14) the custom import scanner is the only architecture gate; no separate reflection or
+  public-signature gate is required, and the root-facing API is designed to avoid vendor types without
+  claiming an automated signature guarantee.
 - Remove Kord dependencies, local `libs/kord-*.jar`, Kord-only dependencies, and Kord-specific
   documentation/CI references. Only Kord-specific docs and references are removed or updated; this
   migration plan (`docs/migrations/kord-to-jda.md`) is **not** Kord-specific documentation and must
   be kept. Note the current setup: the SonarCloud build job sets up **JDK 17**
   (`actions/setup-java`, zulu) despite the Java 21 toolchain, and the ktlint workflow does not set
   up a JDK at all.
-- Align the root dependency set to the tested JDA/DAVE stack at this point: add `adapter-jda` and
-  bump root `libdave` / `libdave-natives` to the 0.2.0 set proven by the spike. Phase 1 leaves the
-  root catalog on its current Kord-era versions; the root dependency replacement happens here,
-  not through spike-local overrides.
+- Align the root **production** dependency set to the tested JDA/DAVE stack at this point: add
+  `adapter-jda` to the root production set and bump root `libdave` / `libdave-natives` to the 0.2.0
+  set proven by the spike. Phase 1 leaves the root production set on its current Kord-era `libdave`
+  versions; the root production dependency replacement happens here, not through spike-local
+  overrides. Existing catalog aliases consumed only by isolated modules remain additive until used by
+  the root production set.
+- Extend the **Phase 2 import scanner** to the Phase 6 matrix: remove the root Kord exception and
+  apply the module split above — root project source and `:core` / `:locale-persistence` forbid all four
+  prefixes, and only `:jda-runtime` may import JDA/jda-ktx/libdave, within the declared adapter packages
+  (`es.wokis.jda`, `.command`, `.player`, `.voice` and subpackages). `spikes/jda-dave`
+  is non-production: delete it before this gate, or retain it under the explicit non-production
+  `spike.jdadave`-package row in the Phase 6 matrix (see the Phase 2 scanner subsection for the exact
+  rule).
 - Update the SonarCloud build job to set up **JDK 21 explicitly**, and make that build/CI gate
   pass. Do **not** add a JDK step to the ktlint workflow unless it is shown to need one; that
   workflow does not set up a JDK today. This is **R3**, a go/no-go gate.
@@ -1912,13 +2348,31 @@ Cleanup and the promotable artifact are completed **before** the production swit
   the **full staging matrix** on the separate staging bot. A digest mismatch is a stop condition.
 
 **Exit criteria**
+- The root runtime code/build runs the JDA lifecycle and the root Kord bootstrap/services are replaced,
+  verified on the staged artifact; production cutover to that artifact is **Phase 7**.
+- Root `Main`/application code may call only the **narrow lifecycle/entrypoint exposed by
+  `:jda-runtime`** and must **not import JDA/DAVE types**; JDA and DAVE types stay in the
+  `es.wokis.jda.*` adapter packages. No generic facade or final entrypoint name is required. **No
+  separate reflection-based public-signature gate is required (owner decision 2026-11-14), and there is
+  no requirement to add one**: the custom import scanner is the enforcement mechanism; the root-facing
+  API is designed to avoid vendor types, and existing reflection tests are complementary only — no
+  automated signature guarantee is claimed.
 - The build tree contains no Kord source, Kord dependency, or local Kord JAR.
-- The architectural import rule forbids `dev.kord.*` and `net.dv8tion.*` outside declared Discord
-  adapter packages, and passes as a test/CI gate on the Kord-free tree. Core tests mock neutral
-  ports, not library types.
-- The root version catalog resolves the tested stack — JDA 6.7.0, jda-ktx 0.14.2, libdave 0.2.0
-  including `adapter-jda` and the Linux x86_64 natives — with no spike-local force or override
-  carrying the runtime.
+- The **same import scanner** from Phase 2 passes **repo-wide on the Kord-free tree** with the Phase 6
+  matrix: the root project source and `:core` / `:locale-persistence` forbid all four vendor prefixes
+  (`dev.kord.`, `net.dv8tion.`, `dev.minn.jda.ktx.`, `moe.kyokobot.libdave.`); only `:jda-runtime` may
+  import JDA/jda-ktx/libdave, and only inside the declared `es.wokis.jda.*` adapter packages. This is an
+  **import-declaration gate only**; it does not inspect public signatures or fully qualified references,
+  and no separate reflection gate is approved. Core
+  tests mock neutral ports, not library types. `spikes/jda-dave` is either deleted or covered by the
+  explicit non-production `spike.jdadave`-package matrix row; it is never production source, and that
+  exception is not part of the production adapter allowlist.
+- The root version catalog resolves the tested stack: **JDA 6.7.0**, **libdave 0.2.0** including
+  `adapter-jda` and the Linux x86_64 natives, with no spike-local force or override carrying the
+  runtime. **jda-ktx is conditional**: if jda-ktx is the selected path, record and verify the exact
+  candidate and its JDA pairing (currently `jda-ktx 0.14.2` + JDA 6.7.0 as the candidate under test);
+  if **direct JDA + coroutine bridge** is selected instead, jda-ktx is **not required** and no
+  jda-ktx resolution gate applies. This plan does not force either path.
 - `./gradlew clean build` passes on the Kord-free tree.
 - A clean build produces the fat JAR with no Kord classes — verified by inspecting the artifact,
   not by trusting the build file — and with no packaging or native defects.
@@ -1928,22 +2382,25 @@ Cleanup and the promotable artifact are completed **before** the production swit
   Linux x86_64, including DAVE-enabled real voice playback.
 - Record in migration issue #114 (or the release record), against the staged artifact, all of:
   the **resolved dependency versions**; the **JDK 21 CI pass**; the exact fat JAR **SHA-256
-  digest**; the **full staging matrix result**; the **staging-container digest verification**;
-  and the **production-server digest verification** (recorded at cutover). No separate evidence
-  file is created.
+  digest**; the **full staging matrix result**; and the **staging-container digest verification**.
+  The **production-server digest verification** is recorded at the Phase 7 cutover. No separate
+  evidence file is created.
 
 **Stop condition:** a failed artifact inspection, a digest mismatch, or a failed staging run
 blocks cutover. Because the user rejected a Kord rollback, this gate cannot be waived, downgraded,
 or replaced by "roll forward".
 
-### Phase 7 — Production cutover
+### Phase 7 — Production deployment of the Phase 6-verified artifact
 
-- Stop Kord and start the gated JDA artifact in production during an announced window. The user
-  deploys the JAR through their **external `eclipse-temurin:21` Dockerfile**; this repo adds no
-  Docker files and assumes no artifact registry.
+**Depends on:** Phase 6 exit.
+
+- Stop Kord and start the **exact artifact verified in Phase 6** in production during an announced
+  window. The user deploys the JAR through their **external `eclipse-temurin:21` Dockerfile**; this
+  repo adds no Docker files and assumes no artifact registry.
 - Before start, compute the SHA-256 digest of the production JAR **on the server** and require it
   to equal the digest recorded in Phase 6 **and** verified on staging. Any mismatch is a stop
-  condition. Do not rebuild or substitute a different artifact.
+  condition. Do not rebuild or substitute a different artifact. Same-digest verification applies
+  here exactly as in Phase 6.
 - Run post-start smoke checks only. The no-rebuild/no-substitution rule applies through cutover
   and after it.
 
@@ -1952,13 +2409,23 @@ or replaced by "roll forward".
 - No Kord artifacts on the production classpath.
 - Production healthy; rollback path is deliberately absent per decision above.
 
-### Phase 8 — Port parked PRs
+### Phase 8 — Port parked PRs (post-migration follow-up, after Phase 7)
 
-- Rebase/port #106, #109, #111 individually onto the JDA implementation.
+**This phase is not a prerequisite** for Phase 2, Phase 6, or issue #114 closure unless the owner later
+makes it one. It is post-migration follow-up work that runs **after Phase 7**.
+
+- Port #106, #109, #111 individually. **Do not rebase, rewrite or amend the parked branches.** For each
+  one, fetch and verify the **live epic tip**, create a **new child branch** from it, then port the
+  change as a reviewed **cherry-pick or reimplementation** with its own tests, and land it with a
+  **regular merge commit** against the epic integration branch.
+- Leave the parked PRs/branches untouched as history; re-scope or close them only when the replacement
+  lands.
 
 **Exit criteria**
-- Each PR merged or explicitly re-scoped, with its own tests.
-- No parked branch retains Kord-only APIs.
+- Each parked PR is merged/replaced or explicitly re-scoped, with its own tests, through a new child
+  branch and regular merge commit.
+- No parked branch is rebased or rewritten, and no ported replacement retains Kord-only APIs.
+- Phase 8 is follow-up only: it does **not** gate Phase 2, Phase 6 or issue #114 closure.
 
 ---
 
@@ -1966,16 +2433,18 @@ or replaced by "roll forward".
 
 | # | Risk / gate | Status |
 | --- | --- | --- |
-| R1 | No official `jda-ktx 0.14.2` + JDA 6.7 combination exists | **IN PROGRESS — transport subgate PASS only (2026-10-30)** — resolved and exercised for voice transport. Residual: the pairing is still undeclared upstream and must be re-verified against the final Phase 6 artifact |
+| R1 | No official `jda-ktx 0.14.2` + JDA 6.7 combination exists | **IN PROGRESS — transport subgate PASS only (2026-10-30)** — resolved and exercised for voice transport. **Conditional:** only applies if jda-ktx is the selected path; if direct JDA + coroutine bridge is selected, no jda-ktx pairing gate applies. Residual for the jda-ktx path: the pairing is still undeclared upstream and must be re-verified against the final Phase 6 artifact |
 | R2 | `adapter-jda` 0.2.0: source build catalog declares `compileOnly` JDA 6.3.1; published metadata does not declare/test 6.7.0 | **IN PROGRESS — transport subgate PASS only (2026-10-30)** — DAVE negotiated and played through JDA. Residual: inferred, not certified, and vendor metadata still targets 6.3.1; re-verify on the Phase 6 artifact |
 | R3 | The SonarCloud build job explicitly sets up **JDK 17** (`actions/setup-java`, zulu) despite the build's **Java 21** toolchain; the ktlint workflow does **not** set up a JDK at all | Open — **go/no-go**; closed only when the SonarCloud build job sets up JDK 21 explicitly and that build/CI gate passes (Phase 6 exit criterion) |
 | R4 | `fatJar` uses `DuplicatesStrategy.EXCLUDE`; duplicate handling, OkHttp, JNA and `META-INF/services` entries are unverified for the JDA stack | Open — Phase 6 artifact gate; the Phase 1 evidence came from the isolated spike build, not the root fat JAR |
 | R5 | `docker/docker-compose.yml` references build contexts that do not exist in this repo; the real Dockerfile is external | Fact — no action in repo, confirm image contract with owner |
 | R6 | Base image immutability/pinning is unconfirmed; `eclipse-temurin:21` is currently glibc/Ubuntu, and `/tmp` `noexec` would break extracted JNI natives | Open — Phase 6 staging gate; verify or pin |
 | R7 | Existing Kord build does not support channel obfuscation at all | Fact — this is the reason for the migration, not a regression |
-| R8 | Per-guild serialization regressions when porting concurrent Kord handlers | Open — Phase 3 go/no-go |
+| R8 | Per-guild serialization regressions when porting concurrent Kord handlers | Open — Phase 3 go/no-go (isolated JDA real-player slice; root production stays Kord) |
 | R9 | Schedule pressure: Nov 16 is a readiness target; the 17–19 day estimate is unvalidated | Open — re-estimate now that the DAVE transport subgate and Phase 1's missing-native fail-fast check both have recorded evidence (2026-11-08) |
-| R10 | Domain/command code can silently re-couple to Kord/JDA during the port, defeating library replaceability | Open — **acceptance criterion**; closed only when the architectural test/CI rule forbids `dev.kord.*` / `net.dv8tion.*` outside declared Discord adapter packages and core tests mock neutral ports |
+| R10 | Domain/command code can silently re-couple to Kord/JDA during the port, defeating library replaceability | Open — **acceptance criterion**, enforced in two scopes by the **custom import-declaration scanner** (no new dependency): Phase 2 forbids Kord/JDA/jda-ktx/libdave in `:core`/`:locale-persistence`, forbids JDA/jda-ktx/libdave in the root (Kord grandfathered), and allows JDA/jda-ktx/libdave in `:jda-runtime` only inside declared adapter package boundaries; Phase 6 removes the root Kord exception and applies it **repo-wide on the Kord-free tree**. Core tests mock neutral ports |
+| R11 | Ordering hazard: root JDA code/build switch attempted before the isolated implementation is proven, or Kord removed before the exact artifact is verified | Open — Phase 6/7 ownership: the root code/build switch and Kord removal happen in **Phase 6** on the Kord-free tree, and production deployment of the exact verified artifact in **Phase 7** |
+| R12 | Import-rule scanner blind spots: import-declaration scanning does not catch fully-qualified references used without an import, reflection string targets, or unusual comment layouts | Accepted limitation — documented in the Phase 2 scanner subsection. The `VoiceBoundaryReflectionTest`/neutral-port reflection tests remain complementary evidence, not a public-signature policy. **No separate reflection/API-signature gate is required (owner decision 2026-11-14)**; extending to full Kotlin type-use/FQ reference analysis or signature proof is not required by this plan |
 
 Open entries marked as gates are **stop conditions** per §3. They are never downgraded to
 accepted risk, and a documented blocker does not close a gate.
@@ -1992,8 +2461,9 @@ accepted risk, and a documented blocker does not close a gate.
   recorded 2026-11-14 snapshot) and `0b365aa` (`Finalized Phase 2D gate record`, all four checks
   green) were pushed. PR #119 is **merged** into the epic branch by the regular merge commit
   `f56d225` (2026-11-14; parents `1304aa6` and `0b365aa`), so the epic branch advanced to `f56d225`
-  at that recorded snapshot; **`f56d225` was the epic tip before this documentation update**. The
-  live tip is read from fetched Git/GitHub. PRs #115,
+  at that recorded snapshot; **`f56d225` was the epic tip before the earlier documentation update**,
+  and the later documentation-only `38bdba1` (`Recorded Phase 2D merge and next steps`) was the epic
+  tip **before this documentation-only edit**. The live tip is read from fetched Git/GitHub. PRs #115,
   #116, #117, #118 and #119 are **closed/merged** and the former `feature/114-kord-to-jda-migration` child
   branch's remote ref is deleted (a stale local ref may remain); no open Phase 2C or 2D branch/PR remains. The merged 2C work (implementation,
   tests, tone resource and formatting-only ktlint repairs) was pushed at `8eb0349`, followed by the
@@ -2018,7 +2488,9 @@ accepted risk, and a documented blocker does not close a gate.
   as `c00bdf1`; its head `1b753b9` was an **ancestry-only merge** with **no content change**. Current
   Git state is authoritative for what is committed and pushed.
 - The Phase 2A source and test changes, and the plan edits made after `8ca6242`, were **squash-merged
-  into the epic branch** by PR #115 as `5aad7c7`; the remote branch is deleted (a stale local ref may remain). Current Git and PR
+  into the epic branch** by PR #115 as `5aad7c7`; the remote branch is deleted (a stale local ref may remain). Phase 2A is
+  **PASS — gate closed (owner scope decision 2026-11-14)** for its delivered neutral-value/locale-persistence
+  scope, and the root Kord locale service/command remain **Phase 6** scope. Current Git and PR
   state is authoritative for what is committed and pushed.
 - The Phase 2B modules `core/` and `jda-runtime/`, the root `settings.gradle.kts` /
   `build.gradle.kts` changes and the version-catalog entries are present on
