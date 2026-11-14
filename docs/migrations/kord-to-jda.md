@@ -16,16 +16,21 @@ head `8c20a1f` which was fully green at the recorded 2026-11-14 snapshot, and th
 `0b365aa`; the merge was recorded on 2026-11-14 and the epic branch advanced to `f56d225` at that
 recorded snapshot. **`f56d225` was the epic tip before the earlier documentation update**, not a claim
 about the tip after it; the later documentation-only `38bdba1` (`Recorded Phase 2D merge and next
-steps`) was the epic tip **before this documentation-only edit**, verified live at the start of this
-update. The live tip is read from fetched Git/GitHub. The epic remains the merge baseline
+steps`) was followed by its child `955ac49` (`Clarified migration phase gates and adapter
+boundaries`), the epic tip verified live at the start of this update and the base of the
+import-scanner child branch. The live tip is read from fetched Git/GitHub. The epic remains the merge baseline
 for this migration. Phase 2A working branch
 `feature/114-kord-to-jda-migration` **no longer exists on the remote**: PR
 [#115](https://github.com/Wikijito7/ECIBotKt/pull/115) was **squash-merged** into the epic branch as
 `5aad7c7` and the remote branch was deleted; a stale local ref may remain. Phase 2A is **PASS — gate
 closed (owner scope decision 2026-11-14)** for its neutral-value/locale-persistence scope; that closure
 does **not** complete Phase 2, which stays **IN PROGRESS only because the scoped architectural
-import-rule CI gate is open** — 2A–2D are **PASS** and the isolated-runtime criteria already have
-recorded evidence. The root `LocalizationService` and root `/locale` are intentionally
+import-rule CI gate is open**: 2A–2D are **PASS**, the isolated-runtime criteria already have
+recorded evidence, and the scanner existed as **uncommitted test-source changes** in the **local
+working-tree snapshot taken 2026-11-14 on base `955ac49`, before the scanner branch was committed or
+pushed** — the gate closes only after the committed/pushed child PR is green in CI. That snapshot is
+time-qualified: at it **no PR and no CI run existed**, which is not a standing statement that the branch
+stays unpushed — after that snapshot the live GitHub branch/PR/check state must be read directly. The root `LocalizationService` and root `/locale` are intentionally
 Kord-facing (already refactored in 2D while remaining Kord-based); their root code/build switch
 belongs to **Phase 6** (production deployment is Phase 7), not to Phase 2A.
 Phase 1B subphase branch: `feature/114-native-failfast-check`; its PR
@@ -65,7 +70,11 @@ earlier `c893567` failure are part of the merged implementation. The gate was cl
 **user-run staging evidence recorded on 2026-11-14** (sanitized in the Phase 2C section), not by CI
 alone. No human GitHub review is recorded here; read the PR for its live review state. Broader
 **Phase 2 remains IN PROGRESS only because the scoped architectural import-rule CI gate is still
-open**; its isolated-runtime criteria are already satisfied by the 2A–2D evidence. The root Kord runtime is **not** migrated by Phase 2: the root code/build switch and
+open**; its isolated-runtime criteria are already satisfied by the 2A–2D evidence, and in the
+**local test-source working-tree snapshot taken 2026-11-14 on base `955ac49`, before the scanner branch
+was committed or pushed**, the scanner implementation existed in that worktree with no PR or CI result
+yet. At that snapshot no PR and no CI run existed; that is a dated observation only, so read the live
+GitHub branch/PR/check state for the current head rather than assuming the branch is still unpushed. The root Kord runtime is **not** migrated by Phase 2: the root code/build switch and
 the Kord dependency/JAR removal belong to **Phase 6**, whose packaging/artifact validation is still
 **OPEN**. **Phase 2D is PASS — gate closed (2026-11-14)**: the live remote epic tip was fetched and
 verified as `1304aa6` (`Clarified Phase 2C staging provenance`) before branching, and the child branch
@@ -114,8 +123,11 @@ not a standing guarantee: read the GitHub check runs for any later head. Local Q
 satisfied the independent review criterion; no GitHub PR review has been submitted, which is not itself
 a required gate. PR #117 is **merged** into the epic branch at `255893a`; it is not modified here.
 Issue #114 stays open because broader Phase 2 is unfinished: **only the scoped architectural
-import-rule CI gate remains open** (2A–2D are **PASS** and their isolated-runtime evidence already
-exists); the root code/build switch belongs to Phase 6 (production deployment is Phase 7), whose
+import-rule CI gate remains open** (2A–2D are **PASS**, their isolated-runtime evidence already
+exists, and in the **local test-source working-tree snapshot taken 2026-11-14 on base `955ac49`,
+before the scanner branch was committed or pushed** the scanner was implemented with no PR/CI verdict
+yet — at that snapshot no PR and no CI run existed, which is a dated observation, not a standing claim;
+read the live GitHub branch/PR/check state for the current head); the root code/build switch belongs to Phase 6 (production deployment is Phase 7), whose
 packaging/artifact validation is also open. **Phase 2C is PASS — gate closed (2026-11-14)** on the recorded user-run staging evidence,
 and PR #118 is **merged** into the epic branch by the regular merge commit `5fa9c63`, so **no open
 Phase 2C PR remains**.
@@ -143,7 +155,7 @@ Phase 6-verified artifact. Phases 2–5 therefore deliver and prove an **isolate
 | Phase 1B — missing-DAVE-native fail-fast simulation | **PASS — gate closed (2026-11-08)** | User-run negative container on Linux amd64, Temurin 21.0.13 (`eclipse-temurin:21`), negative no-DAVE-native JAR: exit exactly `3` (`EXIT_NATIVE`), DAVE native unavailable with `UnsatisfiedLinkError: Required library was not found`, **zero** `[gateway] logging in` and **zero** `[gateway] ready` lines, fake placeholder token never printed. The host pre-pulled the image, so the image pull was not itself isolated; the container ran with `--network none`. Sanitized record only |
 | R1 — `jda-ktx 0.14.2` + JDA 6.7.0 pairing | **IN PROGRESS — transport subgate PASS only** | Candidate resolved and exercised for voice transport; still not an upstream-declared combination and not yet re-verified on the final Phase 6 artifact. **Conditional:** only applies if jda-ktx is the selected path; direct JDA + coroutine bridge requires no jda-ktx gate |
 | R2 — `adapter-jda` 0.2.0 vs JDA 6.7.0 ABI | **IN PROGRESS — transport subgate PASS only** | DAVE negotiated and played through JDA; published metadata still does not declare or test 6.7.0, and the ABI is not yet re-verified on the final Phase 6 artifact |
-| Phase 2 — isolated JDA runtime: bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork **landed on the epic branch** through the squash merge of PR #115 (`5aad7c7`, tree identical to the former 2A head `67802d1`); **2A is PASS — gate closed (owner scope decision 2026-11-14)** for its neutral-value/locale-persistence scope. Phase 2 as a whole stays **IN PROGRESS only on the scoped architectural import-rule CI gate** — 2A, 2B, 2C and 2D are all **PASS**, and the isolated-runtime criteria are already satisfied by their recorded evidence; the root Kord `LocalizationService`, root `/locale` and the root code/build switch are **Phase 6** scope. Phase 2B is **PASS — gate closed 2026-11-13**: its neutral command boundary and isolated JDA runtime exist with unit tests on child branch `feature/114-phase-2b-command-port`, JaCoCo coverage is wired for both isolated modules, CI passed on the verified all-green checkpoints `988a7cd` and `7bf5419` (the latest verified all-green checkpoint before the subsequent docs-only updates; all of these are historical checkpoints, so read the live checks for later heads), and the user-run staging `/jda-walkthrough` interaction succeeded (sanitized evidence in the Phase 2B section). No JDA runtime is wired into the root runtime (the 2D root locale refactor stays Kord-based and is not JDA wiring). **2D is PASS — gate closed (2026-11-14)** on the `a4bc1ae` time-qualified green snapshot (all four checks green and Sonar Quality Gate OK) plus sanitized user-run staging evidence in the Phase 2D section; PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (merge recorded 2026-11-14; head `0b365aa`, base `1304aa6`). Root Kord production is **not cut over** through Phase 2 (and through Phase 5); the root gateway/runtime cutover is **Phase 6**. **2C is PASS — gate closed (2026-11-14)**: its acceptance criteria and sanitized staging evidence are recorded in the Phase 2C section; its branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a`, and PR #118 is **merged** into the epic branch by the regular merge commit `5fa9c63` (parents `255893a` and PR head `3e50248`), whose four checks succeeded; the Sonar gate reported 90.1% coverage on new code with 11 new issues (10 major, 1 critical), 0 hotspots and 0.0% duplication — recorded as-is, not zero. The implementation head `8eb0349`, the docs-only `9fd1826` and the merged head `3e50248` are dated historical checkpoints; read the live checks for any later epic head. PR #116 was **squash-merged** into the epic branch (`c00bdf1`); PR #117 was then **merged** into the epic branch by a regular merge commit at `255893a` (parents `c00bdf1` and `7d8661d`, merge tree identical to the Phase 2B head) |
+| Phase 2 — isolated JDA runtime: bootstrap, events, command response | **IN PROGRESS** | Phase 2A neutral repository/use-case groundwork **landed on the epic branch** through the squash merge of PR #115 (`5aad7c7`, tree identical to the former 2A head `67802d1`); **2A is PASS — gate closed (owner scope decision 2026-11-14)** for its neutral-value/locale-persistence scope. Phase 2 as a whole stays **IN PROGRESS only on the scoped architectural import-rule CI gate**: 2A, 2B, 2C and 2D are all **PASS**, the isolated-runtime criteria are already satisfied by their recorded evidence, and the scanner is implemented in the **local test-source working-tree snapshot taken 2026-11-14 on base `955ac49`, before the scanner branch was committed or pushed**, with passing local tests but **no PR/CI verdict** at that snapshot — that gate stays **OPEN** until the child PR is green (the snapshot's "no PR/CI" is a dated observation; read the live GitHub state for the current head); the root Kord `LocalizationService`, root `/locale` and the root code/build switch are **Phase 6** scope. Phase 2B is **PASS — gate closed 2026-11-13**: its neutral command boundary and isolated JDA runtime exist with unit tests on child branch `feature/114-phase-2b-command-port`, JaCoCo coverage is wired for both isolated modules, CI passed on the verified all-green checkpoints `988a7cd` and `7bf5419` (the latest verified all-green checkpoint before the subsequent docs-only updates; all of these are historical checkpoints, so read the live checks for later heads), and the user-run staging `/jda-walkthrough` interaction succeeded (sanitized evidence in the Phase 2B section). No JDA runtime is wired into the root runtime (the 2D root locale refactor stays Kord-based and is not JDA wiring). **2D is PASS — gate closed (2026-11-14)** on the `a4bc1ae` time-qualified green snapshot (all four checks green and Sonar Quality Gate OK) plus sanitized user-run staging evidence in the Phase 2D section; PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (merge recorded 2026-11-14; head `0b365aa`, base `1304aa6`). Root Kord production is **not cut over** through Phase 2 (and through Phase 5); the root gateway/runtime cutover is **Phase 6**. **2C is PASS — gate closed (2026-11-14)**: its acceptance criteria and sanitized staging evidence are recorded in the Phase 2C section; its branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a`, and PR #118 is **merged** into the epic branch by the regular merge commit `5fa9c63` (parents `255893a` and PR head `3e50248`), whose four checks succeeded; the Sonar gate reported 90.1% coverage on new code with 11 new issues (10 major, 1 critical), 0 hotspots and 0.0% duplication — recorded as-is, not zero. The implementation head `8eb0349`, the docs-only `9fd1826` and the merged head `3e50248` are dated historical checkpoints; read the live checks for any later epic head. PR #116 was **squash-merged** into the epic branch (`c00bdf1`); PR #117 was then **merged** into the epic branch by a regular merge commit at `255893a` (parents `c00bdf1` and `7d8661d`, merge tree identical to the Phase 2B head) |
 | Phase 2A — domain-owned ID/locale values + locale persistence refactor | **PASS — gate closed (owner scope decision 2026-11-14)** | Phase 2A source and test changes were **squash-merged** into the epic branch by PR #115 as `5aad7c7`; that commit's tree equals the former 2A head `67802d1`, and the remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain). The delivered scope is closed as **PASS**: `GuildId`/`LocaleCode` as domain-owned values, the neutral locale repository and use cases, and preserved `guild_locales` JSON compatibility. Neutral locale contracts/catalog/shared persistence and the isolated JDA `/locale` were completed in **Phase 2D**. The **root** `LocalizationService` and **root** `/locale` stay Kord-facing (2D refactored them — DI, resources, module deps — without cutting the gateway over) and the **gateway/runtime cutover** is **Phase 6** scope — not a Phase 2A blocker |
 | Phase 2B — neutral command context + responder/response port | **PASS — gate closed (2026-11-13)** | Implementation and unit tests are present on `feature/114-phase-2b-command-port` as the initial implementation checkpoint `fbd9f5a`, originally stacked on Phase 1B `feature/114-native-failfast-check`. PR #116 has since been **squash-merged** into the epic branch (`c00bdf1`), so PR #117 was retargeted to the epic branch and was later **merged** into it by the regular merge commit `255893a`; its only conflict — this plan — was resolved by an ancestry merge that changed no code. The branch adds isolated Gradle modules `:core` (gateway-free neutral ports and a pure walkthrough handler) and `:jda-runtime` (JDA 6.7.0 adapter, guild-only `/jda-walkthrough`); **at the Phase 2B snapshot** the root project depended on `:core` only and remained Kord-based and JDA-free. **Phase 2D later added the shared `:locale-persistence` module to both the root project and `:jda-runtime`**, so that 2B dependency statement is historical and does not describe the current graph. On head `001e722` **Check Code Quality**, **Build and analyze** and the separately named **SonarCloud** check passed, while **SonarCloud Code Analysis** failed its Quality Gate at 0.0% coverage on new code (required >=50%) because the modules emitted no JaCoCo XML; the JaCoCo 0.8.12 fix then passed CI on the covered checkpoint `e607ff7` — all four #117 checks green, including both SonarCloud checks, with 75.0% Coverage on New Code, 0 new issues and 0 hotspots. The later docs-only checkpoints `2850907`, `16247f8` and `d353113` also passed all four #117 checks, as did `988a7cd` (last check completed 2026-11-13 16:38:44Z), and `e4a9e29` was observed in progress at 16:41:06Z (the observation time, when only Check Code Quality had concluded successfully) and later completed all four checks successfully (last at 16:44:11Z). `7bf5419` (`Corrected Phase 2B CI status record`) is the latest verified all-green checkpoint before the subsequent docs-only updates: all four checks passed on 2026-11-13 — Check Code Quality 16:47:15Z, SonarCloud Code Analysis 16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z — with 75.0% Coverage on New Code, 0 new issues and 0 hotspots; it was the head at that point, not afterwards. The later docs-only `f5f04d1` (`Recorded passing Phase 2B CI runs`) was the head in a dated snapshot observed on 2026-11-13 in which only Check Code Quality had concluded successfully (16:53:24Z), Build and analyze was still in progress and the SonarCloud checks were not yet listed — so it was **not green at that snapshot**; GitHub holds the status of the head after this docs-only follow-up. All of these are historical verified checkpoints, not a guarantee for later commits, so CI status for any newer head must be read from the GitHub check runs. Local QA and reviewer agents satisfied the independent review criterion while no GitHub PR review has been submitted. The user ran the isolated runtime on 2026-11-13 against staging and the guild-scoped `/jda-walkthrough` replied `JDA walkthrough OK`, closing the gate. PR #117 was subsequently **merged** into the epic branch by a regular merge commit at `255893a`, so the Phase 2B pass is now on the epic integration branch. The root runtime is still Kord-based and JDA-free |
 | Phase 2C — voice/session/player message ports and adapters | **PASS — gate closed (2026-11-14)** | Acceptance criteria, scope limits and sanitized staging evidence are recorded in the Phase 2C section. Branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a` (the regular merge commit that brought PR #117 into the epic branch). The neutral voice/audio/player-message ports, their JDA adapters, the DAVE 0.2.0 wiring, `/jda-voice-walkthrough` and the unit tests were merged into the epic branch through PR #118 by the regular merge commit `5fa9c63` (PR head `3e50248`); the implementation head is `8eb0349` (`Fixed ktlint violations in Phase 2C`). All four checks on that head **succeeded** — Check Code Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud — and the Sonar Quality Gate **passed** with **90.1% new-code coverage, 11 new issues (10 major, 1 critical), 0 security hotspots and 0.0% duplication** (no zero-issue claim). The earlier head `c893567` is kept as history: **Check Code Quality failed** there on 25 ktlint formatting findings while the other three checks passed with the same Sonar figures; the formatting-only repairs were committed and pushed as `8eb0349`. The docs-only `9fd1826` (`Recorded Phase 2C CI checkpoint`) is a **dated historical green checkpoint** too: all four checks succeeded on 2026-11-14 — Check Code Quality 08:28:21Z, SonarCloud Code Analysis 08:31:00Z, Build and analyze 08:31:04Z, SonarCloud 08:31:05Z — with the Sonar Quality Gate passed at 90.1% Coverage on New Code, 11 new issues, 0 security hotspots and 0.0% duplication. Those checkpoints are historical; the merged PR head `3e50248` also passed all four checks, and later epic heads are read live from GitHub. Latest **local** run on the formatted tree: `:core:test` 81 tests, `:jda-runtime:test` 224 tests and the root suite 380 tests (5 pre-existing skips) all pass with 0 failures/errors — **685 cases total (680 executed + 5 skips)**; local JaCoCo **module** line coverage is `:core` **207/219 = 94.52%** (branch **108/115 = 93.91%**) and `:jda-runtime` **870/948 = 91.77%** (branch **342/418 = 81.82%**), and the full `./gradlew build` passed locally. All coverage figures here are **local module JaCoCo report readings only — not Sonar, new-code or CI evidence**. Phase 2C is **PASS — gate closed (2026-11-14)** on the recorded user-run staging playback evidence (sanitized in the Phase 2C section); the 11 Sonar new issues remain recorded as **tracked follow-up debt** rather than being described as resolved or zero, because under the **owner-approved 2026-11-14 interpretation** the repository's configured Quality Gate is the criterion and it passed. `master` is untouched |
@@ -323,9 +335,14 @@ tests/build/JaCoCo/ktlint-diff checks passed, the `a4bc1ae` time-qualified green
 green with a passing Sonar Quality Gate, and the sanitized user-run staging/restart checks in the
 Phase 2D section are recorded.
 
-**Phase 2 exit status after 2D:** Phase 2A, 2B, 2C and 2D are all **PASS**, so the isolated-runtime
-criteria already have recorded evidence. Phase 2 remains **IN PROGRESS only because the scoped
-import-rule CI gate** (exact scanner in the Phase 2 section) is still open. Root Kord production is
+**Phase 2 exit status after 2D (updated 2026-11-14):** Phase 2A, 2B, 2C and 2D are all **PASS**, so
+the isolated-runtime criteria already have recorded evidence. Phase 2 remains **IN PROGRESS only
+because the scoped import-rule CI gate** (exact scanner in the Phase 2 section) is still **OPEN**:
+in the **local test-source working-tree snapshot taken 2026-11-14 on base `955ac49`, before the
+scanner branch was committed or pushed**, the scanner existed as uncommitted test-source changes on
+`feature/114-import-declaration-scanner` and its local tests passed, but no committed/pushed PR had run
+the CI checks at that snapshot. That "no PR/CI" state is dated 2026-11-14 evidence, not a standing
+guarantee: read the live GitHub branch/PR/check state for the current head. Root Kord production is
 **not cut over** and no Kord removal happens before Phase 6.
 
 Stacking rules (current policy, owner decision 2026-11-14):
@@ -933,7 +950,10 @@ this branch.
 
 **Status: PASS — gate closed (2026-11-14).** Phase 2C remains **PASS — gate closed (2026-11-14)**. Phase 2
 overall remains **IN PROGRESS only because the scoped import-rule CI gate is open** — 2A–2D are
-**PASS** and the isolated-runtime evidence is recorded;
+**PASS** and the isolated-runtime evidence is recorded, and in the **local test-source working-tree
+snapshot taken 2026-11-14 on base `955ac49`, before the scanner branch was committed or pushed** the
+scanner implementation existed with no PR/CI result yet (a dated snapshot — not a standing "still
+unpushed" claim; read the live GitHub state for the current head);
 **Phase 6** — root code/build switch, Kord removal plus packaging/artifact validation — remains **OPEN**;
 issue #114 remains open. Pause/resume preservation remains
 deferred to Phase 3 and is a required Phase 3 outcome with semantics approved before implementation;
@@ -1435,7 +1455,11 @@ deploys the exact Phase 6-verified artifact.
   PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (2026-11-14;
   head `0b365aa`, base `1304aa6`), and the recorded final head `0b365aa` had all four checks green.
   Broader **Phase 2 remains IN PROGRESS only because the scoped import-rule CI gate is still open**;
-  2A–2D are **PASS** and their isolated-runtime evidence is recorded. **Phase 6**
+  2A–2D are **PASS** and their isolated-runtime evidence is recorded, and in the **local test-source
+  working-tree snapshot taken 2026-11-14 on base `955ac49`, before the scanner branch was committed or
+  pushed** the scanner existed as uncommitted test-source work with passing local tests but no PR/CI
+  verdict. At that snapshot no PR and no CI run existed; that is dated evidence only, and after it the
+  live GitHub branch/PR/check state must be read for the current head. **Phase 6**
   packaging/artifact validation is still OPEN. The root gateway/runtime is **not cut over** through
   Phase 5; the root code/build switch, Kord removal and the repo-wide import rule belong to **Phase 6**; Phase 7 deploys the artifact.
   **Phase 2A is PASS — gate closed (owner scope decision 2026-11-14)** for its delivered
@@ -1456,11 +1480,24 @@ deploys the exact Phase 6-verified artifact.
   graph and `fatJar` untouched; 2D later added the shared `:locale-persistence` module dependency to
   the root project and refactored the root Kord locale service while keeping Kord as the root gateway.
 - **Test counts.** Phase 2B's recorded baseline is **18 `:core` / 62 `:jda-runtime` / 380 root with 5
-  pre-existing skips = 460** (kept in the Phase 2B coverage section). The latest **local 2C**
+  pre-existing skips = 460** (kept in the Phase 2B coverage section). The earlier **local 2C**
   results are higher: `:core` **81** (0 skips), `:jda-runtime` **224** (0 skips) and root **380**
   (5 pre-existing skips) = **685 cases, 680 executed + 5 skips, all passing with 0
-  failures/errors**. These are **local** results from the formatted tree; the 2C source, tests, tone
-  resource and formatting repairs were merged at `5fa9c63` (heads `8eb0349` and `3e50248`); all four
+  failures/errors**; those and the **758** 2D figure (753 executed + 5 skips) remain **historical**
+  local snapshots of their own worktrees. The latest **local import-scanner** snapshot is the **local
+  test-source working-tree snapshot taken on 2026-11-14, based on `955ac49`, before the scanner branch
+  was committed or pushed**; it recorded **949 cases =
+  944 executed + 5 pre-existing skips, 0 failures/errors**: root **557** (552 executed + 5 skips),
+  `:core` **134**, `:locale-persistence` **21** and `:jda-runtime` **237**, with the **191**
+  architecture scanner tests (ImportBoundaryPolicy **148**, KotlinFileHeaderParser **21**,
+  SourceTreeScanner **22**) all passing; local ktlint **1.8.0** reported **0 findings** on the 7
+  changed Kotlin test files. That snapshot is local working-tree evidence only, not CI: at that
+  snapshot **no PR and no CI run existed**, which is a 2026-11-14 observation and not a standing claim
+  that no PR/CI exists afterwards — for any later state read the live GitHub branch/PR/check runs.
+  Because the change is tests-only it leaves production coverage unchanged (no new coverage percentage
+  is claimed). The 2C
+  source, tests, tone resource and formatting repairs were merged at `5fa9c63` (heads `8eb0349` and
+  `3e50248`); all four
   checks are green on the recorded heads (dated historical checkpoints, so read the live GitHub
   checks). The 11 Sonar new issues remain recorded as **tracked follow-up debt** under the
   owner-approved 2026-11-14 interpretation (the configured Quality Gate is the criterion), and the
@@ -1475,12 +1512,16 @@ Next actions, in order:
    Phase 6-verified artifact. Do not start a root JDA bootstrap/cutover in Phase 2. **No Phase 2E is
    defined**, and none should be invented to carry it. Non-cutover root refactors that preserve Kord
    remain permitted where already accepted (2D already did some).
-2. Close the **only remaining Phase 2 gate**: implement and land the **custom import-declaration
-   scanner** exactly as specified in "Phase 2 scoped architectural import rule", using only existing
-   JDK/Kotlin/Gradle APIs (no new dependency), and make it **green in CI**. Criteria 1–3 are already
-   satisfied by the 2A–2D evidence; criterion 4 is not. Root Kord stays grandfathered until Phase 6.
-   The Phase 2B reflection test is complementary only; it is not the CI gate and does not establish a
-   public-signature guarantee.
+2. Close the **only remaining Phase 2 gate**: as of the **local test-source working-tree snapshot taken
+   2026-11-14 on base `955ac49`, before the scanner branch was committed or pushed**, the **custom
+   import-declaration scanner** exists as uncommitted test-source work on
+   `feature/114-import-declaration-scanner` and passes locally (that snapshot had no PR or CI run;
+   re-read the live GitHub branch/PR/check state before acting). **Commit and push it, open the child PR against the epic branch,
+   wait for Check Code Quality and the Build and analyze/Sonar checks to go green, and only then mark
+   the scanner gate closed.** Use only existing JDK/Kotlin/Gradle APIs (no new dependency). Criteria
+   1–3 are already satisfied by the 2A–2D evidence; criterion 4 is not. Root Kord stays grandfathered
+   until Phase 6. The Phase 2B reflection test is complementary only; it is not the CI gate and does
+   not establish a public-signature guarantee.
 3. **Phase 3** (isolated JDA real-player slice, per-guild actor/mailbox, enqueue-only Lavaplayer
    callbacks, real player integration/serialization) starts **only after Phase 2 exit**, while root
    production stays Kord. It **reuses** the existing Phase 2C `JdaAudioSendHandler` and adds no new
@@ -1519,8 +1560,8 @@ Next actions, in order:
 | Item | State |
 | --- | --- |
 | Baseline commit | Clean `master` @ `4badb92` |
-| Epic integration branch | `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; it contains `5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`, the regular merge commit of PR #118 whose parents are `255893a` (the regular merge commit of PR #117, whose parents are `c00bdf1` — squash merge of PR #116 on top of `5aad7c7`, the squash merge of PR #115 — and `7d8661d`, the Phase 2B head) and `3e50248` (the final Phase 2C PR head), plus the documentation-only `269acc1` that recorded the Phase 2C staging pass and was the epic tip when the earlier documentation update was written. That merge carries the Phase 2B and Phase 2C passes; the `269acc1` tip statement is **historical**. The Phase 2D child branch was based on `1304aa6`; its tested implementation snapshot `4ff8167` and the `a4bc1ae` time-qualified green snapshot were pushed, and PR #119 is **MERGED** into the epic branch by the regular merge commit `f56d2252506617ae282c50a3cc95fb830c644424` (parents `1304aa6` and `0b365aa`) on 2026-11-14, so the epic branch advanced to `f56d225` at that recorded snapshot; **`f56d225` was the epic tip before that earlier documentation update**. A later documentation-only commit `38bdba1` (`Recorded Phase 2D merge and next steps`) was the epic tip **before this documentation-only edit**, verified live at the start of this update. The live tip is read from fetched Git/GitHub, and no SHA recorded here is asserted as the current head |
-| Working branch (current) | The **epic branch** `feature/114-migrate-to-jda-jda-ktx`, checked out at `38bdba1604794b13efeb0cdfc7920552f94a8588` for this documentation-only update (verified clean and in sync with `origin` before the edit; `master` `4badb92` untouched); the Phase 2D branch `feature/114-phase-2d-locale-edge-adapters` is preserved locally at `0b365aa` and its remote ref was deleted after the merge. **2D is PASS — gate closed (2026-11-14)**; PR #119 is **merged** by the regular merge commit `f56d225` (head `0b365aa`, base `1304aa6`). Final local QA on 2026-11-14 recorded **758 test cases: 753 executed, 5 skipped (pre-existing), 0 failures/errors**, a clean local build, local module JaCoCo readings and local changed-file ktlint **0 findings**; the `a4bc1ae` time-qualified green snapshot has all four checks green and Sonar Quality Gate OK, the merged head `0b365aa` also had all four checks green (2026-11-14), and the sanitized staging/restart evidence is recorded in the Phase 2D section. 2C remains **PASS — gate closed (2026-11-14)** and merged into the epic branch by PR #118 at `5fa9c63`; no open 2C PR remains. The remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain); PRs #115, #116, #117, #118 and #119 are merged. `master` (`4badb92`) is untouched. The root gateway/runtime stays Kord-based through Phase 5; the root code/build switch is Phase 6 and production deployment is Phase 7, both still open |
+| Epic integration branch | `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; it contains `5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`, the regular merge commit of PR #118 whose parents are `255893a` (the regular merge commit of PR #117, whose parents are `c00bdf1` — squash merge of PR #116 on top of `5aad7c7`, the squash merge of PR #115 — and `7d8661d`, the Phase 2B head) and `3e50248` (the final Phase 2C PR head), plus the documentation-only `269acc1` that recorded the Phase 2C staging pass and was the epic tip when the earlier documentation update was written. That merge carries the Phase 2B and Phase 2C passes; the `269acc1` tip statement is **historical**. The Phase 2D child branch was based on `1304aa6`; its tested implementation snapshot `4ff8167` and the `a4bc1ae` time-qualified green snapshot were pushed, and PR #119 is **MERGED** into the epic branch by the regular merge commit `f56d2252506617ae282c50a3cc95fb830c644424` (parents `1304aa6` and `0b365aa`) on 2026-11-14, so the epic branch advanced to `f56d225` at that recorded snapshot; **`f56d225` was the epic tip before that earlier documentation update**. A later documentation-only commit `38bdba1` (`Recorded Phase 2D merge and next steps`) was the epic tip before `955ac49f6e397d5d59198c5fa4c6e3e14e94c634` (`Clarified migration phase gates and adapter boundaries`), which was verified live as the epic tip at the start of this update and is the base of the import-scanner child branch. The live tip is read from fetched Git/GitHub, and no SHA recorded here is asserted as the current head |
+| Working branch (current) | The **import-scanner child branch** `feature/114-import-declaration-scanner`, based on the epic tip `955ac49f6e397d5d59198c5fa4c6e3e14e94c634` (`Clarified migration phase gates and adapter boundaries`); in the **local test-source working-tree snapshot taken 2026-11-14 on base `955ac49`, before this branch was committed or pushed**, its implementation was test-source-only under `src/test/kotlin/architecture/`, with the worktree also containing this documentation status update, and **no PR, push or CI run existed at that snapshot** — that is dated 2026-11-14 evidence, not a standing "unpushed" claim, so read the live GitHub branch/PR/check state for the current head; the documentation-only `38bdba1` preceded the current epic tip `955ac49` (verified clean before the edit; `master` `4badb92` untouched); the Phase 2D branch `feature/114-phase-2d-locale-edge-adapters` is preserved locally at `0b365aa` and its remote ref was deleted after the merge. **2D is PASS — gate closed (2026-11-14)**; PR #119 is **merged** by the regular merge commit `f56d225` (head `0b365aa`, base `1304aa6`). Final local QA on 2026-11-14 recorded **758 test cases: 753 executed, 5 skipped (pre-existing), 0 failures/errors**, a clean local build, local module JaCoCo readings and local changed-file ktlint **0 findings**; the later local test-source-only import-scanner **snapshot of 2026-11-14 based on `955ac49`, before the branch was committed or pushed,** recorded **949 cases (944 executed + 5 pre-existing skips, 0 failures/errors)** with the **191** scanner tests all passing and local ktlint 1.8.0 at **0 findings** on the 7 changed Kotlin test files, and at that snapshot GitHub CI/Check Code Quality/Sonar **had not run because the branch was not pushed and no PR was open** — a dated observation only; after it, CI state is read live from GitHub for the current head, not assumed; the `a4bc1ae` time-qualified green snapshot has all four checks green and Sonar Quality Gate OK, the merged head `0b365aa` also had all four checks green (2026-11-14), and the sanitized staging/restart evidence is recorded in the Phase 2D section. 2C remains **PASS — gate closed (2026-11-14)** and merged into the epic branch by PR #118 at `5fa9c63`; no open 2C PR remains. The remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain); PRs #115, #116, #117, #118 and #119 are merged. `master` (`4badb92`) is untouched. The root gateway/runtime stays Kord-based through Phase 5; the root code/build switch is Phase 6 and production deployment is Phase 7, both still open |
 | Assistant receive-audio | Stays separately stashed; **out of scope** for this migration |
 | Parked PRs | #106, #109, #111 remain **parked and untouched**; Phase 8 (post-Phase 7 follow-up) ports each individually from a new child branch off the verified live epic tip, without rebasing or rewriting the parked branches. Not a prerequisite for Phase 2, Phase 6 or issue #114 closure |
 | Docker / deployment | Deployment stays a fat JAR. Do **not** add a `Dockerfile` to this repo |
@@ -1833,7 +1874,11 @@ final Phase 6 artifact before promotion.
 
 ### Phase 2 — isolated JDA bootstrap, event and command-response foundation
 
-**Status: IN PROGRESS — the scoped architectural import rule is the only open Phase 2 exit gate.**
+**Status: IN PROGRESS — the scoped architectural import rule is the only open Phase 2 exit gate; in the
+local test-source working-tree snapshot taken 2026-11-14 on base `955ac49`, before the scanner branch was
+committed or pushed, its scanner implementation existed locally with no CI run, because at that snapshot
+the branch was not pushed and no PR was open. That is dated evidence only; read the live GitHub
+branch/PR/check state for the current head.**
 Phase 2A is implemented, **squash-merged into the epic branch** (`5aad7c7`), and **PASS — gate closed
 (owner scope decision 2026-11-14)** for its delivered neutral-value/locale-persistence scope. The
 **root Kord** `LocalizationService`, **root Kord** `/locale` command, resources, DI wiring and module
@@ -1854,7 +1899,9 @@ code/build switch — that is Phase 6.
 **2D is PASS — gate closed (2026-11-14)** on the `a4bc1ae` time-qualified green snapshot (all four checks green,
 Sonar gate OK) and the sanitized staging evidence in the Phase 2D section; PR #119 is **merged** into
 the epic branch by the regular merge commit `f56d225` on 2026-11-14 (head `0b365aa`, base `1304aa6`).
-Remaining work is the scoped import rule only (see the subsection below and the subphase plan above).
+Remaining work is the scoped import rule only (see the subsection below and the subphase plan above):
+in the 2026-11-14 local test-source snapshot based on `955ac49` (before commit/push) its scanner
+implementation existed, so what remains is to commit/push it and close the rule's CI gate.
 **2C is PASS — gate closed
 (2026-11-14)**: its acceptance criteria and sanitized staging evidence are recorded in the Phase 2C
 section, and its branch `feature/114-phase-2c-voice-ports` (created from the fetched epic head
@@ -1964,18 +2011,29 @@ repository's configured Quality Gate is the criterion — so they are not a fail
    Phase 6 and is excluded from this scoped rule. The **automated Phase 2 gate is criterion 4's
    import-declaration matrix**, which checks source imports only and does not prove that no vendor type
    appears in compiled signatures or via fully qualified references.
-4. **Scoped architectural import rule passes in CI — OPEN; the only remaining Phase 2 gate.** A
-   **passing** CI boundary rule must enforce the exact matrix defined in the next subsection: `:core`
+4. **Scoped architectural import rule passes in CI — IMPLEMENTED LOCALLY, gate OPEN; the only
+   remaining Phase 2 gate.** A **passing** CI boundary rule must enforce the exact matrix defined in
+   the next subsection: `:core`
    and `:locale-persistence` gateway-free, the root's **source imports** free of JDA/jda-ktx/libdave, and JDA/jda-ktx/
    libdave confined to the declared `:jda-runtime` adapter packages. Written but not green does not
-   pass. **Phase 6 later extends the same scanner repo-wide on the Kord-free tree.** The earlier
+   pass. **In the local test-source working-tree snapshot taken 2026-11-14 on base `955ac49`, before the
+   scanner branch was committed or pushed, the scanner was implemented as uncommitted test-source
+   changes; its local build and tests passed, and at that snapshot no PR/CI had run, so this criterion
+   stays OPEN. That "no PR/CI" state is a 2026-11-14 observation only — read the live GitHub
+   branch/PR/check state for the current head.** **Phase 6 later
+   extends the same scanner repo-wide on the Kord-free tree.** The earlier
    Phase 2B reflection tests remain **complementary only**; they are not the CI gate and do not
    establish a public-signature guarantee.
 
 #### Phase 2 scoped architectural import rule — exact scanner definition (owner decision 2026-11-14)
 
-This is the rule Phase 2 exit criterion 4 requires and Phase 6 reuses. It is specified here; building
-the task is separate implementation work.
+This is the rule Phase 2 exit criterion 4 requires and Phase 6 reuses. In the **local test-source
+working-tree snapshot taken 2026-11-14 on base `955ac49`, before the scanner branch was committed or
+pushed**, it was implemented: the scanner, its configuration and its tests existed as **uncommitted
+test-source changes** on `feature/114-import-declaration-scanner` (local worktree only — nothing was
+pushed or merged at that snapshot; read the live GitHub branch/PR state for the current head). This
+subsection remains the normative definition against which that implementation and
+the Phase 6 reuse are checked.
 
 **Mechanism — no new dependency.** A Gradle/Kotlin test or verification task implemented using only
 the **existing JDK, Kotlin and Gradle APIs**. No Konsist, ArchUnit, Detekt, annotation processor,
@@ -2030,6 +2088,26 @@ acceptance fixtures and the source-root completeness check below**. The rule mus
 line-based or regex-only matching, and no parser dependency may be added to compensate; if a candidate
 implementation cannot pass the fixtures, scanner implementation design is deferred and the Phase 2 gate
 stays open.
+
+**Implementation status (local test-source working-tree snapshot, 2026-11-14, based on `955ac49`,
+before the scanner branch was committed or pushed) — gate still OPEN.** The scanner and its
+acceptance tests are implemented as **test-source-only** changes (new files under
+`src/test/kotlin/architecture/`: `ImportBoundaryConfig`, `ImportBoundaryPolicy`,
+`KotlinFileHeaderParser`, `SourceTreeScanner` plus their tests) on
+`feature/114-import-declaration-scanner`; no production source, build script,
+dependency, or CI wiring is changed, and the scanner tests run through the existing root `build`
+(no new Gradle task). Local evidence at that date: a clean full `./gradlew build`
+passed (36 tasks); the full local suite recorded **949 cases = 944 executed + 5 pre-existing skips,
+0 failures/errors** (root **557** = 552 executed + 5 skips, `:core` **134**, `:locale-persistence`
+**21**, `:jda-runtime` **237**); the **191** architecture scanner tests (ImportBoundaryPolicy **148**,
+KotlinFileHeaderParser **21**, SourceTreeScanner **22**) all pass; and a scan of the current Phase 2
+tree reports **0 violations and 0 completeness issues**. Local ktlint **1.8.0** reported **0
+findings** on the 7 changed Kotlin test files. Because the change is tests-only, production coverage is unchanged
+and **no new coverage percentage is claimed**. These are local working-tree results — not a PR, CI or
+Sonar verdict: at that snapshot GitHub **Check Code Quality** and the **Build and analyze**/Sonar checks
+**had not run because the branch was not pushed and no PR was open**. That is a 2026-11-14 observation,
+not a standing claim that they remain unrun: they run after push and PR, the gate does not close before
+they pass, and the current check state must be read live from GitHub for the current head.
 
 **Scanner acceptance tests.** The scanner's own tests must include **all** of these fixtures:
 
