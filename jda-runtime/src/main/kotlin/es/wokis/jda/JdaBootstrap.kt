@@ -1,36 +1,38 @@
 package es.wokis.jda
 
 import es.wokis.commands.neutral.GuildCommandRegistrar
+import es.wokis.commands.voicewalkthrough.JdaVoiceWalkthroughCommand
 import es.wokis.commands.walkthrough.WalkthroughCommand
 import es.wokis.jda.command.JdaCommandRouter
 import es.wokis.jda.command.JdaGuildCommandRegistrar
+import es.wokis.jda.voice.JdaVoiceSessionPort
+import es.wokis.jda.voice.OpusPacketFrameSource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.JDABuilder
-import net.dv8tion.jda.api.requests.GatewayIntent
 import org.slf4j.LoggerFactory
-import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 private val LOG = LoggerFactory.getLogger("es.wokis.jda.JdaBootstrap")
 
 private const val EXIT_SUCCESS = 0
 private const val EXIT_FAILURE = 1
-private const val SHUTDOWN_TIMEOUT_SECONDS = 10L
 
 /**
- * Minimal isolated JDA bootstrap for the neutral command boundary.
+ * Minimal isolated JDA bootstrap for the neutral command and voice boundaries.
  *
- * It registers exactly one guild-scoped command and never publishes a global command, so a
- * missing or wrong development guild fails fast instead of leaking commands application-wide.
- * No gateway intents are enabled: slash-command interactions do not require privileged intents.
+ * It performs the DAVE native/protocol preflight **before** creating the gateway client,
+ * enables only the non-privileged `GUILD_VOICE_STATES` intent and the voice-state cache, and
+ * registers both diagnostics guild-scoped. No global command and no privileged intent is
+ * used. The root Kord runtime is not involved.
  *
- * The process exits with a non-zero code when configuration or startup fails, but only after
- * [runBootstrap] has released the router scope, the shutdown hook and the JDA client in its
- * `finally` block. The bot token is only handed to [JDABuilder]; it is never logged or rendered.
- *
- * This entry point is intentionally separate from the root Kord runtime and is not part of
- * the root application or fat jar.
+ * The process exits with a non-zero code when configuration, DAVE or startup fails. Even then,
+ * every applicable cleanup step is attempted independently after startup completes or fails
+ * (voice disconnect, router scope, shutdown hook, JDA client), so one failing step cannot skip the
+ * rest. Cleanup failures are surfaced and attached as suppressed to a primary startup failure; a
+ * fatal cleanup failure still propagates. If startup otherwise succeeded, a cleanup failure produces
+ * a failure exit code. The bot token is only handed to JDA's `JDABuilder`; it is never logged or
+ * rendered.
  */
 fun main() {
     val exitCode = try {
@@ -48,23 +50,49 @@ fun main() {
 /**
  * Runs the isolated runtime with an already validated [config].
  *
- * The function fully owns the lifecycle of the router, the JDA shutdown hook and the JDA
- * client: everything is released in the `finally` block before the exit code is returned, so
- * no cleanup is skipped on a startup failure.
+ * [davePreflight] and [clientFactory] are narrow test seams with production defaults. The
+ * preflight always runs first; when it throws, no client is created and no gateway login is
+ * attempted. [cleanupStepsFactory] is an internal seam: it receives the resources that were
+ * created and returns the cleanup steps to attempt, so cleanup ordering and failure aggregation can
+ * be verified without relying on a live JDA's own shutdown behaviour. If it throws, the production
+ * [defaultBootstrapCleanupSteps] still run for the created resources and the factory failure is
+ * recorded in the report.
  *
- * @return [EXIT_SUCCESS] after a normal JDA shutdown, [EXIT_FAILURE] when startup fails.
+ * Cleanup never stops at the first failure. Each step is attempted, and its exception is collected.
+ * Cleanup failures are attached as suppressed to a preserved primary failure. When startup otherwise
+ * succeeds, a cleanup failure is logged and reported as [EXIT_FAILURE]. Fatal [Error]s and
+ * [CancellationException]s are rethrown instead of being turned into an ordinary exit code; a fatal
+ * primary startup failure is preserved, and a fatal cleanup failure carries the primary as a
+ * suppressed exception when it takes precedence.
+ *
+ * @return [EXIT_SUCCESS] after a normal JDA shutdown with every cleanup step succeeding,
+ * [EXIT_FAILURE] when the DAVE preflight, startup or cleanup fails.
  */
-internal fun runBootstrap(config: JdaRuntimeConfig): Int {
-    val walkthrough = WalkthroughCommand()
-    val router = JdaCommandRouter(listOf(walkthrough))
+internal fun runBootstrap(
+    config: JdaRuntimeConfig,
+    davePreflight: DavePreflight = NativeDavePreflight,
+    clientFactory: JdaClientFactory = DefaultJdaClientFactory,
+    cleanupStepsFactory: (BootstrapCleanupTargets) -> List<BootstrapCleanupStep> =
+        ::defaultBootstrapCleanupSteps,
+): Int {
+    var router: JdaCommandRouter? = null
     var jda: JDA? = null
     var shutdownHook: Thread? = null
+    var primaryFailure: Throwable? = null
 
     try {
-        val client = JDABuilder.createLight(config.token, emptySet<GatewayIntent>())
-            .addEventListeners(router)
-            .build()
+        // Fail fast before any gateway login: no passthrough fallback is allowed.
+        val client = buildGatewayClient(config, davePreflight, clientFactory)
         jda = client
+
+        val walkthrough = WalkthroughCommand()
+        val voiceWalkthrough = JdaVoiceWalkthroughCommand(
+            voiceSession = JdaVoiceSessionPort(client),
+            frameSourceFactory = { OpusPacketFrameSource.fromResource() },
+        )
+        val commandRouter = JdaCommandRouter(listOf(walkthrough, voiceWalkthrough))
+        router = commandRouter
+        client.addEventListener(commandRouter)
 
         shutdownHook = Thread({ client.shutdown() }, "jda-shutdown").also {
             Runtime.getRuntime().addShutdownHook(it)
@@ -73,34 +101,113 @@ internal fun runBootstrap(config: JdaRuntimeConfig): Int {
         client.awaitReady()
 
         runBlocking {
-            registerWalkthroughCommand(JdaGuildCommandRegistrar(client), config, walkthrough)
+            val registrar = JdaGuildCommandRegistrar(client)
+            registerWalkthroughCommand(registrar, config, walkthrough)
+            registerVoiceWalkthroughCommand(registrar, config, voiceWalkthrough)
         }
 
         LOG.info(
-            "JDA ready as {} ({}); guild-scoped /{} registered in guild {}; no gateway intents enabled",
+            "JDA ready as {}; guild-scoped /{} and /{} registered; intents=[GUILD_VOICE_STATES]",
             client.selfUser.name,
-            client.selfUser.id,
             walkthrough.name,
-            config.guildId,
+            voiceWalkthrough.name,
         )
 
         client.awaitShutdown()
-        return EXIT_SUCCESS
     } catch (error: Throwable) {
-        LOG.error("JDA bootstrap failed", error)
-        return EXIT_FAILURE
-    } finally {
-        router.close()
-        shutdownHook?.let { hook -> runCatching { Runtime.getRuntime().removeShutdownHook(hook) } }
-        jda?.let { client ->
-            if (client.status != JDA.Status.SHUTDOWN) {
-                client.shutdown()
-                if (!client.awaitShutdown(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                    client.shutdownNow()
-                }
-            }
-        }
+        primaryFailure = error
     }
+
+    val targets = BootstrapCleanupTargets(jda = jda, router = router, shutdownHook = shutdownHook)
+    val cleanupReport = runBootstrapCleanupWithFallback(cleanupStepsFactory, targets)
+
+    return finishBootstrap(primaryFailure, cleanupReport)
+}
+
+/**
+ * Runs the cleanup steps, falling back to [defaultBootstrapCleanupSteps] when the factory fails.
+ *
+ * A failing factory must not skip the shutdown work, so the production steps still receive every
+ * created resource (voice disconnect, router, shutdown hook, JDA). The factory failure is recorded
+ * first in the report: a successful startup is therefore never reported as clean, and
+ * [finishBootstrap] applies the usual primary/fatal policy to it. The fallback is guarded as well:
+ * when the production steps cannot even be built, both failures are recorded instead of aborting
+ * the cleanup phase.
+ */
+private fun runBootstrapCleanupWithFallback(
+    cleanupStepsFactory: (BootstrapCleanupTargets) -> List<BootstrapCleanupStep>,
+    targets: BootstrapCleanupTargets,
+): BootstrapCleanupReport {
+    val steps = try {
+        cleanupStepsFactory(targets)
+    } catch (factoryFailure: Throwable) {
+        LOG.error(
+            "The bootstrap cleanup step factory failed; using the production cleanup steps",
+            factoryFailure,
+        )
+        val fallbackSteps = try {
+            defaultBootstrapCleanupSteps(targets)
+        } catch (fallbackFailure: Throwable) {
+            LOG.error("The production cleanup steps could not be built", fallbackFailure)
+            return BootstrapCleanupReport(listOf(factoryFailure, fallbackFailure))
+        }
+        return runBootstrapCleanup(fallbackSteps).withLeadingFailure(factoryFailure)
+    }
+
+    return runBootstrapCleanup(steps)
+}
+
+/**
+ * Reports the bootstrap outcome after cleanup, attaching cleanup failures to the preserved primary.
+ *
+ * Internal so the exit-code and suppression semantics can be verified without a live JDA; the
+ * production caller is [runBootstrap].
+ */
+internal fun finishBootstrap(
+    primaryFailure: Throwable?,
+    cleanupReport: BootstrapCleanupReport,
+): Int {
+    if (primaryFailure != null) {
+        if (primaryFailure.isFatalBootstrapFailure()) {
+            cleanupReport.attachTo(primaryFailure)
+            LOG.error("JDA bootstrap failed", primaryFailure)
+            throw primaryFailure
+        }
+
+        val cleanupFatal = cleanupReport.fatalFailure
+        if (cleanupFatal != null) {
+            cleanupReport.attachTo(cleanupFatal)
+            if (cleanupFatal !== primaryFailure && !cleanupFatal.suppressed.contains(primaryFailure)) {
+                cleanupFatal.addSuppressed(primaryFailure)
+            }
+            LOG.error("JDA bootstrap cleanup failed with a fatal error", cleanupFatal)
+            throw cleanupFatal
+        }
+
+        cleanupReport.attachTo(primaryFailure)
+        LOG.error("JDA bootstrap failed", primaryFailure)
+        return EXIT_FAILURE
+    }
+
+    val cleanupFatal = cleanupReport.fatalFailure
+    if (cleanupFatal != null) {
+        cleanupReport.attachTo(cleanupFatal)
+        LOG.error("JDA bootstrap cleanup failed with a fatal error", cleanupFatal)
+        throw cleanupFatal
+    }
+
+    if (cleanupReport.failed) {
+        val cleanupFailure = cleanupReport.failure
+        if (cleanupFailure != null) {
+            cleanupReport.attachTo(cleanupFailure)
+            LOG.error("JDA bootstrap cleanup failed after a normal shutdown", cleanupFailure)
+        } else {
+            LOG.error("JDA bootstrap cleanup failed after a normal shutdown")
+        }
+        return EXIT_FAILURE
+    }
+
+    return EXIT_SUCCESS
 }
 
 /**
@@ -115,4 +222,17 @@ internal suspend fun registerWalkthroughCommand(
     walkthrough: WalkthroughCommand = WalkthroughCommand(),
 ) {
     walkthrough.registerIn(registrar, config.guildId)
+}
+
+/**
+ * Registers the voice walkthrough command through [registrar] using the validated [config].
+ *
+ * The destination is always [JdaRuntimeConfig.guildId]; there is no global registration path.
+ */
+internal suspend fun registerVoiceWalkthroughCommand(
+    registrar: GuildCommandRegistrar,
+    config: JdaRuntimeConfig,
+    voiceWalkthrough: JdaVoiceWalkthroughCommand,
+) {
+    voiceWalkthrough.registerIn(registrar, config.guildId)
 }
