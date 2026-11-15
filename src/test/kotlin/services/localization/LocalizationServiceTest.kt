@@ -229,7 +229,11 @@ class LocalizationServiceTest {
         val result = "esta string tiene argumentos, yay!"
 
         // When
-        val actual = localizationService.getStringFormat(key, discordLocale = Locale.SPANISH_SPAIN, arguments = arrayOf("yay!"))
+        val actual = localizationService.getStringFormat(
+            key,
+            discordLocale = Locale.SPANISH_SPAIN,
+            arguments = arrayOf("yay!")
+        )
 
         // Then
         assertEquals(result, actual)
@@ -251,7 +255,7 @@ class LocalizationServiceTest {
     }
 
     @Test
-    fun `Given invalid persisted locale When getStringFormat is called with discordLocale Then fall back to interaction locale`() = runTest {
+    fun `Given invalid persisted locale When getStringFormat is used with discordLocale Then fall back to interaction locale`() = runTest {
         // Given
         val key = "test_args_string"
         val guildId = Snowflake(123)
@@ -277,7 +281,11 @@ class LocalizationServiceTest {
         val result = "this string has arguments, yay!"
 
         // When
-        val actual = localizationService.getStringFormat(key, discordLocale = Locale.FRENCH, arguments = arrayOf("yay!"))
+        val actual = localizationService.getStringFormat(
+            key,
+            discordLocale = Locale.FRENCH,
+            arguments = arrayOf("yay!")
+        )
 
         // Then
         assertEquals(result, actual)

@@ -10,6 +10,7 @@ import dev.kord.rest.builder.component.MessageComponentBuilder
 import dev.kord.rest.builder.message.MessageBuilder
 import dev.kord.rest.builder.message.embed
 import es.wokis.commands.ComponentsEnum
+import es.wokis.constants.BRAND_COLOR
 import es.wokis.localization.LocalizationKeys
 import es.wokis.player.engine.model.PlayerTrack
 import es.wokis.services.lavaplayer.model.TrackBO
@@ -19,6 +20,8 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 private const val ENABLE_PLAYBACK_POSITION = false
+private const val PLAYER_POSITION_BAR = "─────────"
+private const val QUEUE_PREVIEW_SIZE = 3
 
 suspend fun MessageBuilder.createPlayerEmbed(
     guildId: Snowflake?,
@@ -39,27 +42,27 @@ suspend fun MessageBuilder.createPlayerEmbed(
         thumbnail {
             url = currentTrack?.customFavicon ?: currentTrack?.artworkUrl.orEmpty()
         }
-        color = Color(0x01B05B)
+        color = Color(BRAND_COLOR)
         currentTrack?.let {
             val duration = it.durationMillis.toDisplayDuration()
             val currentSeek = it.positionMillis.toDisplayDuration()
             field {
-                name = localizationService.getString(key = LocalizationKeys.PLAYER_CURRENT_TRACK, guildId = guildId, discordLocale = discordLocale)
+                name = localizationService.getString(LocalizationKeys.PLAYER_CURRENT_TRACK, guildId, discordLocale)
                 value = it.getTrackName()
             }
             if (ENABLE_PLAYBACK_POSITION) {
-                // TODO: Take a look in the future to solve discord update request error or delete it
+                // Playback-position updates stay disabled until the Discord update-request error is resolved.
                 field {
-                    name = localizationService.getString(key = LocalizationKeys.PLAYER_PLAYBACK_POSITION, guildId = guildId, discordLocale = discordLocale)
+                    name = localizationService.getString(LocalizationKeys.PLAYER_PLAYBACK_POSITION, guildId, discordLocale)
                     value = "`$currentSeek ${generatePlayerPosition(it.positionMillis, it.durationMillis)} $duration`"
                 }
             }
             field {
-                name = localizationService.getString(key = LocalizationKeys.PLAYER_TRACK_DURATION, guildId = guildId, discordLocale = discordLocale)
+                name = localizationService.getString(LocalizationKeys.PLAYER_TRACK_DURATION, guildId, discordLocale)
                 value = duration.takeUnless {
                     currentTrack.durationMillis == PlayerTrack.UNKNOWN_DURATION
                 } ?: localizationService.getString(
-                    key = if (currentTrack.isStream) LocalizationKeys.PLAYER_TRACK_DURATION_STREAM else LocalizationKeys.PLAYER_TRACK_DURATION_UNKNOWN,
+                    key = trackDurationKey(currentTrack.isStream),
                     guildId = guildId,
                     discordLocale = discordLocale
                 )
@@ -67,11 +70,11 @@ suspend fun MessageBuilder.createPlayerEmbed(
         }
         if (queue.isNotEmpty()) {
             field {
-                name = localizationService.getString(key = LocalizationKeys.PLAYER_SERVER_QUEUE, guildId = guildId, discordLocale = discordLocale)
+                name = localizationService.getString(LocalizationKeys.PLAYER_SERVER_QUEUE, guildId, discordLocale)
                 value = queue.getDisplayQueue(localizationService, guildId, discordLocale)
             }
         } else if (currentTrack == null) {
-            description = localizationService.getString(key = LocalizationKeys.PLAYER_SERVER_QUEUE_EMPTY, guildId = guildId, discordLocale = discordLocale)
+            description = localizationService.getString(LocalizationKeys.PLAYER_SERVER_QUEUE_EMPTY, guildId, discordLocale)
         }
     }
     components = if (queue.isNotEmpty() || currentTrack != null) {
@@ -86,20 +89,32 @@ suspend fun MessageBuilder.createPlayerEmbed(
     }
 }
 
+private fun trackDurationKey(isStream: Boolean): String =
+    if (isStream) {
+        LocalizationKeys.PLAYER_TRACK_DURATION_STREAM
+    } else {
+        LocalizationKeys.PLAYER_TRACK_DURATION_UNKNOWN
+    }
+
 private fun TrackBO.getTrackName() = customName?.let {
     "**$customName**"
 } ?: "**$title**\n$author"
 
 private fun generatePlayerPosition(currentSeek: Long, maxDuration: Long): String {
     val safeMaxDuration = maxDuration.takeUnless { it == 0L } ?: 1
-    val position = ((currentSeek / 1000f) / (safeMaxDuration / 1000f) * 9).toInt() + 1
-    val playerString = "─────────".split("").toMutableList().apply {
+    val position = ((currentSeek / 1000f) / (safeMaxDuration / 1000f) * PLAYER_POSITION_BAR.length).toInt() + 1
+    val playerString = PLAYER_POSITION_BAR.split("").toMutableList().apply {
         add(position, "●")
     }.joinToString(separator = "")
     return playerString
 }
 
-private suspend fun createPlayerComponents(localizationService: LocalizationService, guildId: Snowflake?, discordLocale: Locale?, isPaused: Boolean): MutableList<MessageComponentBuilder> =
+private suspend fun createPlayerComponents(
+    localizationService: LocalizationService,
+    guildId: Snowflake?,
+    discordLocale: Locale?,
+    isPaused: Boolean
+): MutableList<MessageComponentBuilder> =
     mutableListOf(
         ActionRowBuilder().apply {
             if (isPaused) {
@@ -107,7 +122,7 @@ private suspend fun createPlayerComponents(localizationService: LocalizationServ
                     style = ButtonStyle.Secondary,
                     customId = ComponentsEnum.PLAYER_RESUME.customId
                 ) {
-                    label = localizationService.getString(key = LocalizationKeys.PLAYER_RESUME, guildId = guildId, discordLocale = discordLocale)
+                    label = localizationService.getString(LocalizationKeys.PLAYER_RESUME, guildId, discordLocale)
                     emoji = DiscordPartialEmoji(name = "▶️")
                 }
             } else {
@@ -115,7 +130,7 @@ private suspend fun createPlayerComponents(localizationService: LocalizationServ
                     style = ButtonStyle.Secondary,
                     customId = ComponentsEnum.PLAYER_PAUSE.customId
                 ) {
-                    label = localizationService.getString(key = LocalizationKeys.PLAYER_PAUSE, guildId = guildId, discordLocale = discordLocale)
+                    label = localizationService.getString(LocalizationKeys.PLAYER_PAUSE, guildId, discordLocale)
                     emoji = DiscordPartialEmoji(name = "⏸")
                 }
             }
@@ -123,41 +138,63 @@ private suspend fun createPlayerComponents(localizationService: LocalizationServ
                 style = ButtonStyle.Secondary,
                 customId = ComponentsEnum.PLAYER_SKIP.customId
             ) {
-                label = localizationService.getString(key = LocalizationKeys.PLAYER_SKIP, guildId = guildId, discordLocale = discordLocale)
+                label = localizationService.getString(LocalizationKeys.PLAYER_SKIP, guildId, discordLocale)
                 emoji = DiscordPartialEmoji(name = "⏭")
             }
             interactionButton(
                 style = ButtonStyle.Secondary,
                 customId = ComponentsEnum.PLAYER_SHUFFLE.customId
             ) {
-                label = localizationService.getString(key = LocalizationKeys.PLAYER_SHUFFLE, guildId = guildId, discordLocale = discordLocale)
+                label = localizationService.getString(LocalizationKeys.PLAYER_SHUFFLE, guildId, discordLocale)
                 emoji = DiscordPartialEmoji(name = "\uD83D\uDD00")
             }
             interactionButton(
                 style = ButtonStyle.Secondary,
                 customId = ComponentsEnum.PLAYER_RECONNECT.customId
             ) {
-                label = localizationService.getString(key = LocalizationKeys.PLAYER_RECONNECT, guildId = guildId, discordLocale = discordLocale)
+                label = localizationService.getString(LocalizationKeys.PLAYER_RECONNECT, guildId, discordLocale)
                 emoji = DiscordPartialEmoji(name = "🔄")
             }
             interactionButton(
                 style = ButtonStyle.Danger,
                 customId = ComponentsEnum.PLAYER_DISCONNECT.customId
             ) {
-                label = localizationService.getString(key = LocalizationKeys.PLAYER_DISCONNECT, guildId = guildId, discordLocale = discordLocale)
+                label = localizationService.getString(LocalizationKeys.PLAYER_DISCONNECT, guildId, discordLocale)
             }
         }
     )
 
-private suspend fun List<TrackBO>.getDisplayQueue(localizationService: LocalizationService, guildId: Snowflake?, discordLocale: Locale?): String {
+private suspend fun List<TrackBO>.getDisplayQueue(
+    localizationService: LocalizationService,
+    guildId: Snowflake?,
+    discordLocale: Locale?
+): String {
     val firstTrack = getOrNull(0)
     val secondTrack = getOrNull(1)
     val thirdTrack = getOrNull(2)
-    val queueRemaining = (size - 3).takeIf { it > 0 }
-    val duration = filterNot { it.isStream || it.durationMillis == PlayerTrack.UNKNOWN_DURATION }.sumOf { it.durationMillis }.toDisplayDuration()
+    val queueRemaining = (size - QUEUE_PREVIEW_SIZE).takeIf { it > 0 }
+    val duration = filterNot {
+        it.isStream || it.durationMillis == PlayerTrack.UNKNOWN_DURATION
+    }.sumOf { it.durationMillis }.toDisplayDuration()
     return firstTrack?.getDisplayNameAndDuration(localizationService, guildId, discordLocale)
-        ?.plus(secondTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, guildId, discordLocale)}" }.orEmpty())
-        ?.plus(thirdTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, guildId, discordLocale)}" }.orEmpty())
+        ?.plus(
+            secondTrack?.let {
+                "\n${it.getDisplayNameAndDuration(
+                    localizationService,
+                    guildId,
+                    discordLocale
+                )}"
+            }.orEmpty()
+        )
+        ?.plus(
+            thirdTrack?.let {
+                "\n${it.getDisplayNameAndDuration(
+                    localizationService,
+                    guildId,
+                    discordLocale
+                )}"
+            }.orEmpty()
+        )
         ?.plus(
             queueRemaining?.let {
                 "\n".plus(
@@ -182,7 +219,11 @@ private suspend fun List<TrackBO>.getDisplayQueue(localizationService: Localizat
         ).orEmpty()
 }
 
-private suspend fun TrackBO.getDisplayNameAndDuration(localizationService: LocalizationService, guildId: Snowflake?, discordLocale: Locale?): String {
+private suspend fun TrackBO.getDisplayNameAndDuration(
+    localizationService: LocalizationService,
+    guildId: Snowflake?,
+    discordLocale: Locale?
+): String {
     val displayDuration = if (durationMillis != PlayerTrack.UNKNOWN_DURATION) {
         durationMillis.toDisplayDuration()
     } else {
@@ -191,6 +232,8 @@ private suspend fun TrackBO.getDisplayNameAndDuration(localizationService: Local
     return "${getDisplayTrackName()} ($displayDuration)"
 }
 
-private fun Long.toDisplayDuration() = toDuration(DurationUnit.MILLISECONDS).toComponents { hours, minutes, seconds, _ ->
+private fun Long.toDisplayDuration() = toDuration(
+    DurationUnit.MILLISECONDS
+).toComponents { hours, minutes, seconds, _ ->
     "%02d:%02d:%02d".format(hours, minutes, seconds)
 }

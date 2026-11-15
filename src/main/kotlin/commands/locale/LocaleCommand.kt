@@ -15,6 +15,7 @@ import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.Autocomplete
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
+import es.wokis.constants.MAX_AUTOCOMPLETE_CHOICES
 import es.wokis.domain.locale.RESET_LOCALE_VALUE
 import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.exceptions.BotException
@@ -42,19 +43,27 @@ class LocaleCommand(
 ) : Command, Autocomplete {
 
     override fun onRegisterCommand(commandBuilder: GlobalMultiApplicationCommandBuilder) {
-        val commandDescriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_DESCRIPTION)
-        val optionDescriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION)
+        val commandDescriptionLocalizations = localizationService.getLocalizations(
+            LocalizationKeys.LOCALE_COMMAND_DESCRIPTION
+        )
+        val optionDescriptionLocalizations = localizationService.getLocalizations(
+            LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION
+        )
 
         commandBuilder.apply {
             input(
                 name = CommandName.Locale.commandName,
-                description = commandDescriptionLocalizations.defaultDescription(LocalizationKeys.LOCALE_COMMAND_DESCRIPTION)
+                description = commandDescriptionLocalizations.defaultDescription(
+                    LocalizationKeys.LOCALE_COMMAND_DESCRIPTION
+                )
             ) {
                 this.descriptionLocalizations = commandDescriptionLocalizations
                 defaultMemberPermissions = Permissions(Permission.Administrator)
                 string(
                     name = ARGUMENT_LOCALE,
-                    description = optionDescriptionLocalizations.defaultDescription(LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION)
+                    description = optionDescriptionLocalizations.defaultDescription(
+                        LocalizationKeys.LOCALE_COMMAND_INPUT_DESCRIPTION
+                    )
                 ) {
                     this.descriptionLocalizations = optionDescriptionLocalizations
                     required = true
@@ -127,7 +136,7 @@ class LocaleCommand(
                 code.lowercase().contains(input)
             }
         }
-            .take(25)
+            .take(MAX_AUTOCOMPLETE_CHOICES)
             .map { (code, _) ->
                 Choice.StringChoice(
                     name = code.take(100),

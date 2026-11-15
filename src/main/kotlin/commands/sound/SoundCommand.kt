@@ -12,6 +12,7 @@ import dev.kord.rest.builder.interaction.string
 import es.wokis.commands.Autocomplete
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
+import es.wokis.constants.MAX_AUTOCOMPLETE_CHOICES
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.services.queue.GuildQueueService
@@ -32,12 +33,16 @@ class SoundCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Sound.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_DESCRIPTION).values.first()
+                description = localizationService.getLocalizations(
+                    LocalizationKeys.SOUND_COMMAND_DESCRIPTION
+                ).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_DESCRIPTION)
                 string(
                     name = ARGUMENT_NAME,
-                    description = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_INPUT_DESCRIPTION).values.first()
+                    description = localizationService.getLocalizations(
+                        LocalizationKeys.SOUND_COMMAND_INPUT_DESCRIPTION
+                    ).values.first()
                 ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SOUND_COMMAND_INPUT_DESCRIPTION)
                     required = true
@@ -108,13 +113,13 @@ class SoundCommand(
             val containsMatches = allFiles
                 .filter { file ->
                     !file.nameWithoutExtension.startsWith(input, ignoreCase = true) &&
-                    file.nameWithoutExtension.contains(input, ignoreCase = true)
+                        file.nameWithoutExtension.contains(input, ignoreCase = true)
                 }
                 .sortedBy { it.nameWithoutExtension.lowercase() }
 
             // Combine: startsWith first, then contains, up to 25 total
             val sounds = (startsWithMatches + containsMatches)
-                .take(25)
+                .take(MAX_AUTOCOMPLETE_CHOICES)
                 .map { file ->
                     Choice.StringChoice(
                         name = file.nameWithoutExtension.take(100),

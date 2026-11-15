@@ -2,8 +2,6 @@ package commands.next
 
 import dev.kord.common.Locale
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
-import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
-import es.wokis.commands.CommandName
 import es.wokis.commands.next.NextCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.lavaplayer.model.TrackBO

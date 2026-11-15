@@ -49,7 +49,7 @@ object OpusPacketValidator {
             "An Opus packet cannot exceed $MAX_PACKET_BYTES bytes, got ${payload.size}"
         }
 
-        val toc = payload[0].toInt() and 0xFF
+        val toc = payload[0].toInt() and BYTE_MASK
         val samplesPerFrame = samplesPerFrame(toc ushr CONFIG_SHIFT)
         val frameCount = when (toc and CODE_MASK) {
             CODE_ONE_FRAME -> 1
@@ -106,7 +106,7 @@ object OpusPacketValidator {
      */
     private fun parseCodeThreeFrameCount(payload: ByteArray): Int {
         require(payload.size >= 2) { "A code 3 Opus packet must contain a frame count byte" }
-        val countByte = payload[1].toInt() and 0xFF
+        val countByte = payload[1].toInt() and BYTE_MASK
         val frameCount = countByte and FRAME_COUNT_MASK
         require(frameCount > 0) { "A code 3 Opus packet must declare at least one frame" }
 
@@ -116,7 +116,7 @@ object OpusPacketValidator {
             var paddingBytes = 0
             while (true) {
                 require(index < payload.size) { "Truncated Opus padding length header" }
-                val value = payload[index].toInt() and 0xFF
+                val value = payload[index].toInt() and BYTE_MASK
                 index++
                 if (value == MAX_PADDING_RUN) {
                     paddingBytes += MAX_PADDING_RUN - 1
@@ -156,18 +156,18 @@ object OpusPacketValidator {
      */
     private fun readFrameLength(payload: ByteArray, index: Int, limit: Int): FrameLength {
         require(index < limit) { "Truncated Opus frame length header" }
-        val first = payload[index].toInt() and 0xFF
+        val first = payload[index].toInt() and BYTE_MASK
         if (first < TWO_BYTE_LENGTH_MARKER) {
             return FrameLength(length = first, headerBytes = 1)
         }
         require(index + 1 < limit) { "Truncated two-byte Opus frame length header" }
-        val second = payload[index + 1].toInt() and 0xFF
+        val second = payload[index + 1].toInt() and BYTE_MASK
         return FrameLength(length = (second shl 2) + first, headerBytes = 2)
     }
 
     /** Decoded samples of one frame for the 5-bit TOC config (RFC 6716 table 2). */
     private fun samplesPerFrame(config: Int): Int = when {
-        config < HYBRID_CONFIG_LIMIT -> when (config and 0x03) {
+        config < HYBRID_CONFIG_LIMIT -> when (config and CONFIG_DURATION_MASK) {
             0 -> SAMPLES_10_MS
             1 -> SAMPLES_20_MS
             2 -> SAMPLES_40_MS
@@ -179,7 +179,7 @@ object OpusPacketValidator {
             else -> SAMPLES_20_MS
         }
 
-        else -> when (config and 0x03) {
+        else -> when (config and CONFIG_DURATION_MASK) {
             0 -> SAMPLES_2_5_MS
             1 -> SAMPLES_5_MS
             2 -> SAMPLES_10_MS
@@ -193,6 +193,8 @@ object OpusPacketValidator {
     )
 
     private const val CONFIG_SHIFT = 3
+    private const val BYTE_MASK = 0xFF
+    private const val CONFIG_DURATION_MASK = 0x03
     private const val CODE_MASK = 0x03
     private const val CODE_ONE_FRAME = 0
     private const val CODE_TWO_CBR_FRAMES = 1

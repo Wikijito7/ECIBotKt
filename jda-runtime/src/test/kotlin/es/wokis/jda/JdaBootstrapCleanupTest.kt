@@ -515,7 +515,7 @@ class JdaBootstrapCleanupTest {
         // When
         val exitCode = runBootstrap(config, preflight, clientFactory) { targets ->
             observedTargets = targets
-            throw IllegalStateException("cleanup factory failed")
+            error("cleanup factory failed")
         }
 
         // Then
@@ -535,7 +535,7 @@ class JdaBootstrapCleanupTest {
         // When
         val thrown = assertThrows(AssertionError::class.java) {
             runBootstrap(config, preflight, clientFactory) {
-                throw IllegalStateException("cleanup factory failed")
+                error("cleanup factory failed")
             }
         }
 
@@ -703,7 +703,7 @@ class JdaBootstrapCleanupTest {
 
         // When
         val exitCode = fixture.run {
-            throw IllegalStateException("cleanup factory failed")
+            error("cleanup factory failed")
         }
 
         // Then: the factory failure is reported as a failed startup...
@@ -743,7 +743,7 @@ class JdaBootstrapCleanupTest {
     }
 
     @Test
-    fun `Given a cleanup factory that throws a cancellation When startup succeeded Then the fallback runs and the cancellation is rethrown`() {
+    fun `Given cleanup factory throws cancellation When startup succeeds Then fallback runs and cancellation is rethrown`() {
         // Given
         val fixture = BootstrapFixture(config)
         val factoryFailure = CancellationException("cleanup factory cancelled")
@@ -780,7 +780,7 @@ class JdaBootstrapCleanupTest {
     }
 
     @Test
-    fun `Given a normal startup failure When the cleanup factory throws a cancellation Then the cancellation wins with the primary suppressed`() {
+    fun `Given normal startup failure When cleanup factory throws cancellation Then cancellation wins with primary suppressed`() {
         // Given
         val primary = IllegalStateException("startup failed after resources were created")
         val fixture = BootstrapFixture(config, awaitReadyFailure = primary)

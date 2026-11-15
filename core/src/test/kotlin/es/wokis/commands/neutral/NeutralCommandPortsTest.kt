@@ -86,48 +86,38 @@ class NeutralCommandPortsTest {
         val references = mutableListOf<String>()
 
         type.declaredFields.forEach { field ->
-            field.type.typeName
-                .takeIf { it.isGatewayType() }
-                ?.let { references += "${type.simpleName}.${field.name}: $it" }
-            field.genericType.typeName
-                .takeIf { it.isGatewayType() }
-                ?.let { references += "${type.simpleName}.${field.name}: $it" }
+            references += type.referenceFor(field.name, field.type.typeName)
+            references += type.referenceFor(field.name, field.genericType.typeName)
         }
 
         type.declaredMethods.forEach { method ->
-            method.returnType.typeName
-                .takeIf { it.isGatewayType() }
-                ?.let { references += "${type.simpleName}.${method.name}(): $it" }
-            method.genericReturnType.typeName
-                .takeIf { it.isGatewayType() }
-                ?.let { references += "${type.simpleName}.${method.name}(): $it" }
+            references += type.referenceFor(method.name, method.returnType.typeName, "()")
+            references += type.referenceFor(method.name, method.genericReturnType.typeName, "()")
             method.parameterTypes.forEach { parameter ->
-                parameter.typeName
-                    .takeIf { it.isGatewayType() }
-                    ?.let { references += "${type.simpleName}.${method.name}($it)" }
+                references += type.parameterReference(method.name, parameter.typeName)
             }
             method.genericParameterTypes.forEach { parameter ->
-                parameter.typeName
-                    .takeIf { it.isGatewayType() }
-                    ?.let { references += "${type.simpleName}.${method.name}($it)" }
+                references += type.parameterReference(method.name, parameter.typeName)
             }
         }
 
         type.declaredConstructors.forEach { constructor ->
             constructor.parameterTypes.forEach { parameter ->
-                parameter.typeName
-                    .takeIf { it.isGatewayType() }
-                    ?.let { references += "${type.simpleName}.<init>($it)" }
+                references += type.parameterReference("<init>", parameter.typeName)
             }
             constructor.genericParameterTypes.forEach { parameter ->
-                parameter.typeName
-                    .takeIf { it.isGatewayType() }
-                    ?.let { references += "${type.simpleName}.<init>($it)" }
+                references += type.parameterReference("<init>", parameter.typeName)
             }
         }
 
-        return references
+        return references.filter { it.isNotEmpty() }
     }
+
+    private fun Class<*>.referenceFor(memberName: String, candidate: String, memberSuffix: String = ""): String =
+        candidate.takeIf { it.isGatewayType() }?.let { "$simpleName.$memberName$memberSuffix: $it" }.orEmpty()
+
+    private fun Class<*>.parameterReference(memberName: String, candidate: String): String =
+        candidate.takeIf { it.isGatewayType() }?.let { "$simpleName.$memberName($it)" }.orEmpty()
 
     private fun String.isGatewayType(): Boolean = gatewayPrefixes.any { startsWith(it) }
 

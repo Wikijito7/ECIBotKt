@@ -25,14 +25,22 @@ internal data class JdaRuntimeConfig(
          * id is missing, non-numeric or not positive. Messages name the environment variable but
          * never include the configured token.
          */
-        fun fromEnv(env: Map<String, String> = System.getenv()): JdaRuntimeConfig {
+        fun fromEnv(env: Map<String, String> = System.getenv()): JdaRuntimeConfig = JdaRuntimeConfig(
+            token = readToken(env),
+            guildId = GuildId.fromDecimal(readGuildId(env).toString()),
+        )
+
+        private fun readToken(env: Map<String, String>): String {
             val token = env[ENV_TOKEN]?.trim().orEmpty()
             if (token.isEmpty()) {
                 throw JdaRuntimeConfigException(
                     "Missing $ENV_TOKEN. Provide it through the environment; it is never read from source.",
                 )
             }
+            return token
+        }
 
+        private fun readGuildId(env: Map<String, String>): Long {
             val rawGuildId = env[ENV_GUILD_ID]?.trim().orEmpty()
             if (rawGuildId.isEmpty()) {
                 throw JdaRuntimeConfigException(
@@ -45,11 +53,7 @@ internal data class JdaRuntimeConfig(
                     "$ENV_GUILD_ID must be a positive numeric guild id; global command registration is not allowed.",
                 )
             }
-
-            return JdaRuntimeConfig(
-                token = token,
-                guildId = GuildId.fromDecimal(guildId.toString()),
-            )
+            return guildId
         }
     }
 }

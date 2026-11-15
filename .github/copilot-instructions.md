@@ -5,12 +5,11 @@
 **ECIBotKt** is a Discord bot written in Kotlin (JVM application) that provides music playback, text-to-speech, internet radio, and custom sound features. It's a rewrite of the original Python ECIBot with improved architecture and type safety.
 
 ### Key Information
-- **Language**: Kotlin 2.1.21
+- **Language**: Kotlin 2.3.10
 - **Build Tool**: Gradle with Kotlin DSL
-- **JDK**: Java 17
+- **JDK**: Java 21
 - **Architecture**: Clean Architecture with Koin DI
 - **Discord Library**: Kord (currently using local SNAPSHOT JARs for voice encryption support)
-- **Test Coverage**: 148 tests, all passing
 
 ### Main Features
 - **Music**: YouTube, SoundCloud, Spotify via Lavaplayer
@@ -63,15 +62,15 @@ Country codes are cached for 1 hour to reduce API calls:
 - See `discord-integration.instructions.md` for implementation
 
 ### Code Quality
-- **ktlint**: Strict code style enforcement
+- **Detekt**: Strict static analysis and code style enforcement (formatting ruleset included)
 - **Jacoco**: Code coverage reporting
 - **SonarCloud**: Quality gates in CI/CD
-- All code must pass ktlint checks before merge
+- All code must pass Detekt checks before merge
 
 ### Testing Strategy
 - **Framework**: Kotlin Test with Mockk
 - **Pattern**: Mock external dependencies (Discord API, HTTP clients)
-- **Coverage**: 148 tests covering main functionality
+- **Coverage**: See the current Gradle test reports (`build/reports/tests/`) rather than a fixed count
 - **CI**: Tests run on every PR via GitHub Actions
 
 ## Working with This Project
@@ -79,13 +78,13 @@ Country codes are cached for 1 hour to reduce API calls:
 ### Before Starting
 1. Read `.memory/STATUS.md` for current project state
 2. Check `.github/instructions/` for topic-specific guidance
-3. Verify Java 17 is installed
+3. Verify Java 21 is installed
 4. Ensure Discord bot token is configured
 
 ### Common Tasks
 - **Build**: `./gradlew build`
 - **Test**: `./gradlew test`
-- **Ktlint**: `./gradlew ktlintCheck`
+- **Detekt**: `./gradlew detektBudget`
 - **Coverage**: `./gradlew jacocoTestReport`
 
 ### Adding New Features
@@ -93,7 +92,7 @@ Country codes are cached for 1 hour to reduce API calls:
 2. Use Koin for dependency injection
 3. Add localization keys for all user-facing strings
 4. Write tests for new functionality
-5. Ensure ktlint compliance
+5. Ensure Detekt compliance
 
 ## Related Documentation
 

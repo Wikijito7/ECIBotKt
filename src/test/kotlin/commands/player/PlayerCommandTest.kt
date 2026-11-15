@@ -3,7 +3,6 @@ package commands.player
 import commands.discordMessage
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
-import dev.kord.common.entity.optional.OptionalSnowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.entity.Message
@@ -22,7 +21,6 @@ import io.mockk.*
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import services.player.result.PlayerChannelResult
-import kotlin.test.Ignore
 
 private fun createMockTrackBO(): TrackBO = TrackBO(
     identifier = "title",
@@ -47,41 +45,7 @@ class PlayerCommandTest {
     @Test
     fun `Given interaction When onExecute Then respond with player message`() = runTest {
         // Given
-        val mockKord: Kord = mockk {
-            every { resources } returns mockk {
-                every { defaultStrategy } returns EntitySupplyStrategy.rest
-            }
-            every { defaultSupplier } returns mockk()
-            coEvery { getGuild(any()) } returns mockk {
-                every { name } returns "TestGuild"
-            }
-            every { rest } returns mockk {
-                every { interaction } returns mockk {
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                }
-                every { channel } returns mockk {
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
-                    } returns discordMessage()
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
-                    } returns discordMessage()
-                }
-            }
-        }
+        val mockKord: Kord = createMockKord()
         val interaction = mockk<ChatInputCommandInteraction> {
             every { data } returns mockk {
                 every { guildId.value } returns Snowflake(123)
@@ -133,41 +97,7 @@ class PlayerCommandTest {
     @Test
     fun `Given resume interaction When onInteract Then respond with player message`() = runTest {
         // Given
-        val mockKord: Kord = mockk {
-            every { resources } returns mockk {
-                every { defaultStrategy } returns EntitySupplyStrategy.rest
-            }
-            every { defaultSupplier } returns mockk()
-            coEvery { getGuild(any()) } returns mockk {
-                every { name } returns "TestGuild"
-            }
-            every { rest } returns mockk {
-                every { interaction } returns mockk {
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                }
-                every { channel } returns mockk {
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
-                    } returns discordMessage()
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
-                    } returns discordMessage()
-                }
-            }
-        }
+        val mockKord: Kord = createMockKord()
         val interaction = mockk<ButtonInteraction> {
             every { data } returns mockk {
                 every { guildId.value } returns Snowflake(123)
@@ -209,41 +139,7 @@ class PlayerCommandTest {
     @Test
     fun `Given skip interaction When onInteract Then respond with player message`() = runTest {
         // Given
-        val mockKord: Kord = mockk {
-            every { resources } returns mockk {
-                every { defaultStrategy } returns EntitySupplyStrategy.rest
-            }
-            every { defaultSupplier } returns mockk()
-            coEvery { getGuild(any()) } returns mockk {
-                every { name } returns "TestGuild"
-            }
-            every { rest } returns mockk {
-                every { interaction } returns mockk {
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                }
-                every { channel } returns mockk {
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
-                    } returns discordMessage()
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
-                    } returns discordMessage()
-                }
-            }
-        }
+        val mockKord: Kord = createMockKord()
         val interaction = mockk<ButtonInteraction> {
             every { data } returns mockk {
                 every { guildId.value } returns Snowflake(123)
@@ -285,41 +181,7 @@ class PlayerCommandTest {
     @Test
     fun `Given shuffle interaction When onInteract Then respond with player message`() = runTest {
         // Given
-        val mockKord: Kord = mockk {
-            every { resources } returns mockk {
-                every { defaultStrategy } returns EntitySupplyStrategy.rest
-            }
-            every { defaultSupplier } returns mockk()
-            coEvery { getGuild(any()) } returns mockk {
-                every { name } returns "TestGuild"
-            }
-            every { rest } returns mockk {
-                every { interaction } returns mockk {
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                }
-                every { channel } returns mockk {
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
-                    } returns discordMessage()
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
-                    } returns discordMessage()
-                }
-            }
-        }
+        val mockKord: Kord = createMockKord()
         val interaction = mockk<ButtonInteraction> {
             every { data } returns mockk {
                 every { guildId.value } returns Snowflake(123)
@@ -361,41 +223,7 @@ class PlayerCommandTest {
     @Test
     fun `Given disconnect interaction When onInteract Then respond with player message`() = runTest {
         // Given
-        val mockKord: Kord = mockk {
-            every { resources } returns mockk {
-                every { defaultStrategy } returns EntitySupplyStrategy.rest
-            }
-            every { defaultSupplier } returns mockk()
-            coEvery { getGuild(any()) } returns mockk {
-                every { name } returns "TestGuild"
-            }
-            every { rest } returns mockk {
-                every { interaction } returns mockk {
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                }
-                every { channel } returns mockk {
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
-                    } returns discordMessage()
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
-                    } returns discordMessage()
-                }
-            }
-        }
+        val mockKord: Kord = createMockKord()
         val interaction = mockk<ButtonInteraction> {
             every { data } returns mockk {
                 every { guildId.value } returns Snowflake(123)
@@ -440,41 +268,7 @@ class PlayerCommandTest {
     @Test
     fun `Given pause interaction When onInteract Then respond with player message`() = runTest {
         // Given
-        val mockKord: Kord = mockk {
-            every { resources } returns mockk {
-                every { defaultStrategy } returns EntitySupplyStrategy.rest
-            }
-            every { defaultSupplier } returns mockk()
-            coEvery { getGuild(any()) } returns mockk {
-                every { name } returns "TestGuild"
-            }
-            every { rest } returns mockk {
-                every { interaction } returns mockk {
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                    coEvery {
-                        modifyInteractionResponse(
-                            any(),
-                            any(),
-                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
-                        )
-                    } returns discordMessage()
-                }
-                every { channel } returns mockk {
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
-                    } returns discordMessage()
-                    coEvery {
-                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
-                    } returns discordMessage()
-                }
-            }
-        }
+        val mockKord: Kord = createMockKord()
         val interaction = mockk<ButtonInteraction> {
             every { data } returns mockk {
                 every { guildId.value } returns Snowflake(123)
@@ -510,6 +304,42 @@ class PlayerCommandTest {
             guildLavaPlayerService.getCurrentPlayingTrack()
             guildLavaPlayerService.isPaused()
             guildLavaPlayerService.pause()
+        }
+    }
+
+    private fun createMockKord(): Kord = mockk {
+        every { resources } returns mockk {
+            every { defaultStrategy } returns EntitySupplyStrategy.rest
+        }
+        every { defaultSupplier } returns mockk()
+        coEvery { getGuild(any()) } returns mockk {
+            every { name } returns "TestGuild"
+        }
+        every { rest } returns mockk {
+            every { interaction } returns mockk {
+                coEvery {
+                    modifyInteractionResponse(
+                        any(),
+                        any(),
+                        any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
+                    )
+                } returns discordMessage()
+                coEvery {
+                    modifyInteractionResponse(
+                        any(),
+                        any(),
+                        any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
+                    )
+                } returns discordMessage()
+            }
+            every { channel } returns mockk {
+                coEvery {
+                    editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
+                } returns discordMessage()
+                coEvery {
+                    editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
+                } returns discordMessage()
+            }
         }
     }
 }

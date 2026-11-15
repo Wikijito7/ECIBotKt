@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.detekt)
     jacoco
 }
 
@@ -13,6 +14,7 @@ repositories {
 dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlin.coroutines.test)
+    detektPlugins(libs.detekt.formatting)
 }
 
 tasks.test {

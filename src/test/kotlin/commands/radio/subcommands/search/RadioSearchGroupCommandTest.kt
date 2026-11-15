@@ -8,7 +8,6 @@ import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.radio.subcommands.search.RadioSearchCountryCodeCommand
 import es.wokis.commands.radio.subcommands.search.RadioSearchGroupCommand
 import es.wokis.commands.radio.subcommands.search.RadioSearchNameCommand
-import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import io.mockk.coEvery
 import io.mockk.coJustRun
@@ -96,6 +95,9 @@ class RadioSearchGroupCommandTest {
         coVerify(exactly = 1) {
             radioSearchCountryCodeCommand.onInteract(interaction)
         }
+        coVerify(exactly = 0) {
+            radioSearchNameCommand.onInteract(any())
+        }
     }
 
     @Test
@@ -115,6 +117,31 @@ class RadioSearchGroupCommandTest {
         coVerify(exactly = 1) {
             radioSearchCountryCodeCommand.onInteract(interaction)
         }
+        coVerify(exactly = 0) {
+            radioSearchNameCommand.onInteract(any())
+        }
+    }
+
+    @Test
+    fun `Given search name next button When onInteract Then delegate to name command`() = runTest {
+        // Given
+        val customId = ComponentsEnum.RADIO_SEARCH_NAME_NEXT.customId.plus("::WokisRadio")
+        val interaction = mockk<dev.kord.core.entity.interaction.ButtonInteraction> {
+            every { component } returns mockk {
+                every { this@mockk.customId } returns customId
+            }
+        }
+
+        // When
+        radioSearchGroupCommand.onInteract(interaction)
+
+        // Then
+        coVerify(exactly = 1) {
+            radioSearchNameCommand.onInteract(interaction)
+        }
+        coVerify(exactly = 0) {
+            radioSearchCountryCodeCommand.onInteract(any())
+        }
     }
 
     @Test
@@ -133,6 +160,9 @@ class RadioSearchGroupCommandTest {
         // Then
         coVerify(exactly = 1) {
             radioSearchNameCommand.onInteract(interaction)
+        }
+        coVerify(exactly = 0) {
+            radioSearchCountryCodeCommand.onInteract(any())
         }
     }
 

@@ -16,7 +16,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.coEvery as coEvery
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 

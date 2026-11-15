@@ -170,11 +170,13 @@ class SourceTreeScanner(
         knownProjectRoots: Set<String>,
     ): Boolean {
         val name = substringAfterLast('/')
-        if (name == ".gradle" || name == ".git") return true
-        if (configuredRoots.any { isInside(it) || it.isInside(this) }) return false
-        if (explicitOutputRoots.any { isInside(it) }) return true
-        if (name != "build") return false
-        return isActualProjectOutput(knownProjectRoots)
+        return when {
+            name == ".gradle" || name == ".git" -> true
+            configuredRoots.any { isInside(it) || it.isInside(this) } -> false
+            explicitOutputRoots.any { isInside(it) } -> true
+            name != "build" -> false
+            else -> isActualProjectOutput(knownProjectRoots)
+        }
     }
 
     private fun String.isActualProjectOutput(knownProjectRoots: Set<String>): Boolean =
@@ -253,23 +255,28 @@ class SourceTreeScanner(
     }
 
     private fun symlinkProblem(relativePath: String, entry: Path): CompletenessProblem? {
-        if (entry.fileName.toString().endsWith(".kt")) {
-            return CompletenessProblem(
+        return when {
+            entry.fileName.toString().endsWith(".kt") -> CompletenessProblem(
                 file = relativePath,
                 derivedRoot = deriveSourceRoot(relativePath),
                 message = "Symlinked Kotlin source file '$relativePath' is rejected before reading; " +
                     "symbolic links are not followed",
             )
+            !Files.isDirectory(entry) -> null
+            else -> {
+                val isInsideConfiguredRoot = rules.any { relativePath.isInside(it.path) }
+                val isConfiguredRoot = config.roots.any { it.path == relativePath }
+                if (!isInsideConfiguredRoot || isConfiguredRoot) {
+                    null
+                } else {
+                    CompletenessProblem(
+                        file = relativePath,
+                        derivedRoot = relativePath,
+                        message = "Symlinked directory '$relativePath' under a scanned source root is not followed",
+                    )
+                }
+            }
         }
-        if (!Files.isDirectory(entry)) return null
-        val isInsideConfiguredRoot = rules.any { relativePath.isInside(it.path) }
-        val isConfiguredRoot = config.roots.any { it.path == relativePath }
-        if (!isInsideConfiguredRoot || isConfiguredRoot) return null
-        return CompletenessProblem(
-            file = relativePath,
-            derivedRoot = relativePath,
-            message = "Symlinked directory '$relativePath' under a scanned source root is not followed",
-        )
     }
 
     private fun deriveSourceRoot(relativePath: String): String? {

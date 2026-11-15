@@ -79,12 +79,20 @@ internal class VoiceConnectionWaiter : ConnectionListener {
         try {
             connected.get(timeout, unit)
         } catch (_: TimeoutException) {
-            terminalFailure.get()?.let { throw VoiceConnectionException(it) }
-            throw TimeoutException("Voice connection did not reach CONNECTED within ${unit.toMillis(timeout)} ms.")
+            throwTimeout(timeout, unit)
         } catch (error: ExecutionException) {
-            throw error.cause as? VoiceConnectionException
-                ?: VoiceConnectionException(error.cause?.message ?: "Voice connection failed.", error.cause)
+            throwConnectionFailure(error)
         }
+    }
+
+    private fun throwConnectionFailure(error: ExecutionException): Nothing {
+        throw error.cause as? VoiceConnectionException
+            ?: VoiceConnectionException(error.cause?.message ?: "Voice connection failed.", error.cause)
+    }
+
+    private fun throwTimeout(timeout: Long, unit: TimeUnit): Nothing {
+        terminalFailure.get()?.let { throw VoiceConnectionException(it) }
+        throw TimeoutException("Voice connection did not reach CONNECTED within ${unit.toMillis(timeout)} ms.")
     }
 
     /**

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.plugin.serialization)
+    alias(libs.plugins.detekt)
     jacoco
 }
 
@@ -21,6 +22,7 @@ dependencies {
     testImplementation(libs.kotlin.coroutines.test)
     testImplementation(libs.mockk)
     testRuntimeOnly(libs.slf4j.simple)
+    detektPlugins(libs.detekt.formatting)
 }
 
 tasks.test {

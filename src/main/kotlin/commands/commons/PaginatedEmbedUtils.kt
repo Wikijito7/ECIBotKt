@@ -10,6 +10,7 @@ import dev.kord.rest.builder.component.MessageComponentBuilder
 import dev.kord.rest.builder.message.embed
 import dev.kord.rest.builder.message.modify.AbstractMessageModifyBuilder
 import es.wokis.constants.BLANK_SPACE
+import es.wokis.constants.BRAND_COLOR
 import es.wokis.localization.LocalizationKeys
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.takeIfNotEmpty
@@ -67,7 +68,7 @@ private suspend fun AbstractMessageModifyBuilder.createEmbed(
         embedDescription?.let {
             description = it
         }
-        color = Color(0x01B05B)
+        color = Color(BRAND_COLOR)
         if (currentPageContent.isNullOrEmpty().not()) {
             for (column in (0 until columns)) {
                 val displayMessage = currentPageContent?.getOrNull(column)?.takeIfNotEmpty() ?: BLANK_SPACE

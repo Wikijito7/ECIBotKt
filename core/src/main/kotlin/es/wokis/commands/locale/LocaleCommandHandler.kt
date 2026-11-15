@@ -9,6 +9,7 @@ import es.wokis.commands.neutral.StringOptionDefinition
 import es.wokis.domain.locale.DiscordLocaleCatalog
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.locale.SetGuildLocaleUseCase
+import es.wokis.domain.model.GuildId
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.LocaleMessageKeys
 
@@ -38,9 +39,16 @@ class LocaleCommandHandler(
                     ),
                 ),
             )
-            return
+        } else {
+            handleForGuild(context, responder, guildId)
         }
+    }
 
+    private suspend fun handleForGuild(
+        context: CommandContext,
+        responder: CommandResponder,
+        guildId: GuildId,
+    ) {
         val input = context.stringOptions[OPTION_NAME]
         if (input.isNullOrEmpty()) {
             responder.respond(

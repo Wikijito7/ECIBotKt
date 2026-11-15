@@ -19,7 +19,9 @@ class DisconnectCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Disconnect.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.DISCONNECT_COMMAND_DESCRIPTION).values.first()
+                description = localizationService.getLocalizations(
+                    LocalizationKeys.DISCONNECT_COMMAND_DESCRIPTION
+                ).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.DISCONNECT_COMMAND_DESCRIPTION)
             }

@@ -314,12 +314,8 @@ internal class LavaPlayerEngine internal constructor(
 
         // TTS and radio historically required a single AudioTrack and silently ignored anything
         // else; preserve that instead of starting a playlist the user never expected here.
-        if (item !is AudioTrack) {
-            request.acknowledgement?.complete(Unit)
-            return
-        }
-
-        if (request.cancelled.get() || closed.get() || request.epoch != loadEpoch.get()) {
+        val stale = request.cancelled.get() || closed.get() || request.epoch != loadEpoch.get()
+        if (item !is AudioTrack || stale) {
             request.acknowledgement?.complete(Unit)
             return
         }

@@ -152,15 +152,16 @@ internal class JdaAudioSendHandler private constructor(
      * recorded so the waiter wakes and is then rethrown.
      */
     override fun canProvide(): Boolean {
-        synchronized(stateLock) {
-            if (closed || exhausted) {
-                return false
-            }
-            if (prefetched != null) {
-                return true
+        val earlyResult: Boolean? = synchronized(stateLock) {
+            when {
+                closed || exhausted -> false
+                prefetched != null -> true
+                else -> null
             }
         }
+        if (earlyResult != null) return earlyResult
 
+        var sourceFailed = false
         val frame = try {
             supply.nextFrame()
         } catch (cancellation: CancellationException) {
@@ -175,7 +176,8 @@ internal class JdaAudioSendHandler private constructor(
             throw error
         } catch (error: Exception) {
             recordSourceFailure(error)
-            return false
+            sourceFailed = true
+            null
         } catch (error: Throwable) {
             // Not an Exception or an Error, so it is not recoverable either: signal it and
             // rethrow instead of pretending the source only ended.
@@ -184,7 +186,7 @@ internal class JdaAudioSendHandler private constructor(
         }
 
         if (frame == null) {
-            recordExhaustion()
+            if (!sourceFailed) recordExhaustion()
             return false
         }
 
@@ -377,9 +379,11 @@ internal class JdaAudioSendHandler private constructor(
             is CancellationException -> throw failure
             is Error -> throw failure
         }
-        recordedFatalFailure()?.let { throw it }
+        recordedFatalFailure()?.let { throwFatal(it) }
         return false
     }
+
+    private fun throwFatal(failure: Throwable): Nothing = throw failure
 
     /**
      * Returns the recorded source failure when it is fatal, or `null`.

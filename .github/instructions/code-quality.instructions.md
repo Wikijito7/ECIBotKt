@@ -1,22 +1,48 @@
 # Code Quality Instructions
 
-This document covers both **formatting standards** (ktlint) and **refactoring patterns** for maintaining high-quality code in ECIBotKt.
+This document covers both **formatting standards** (enforced by Detekt and its formatting ruleset, which wraps ktlint rules) and **refactoring patterns** for maintaining high-quality code in ECIBotKt.
 
 ---
 
-## Part 1: Code Formatting (ktlint)
+## Part 1: Code Formatting (Detekt)
 
-### Running Ktlint
+### Running Detekt
 
 ```bash
-# Check for issues
-./gradlew ktlintCheck
-
-# Auto-fix issues (when possible)
-./gradlew ktlintFormat
+# Run the blocking quality gate across the root project and every module
+./gradlew detektBudget
 ```
 
+Detekt is configured in `config/detekt/detekt.yml`, with the `detekt-formatting` ruleset
+(ktlint-backed formatting rules) applied to the root project and to every subproject that applies
+the Detekt plugin. The scope is discovered from the build instead of a maintained module list, so a
+module is covered as soon as it is Detekt-enabled; today those modules are `:core`,
+`:locale-persistence`, `:player` and `:jda-runtime`. The gate has **no baseline file**, no
+`ignoreFailures`, and no broad source exclusions.
+
+Detekt's `build.maxIssues = 40` is evaluated **per Gradle project**, so it alone cannot enforce a
+repository-wide ceiling: a run could pass with up to 40 findings in each scanned project. The
+user-requested cap is repository-wide, so the blocking task is `detektBudget`:
+it depends on the `detekt` task of every scanned project, reads their XML reports, and fails when
+the **combined** finding count exceeds 40. `check`/`build` depend on it, and the `Check Code
+Quality` workflow runs it. `./gradlew detekt` still produces the per-project reports, but
+`detektBudget` is the gate that enforces the global budget.
+
+Fix findings first; do not add a baseline, exclude source, raise either limit, or disable a rule to
+fit the threshold. Keep the ceiling at the user-requested 40; do not lower it to the current
+finding count.
+
+Autocorrection is disabled (`autoCorrect = false`): Detekt reports problems but never rewrites
+sources. Fix findings by hand or with your IDE. The separate `spikes/jda-dave` Gradle build is
+outside the root project graph and is not scanned; Gradle build scripts (`*.kts`) are not part of
+Detekt's Kotlin source sets either.
+
+The experimental `detektMain`/`detektTest` type-resolution tasks are not part of the gate, so do not
+use their failures as a quality signal.
+
 ### Common Formatting Issues
+
+The rule ids below are the underlying ktlint rules surfaced by the Detekt formatting ruleset.
 
 #### 1. import-ordering
 
@@ -157,30 +183,36 @@ val x = 5
 ### IDE Integration
 
 **IntelliJ IDEA**:
-1. Install ktlint plugin
-2. Enable "Reformat with ktlint on save"
-3. Configure to use project's ktlint settings
-
-**VS Code**:
-1. Install "Kotlin Language" extension
-2. Enable format on save
+1. Install the Detekt plugin
+2. Point it at `config/detekt/detekt.yml`
+3. Enable analysis on save (formatting findings are not autocorrected by the build)
 
 ### EditorConfig
 
-Project includes `.editorconfig`:
+The formatting ruleset still reads `.editorconfig`, so ktlint rule toggles there keep informing the
+Detekt formatting rules. The project currently uses:
 
 ```ini
-[*]
-charset = utf-8
-indent_style = space
-indent_size = 4
-insert_final_newline = true
-trim_trailing_whitespace = true
+[*.{kt,kts}]
+ktlint_experimental = disabled
+ktlint_code_style = intellij_idea
+ktlint_standard_trailing-comma-on-call-site = disabled
+ktlint_standard_trailing-comma-on-declaration-site = disabled
+ktlint_standard_function-signature = disabled
+ktlint_standard_multiline-expression-wrapping = disabled
+ktlint_standard_no-wildcard-imports = disabled
+ktlint_standard_class-signature = disabled
 ```
 
 ### CI/CD Integration
 
-Ktlint runs in GitHub Actions. **PRs cannot be merged if ktlint fails.**
+Detekt runs in GitHub Actions (`.github/workflows/detekt.yaml`) as the `Check Code Quality` job,
+triggered on `pull_request` — the same trigger as the ktlint workflow it replaces — and the
+aggregate `detektBudget` task is also wired into Gradle `check`/`build`, so CI and local build runs
+enforce the same budget. **PRs cannot be merged if Detekt or the repository-wide finding budget
+fails.** The job runs `./gradlew detektBudget` and publishes the HTML, Markdown, XML and SARIF
+reports as the `detekt-reports` artifact. The SonarCloud workflow also runs Detekt through
+`./gradlew build`.
 
 ---
 
@@ -357,7 +389,8 @@ coVerify { lavaPlayerService.loadAndPlay(expectedUrl, addToFront = true) }     /
 
 Before submitting a PR, verify:
 
-- [ ] `./gradlew ktlintCheck` passes
+- [ ] `./gradlew detektBudget` passes
+- [ ] New findings are fixed rather than baselined or suppressed
 - [ ] All existing tests pass
 - [ ] No trailing spaces or formatting issues
 - [ ] Code duplication is minimized
@@ -380,7 +413,8 @@ Before submitting a PR, verify:
 
 ## References
 
-- ktlint: https://pinterest.github.io/ktlint/
+- Detekt: https://detekt.dev/docs/introduction/configurations
+- ktlint (formatting rules used by the Detekt formatting ruleset): https://pinterest.github.io/ktlint/
 - Kotlin Coding Conventions: https://kotlinlang.org/docs/coding-conventions.html
 - Refactoring Guru: https://refactoring.guru/
 - EditorConfig: https://editorconfig.org/

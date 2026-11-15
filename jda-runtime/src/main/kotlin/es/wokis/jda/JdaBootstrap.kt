@@ -197,19 +197,17 @@ internal fun finishBootstrap(
 ): Int {
     if (primaryFailure != null) {
         if (primaryFailure.isFatalBootstrapFailure()) {
-            cleanupReport.attachTo(primaryFailure)
-            LOG.error("JDA bootstrap failed", primaryFailure)
-            throw primaryFailure
+            failBootstrap(primaryFailure, cleanupReport, "JDA bootstrap failed")
         }
 
         val cleanupFatal = cleanupReport.fatalFailure
         if (cleanupFatal != null) {
-            cleanupReport.attachTo(cleanupFatal)
-            if (cleanupFatal !== primaryFailure && !cleanupFatal.suppressed.contains(primaryFailure)) {
-                cleanupFatal.addSuppressed(primaryFailure)
-            }
-            LOG.error("JDA bootstrap cleanup failed with a fatal error", cleanupFatal)
-            throw cleanupFatal
+            failBootstrap(
+                cleanupFatal,
+                cleanupReport,
+                "JDA bootstrap cleanup failed with a fatal error",
+                suppressed = primaryFailure,
+            )
         }
 
         cleanupReport.attachTo(primaryFailure)
@@ -219,9 +217,7 @@ internal fun finishBootstrap(
 
     val cleanupFatal = cleanupReport.fatalFailure
     if (cleanupFatal != null) {
-        cleanupReport.attachTo(cleanupFatal)
-        LOG.error("JDA bootstrap cleanup failed with a fatal error", cleanupFatal)
-        throw cleanupFatal
+        failBootstrap(cleanupFatal, cleanupReport, "JDA bootstrap cleanup failed with a fatal error")
     }
 
     if (cleanupReport.failed) {
@@ -236,6 +232,20 @@ internal fun finishBootstrap(
     }
 
     return EXIT_SUCCESS
+}
+
+private fun failBootstrap(
+    failure: Throwable,
+    cleanupReport: BootstrapCleanupReport,
+    message: String,
+    suppressed: Throwable? = null,
+): Nothing {
+    cleanupReport.attachTo(failure)
+    if (suppressed != null && suppressed !== failure && !failure.suppressed.contains(suppressed)) {
+        failure.addSuppressed(suppressed)
+    }
+    LOG.error(message, failure)
+    throw failure
 }
 
 /**
