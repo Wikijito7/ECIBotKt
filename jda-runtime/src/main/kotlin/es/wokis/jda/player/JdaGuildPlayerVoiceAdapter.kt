@@ -4,6 +4,7 @@ import es.wokis.jda.voice.JdaAudioSendHandler
 import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.audio.ContinuousPlayerAudioStream
 import es.wokis.player.engine.event.PlayerEvent
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,14 +31,22 @@ private const val CLOSE_TIMEOUT_MILLIS = 5_000L
  * no JDA event/coroutine caller blocks a thread and connect/disconnect/close cannot interleave.
  * [close] is only a fast idempotent signal: it prevents new operations and cancels the event
  * collector without touching JDA. Production shutdown awaits [shutdown].
+ *
+ * [serialDispatcher] is that single-coroutine dispatcher and is owned by this adapter: the default
+ * expression creates a **fresh** `Dispatchers.Default.limitedParallelism(1)` view for every adapter
+ * instance, so unrelated guilds never share a serialization queue. Never pass one process-wide
+ * single-thread dispatcher from a multi-guild composition root — do that and every guild's
+ * connect/disconnect queues behind the slowest one. Inject a dispatcher to observe or control
+ * serialization without changing connect/disconnect/close semantics.
  */
 internal class JdaGuildPlayerVoiceAdapter(
     private val guild: Guild,
     private val engine: PlayerEngine,
     private val scope: CoroutineScope,
+    serialDispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1),
 ) : AutoCloseable {
 
-    private val serial = Dispatchers.Default.limitedParallelism(1)
+    private val serial = serialDispatcher
     private val closeRequested = AtomicBoolean(false)
     private val shutdownComplete = AtomicBoolean(false)
 

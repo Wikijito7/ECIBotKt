@@ -275,6 +275,9 @@ class LavaPlayerEngineTest {
             assertTrue(callbackReturned.await(1, TimeUnit.SECONDS), "the callback did not return promptly")
             callbackThread.join(1_000)
             assertFalse(callbackThread.isAlive)
+            // Ordered command barrier: once Pause is acknowledged, the prior TrackEnded command
+            // has been handled by the same actor.
+            assertTrue(harness.engine.pause())
             assertNull(harness.engine.snapshot().current)
         } finally {
             harness.close()

@@ -12,33 +12,47 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import net.dv8tion.jda.api.audio.AudioSendHandler
 import net.dv8tion.jda.api.audio.hooks.ConnectionStatus
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel
 import net.dv8tion.jda.api.managers.AudioManager
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class JdaGuildPlayerVoiceAdapterTest {
+
+    private val testFixtures = mutableListOf<Fixture>()
+
+    @AfterEach
+    fun disposeTestFixtures() {
+        testFixtures.forEach { it.dispose() }
+        testFixtures.clear()
+    }
 
     @Test
     fun `Given a guild voice channel When connect runs Then the existing send handler is installed`() = runTest {
         // Given
-        val fixture = Fixture()
+        val fixture = testFixture(testDispatcher())
 
         // When
         fixture.adapter.connect(fixture.channel)
@@ -52,7 +66,7 @@ class JdaGuildPlayerVoiceAdapterTest {
     @Test
     fun `Given a connected adapter When disconnect runs Then handler and stream are closed`() = runTest {
         // Given
-        val fixture = Fixture()
+        val fixture = testFixture(testDispatcher())
         fixture.adapter.connect(fixture.channel)
         clearMocks(fixture.audioManager, answers = false)
         val handler = requireNotNull(fixture.installedHandler) as JdaAudioSendHandler
@@ -70,7 +84,7 @@ class JdaGuildPlayerVoiceAdapterTest {
     @Test
     fun `Given a connected adapter When close signals Then JDA cleanup waits for shutdown`() = runTest {
         // Given
-        val fixture = Fixture()
+        val fixture = testFixture(testDispatcher())
         fixture.adapter.connect(fixture.channel)
         clearMocks(fixture.audioManager, answers = false)
 
@@ -90,30 +104,32 @@ class JdaGuildPlayerVoiceAdapterTest {
     }
 
     @Test
-    fun `Given an active adapter When the engine emits stopped Then the voice connection disconnects`() = runBlocking {
+    fun `Given an active adapter When the engine emits stopped Then the voice connection disconnects`() = runTest {
         // Given
-        val fixture = Fixture()
+        val fixture = testFixture(testDispatcher())
         fixture.adapter.connect(fixture.channel)
         clearMocks(fixture.audioManager, answers = false)
 
         // When
         fixture.events.emit(PlayerEvent.Stopped)
+        advanceUntilIdle()
 
         // Then
-        verify(timeout = 2_000) { fixture.audioManager.setSendingHandler(null) }
+        verify(exactly = 1) { fixture.audioManager.setSendingHandler(null) }
         verify(exactly = 1) { fixture.audioManager.closeAudioConnection() }
     }
 
     @Test
     fun `Given an adapter When shutdown runs Then its event collector no longer reacts`() = runTest {
         // Given
-        val fixture = Fixture()
+        val fixture = testFixture(testDispatcher())
         fixture.adapter.connect(fixture.channel)
         clearMocks(fixture.audioManager, answers = false)
         fixture.adapter.shutdown()
 
         // When
         fixture.events.emit(PlayerEvent.Stopped)
+        advanceUntilIdle()
 
         // Then
         verify(exactly = 1) { fixture.audioManager.closeAudioConnection() }
@@ -158,7 +174,15 @@ class JdaGuildPlayerVoiceAdapterTest {
         }
     }
 
-    private class Fixture {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun TestScope.testDispatcher(): CoroutineDispatcher = UnconfinedTestDispatcher(testScheduler)
+
+    private fun testFixture(dispatcher: CoroutineDispatcher): Fixture =
+        Fixture(dispatcher).also { testFixtures += it }
+
+    private class Fixture(
+        dispatcher: CoroutineDispatcher? = null,
+    ) {
         val events = MutableSharedFlow<PlayerEvent>(extraBufferCapacity = 4)
         val stream = FakeStream()
         val streams = CopyOnWriteArrayList<FakeStream>()
@@ -169,11 +193,15 @@ class JdaGuildPlayerVoiceAdapterTest {
         val channel: VoiceChannel = mockk {
             every { idLong } returns 42L
         }
-        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        val scope = CoroutineScope(SupervisorJob() + (dispatcher ?: Dispatchers.Unconfined))
         var installedHandler: AudioSendHandler? = null
         private val handlerSlot = slot<AudioSendHandler>()
         val adapter: JdaGuildPlayerVoiceAdapter by lazy {
-            JdaGuildPlayerVoiceAdapter(guild, engine, scope)
+            if (dispatcher == null) {
+                JdaGuildPlayerVoiceAdapter(guild, engine, scope)
+            } else {
+                JdaGuildPlayerVoiceAdapter(guild, engine, scope, dispatcher)
+            }
         }
 
         init {

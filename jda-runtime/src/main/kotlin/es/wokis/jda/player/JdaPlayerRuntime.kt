@@ -4,6 +4,7 @@ import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.PlayerEngineFactory
 import es.wokis.player.engine.PlayerEngines
 import es.wokis.player.engine.config.PlayerSourcesConfig
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,10 +34,20 @@ import java.util.concurrent.atomic.AtomicBoolean
  * JSON config. The isolated runtime's bootstrap passes the default (local/remote enabled, optional
  * providers disabled) until Phase 4/5 supplies runtime configuration; every provider option remains
  * injectable through this parameter.
+ *
+ * **Serialization scope:** each guild adapter owns its own single-coroutine dispatcher so a slow or
+ * blocked connect/disconnect in one guild never stalls another. [serialDispatcherFactory] is
+ * invoked once per adapter created, so the production default hands every guild a fresh
+ * `Dispatchers.Default.limitedParallelism(1)` view instead of one process-wide view shared by all
+ * adapters (which would serialize unrelated guilds). Inject a factory to observe or control that
+ * per-guild serialization without changing connect/disconnect/close semantics.
  */
 internal class JdaPlayerRuntime(
     private val sources: PlayerSourcesConfig = PlayerSourcesConfig(),
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    private val serialDispatcherFactory: () -> CoroutineDispatcher = {
+        Dispatchers.Default.limitedParallelism(1)
+    },
 ) : AutoCloseable {
 
     private val closed = AtomicBoolean(false)
@@ -66,6 +77,7 @@ internal class JdaPlayerRuntime(
                 guild = guild,
                 engine = engineFor(guild),
                 scope = scope,
+                serialDispatcher = serialDispatcherFactory(),
             )
         }
     }
