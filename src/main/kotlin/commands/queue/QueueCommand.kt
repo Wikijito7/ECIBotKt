@@ -29,7 +29,9 @@ class QueueCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Queue.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION).values.first()
+                description = localizationService.getLocalizations(
+                    LocalizationKeys.QUEUE_COMMAND_DESCRIPTION
+                ).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.QUEUE_COMMAND_DESCRIPTION)
             }

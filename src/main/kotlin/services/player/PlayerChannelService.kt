@@ -87,7 +87,9 @@ class PlayerChannelService {
                     )
                 )
             }.also {
-                Log.info("$TAG: Successfully created #player channel '${it.name}' (ID: ${it.id}) in guild '${guild.name}'")
+                Log.info(
+                    "$TAG: Successfully created #player channel '${it.name}' (ID: ${it.id}) in guild '${guild.name}'"
+                )
             }
         } catch (e: Exception) {
             Log.error("$TAG: Unexpected error creating #player channel in guild '${guild.name}': ${e.message}", e)

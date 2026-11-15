@@ -1,13 +1,11 @@
 package services.radio
 
-import es.wokis.data.radio.RadioDTO
 import es.wokis.data.response.RemoteResponse
 import es.wokis.services.config.ConfigService
 import es.wokis.services.radio.RadioService
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.json.Json
 import mock.getMockedHttpClient
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue

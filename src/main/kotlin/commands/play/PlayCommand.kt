@@ -25,12 +25,16 @@ class PlayCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Play.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.PLAY_COMMAND_DESCRIPTION).values.first()
+                description = localizationService.getLocalizations(
+                    LocalizationKeys.PLAY_COMMAND_DESCRIPTION
+                ).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.PLAY_COMMAND_DESCRIPTION)
                 string(
                     name = ARGUMENT_NAME,
-                    description = localizationService.getLocalizations(LocalizationKeys.PLAY_COMMAND_INPUT_DESCRIPTION).values.first()
+                    description = localizationService.getLocalizations(
+                        LocalizationKeys.PLAY_COMMAND_INPUT_DESCRIPTION
+                    ).values.first()
                 ) {
                     descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.PLAY_COMMAND_INPUT_DESCRIPTION)
                     required = true

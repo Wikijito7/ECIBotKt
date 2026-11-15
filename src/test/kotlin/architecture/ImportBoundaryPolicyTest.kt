@@ -70,31 +70,7 @@ class ImportBoundaryPolicyTest {
     private fun phase2Cases(): List<PolicyCase> = buildList {
         // Phase 2 root: Kord is grandfathered legacy; every other vendor is denied,
         // including when the file declares an adapter-looking package.
-        vendorImports.forEach { vendorImport ->
-            val expected = vendorImport.vendor == VendorFamily.KORD
-            add(
-                PolicyCase(
-                    "P2 root ${vendorImport.vendor} ${if (expected) "allowed" else "denied"}",
-                    ScanMode.PHASE_2,
-                    SourceModule.ROOT,
-                    "solid.root",
-                    vendorImport.importName,
-                    expected,
-                    vendorImport.vendor,
-                ),
-            )
-            add(
-                PolicyCase(
-                    "P2 root ${vendorImport.vendor} ${if (expected) "allowed" else "denied"} in adapter-looking package",
-                    ScanMode.PHASE_2,
-                    SourceModule.ROOT,
-                    "es.wokis.jda.command",
-                    vendorImport.importName,
-                    expected,
-                    vendorImport.vendor,
-                ),
-            )
-        }
+        addAll(rootPhase2Cases())
 
         // Phase 2 gateway-free modules deny all four vendors.
         gatewayFreeModules().forEach { (module, packageName) ->
@@ -153,30 +129,7 @@ class ImportBoundaryPolicyTest {
 
     private fun phase6Cases(): List<PolicyCase> = buildList {
         // Phase 6 root removes the Kord exception and never authorizes by package.
-        vendorImports.forEach { vendorImport ->
-            add(
-                PolicyCase(
-                    "P6 root ${vendorImport.vendor} denied",
-                    ScanMode.PHASE_6,
-                    SourceModule.ROOT,
-                    "solid.root",
-                    vendorImport.importName,
-                    false,
-                    vendorImport.vendor,
-                ),
-            )
-            add(
-                PolicyCase(
-                    "P6 root ${vendorImport.vendor} denied in adapter-looking package",
-                    ScanMode.PHASE_6,
-                    SourceModule.ROOT,
-                    "es.wokis.jda",
-                    vendorImport.importName,
-                    false,
-                    vendorImport.vendor,
-                ),
-            )
-        }
+        addAll(rootPhase6Cases())
 
         // Phase 6 :core and :locale-persistence deny all four vendors.
         gatewayFreeModules().forEach { (module, packageName) ->
@@ -230,6 +183,61 @@ class ImportBoundaryPolicyTest {
 
         addAll(normalizationCases(ScanMode.PHASE_6))
         addAll(nonVendorCases())
+    }
+
+    private fun rootPhase2Cases(): List<PolicyCase> = buildList {
+        vendorImports.forEach { vendorImport ->
+            val expected = vendorImport.vendor == VendorFamily.KORD
+            add(
+                PolicyCase(
+                    "P2 root ${vendorImport.vendor} ${if (expected) "allowed" else "denied"}",
+                    ScanMode.PHASE_2,
+                    SourceModule.ROOT,
+                    "solid.root",
+                    vendorImport.importName,
+                    expected,
+                    vendorImport.vendor,
+                ),
+            )
+            add(
+                PolicyCase(
+                    "P2 root ${vendorImport.vendor} ${if (expected) "allowed" else "denied"} in adapter-looking package",
+                    ScanMode.PHASE_2,
+                    SourceModule.ROOT,
+                    "es.wokis.jda.command",
+                    vendorImport.importName,
+                    expected,
+                    vendorImport.vendor,
+                ),
+            )
+        }
+    }
+
+    private fun rootPhase6Cases(): List<PolicyCase> = buildList {
+        vendorImports.forEach { vendorImport ->
+            add(
+                PolicyCase(
+                    "P6 root ${vendorImport.vendor} denied",
+                    ScanMode.PHASE_6,
+                    SourceModule.ROOT,
+                    "solid.root",
+                    vendorImport.importName,
+                    false,
+                    vendorImport.vendor,
+                ),
+            )
+            add(
+                PolicyCase(
+                    "P6 root ${vendorImport.vendor} denied in adapter-looking package",
+                    ScanMode.PHASE_6,
+                    SourceModule.ROOT,
+                    "es.wokis.jda",
+                    vendorImport.importName,
+                    false,
+                    vendorImport.vendor,
+                ),
+            )
+        }
     }
 
     private fun gatewayFreeModules(): List<Pair<SourceModule, String>> = listOf(

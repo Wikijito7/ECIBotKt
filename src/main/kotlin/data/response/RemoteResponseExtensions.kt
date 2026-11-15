@@ -15,7 +15,7 @@ import es.wokis.exceptions.toException
  * @throws IllegalStateException if success but data is null
  */
 fun <T> RemoteResponse<T>.getOrThrow(): T = when (this) {
-    is RemoteResponse.Success -> data ?: throw IllegalStateException("Success response but data is null")
+    is RemoteResponse.Success -> data ?: error("Success response but data is null")
     is RemoteResponse.Error -> throw error.toException()
 }
 

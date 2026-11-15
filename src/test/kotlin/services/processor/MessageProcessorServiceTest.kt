@@ -184,7 +184,9 @@ class MessageProcessorServiceTest {
             }
         }
         // Note: Query parameters are kept for girlcockx.com as they are required for embeds
-        val editedMessage = "Post enviado por $authorMention con el enlace arreglado:\nhttps://girlcockx.com/elonmusk/status/12345?t=abc123&s=19"
+        val editedMessage =
+            "Post enviado por $authorMention con el enlace arreglado:\n" +
+                "https://girlcockx.com/elonmusk/status/12345?t=abc123&s=19"
 
         coEvery { localizationService.getStringFormat(any(), any(), any(), *anyVararg()) } returns editedMessage
         coJustRun { message.delete() }

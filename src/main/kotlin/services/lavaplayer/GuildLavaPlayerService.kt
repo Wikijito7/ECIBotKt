@@ -109,10 +109,6 @@ class GuildLavaPlayerService(
         playerEngine.loadAndPlayTts(message)
     }
 
-    fun searchAndPlay(searchTerm: String) {
-        // TODO: Implement on next steps
-    }
-
     suspend fun playRadio(radioName: String, radioUrl: String, customFavicon: String) {
         playerEngine.playRadio(radioName, radioUrl, customFavicon)
     }
@@ -393,7 +389,11 @@ class GuildLavaPlayerService(
 
     private suspend fun updatePlayerEmbed() {
         playerMessage?.let {
-            val guildName = textChannel.data.guildId.value?.let { guildId -> textChannel.kord.getGuild(guildId) }?.name.orEmpty()
+            val guildName = textChannel.data.guildId.value?.let { guildId ->
+                textChannel.kord.getGuild(
+                    guildId
+                )
+            }?.name.orEmpty()
             val snapshot = playerEngine.snapshot()
             try {
                 it.edit {

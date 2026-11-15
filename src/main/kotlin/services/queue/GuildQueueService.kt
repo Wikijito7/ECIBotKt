@@ -28,10 +28,8 @@ class GuildQueueService(
         check(!closed.get()) { "The guild queue service is shutting down" }
         val voiceChannel = interaction.getMemberVoiceChannel(interaction.kord)
             ?: throw BotException.UserException.NotInVoiceChannelException()
-        val textChannel = interaction.channel.asChannelOrNull()
-            ?: throw BotException.UserException.NotInTextChannelException()
-        val guildId = interaction.data.guildId.value
-            ?: throw BotException.UserException.NotInGuildException()
+        val textChannel = interaction.requireTextChannel()
+        val guildId = interaction.requireGuildId()
 
         return getOrCreateLavaPlayerService(
             guildId = guildId,
@@ -111,3 +109,9 @@ class GuildQueueService(
         }
     }
 }
+
+private suspend fun ApplicationCommandInteraction.requireTextChannel(): MessageChannel =
+    channel.asChannelOrNull() ?: throw BotException.UserException.NotInTextChannelException()
+
+private fun ApplicationCommandInteraction.requireGuildId(): Snowflake =
+    data.guildId.value ?: throw BotException.UserException.NotInGuildException()

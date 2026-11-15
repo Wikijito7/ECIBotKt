@@ -19,7 +19,9 @@ class ShuffleCommand(
         commandBuilder.apply {
             input(
                 name = CommandName.Shuffle.commandName,
-                description = localizationService.getLocalizations(LocalizationKeys.SHUFFLE_COMMAND_DESCRIPTION).values.first()
+                description = localizationService.getLocalizations(
+                    LocalizationKeys.SHUFFLE_COMMAND_DESCRIPTION
+                ).values.first()
             ) {
                 descriptionLocalizations = localizationService.getLocalizations(LocalizationKeys.SHUFFLE_COMMAND_DESCRIPTION)
             }

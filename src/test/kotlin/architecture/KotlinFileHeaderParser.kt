@@ -141,9 +141,9 @@ private class HeaderLexer(private val source: String) {
     }
 
     private fun isAtFileAnnotation(): Boolean {
-        if (index >= source.length || source[index] != '@') return false
         var pos = index + 1
-        if (!source.startsWith("file", pos)) return false
+        val startsAnnotation = index < source.length && source[index] == '@' && source.startsWith("file", pos)
+        if (!startsAnnotation) return false
         pos += "file".length
         if (pos < source.length && isIdentifierPart(source[pos])) return false
         pos = skipTriviaAt(pos)
@@ -173,54 +173,39 @@ private class HeaderLexer(private val source: String) {
         val expectedClosers = ArrayDeque<Char>()
         var pos = position
         while (pos < source.length) {
-            when {
-                source.startsWith("//", pos) -> {
-                    pos = skipLineCommentAt(pos)
-                    continue
+            val skippedTo = skipNonStructuralTokenAt(pos)
+            if (skippedTo != pos) {
+                pos = skippedTo
+                continue
+            }
+            val current = source[pos]
+            when (current) {
+                '(', '[', '{' -> {
+                    expectedClosers.addLast(closingDelimiterFor(current))
+                    pos++
                 }
 
-                source.startsWith("/*", pos) -> {
-                    pos = skipBlockCommentAt(pos)
-                    continue
-                }
-
-                source.startsWith(RAW_STRING_DELIMITER, pos) -> {
-                    pos = skipRawStringAt(pos)
-                    continue
-                }
-
-                source[pos] == '"' -> {
-                    pos = skipStringAt(pos)
-                    continue
-                }
-
-                source[pos] == '\'' -> {
-                    pos = skipCharAt(pos)
-                    continue
-                }
-
-                else -> {
-                    val current = source[pos]
-                    when (current) {
-                        '(', '[', '{' -> {
-                            expectedClosers.addLast(closingDelimiterFor(current))
-                            pos++
-                        }
-
-                        ')', ']', '}' -> {
-                            if (expectedClosers.isNotEmpty() && expectedClosers.last() == current) {
-                                expectedClosers.removeLast()
-                            }
-                            pos++
-                            if (expectedClosers.isEmpty()) return pos
-                        }
-
-                        else -> pos++
+                ')', ']', '}' -> {
+                    if (expectedClosers.isNotEmpty() && expectedClosers.last() == current) {
+                        expectedClosers.removeLast()
                     }
+                    pos++
+                    if (expectedClosers.isEmpty()) return pos
                 }
+
+                else -> pos++
             }
         }
         return pos
+    }
+
+    private fun skipNonStructuralTokenAt(pos: Int): Int = when {
+        source.startsWith("//", pos) -> skipLineCommentAt(pos)
+        source.startsWith("/*", pos) -> skipBlockCommentAt(pos)
+        source.startsWith(RAW_STRING_DELIMITER, pos) -> skipRawStringAt(pos)
+        source[pos] == '"' -> skipStringAt(pos)
+        source[pos] == '\'' -> skipCharAt(pos)
+        else -> pos
     }
 
     private fun readDirectiveBody(): String {
@@ -228,12 +213,12 @@ private class HeaderLexer(private val source: String) {
         var inBacktick = false
         while (index < source.length) {
             when {
-                !inBacktick && source.startsWith("//", index) -> {
+                isLineCommentStart(inBacktick) -> {
                     advanceTo(skipLineCommentAt(index))
                     break
                 }
 
-                !inBacktick && source.startsWith("/*", index) -> {
+                isBlockCommentStart(inBacktick) -> {
                     advanceTo(skipBlockCommentAt(index))
                     body.append(' ')
                 }
@@ -244,12 +229,12 @@ private class HeaderLexer(private val source: String) {
                     advanceBy(1)
                 }
 
-                source[index] == '\n' || source[index] == '\r' -> {
+                isLineBreak() -> {
                     advanceBy(1)
                     break
                 }
 
-                !inBacktick && source[index] == ';' -> {
+                isStatementTerminator(inBacktick) -> {
                     // A semicolon terminates this header statement outside backtick identifiers;
                     // the caller continues with the next statement.
                     advanceBy(1)
@@ -264,6 +249,14 @@ private class HeaderLexer(private val source: String) {
         }
         return body.toString()
     }
+
+    private fun isLineCommentStart(inBacktick: Boolean): Boolean = !inBacktick && source.startsWith("//", index)
+
+    private fun isBlockCommentStart(inBacktick: Boolean): Boolean = !inBacktick && source.startsWith("/*", index)
+
+    private fun isLineBreak(): Boolean = source[index] == '\n' || source[index] == '\r'
+
+    private fun isStatementTerminator(inBacktick: Boolean): Boolean = !inBacktick && source[index] == ';'
 
     private fun parseImportBody(body: String, importLine: Int): KotlinImport {
         val statement = body.trim()

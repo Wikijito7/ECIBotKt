@@ -19,7 +19,6 @@ class ConfigService {
         config.validate()
         return config
     }
-
 }
 
 fun Config.validate() {

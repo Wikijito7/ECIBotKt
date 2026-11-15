@@ -55,7 +55,11 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
         return ImportPolicyDecision(
             allowed = allowed,
             vendor = vendor,
-            reason = if (allowed) allowedReason(module, vendor, packageName) else denialReason(module, vendor, packageName),
+            reason = if (allowed) {
+                allowedReason(module, packageName)
+            } else {
+                denialReason(module, vendor, packageName)
+            },
         )
     }
 
@@ -86,7 +90,7 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
         }
     }
 
-    private fun allowedReason(module: SourceModule, vendor: VendorFamily, packageName: String?): String =
+    private fun allowedReason(module: SourceModule, packageName: String?): String =
         when (module) {
             SourceModule.ROOT -> "Root Kord imports are grandfathered legacy in Phase 2"
 

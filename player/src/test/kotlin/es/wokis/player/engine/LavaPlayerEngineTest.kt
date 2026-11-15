@@ -43,7 +43,6 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -318,7 +317,7 @@ class LavaPlayerEngineTest {
     }
 
     @Test
-    fun `Given a blocking sync load When pause skip and stop run Then the actor stays responsive and no stale track starts`() = runBlocking {
+    fun `Given blocking sync load When pause skip and stop run Then the actor stays responsive and no stale track starts`() = runBlocking {
         val harness = EngineHarness()
         val ttsTrack = harness.track("tts")
         val started = CountDownLatch(1)
@@ -414,7 +413,7 @@ class LavaPlayerEngineTest {
     }
 
     @Test
-    fun `Given delayed async loads in one batch When callbacks complete later Then caller order and one ordering key are preserved`() = runBlocking {
+    fun `Given delayed async loads When callbacks complete later Then caller order and one ordering key are preserved`() = runBlocking {
         val harness = EngineHarness()
         val inputs = listOf("one", "two", "three")
         val tracks = inputs.associateWith { harness.track(it) }
@@ -714,7 +713,8 @@ class LavaPlayerEngineTest {
             title: String = identifier,
             positionProvider: () -> Long = { 0L },
         ): AudioTrack {
-            val info = AudioTrackInfo(title, "author", 1_000L, identifier, false, "https://example/$identifier", null, null)
+            val info =
+                AudioTrackInfo(title, "author", 1_000L, identifier, false, "https://example/$identifier", null, null)
             val sourceManager = mockk<AudioSourceManager> {
                 every { sourceName } returns "test"
             }

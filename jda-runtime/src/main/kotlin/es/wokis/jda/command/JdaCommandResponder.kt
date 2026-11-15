@@ -34,10 +34,10 @@ class JdaCommandResponder internal constructor(
                 ResponseState.IDLE -> Unit
 
                 ResponseState.DEFERRING, ResponseState.DEFERRED ->
-                    throw IllegalStateException("The interaction has already been deferred")
+                    error("The interaction has already been deferred")
 
                 ResponseState.RESPONDING, ResponseState.RESPONDED ->
-                    throw IllegalStateException("The interaction has already been answered")
+                    error("The interaction has already been answered")
             }
 
             state = ResponseState.DEFERRING
@@ -58,10 +58,10 @@ class JdaCommandResponder internal constructor(
                 ResponseState.IDLE, ResponseState.DEFERRED -> Unit
 
                 ResponseState.DEFERRING ->
-                    throw IllegalStateException("The interaction is being deferred and cannot be answered yet")
+                    error("The interaction is being deferred and cannot be answered yet")
 
                 ResponseState.RESPONDING, ResponseState.RESPONDED ->
-                    throw IllegalStateException("The interaction has already been answered")
+                    error("The interaction has already been answered")
             }
 
             state = ResponseState.RESPONDING

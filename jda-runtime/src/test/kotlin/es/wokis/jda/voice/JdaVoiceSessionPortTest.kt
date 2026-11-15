@@ -496,7 +496,7 @@ class JdaVoiceSessionPortTest {
         val fixture = Fixture()
         every { fixture.audioManager.openAudioConnection(any()) } answers {
             fixture.events += "open"
-            throw IllegalStateException("unexpected gateway failure")
+            error("unexpected gateway failure")
         }
 
         // When
@@ -536,7 +536,7 @@ class JdaVoiceSessionPortTest {
         val failing = object : AudioFrameSource {
             override val format: AudioFrameFormat = AudioFrameFormat.OPUS_20MS
             override val expectedFrameCount: Int = 1
-            override fun nextFrame(): AudioFrame? = throw IllegalStateException("source boom")
+            override fun nextFrame(): AudioFrame? = error("source boom")
             override fun close() = Unit
         }
 
@@ -920,7 +920,7 @@ class JdaVoiceSessionPortTest {
             every { audioManager.setConnectionListener(any()) } answers {
                 val newListener = firstArg<ConnectionListener?>()
                 if (newListener == null && failRestoreListener) {
-                    throw IllegalStateException("cannot restore the listener")
+                    error("cannot restore the listener")
                 }
                 listener = newListener
                 events += if (newListener == null) "listener:clear" else "listener:set"
@@ -940,7 +940,7 @@ class JdaVoiceSessionPortTest {
             every { audioManager.closeAudioConnection() } answers {
                 events += "close"
                 if (failClose) {
-                    throw IllegalStateException("cannot close the connection")
+                    error("cannot close the connection")
                 }
                 connected = false
                 listener?.onStatusChange(ConnectionStatus.NOT_CONNECTED)
@@ -956,7 +956,7 @@ class JdaVoiceSessionPortTest {
                     }
                     events += "handler:null"
                     if (failClearHandler) {
-                        throw IllegalStateException("cannot clear the sender")
+                        error("cannot clear the sender")
                     }
                     clearHandlerFailure?.let { throw it }
                 } else {

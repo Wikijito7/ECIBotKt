@@ -64,7 +64,7 @@ class GuildQueueServiceTest {
     }
 
     @Test
-    fun `Given dispatcher When getOrCreateLavaPlayerService is called for two different guilds Then create and return GuildLavaPlayer for each Guild`() {
+    fun `Given dispatcher When getOrCreateLavaPlayerService is called for two guilds Then return GuildLavaPlayer for each Guild`() {
         // Given
         val guildId1 = Snowflake(123)
         val guildId2 = Snowflake(456)
@@ -92,7 +92,7 @@ class GuildQueueServiceTest {
     }
 
     @Test
-    fun `Given dispatcher When getOrCreateLavaPlayerService is called for the same guild twice Then create and return the same GuildLavaPlayer`() {
+    fun `Given dispatcher When getOrCreateLavaPlayerService is called twice for the same guild Then return the same GuildLavaPlayer`() {
         // Given
         val guildId1 = Snowflake(123)
         val guildId2 = Snowflake(123)

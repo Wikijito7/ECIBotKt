@@ -1,5 +1,7 @@
 package es.wokis.commands.sounds
 
+import dev.kord.common.Locale
+import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.behavior.interaction.response.respond
@@ -8,8 +10,6 @@ import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.entity.interaction.ComponentInteraction
 import dev.kord.rest.builder.interaction.GlobalMultiApplicationCommandBuilder
 import dev.kord.rest.builder.message.EmbedBuilder
-import dev.kord.common.Locale
-import dev.kord.common.entity.Snowflake
 import es.wokis.commands.Command
 import es.wokis.commands.CommandName
 import es.wokis.commands.Component
@@ -23,6 +23,7 @@ import java.io.File
 
 private const val SOUNDS_PATH = "./audio"
 private const val MAX_SOUNDS_PER_COLUMN = 50
+private const val SOUNDS_COLUMNS = 3
 
 class SoundsCommand(
     private val localizationService: LocalizationService
@@ -46,14 +47,18 @@ class SoundsCommand(
         val discordLocale = interaction.guildLocale
         val sounds: List<File> = getSoundFilesSorted()
         val displaySounds = getDisplaySounds(sounds).sorted()
-        val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, guildId = guildId, discordLocale = discordLocale)
+        val title = localizationService.getString(
+            key = LocalizationKeys.SOUNDS_EMBED_TITLE,
+            guildId = guildId,
+            discordLocale = discordLocale
+        )
         val description = localizationService.getStringFormat(
             key = LocalizationKeys.SOUNDS_EMBED_DESCRIPTION,
             guildId = guildId,
             discordLocale = discordLocale,
             arguments = arrayOf(sounds.size)
         )
-        val columns = 3
+        val columns = SOUNDS_COLUMNS
         val currentPageContent = displaySounds.chunked(columns).firstOrNull()
         val pageCount = displaySounds.size / columns
         response.respond {
@@ -80,7 +85,7 @@ class SoundsCommand(
         val updatePageBy = if (interactionCustomId == ComponentsEnum.QUEUE_PREVIOUS.customId) -1 else 1
         val sounds: List<File> = getSoundFilesSorted()
         val displayQueue = getDisplaySounds(sounds)
-        val columns = 3
+        val columns = SOUNDS_COLUMNS
         val pageCount = displayQueue.size / columns
         val currentPage = interaction.message.embeds.firstOrNull()
             ?.footer?.text?.split(" ")?.get(1)?.toIntOrNull()?.plus(updatePageBy)
@@ -109,7 +114,9 @@ class SoundsCommand(
             val soundName = sound.nameWithoutExtension
             val separator = "$BLANK_SPACE$BLANK_SPACE\n"
             val appendDisplayTrackName = separator.plus(soundName)
-            if (currentString.split(separator).size < MAX_SOUNDS_PER_COLUMN && currentString.length + appendDisplayTrackName.length <= EmbedBuilder.Field.Limits.value) {
+            if (currentString.split(separator).size < MAX_SOUNDS_PER_COLUMN &&
+                currentString.length + appendDisplayTrackName.length <= EmbedBuilder.Field.Limits.value
+            ) {
                 currentString += appendDisplayTrackName
             } else {
                 displaySounds.add(currentString)
@@ -132,7 +139,11 @@ class SoundsCommand(
         pageCount: Int,
         columns: Int
     ) {
-        val title = localizationService.getString(key = LocalizationKeys.SOUNDS_EMBED_TITLE, guildId = guildId, discordLocale = discordLocale)
+        val title = localizationService.getString(
+            key = LocalizationKeys.SOUNDS_EMBED_TITLE,
+            guildId = guildId,
+            discordLocale = discordLocale
+        )
         val description = localizationService.getStringFormat(
             key = LocalizationKeys.SOUNDS_EMBED_DESCRIPTION,
             guildId = guildId,

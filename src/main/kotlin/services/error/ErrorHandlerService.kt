@@ -18,7 +18,7 @@ import java.time.format.DateTimeFormatter
 
 private const val MAX_DISCORD_MESSAGE_LENGTH = 2000
 private const val STACK_TRACE_MAX_LENGTH = 1900
-private const val ERROR_HEADER_LENGTH = 100
+private const val ELLIPSIS_LENGTH = 3
 private const val TIMESTAMP_PATTERN = "yyyy-MM-dd HH:mm:ss"
 private const val TRUNCATED_SUFFIX = "\n… (truncated)"
 
@@ -133,7 +133,11 @@ class ErrorHandlerService(
         interactionType: InteractionType
     ) {
         val guildInfo = if (interaction.data.guildId.value != null) "Guild(${interaction.data.guildId.value})" else "DM"
-        val context = "${interactionType.displayName} Error: ${commandName ?: "Unknown"} | User: ${interaction.user.username} (${interaction.user.id}) | Guild: $guildInfo"
+        val context = buildString {
+            append("${interactionType.displayName} Error: ${commandName ?: "Unknown"}")
+            append(" | User: ${interaction.user.username} (${interaction.user.id})")
+            append(" | Guild: $guildInfo")
+        }
         Log.error(context, exception)
     }
 
@@ -153,7 +157,7 @@ class ErrorHandlerService(
 
             // Truncate if necessary
             val truncatedMessage = if (errorMessage.length > MAX_DISCORD_MESSAGE_LENGTH) {
-                errorMessage.take(MAX_DISCORD_MESSAGE_LENGTH - 3) + "…"
+                errorMessage.take(MAX_DISCORD_MESSAGE_LENGTH - ELLIPSIS_LENGTH) + "…"
             } else {
                 errorMessage
             }

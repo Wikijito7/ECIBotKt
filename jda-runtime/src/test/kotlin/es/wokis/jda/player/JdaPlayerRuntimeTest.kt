@@ -4,7 +4,6 @@ import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.PlayerEngineFactory
 import es.wokis.player.engine.PlayerEngines
 import io.mockk.every
-import io.mockk.just
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.mockkObject

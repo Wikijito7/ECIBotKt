@@ -137,7 +137,7 @@ class JdaCommandRouterTest {
         val router = router(
             handler { _, commandResponder ->
                 commandResponder.respond(CommandResponse("partial"))
-                throw IllegalStateException("boom after response")
+                error("boom after response")
             },
             responder,
         )
@@ -191,7 +191,10 @@ class JdaCommandRouterTest {
 
         // Then
         assertEquals(listOf(FakeInteractionResponseDelegate.Operation.Defer(false)), delegate.defers)
-        assertEquals(listOf(FakeInteractionResponseDelegate.Operation.Reply(GENERIC_FAILURE_MESSAGE, true)), delegate.replies)
+        assertEquals(
+            listOf(FakeInteractionResponseDelegate.Operation.Reply(GENERIC_FAILURE_MESSAGE, true)),
+            delegate.replies
+        )
         assertTrue(delegate.edits.isEmpty())
         assertEquals(1, delegate.maxConcurrentOperations)
     }

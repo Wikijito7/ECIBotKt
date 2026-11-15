@@ -554,39 +554,62 @@ class JdaAudioSendHandlerTest {
             providers.forEach { it.join(5_000) }
 
             // Then: at most the single pre-linearized frame escapes, and it escapes only once.
-            assertNull(failure.get(), "iteration $iteration: a provider threw")
-            assertFalse(providers.any { it.isAlive }, "iteration $iteration: a provider did not finish")
-            assertEquals(0, unexpectedPayloads.get(), "iteration $iteration: a provider received foreign bytes")
-            assertTrue(
-                nonNullReturns.get() <= 1,
-                "iteration $iteration: ${nonNullReturns.get()} providers claimed a buffer; " +
-                    "close must share the claim critical section",
+            assertRacingCloseOutcome(
+                iteration,
+                handler,
+                source,
+                providers,
+                RacingCloseCounters(nonNullReturns, returnsAfterClose, unexpectedPayloads, failure),
             )
-            if (returnsAfterClose.get() > 0) {
-                assertEquals(
-                    1,
-                    nonNullReturns.get(),
-                    "iteration $iteration: a buffer returned after close returned must be the single pre-close claim",
-                )
-            }
-            assertEquals(
-                nonNullReturns.get(),
-                handler.framesProvided,
-                "iteration $iteration: framesProvided must match the buffers actually handed out",
-            )
-            // Every poll that begins after close returned is dead.
-            assertNull(handler.provide20MsAudio(), "iteration $iteration: a new claim survived close")
-            assertFalse(handler.canProvide(), "iteration $iteration: canProvide revived a closed handler")
-            assertNull(handler.provide20MsAudio(), "iteration $iteration: a repeated poll claimed a frame")
-            assertEquals(
-                nonNullReturns.get(),
-                handler.framesProvided,
-                "iteration $iteration: post-close polls grew framesProvided",
-            )
-            assertEquals(1, source.calls.get(), "iteration $iteration: a post-close poll read the source")
-            assertEquals(0, source.closeCalls.get(), "iteration $iteration: the handler closed the caller source")
         }
     }
+
+    private fun assertRacingCloseOutcome(
+        iteration: Int,
+        handler: JdaAudioSendHandler,
+        source: CountingFrameSource,
+        providers: List<Thread>,
+        counters: RacingCloseCounters,
+    ) {
+        assertNull(counters.failure.get(), "iteration $iteration: a provider threw")
+        assertFalse(providers.any { it.isAlive }, "iteration $iteration: a provider did not finish")
+        assertEquals(0, counters.unexpectedPayloads.get(), "iteration $iteration: a provider received foreign bytes")
+        assertTrue(
+            counters.nonNullReturns.get() <= 1,
+            "iteration $iteration: ${counters.nonNullReturns.get()} providers claimed a buffer; " +
+                "close must share the claim critical section",
+        )
+        if (counters.returnsAfterClose.get() > 0) {
+            assertEquals(
+                1,
+                counters.nonNullReturns.get(),
+                "iteration $iteration: a buffer returned after close returned must be the single pre-close claim",
+            )
+        }
+        assertEquals(
+            counters.nonNullReturns.get(),
+            handler.framesProvided,
+            "iteration $iteration: framesProvided must match the buffers actually handed out",
+        )
+        // Every poll that begins after close returned is dead.
+        assertNull(handler.provide20MsAudio(), "iteration $iteration: a new claim survived close")
+        assertFalse(handler.canProvide(), "iteration $iteration: canProvide revived a closed handler")
+        assertNull(handler.provide20MsAudio(), "iteration $iteration: a repeated poll claimed a frame")
+        assertEquals(
+            counters.nonNullReturns.get(),
+            handler.framesProvided,
+            "iteration $iteration: post-close polls grew framesProvided",
+        )
+        assertEquals(1, source.calls.get(), "iteration $iteration: a post-close poll read the source")
+        assertEquals(0, source.closeCalls.get(), "iteration $iteration: the handler closed the caller source")
+    }
+
+    private class RacingCloseCounters(
+        val nonNullReturns: AtomicInteger,
+        val returnsAfterClose: AtomicInteger,
+        val unexpectedPayloads: AtomicInteger,
+        val failure: AtomicReference<Throwable?>,
+    )
 
     @Test
     fun `Given a fatal failure parked before notifying waiters When close races it Then close publishes the same fatal`() =

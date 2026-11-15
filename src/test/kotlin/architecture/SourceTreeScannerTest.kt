@@ -30,7 +30,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given a real header import and fake import text When scanned Then only the real import is a violation`(@TempDir tempDir: Path) {
+    fun `Given a real header import and fake import text When scanned Then only the real import is a violation`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(
             tempDir,
@@ -62,7 +64,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given mismatched filesystem path and package When scanned Then the header package decides adapter allowance`(@TempDir tempDir: Path) {
+    fun `Given mismatched filesystem path and package When scanned Then the header package decides adapter allowance`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(
             tempDir,
@@ -99,7 +103,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given an unclassified Kotlin source root When scanned Then completeness fails until the root is configured`(@TempDir tempDir: Path) {
+    fun `Given an unclassified Kotlin source root When scanned Then completeness fails until the root is configured`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(tempDir, "known/src/main/kotlin/Known.kt", "package known\n")
         writeKotlinFile(tempDir, "unknown/src/main/kotlin/Unknown.kt", "package unknown\n")
@@ -133,7 +139,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given build outputs and Gradle scripts When scanned Then they are outside the source universe`(@TempDir tempDir: Path) {
+    fun `Given build outputs and Gradle scripts When scanned Then they are outside the source universe`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(tempDir, "app/src/main/kotlin/Valid.kt", "package app\n")
         writeKotlinFile(
@@ -164,7 +172,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given a build directory inside a source root When scanned Then it is scanned while real build outputs are ignored`(@TempDir tempDir: Path) {
+    fun `Given a build directory inside a source root When scanned Then it is scanned while real build outputs are ignored`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(
             tempDir,
@@ -193,7 +203,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given a build package under a custom src root When scanned Then it is never pruned and fails closed until configured`(@TempDir tempDir: Path) {
+    fun `Given a build package under a custom src root When scanned Then it is never pruned and fails closed until configured`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(
             tempDir,
@@ -237,7 +249,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given a configured custom Kotlin source root When scanned Then its build package is scanned and the vendor import is detected`(@TempDir tempDir: Path) {
+    fun `Given a configured custom Kotlin source root When scanned Then its build package is scanned and the vendor import is detected`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(
             tempDir,
@@ -266,7 +280,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given an unconfigured custom Kotlin source root with a build package When scanned Then completeness fails closed`(@TempDir tempDir: Path) {
+    fun `Given an unconfigured custom Kotlin source root with a build package When scanned Then completeness fails closed`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(
             tempDir,
@@ -289,7 +305,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given same line semicolon separated imports When scanned Then the second vendor import is a violation`(@TempDir tempDir: Path) {
+    fun `Given same line semicolon separated imports When scanned Then the second vendor import is a violation`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(
             tempDir,
@@ -340,7 +358,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given a temporary non-project root with a build directory When scanned Then its Kotlin is not silently pruned`(@TempDir tempDir: Path) {
+    fun `Given a temporary non-project root with a build directory When scanned Then its Kotlin is not silently pruned`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(
             tempDir,
@@ -364,7 +384,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given a custom output directory When scanned Then it fails closed unless explicitly registered`(@TempDir tempDir: Path) {
+    fun `Given a custom output directory When scanned Then it fails closed unless explicitly registered`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(tempDir, "app/src/main/kotlin/Valid.kt", "package app\n")
         writeKotlinFile(
@@ -433,7 +455,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given an overlapping scanned and excluded root When scanned Then the configuration fails closed`(@TempDir tempDir: Path) {
+    fun `Given an overlapping scanned and excluded root When scanned Then the configuration fails closed`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(tempDir, "src/main/kotlin/Overlap.kt", "package overlap\n")
         val overlappingExclusions = listOf(
@@ -464,7 +488,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given an excluded output root overlapping a scanned root When scanned Then both phases fail closed`(@TempDir tempDir: Path) {
+    fun `Given an excluded output root overlapping a scanned root When scanned Then both phases fail closed`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(tempDir, "app/kotlin/Overlap.kt", "package overlap\n")
         val overlappingOutputRoots = listOf(
@@ -497,7 +523,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given normal Phase 2 and Phase 6 configurations When scanned Then no overlap diagnostic is produced`(@TempDir tempDir: Path) {
+    fun `Given normal Phase 2 and Phase 6 configurations When scanned Then no overlap diagnostic is produced`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         val configurations = listOf(ImportBoundaryConfigs.phase2(), ImportBoundaryConfigs.phase6())
 
@@ -512,7 +540,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given the spike source root When scanning Phase 2 and Phase 6 Then exclusion and spike allowance differ`(@TempDir tempDir: Path) {
+    fun `Given the spike source root When scanning Phase 2 and Phase 6 Then exclusion and spike allowance differ`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(
             tempDir,
@@ -625,7 +655,9 @@ class SourceTreeScannerTest {
     }
 
     @Test
-    fun `Given violations in several files When scanned Then the report is deterministically ordered`(@TempDir tempDir: Path) {
+    fun `Given violations in several files When scanned Then the report is deterministically ordered`(
+        @TempDir tempDir: Path
+    ) {
         // Given
         writeKotlinFile(
             tempDir,

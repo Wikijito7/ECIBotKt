@@ -58,6 +58,7 @@ internal class OpusPacketFrameSource private constructor(
         const val WALKTHROUGH_TONE_RESOURCE = "/audio/walkthrough-tone-440.opuspackets"
 
         private const val LENGTH_PREFIX_BYTES = 2
+        private const val LENGTH_PREFIX_MASK = 0xFFFF
         private const val MAX_PACKET_BYTES = AudioFrame.MAX_OPUS_PACKET_BYTES
 
         /**
@@ -71,7 +72,7 @@ internal class OpusPacketFrameSource private constructor(
             loader: ClassLoader = OpusPacketFrameSource::class.java.classLoader,
         ): OpusPacketFrameSource {
             val stream = loader.getResourceAsStream(resource.removePrefix("/"))
-                ?: throw IllegalStateException("Missing walkthrough tone resource: $resource")
+                ?: error("Missing walkthrough tone resource: $resource")
             return stream.use { fromStream(it, resource) }
         }
 
@@ -83,14 +84,14 @@ internal class OpusPacketFrameSource private constructor(
             try {
                 while (buffer.remaining() > 0) {
                     if (buffer.remaining() < LENGTH_PREFIX_BYTES) {
-                        throw IllegalStateException("Truncated packet length in $resource")
+                        error("Truncated packet length in $resource")
                     }
-                    val length = buffer.short.toInt() and 0xFFFF
+                    val length = buffer.short.toInt() and LENGTH_PREFIX_MASK
                     if (length !in 1..MAX_PACKET_BYTES) {
-                        throw IllegalStateException("Invalid Opus packet length $length in $resource")
+                        error("Invalid Opus packet length $length in $resource")
                     }
                     if (buffer.remaining() < length) {
-                        throw IllegalStateException("Truncated Opus packet in $resource")
+                        error("Truncated Opus packet in $resource")
                     }
                     val payload = ByteArray(length)
                     buffer.get(payload)
@@ -101,7 +102,7 @@ internal class OpusPacketFrameSource private constructor(
             }
 
             if (frames.isEmpty()) {
-                throw IllegalStateException("The walkthrough tone resource is empty: $resource")
+                error("The walkthrough tone resource is empty: $resource")
             }
             return OpusPacketFrameSource(frames)
         }

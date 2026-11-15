@@ -6,7 +6,6 @@ import dev.kord.core.entity.interaction.AutoCompleteInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import es.wokis.commands.radio.subcommands.play.RadioPlayCommand
 import es.wokis.data.radio.RadioDTO
-import es.wokis.data.response.ErrorType
 import es.wokis.data.response.RemoteResponse
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService

@@ -39,7 +39,7 @@ internal class JdaPlayerMessagePort(
 
     private fun requireTextChannel(channelId: ChannelId): TextChannel =
         jda.getTextChannelById(channelId.toJdaId())
-            ?: throw IllegalStateException("The requested player text channel is not available to the bot")
+            ?: error("The requested player text channel is not available to the bot")
 }
 
 private fun ChannelId.toJdaId(): Long = value.toJdaLong("Channel id")

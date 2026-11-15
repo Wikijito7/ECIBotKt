@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test
 import java.io.IOException
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class KokoroAudioTrackTest {
@@ -148,7 +147,17 @@ class KokoroAudioTrackTest {
     @Test
     fun `Given a KokoroAudioTrack When track is shallow cloned Then every Kokoro field and the source manager are preserved`() {
         // Given
-        val trackInfo = AudioTrackInfo("TTS Message: Hello", "Kokoro", Long.MAX_VALUE, "kokoro://?text=Hello", true, "kokoro://?text=Hello", null, null)
+        val trackInfo =
+            AudioTrackInfo(
+                "TTS Message: Hello",
+                "Kokoro",
+                Long.MAX_VALUE,
+                "kokoro://?text=Hello",
+                true,
+                "kokoro://?text=Hello",
+                null,
+                null
+            )
         val sourceManager = mockk<KokoroSourceManager>()
         val track = KokoroAudioTrack(trackInfo, sourceManager).apply {
             baseUrl = "http://localhost:8880"
@@ -175,7 +184,17 @@ class KokoroAudioTrackTest {
     @Test
     fun `Given a KokoroAudioTrack When process executes Then the POST body is built and the IO failure propagates`() {
         // Given
-        val trackInfo = AudioTrackInfo("TTS Message: Hello", "Kokoro", Long.MAX_VALUE, "kokoro://?text=Hello", true, "kokoro://?text=Hello", null, null)
+        val trackInfo =
+            AudioTrackInfo(
+                "TTS Message: Hello",
+                "Kokoro",
+                Long.MAX_VALUE,
+                "kokoro://?text=Hello",
+                true,
+                "kokoro://?text=Hello",
+                null,
+                null
+            )
         val request = slot<HttpUriRequest>()
         val http = mockk<HttpInterface> {
             every { execute(capture(request)) } throws IOException("boom")

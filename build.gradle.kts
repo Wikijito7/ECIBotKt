@@ -1,5 +1,14 @@
+import io.gitlab.arturbosch.detekt.Detekt
+import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+import java.io.IOException
+import java.util.concurrent.Callable
+import javax.xml.XMLConstants
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.parsers.ParserConfigurationException
 import org.jetbrains.gradle.ext.settings
 import org.jetbrains.gradle.ext.taskTriggers
+import org.w3c.dom.Document
+import org.xml.sax.SAXException
 
 plugins {
     application
@@ -8,6 +17,7 @@ plugins {
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.plugin.serialization)
     alias(libs.plugins.idea.ext)
+    alias(libs.plugins.detekt)
 }
 
 group = "es.wokis"
@@ -90,6 +100,147 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.kotlin.coroutines.test)
     testImplementation(libs.junit.parametrized)
+
+    // Detekt formatting ruleset (ktlint-backed formatting rules)
+    detektPlugins(libs.detekt.formatting)
+}
+
+/*
+ * Detekt is applied to the root project and to every included module. The formatting ruleset is
+ * published as a separate artifact, so each project adds it to its own `detektPlugins`
+ * configuration. Build scripts (`*.kts`) are not part of Detekt's Kotlin source sets and are
+ * therefore not scanned by this gate.
+ */
+val detektConfigFile = layout.projectDirectory.file("config/detekt/detekt.yml")
+
+fun Project.configureDetekt(configFile: File) {
+    extensions.configure<DetektExtension> {
+        buildUponDefaultConfig = true
+        config.setFrom(configFile)
+        // The gate reports findings and never rewrites sources, locally or in CI.
+        autoCorrect = false
+        ignoreFailures = false
+        parallel = true
+        source.setFrom("src/main/kotlin", "src/test/kotlin")
+    }
+
+    tasks.withType<Detekt>().configureEach {
+        jvmTarget = "21"
+        reports {
+            html.required.set(true)
+            md.required.set(true)
+            xml.required.set(true)
+            sarif.required.set(true)
+            txt.required.set(false)
+        }
+    }
+}
+
+configureDetekt(detektConfigFile.asFile)
+
+subprojects {
+    plugins.withId("io.gitlab.arturbosch.detekt") {
+        configureDetekt(detektConfigFile.asFile)
+    }
+}
+
+/*
+ * Repository-wide Detekt budget.
+ *
+ * `build.maxIssues` in `config/detekt/detekt.yml` is applied by Detekt per Gradle project, so on its
+ * own it cannot enforce the repository-wide finding ceiling. This task runs every project's `detekt`
+ * task and fails when the combined number of findings in their XML reports exceeds the same budget.
+ * Keep it as the blocking gate: `check`/`build` and the Detekt workflow depend on it.
+ *
+ * The scope is derived from the build instead of a hand-maintained module list: the root project plus
+ * every subproject that applies the Detekt plugin, so a module joins the repository-wide budget as
+ * soon as it is Detekt-enabled. Detekt writes a Checkstyle-style XML report, which is read with a
+ * hardened standard DOM parser (secure processing on, DTDs and external entities disabled) rather
+ * than text matching, so entity escaping and formatting cannot skew the count.
+ */
+val detektFindingBudget = 40
+
+fun detektScopedProjects(): List<Project> = buildList {
+    add(project)
+    addAll(subprojects.filter { scopedProject -> scopedProject.plugins.hasPlugin("io.gitlab.arturbosch.detekt") })
+}
+
+fun Project.detektBudgetLabel(): String = if (this == rootProject) "root" else path
+
+fun parseDetektReport(reportFile: File): Document {
+    val factory = DocumentBuilderFactory.newInstance().apply {
+        setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+        setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+        setFeature("http://xml.org/sax/features/external-general-entities", false)
+        setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+        isXIncludeAware = false
+        isExpandEntityReferences = false
+    }
+    return try {
+        factory.newDocumentBuilder().parse(reportFile)
+    } catch (exception: ParserConfigurationException) {
+        throw GradleException(
+            "Cannot configure the secure XML parser for Detekt report '${reportFile.path}': ${exception.message}",
+            exception,
+        )
+    } catch (exception: SAXException) {
+        throw GradleException(
+            "Cannot parse Detekt report '${reportFile.path}': ${exception.message}. " +
+                "Re-run `./gradlew detektBudget` to regenerate it.",
+            exception,
+        )
+    } catch (exception: IOException) {
+        throw GradleException(
+            "Cannot read Detekt report '${reportFile.path}': ${exception.message}",
+            exception,
+        )
+    }
+}
+
+val detektBudget by tasks.registering {
+    group = "verification"
+    description = "Fails when the combined Detekt findings of the root project and every Detekt-enabled subproject exceed $detektFindingBudget."
+    // Resolved lazily: this root script is evaluated before subproject scripts apply the Detekt plugin.
+    dependsOn(Callable { detektScopedProjects().map { scopedProject -> scopedProject.tasks.named("detekt") } })
+
+    doLast {
+        val reports = detektScopedProjects().associateWith { scopedProject ->
+            scopedProject.layout.buildDirectory.file("reports/detekt/detekt.xml").get().asFile
+        }
+        val missingReports = reports.filterValues { report -> !report.isFile }
+        if (missingReports.isNotEmpty()) {
+            throw GradleException(
+                "Missing Detekt XML report(s): " +
+                    missingReports.entries.joinToString { (scopedProject, report) ->
+                        "'${scopedProject.detektBudgetLabel()}' (${report.path})"
+                    } +
+                    ". Run the aggregate gate so every project's detekt task runs first: " +
+                    "`./gradlew detektBudget`.",
+            )
+        }
+
+        val findingsByProject = reports.mapValues { (_, report) ->
+            parseDetektReport(report).getElementsByTagName("error").length
+        }
+        val findings = findingsByProject.values.sum()
+        val breakdown = findingsByProject.entries.joinToString { (scopedProject, projectFindings) ->
+            "${scopedProject.detektBudgetLabel()}=$projectFindings"
+        }
+        if (findings > detektFindingBudget) {
+            throw GradleException(
+                "Repository-wide Detekt budget exceeded: $findings findings (limit $detektFindingBudget). " +
+                    "Per project: $breakdown. " +
+                    "Fix the findings instead of raising the budget, adding a baseline or disabling rules.",
+            )
+        }
+        logger.lifecycle(
+            "Detekt repository-wide budget OK: $findings/$detektFindingBudget findings ($breakdown).",
+        )
+    }
+}
+
+tasks.named("check") {
+    dependsOn(detektBudget)
 }
 
 tasks.test {

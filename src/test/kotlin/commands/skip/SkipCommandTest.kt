@@ -3,7 +3,6 @@ package commands.skip
 import commands.discordMessage
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
-import dev.kord.common.entity.optional.OptionalSnowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction

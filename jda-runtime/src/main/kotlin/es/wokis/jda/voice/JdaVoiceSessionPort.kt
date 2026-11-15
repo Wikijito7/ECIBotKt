@@ -84,6 +84,8 @@ internal class JdaVoiceSessionPort(
         }
     }
 
+    private fun throwSessionLost(reason: String): Nothing = throw VoiceConnectionException(reason)
+
     private fun resolveTarget(context: CommandContext): Target {
         val guildId = context.guildId ?: return Target.Rejected(VoiceRequestRejection.DIRECT_MESSAGE)
         val guild = jda.getGuildById(guildId.toJdaId())
@@ -149,7 +151,7 @@ internal class JdaVoiceSessionPort(
             waiter.markPlaying()
 
             when (val signal = awaitPlaybackSignal(handler, waiter, toneTimeoutMillis)) {
-                is PlaybackSignal.Terminal -> throw VoiceConnectionException(signal.reason)
+                is PlaybackSignal.Terminal -> throwSessionLost(signal.reason)
                 is PlaybackSignal.Frames -> outcome = framesOutcome(signal, handler, waiter, source)
             }
         } catch (cancellation: CancellationException) {

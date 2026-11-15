@@ -89,7 +89,7 @@ class LocaleCommandTest {
     }
 
     @Test
-    fun `Given guildId above Kord max supported snowflake When onExecute is called Then use case receives max supported signed snowflake`() = runTest {
+    fun `Given guildId above Kord max supported snowflake When onExecute Then use case receives max signed snowflake`() = runTest {
         // Given
         // Kord clamps Snowflake values to 0..Long.MAX_VALUE, so ULong.MAX_VALUE is not preserved
         val rawGuildId = Snowflake(ULong.MAX_VALUE)

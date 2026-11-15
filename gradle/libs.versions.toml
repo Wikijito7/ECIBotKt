@@ -1,4 +1,5 @@
 [versions]
+detekt = "1.23.8"
 jacoco = "0.8.12"
 kord = "feature-dave-support-SNAPSHOT"
 kotlin = "2.3.10"
@@ -69,9 +70,11 @@ libdaveV2NativesDarwin = { module = "moe.kyokobot.libdave:natives-darwin", versi
 libdaveV2NativesLinuxX64 = { module = "moe.kyokobot.libdave:natives-linux-x86-64", version.ref = "libdaveV2" }
 jda = { module = "net.dv8tion:JDA", version.ref = "jda" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 plugin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
 idea-ext = {id = "org.jetbrains.gradle.plugin.idea-ext", version.ref = "idea-ext"}
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

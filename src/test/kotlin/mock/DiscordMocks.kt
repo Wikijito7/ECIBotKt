@@ -11,7 +11,6 @@ import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteract
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.core.supplier.EntitySupplyStrategy
-import dev.kord.rest.builder.message.create.UserMessageCreateBuilder
 import dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest
 import io.mockk.coEvery
 import io.mockk.coJustRun
