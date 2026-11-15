@@ -131,10 +131,10 @@ class NextCommandTest {
                 every { guildId.value } returns null
             }
         }
-        val mockTrack: TrackBO = mockk(relaxed = true)
+        val mockTrack: TrackBO = TrackBO(identifier = "id", title = "title", author = "author")
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
             every { isQueueEmpty() } returns false
-            every { moveTrackToNext(searchTerm) } returns mockTrack
+            coEvery { moveTrackToNext(searchTerm) } returns mockTrack
         }
 
         coEvery {
@@ -183,7 +183,7 @@ class NextCommandTest {
         }
         val lavaPlayerService = mockk<GuildLavaPlayerService> {
             every { isQueueEmpty() } returns false
-            every { moveTrackToNext(searchTerm) } returns null
+            coEvery { moveTrackToNext(searchTerm) } returns null
             justRun { loadAndPlay(any(), any()) }
         }
 

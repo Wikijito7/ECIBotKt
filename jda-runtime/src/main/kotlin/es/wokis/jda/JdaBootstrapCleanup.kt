@@ -1,13 +1,16 @@
 package es.wokis.jda
 
+import es.wokis.jda.player.JdaPlayerRuntime
 import es.wokis.jda.voice.disconnectVoiceConnections
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDA
 import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 
 private val LOG = LoggerFactory.getLogger("es.wokis.jda.JdaBootstrapCleanup")
 
+private const val PLAYER_RUNTIME_STEP = "player-runtime"
 private const val VOICE_DISCONNECT_STEP = "voice-disconnect"
 private const val ROUTER_STEP = "command-router"
 private const val SHUTDOWN_HOOK_STEP = "shutdown-hook"
@@ -39,6 +42,8 @@ internal data class BootstrapCleanupTargets(
     val jda: JDA?,
     val router: AutoCloseable?,
     val shutdownHook: Thread?,
+    /** Shared player engines and long-lived guild voice adapters, when created. */
+    val playerRuntime: AutoCloseable? = null,
 )
 
 /**
@@ -124,6 +129,20 @@ internal fun runBootstrapCleanup(
 internal fun defaultBootstrapCleanupSteps(
     targets: BootstrapCleanupTargets,
 ): List<BootstrapCleanupStep> = buildList {
+    targets.playerRuntime?.let { runtime ->
+        add(
+            BootstrapCleanupStep(PLAYER_RUNTIME_STEP) {
+                // Cleanup runs on the bootstrap/shutdown thread, never a JDA event or audio thread.
+                // The production runtime needs an awaited, suspend teardown; the fallback keeps
+                // lightweight test doubles working through AutoCloseable.
+                if (runtime is JdaPlayerRuntime) {
+                    runBlocking { runtime.shutdown() }
+                } else {
+                    runtime.close()
+                }
+            }
+        )
+    }
     targets.jda?.let { client ->
         add(BootstrapCleanupStep(VOICE_DISCONNECT_STEP) { disconnectVoiceConnections(client) })
     }

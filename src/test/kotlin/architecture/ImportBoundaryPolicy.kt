@@ -9,6 +9,7 @@ enum class SourceModule(val label: String) {
     ROOT("root"),
     CORE("core"),
     LOCALE_PERSISTENCE("locale-persistence"),
+    PLAYER("player"),
     JDA_RUNTIME("jda-runtime"),
     SPIKE("spike/jda-dave"),
 }
@@ -64,6 +65,7 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
 
             SourceModule.CORE,
             SourceModule.LOCALE_PERSISTENCE,
+            SourceModule.PLAYER,
             -> false
 
             SourceModule.JDA_RUNTIME -> vendor != VendorFamily.KORD && isJdaAdapterPackage(packageName)
@@ -75,6 +77,7 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
             SourceModule.ROOT,
             SourceModule.CORE,
             SourceModule.LOCALE_PERSISTENCE,
+            SourceModule.PLAYER,
             -> false
 
             SourceModule.JDA_RUNTIME -> vendor != VendorFamily.KORD && isJdaAdapterPackage(packageName)
@@ -93,6 +96,7 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
 
             SourceModule.CORE,
             SourceModule.LOCALE_PERSISTENCE,
+            SourceModule.PLAYER,
             -> "Vendor import allowed"
         }
 
@@ -102,6 +106,7 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
 
             SourceModule.CORE,
             SourceModule.LOCALE_PERSISTENCE,
+            SourceModule.PLAYER,
             -> "Gateway-free module ${module.label} may not import ${vendor.displayPrefix} in mode $mode"
 
             SourceModule.JDA_RUNTIME -> if (vendor == VendorFamily.KORD) {

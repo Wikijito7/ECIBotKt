@@ -9,6 +9,7 @@ import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.jda.command.JdaCommandRouter
 import es.wokis.jda.command.JdaGuildCommandRegistrar
 import es.wokis.jda.command.JdaLocaleAutocompleteListener
+import es.wokis.jda.player.JdaPlayerRuntime
 import es.wokis.jda.voice.JdaVoiceSessionPort
 import es.wokis.jda.voice.OpusPacketFrameSource
 import es.wokis.localization.GuildLocalizationService
@@ -86,12 +87,17 @@ internal fun runBootstrap(
     var router: JdaCommandRouter? = null
     var jda: JDA? = null
     var shutdownHook: Thread? = null
+    var playerRuntime: JdaPlayerRuntime? = null
     var primaryFailure: Throwable? = null
 
     try {
         // Fail fast before any gateway login: no passthrough fallback is allowed.
         val client = buildGatewayClient(config, davePreflight, clientFactory)
         jda = client
+
+        // Manual wiring for the isolated runtime (no Koin): one shared player engine and one
+        // long-lived voice adapter per guild, created lazily when a player command arrives.
+        playerRuntime = JdaPlayerRuntime()
 
         val walkthrough = WalkthroughCommand()
         val voiceWalkthrough = JdaVoiceWalkthroughCommand(
@@ -135,7 +141,12 @@ internal fun runBootstrap(
         primaryFailure = error
     }
 
-    val targets = BootstrapCleanupTargets(jda = jda, router = router, shutdownHook = shutdownHook)
+    val targets = BootstrapCleanupTargets(
+        jda = jda,
+        router = router,
+        shutdownHook = shutdownHook,
+        playerRuntime = playerRuntime,
+    )
     val cleanupReport = runBootstrapCleanupWithFallback(cleanupStepsFactory, targets)
 
     return finishBootstrap(primaryFailure, cleanupReport)

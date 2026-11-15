@@ -1,6 +1,5 @@
 package es.wokis.commands.player
 
-import com.sedmelluq.discord.lavaplayer.tools.Units.DURATION_MS_UNKNOWN
 import dev.kord.common.Color
 import dev.kord.common.Locale
 import dev.kord.common.entity.ButtonStyle
@@ -12,6 +11,7 @@ import dev.kord.rest.builder.message.MessageBuilder
 import dev.kord.rest.builder.message.embed
 import es.wokis.commands.ComponentsEnum
 import es.wokis.localization.LocalizationKeys
+import es.wokis.player.engine.model.PlayerTrack
 import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.getDisplayTrackName
@@ -37,12 +37,12 @@ suspend fun MessageBuilder.createPlayerEmbed(
             arguments = arrayOf(guildName)
         )
         thumbnail {
-            url = currentTrack?.customFavicon ?: currentTrack?.audioTrack?.info?.artworkUrl.orEmpty()
+            url = currentTrack?.customFavicon ?: currentTrack?.artworkUrl.orEmpty()
         }
         color = Color(0x01B05B)
         currentTrack?.let {
-            val duration = it.audioTrack.duration.toDisplayDuration()
-            val currentSeek = it.audioTrack.position.toDisplayDuration()
+            val duration = it.durationMillis.toDisplayDuration()
+            val currentSeek = it.positionMillis.toDisplayDuration()
             field {
                 name = localizationService.getString(key = LocalizationKeys.PLAYER_CURRENT_TRACK, guildId = guildId, discordLocale = discordLocale)
                 value = it.getTrackName()
@@ -51,15 +51,15 @@ suspend fun MessageBuilder.createPlayerEmbed(
                 // TODO: Take a look in the future to solve discord update request error or delete it
                 field {
                     name = localizationService.getString(key = LocalizationKeys.PLAYER_PLAYBACK_POSITION, guildId = guildId, discordLocale = discordLocale)
-                    value = "`$currentSeek ${generatePlayerPosition(it.audioTrack.position, it.audioTrack.duration)} $duration`"
+                    value = "`$currentSeek ${generatePlayerPosition(it.positionMillis, it.durationMillis)} $duration`"
                 }
             }
             field {
                 name = localizationService.getString(key = LocalizationKeys.PLAYER_TRACK_DURATION, guildId = guildId, discordLocale = discordLocale)
                 value = duration.takeUnless {
-                    currentTrack.audioTrack.duration == DURATION_MS_UNKNOWN
+                    currentTrack.durationMillis == PlayerTrack.UNKNOWN_DURATION
                 } ?: localizationService.getString(
-                    key = if (currentTrack.audioTrack.info.isStream) LocalizationKeys.PLAYER_TRACK_DURATION_STREAM else LocalizationKeys.PLAYER_TRACK_DURATION_UNKNOWN,
+                    key = if (currentTrack.isStream) LocalizationKeys.PLAYER_TRACK_DURATION_STREAM else LocalizationKeys.PLAYER_TRACK_DURATION_UNKNOWN,
                     guildId = guildId,
                     discordLocale = discordLocale
                 )
@@ -88,7 +88,7 @@ suspend fun MessageBuilder.createPlayerEmbed(
 
 private fun TrackBO.getTrackName() = customName?.let {
     "**$customName**"
-} ?: "**${audioTrack.info.title}**\n${audioTrack.info.author}"
+} ?: "**$title**\n$author"
 
 private fun generatePlayerPosition(currentSeek: Long, maxDuration: Long): String {
     val safeMaxDuration = maxDuration.takeUnless { it == 0L } ?: 1
@@ -154,7 +154,7 @@ private suspend fun List<TrackBO>.getDisplayQueue(localizationService: Localizat
     val secondTrack = getOrNull(1)
     val thirdTrack = getOrNull(2)
     val queueRemaining = (size - 3).takeIf { it > 0 }
-    val duration = filterNot { it.audioTrack.info.isStream || it.audioTrack.duration == DURATION_MS_UNKNOWN }.sumOf { it.audioTrack.duration }.toDisplayDuration()
+    val duration = filterNot { it.isStream || it.durationMillis == PlayerTrack.UNKNOWN_DURATION }.sumOf { it.durationMillis }.toDisplayDuration()
     return firstTrack?.getDisplayNameAndDuration(localizationService, guildId, discordLocale)
         ?.plus(secondTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, guildId, discordLocale)}" }.orEmpty())
         ?.plus(thirdTrack?.let { "\n${it.getDisplayNameAndDuration(localizationService, guildId, discordLocale)}" }.orEmpty())
@@ -183,8 +183,8 @@ private suspend fun List<TrackBO>.getDisplayQueue(localizationService: Localizat
 }
 
 private suspend fun TrackBO.getDisplayNameAndDuration(localizationService: LocalizationService, guildId: Snowflake?, discordLocale: Locale?): String {
-    val displayDuration = if (audioTrack.duration != DURATION_MS_UNKNOWN) {
-        audioTrack.duration.toDisplayDuration()
+    val displayDuration = if (durationMillis != PlayerTrack.UNKNOWN_DURATION) {
+        durationMillis.toDisplayDuration()
     } else {
         localizationService.getString(LocalizationKeys.PLAYER_TRACK_DURATION_STREAM, guildId, discordLocale)
     }

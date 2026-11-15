@@ -1,7 +1,9 @@
 package commands.shuffle
 
+import commands.discordMessage
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
+import dev.kord.common.entity.optional.OptionalSnowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
@@ -33,7 +35,30 @@ class ShuffleCommandTest {
             }
             every { defaultSupplier } returns mockk()
             every { rest } returns mockk {
-                every { interaction } returns mockk(relaxed = true)
+                every { interaction } returns mockk {
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                }
+                every { channel } returns mockk {
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
+                    } returns discordMessage()
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
+                    } returns discordMessage()
+                }
             }
         }
         val interaction = mockk<ChatInputCommandInteraction> {
@@ -49,7 +74,7 @@ class ShuffleCommandTest {
             every { token } returns "testToken"
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
-            justRun { shuffle() }
+            coJustRun { shuffle() }
         }
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
@@ -59,7 +84,7 @@ class ShuffleCommandTest {
         shuffleCommand.onExecute(interaction, response)
 
         // Then
-        verify(exactly = 1) {
+        coVerify(exactly = 1) {
             guildLavaPlayerService.shuffle()
         }
     }
@@ -73,7 +98,30 @@ class ShuffleCommandTest {
             }
             every { defaultSupplier } returns mockk()
             every { rest } returns mockk {
-                every { interaction } returns mockk(relaxed = true)
+                every { interaction } returns mockk {
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                }
+                every { channel } returns mockk {
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
+                    } returns discordMessage()
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
+                    } returns discordMessage()
+                }
             }
         }
         val interaction = mockk<ChatInputCommandInteraction> {
@@ -89,7 +137,7 @@ class ShuffleCommandTest {
             every { token } returns "testToken"
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
-            justRun { shuffle() }
+            coJustRun { shuffle() }
         }
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } throws IllegalStateException()
         coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
@@ -99,7 +147,7 @@ class ShuffleCommandTest {
             shuffleCommand.onExecute(interaction, response)
         }
 
-        verify(exactly = 0) {
+        coVerify(exactly = 0) {
             guildLavaPlayerService.shuffle()
         }
     }

@@ -23,6 +23,7 @@ import es.wokis.services.processor.MessageProcessorService
 import es.wokis.services.queue.GuildQueueService
 import es.wokis.utils.Log
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 
 @OptIn(PrivilegedIntent::class)
@@ -35,13 +36,27 @@ class Bot(
 
     suspend fun start() {
         val bot = Kord(token = configService.config.discordBotToken)
+        val shutdownHook = Thread(
+            { runBlocking { guildQueueService.shutdown() } },
+            "player-shutdown",
+        )
+        Runtime.getRuntime().addShutdownHook(shutdownHook)
 
-        setUpEvents(bot)
-        setUpCommands(bot)
+        try {
+            setUpEvents(bot)
+            setUpCommands(bot)
 
-        bot.login {
-            presence = getPresence(debugMode = configService.config.debug)
-            intents = Intents.ALL
+            bot.login {
+                presence = getPresence(debugMode = configService.config.debug)
+                intents = Intents.ALL
+            }
+        } finally {
+            try {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook)
+            } catch (_: IllegalStateException) {
+                // The JVM is already shutting down; the hook has done or will do the cleanup.
+            }
+            guildQueueService.shutdown()
         }
     }
 

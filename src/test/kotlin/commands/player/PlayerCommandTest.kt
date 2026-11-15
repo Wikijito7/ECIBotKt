@@ -1,7 +1,9 @@
 package commands.player
 
+import commands.discordMessage
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
+import dev.kord.common.entity.optional.OptionalSnowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.entity.Message
@@ -9,8 +11,6 @@ import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo
 import es.wokis.commands.ComponentsEnum
 import es.wokis.commands.player.PlayerCommand
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
@@ -24,14 +24,13 @@ import org.junit.jupiter.api.Test
 import services.player.result.PlayerChannelResult
 import kotlin.test.Ignore
 
-private fun createMockTrackBO(): TrackBO {
-    val audioTrack = mockk<AudioTrack> {
-        every { info } returns AudioTrackInfo("title", "author", 0L, "", true, "", "", "")
-        every { duration } returns 0L
-        every { position } returns 0L
-    }
-    return TrackBO(audioTrack = audioTrack)
-}
+private fun createMockTrackBO(): TrackBO = TrackBO(
+    identifier = "title",
+    title = "title",
+    author = "author",
+    durationMillis = 0L,
+    isStream = true,
+)
 
 class PlayerCommandTest {
 
@@ -57,7 +56,30 @@ class PlayerCommandTest {
                 every { name } returns "TestGuild"
             }
             every { rest } returns mockk {
-                every { interaction } returns mockk(relaxed = true)
+                every { interaction } returns mockk {
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                }
+                every { channel } returns mockk {
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
+                    } returns discordMessage()
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
+                    } returns discordMessage()
+                }
             }
         }
         val interaction = mockk<ChatInputCommandInteraction> {
@@ -78,8 +100,8 @@ class PlayerCommandTest {
             every { isPaused() } returns false
             justRun { savePlayerMessage(any()) }
         }
-        val mockMessage = mockk<Message>(relaxed = true)
-        val mockChannel = mockk<TextChannel>(relaxed = true) {
+        val mockMessage = mockk<Message>()
+        val mockChannel = mockk<TextChannel> {
             every { id } returns Snowflake(123456789)
         }
 
@@ -120,7 +142,30 @@ class PlayerCommandTest {
                 every { name } returns "TestGuild"
             }
             every { rest } returns mockk {
-                every { interaction } returns mockk(relaxed = true)
+                every { interaction } returns mockk {
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                }
+                every { channel } returns mockk {
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
+                    } returns discordMessage()
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
+                    } returns discordMessage()
+                }
             }
         }
         val interaction = mockk<ButtonInteraction> {
@@ -132,13 +177,17 @@ class PlayerCommandTest {
             every { component } returns mockk {
                 every { customId } returns ComponentsEnum.PLAYER_RESUME.customId
             }
-            every { message } returns mockk(relaxed = true)
+            every { message } returns mockk {
+                every { kord } returns mockKord
+                every { channelId } returns Snowflake(123456789)
+                every { id } returns Snowflake(987654321)
+            }
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             every { getQueue() } returns listOf()
             every { getCurrentPlayingTrack() } returns createMockTrackBO()
             every { isPaused() } returns false
-            justRun { resume() }
+            coJustRun { resume() }
         }
 
         coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
@@ -149,7 +198,7 @@ class PlayerCommandTest {
         playerCommand.onInteract(interaction)
 
         // Then
-        verify(exactly = 1) {
+        coVerify(exactly = 1) {
             guildLavaPlayerService.getQueue()
             guildLavaPlayerService.getCurrentPlayingTrack()
             guildLavaPlayerService.isPaused()
@@ -169,7 +218,30 @@ class PlayerCommandTest {
                 every { name } returns "TestGuild"
             }
             every { rest } returns mockk {
-                every { interaction } returns mockk(relaxed = true)
+                every { interaction } returns mockk {
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                }
+                every { channel } returns mockk {
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
+                    } returns discordMessage()
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
+                    } returns discordMessage()
+                }
             }
         }
         val interaction = mockk<ButtonInteraction> {
@@ -181,13 +253,17 @@ class PlayerCommandTest {
             every { component } returns mockk {
                 every { customId } returns ComponentsEnum.PLAYER_SKIP.customId
             }
-            every { message } returns mockk(relaxed = true)
+            every { message } returns mockk {
+                every { kord } returns mockKord
+                every { channelId } returns Snowflake(123456789)
+                every { id } returns Snowflake(987654321)
+            }
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             every { getQueue() } returns listOf()
             every { getCurrentPlayingTrack() } returns createMockTrackBO()
             every { isPaused() } returns false
-            justRun { skip() }
+            coJustRun { skip() }
         }
 
         coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
@@ -198,7 +274,7 @@ class PlayerCommandTest {
         playerCommand.onInteract(interaction)
 
         // Then
-        verify(exactly = 1) {
+        coVerify(exactly = 1) {
             guildLavaPlayerService.getQueue()
             guildLavaPlayerService.getCurrentPlayingTrack()
             guildLavaPlayerService.isPaused()
@@ -218,7 +294,30 @@ class PlayerCommandTest {
                 every { name } returns "TestGuild"
             }
             every { rest } returns mockk {
-                every { interaction } returns mockk(relaxed = true)
+                every { interaction } returns mockk {
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                }
+                every { channel } returns mockk {
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
+                    } returns discordMessage()
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
+                    } returns discordMessage()
+                }
             }
         }
         val interaction = mockk<ButtonInteraction> {
@@ -230,13 +329,17 @@ class PlayerCommandTest {
             every { component } returns mockk {
                 every { customId } returns ComponentsEnum.PLAYER_SHUFFLE.customId
             }
-            every { message } returns mockk(relaxed = true)
+            every { message } returns mockk {
+                every { kord } returns mockKord
+                every { channelId } returns Snowflake(123456789)
+                every { id } returns Snowflake(987654321)
+            }
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             every { getQueue() } returns listOf()
             every { getCurrentPlayingTrack() } returns createMockTrackBO()
             every { isPaused() } returns false
-            justRun { shuffle() }
+            coJustRun { shuffle() }
         }
 
         coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
@@ -247,7 +350,7 @@ class PlayerCommandTest {
         playerCommand.onInteract(interaction)
 
         // Then
-        verify(exactly = 1) {
+        coVerify(exactly = 1) {
             guildLavaPlayerService.getQueue()
             guildLavaPlayerService.getCurrentPlayingTrack()
             guildLavaPlayerService.isPaused()
@@ -267,7 +370,30 @@ class PlayerCommandTest {
                 every { name } returns "TestGuild"
             }
             every { rest } returns mockk {
-                every { interaction } returns mockk(relaxed = true)
+                every { interaction } returns mockk {
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                }
+                every { channel } returns mockk {
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
+                    } returns discordMessage()
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
+                    } returns discordMessage()
+                }
             }
         }
         val interaction = mockk<ButtonInteraction> {
@@ -279,7 +405,11 @@ class PlayerCommandTest {
             every { component } returns mockk {
                 every { customId } returns ComponentsEnum.PLAYER_DISCONNECT.customId
             }
-            every { message } returns mockk(relaxed = true)
+            every { message } returns mockk {
+                every { kord } returns mockKord
+                every { channelId } returns Snowflake(123456789)
+                every { id } returns Snowflake(987654321)
+            }
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             every { getQueue() } returns listOf()
@@ -319,7 +449,30 @@ class PlayerCommandTest {
                 every { name } returns "TestGuild"
             }
             every { rest } returns mockk {
-                every { interaction } returns mockk(relaxed = true)
+                every { interaction } returns mockk {
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                }
+                every { channel } returns mockk {
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
+                    } returns discordMessage()
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
+                    } returns discordMessage()
+                }
             }
         }
         val interaction = mockk<ButtonInteraction> {
@@ -331,13 +484,17 @@ class PlayerCommandTest {
             every { component } returns mockk {
                 every { customId } returns ComponentsEnum.PLAYER_PAUSE.customId
             }
-            every { message } returns mockk(relaxed = true)
+            every { message } returns mockk {
+                every { kord } returns mockKord
+                every { channelId } returns Snowflake(123456789)
+                every { id } returns Snowflake(987654321)
+            }
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
             every { getQueue() } returns listOf()
             every { getCurrentPlayingTrack() } returns createMockTrackBO()
             every { isPaused() } returns false
-            justRun { pause() }
+            coJustRun { pause() }
         }
 
         coEvery { guildQueueService.getLavaPlayerService(any()) } returns guildLavaPlayerService
@@ -348,7 +505,7 @@ class PlayerCommandTest {
         playerCommand.onInteract(interaction)
 
         // Then
-        verify(exactly = 1) {
+        coVerify(exactly = 1) {
             guildLavaPlayerService.getQueue()
             guildLavaPlayerService.getCurrentPlayingTrack()
             guildLavaPlayerService.isPaused()

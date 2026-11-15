@@ -2,15 +2,6 @@
 
 package es.wokis.services.lavaplayer
 
-import com.github.topi314.lavasrc.ExtendedAudioPlaylist
-import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
-import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason
 import dev.kord.common.Locale
 import dev.kord.common.annotation.KordVoice
 import dev.kord.common.entity.Snowflake
@@ -19,69 +10,76 @@ import dev.kord.core.behavior.channel.connect
 import dev.kord.core.behavior.edit
 import dev.kord.core.entity.Message
 import dev.kord.core.entity.channel.MessageChannel
-import dev.kord.gateway.retry.LinearRetry
 import dev.kord.voice.AudioFrame
 import dev.kord.voice.VoiceConnection
 import es.wokis.commands.player.createPlayerEmbed
 import es.wokis.dispatchers.AppDispatchers
 import es.wokis.localization.LocalizationKeys
+import es.wokis.player.engine.PlayerEngine
+import es.wokis.player.engine.audio.ContinuousPlayerAudioStream
+import es.wokis.player.engine.audio.PlayerAudioState
+import es.wokis.player.engine.event.PlayerEvent
 import es.wokis.services.lavaplayer.model.TrackBO
 import es.wokis.services.localization.LocalizationService
 import es.wokis.utils.Log
 import es.wokis.utils.createCoroutineScope
-import es.wokis.utils.getDisplayTrackName
 import es.wokis.utils.getLocale
-import es.wokis.utils.toSanitizedMarkdownLink
 import es.wokis.utils.isValidUrl
-import kotlinx.coroutines.*
+import es.wokis.utils.toSanitizedMarkdownLink
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import java.util.*
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.Timer
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.schedule
-import kotlin.time.Duration
 
 private const val TAG = "GuildLavaPlayerService"
 
 private const val LEAVE_DELAY = 10000L
-private const val FIRST_BACK_OFF_DELAY = "250ms"
-private const val MAX_BACK_OFF_DELAY = "2s"
-private const val MAX_BACK_OFF_RETRIES = 5
 private const val UNKNOWN_ERROR = "Unknown error"
-private const val SEEK_UPDATE_DELAY = 3000L
 private const val RECONNECT_DELAY = 500L
 
+/**
+ * Kord-side adapter over the shared per-guild player engine.
+ *
+ * Voice connection, player-channel messages/embeds, the leave timer, reconnect and locale
+ * presentation stay in this class, because they are Kord gateway concerns. Queue, track,
+ * pause/resume and retry state now live in [PlayerEngine] and are shared with the isolated JDA
+ * runtime; this adapter only maps engine events to the existing Kord messages and maps the
+ * continuous engine audio stream to Kord [AudioFrame]s.
+ */
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
     private val textChannel: MessageChannel,
     private val voiceChannel: BaseVoiceChannelBehavior,
-    private val audioPlayerManager: AudioPlayerManager,
+    private val playerEngine: PlayerEngine,
     private val localizationService: LocalizationService,
     val guildId: Snowflake,
     var discordLocale: Locale? = null
-) : AudioEventAdapter() {
+) {
 
+    @Volatile
     private var voiceConnection: VoiceConnection? = null
+
+    @Volatile
+    private var audioStream: ContinuousPlayerAudioStream? = null
     private val coroutineScope = createCoroutineScope(TAG, appDispatchers)
-    private val queue: MutableList<TrackBO> = mutableListOf()
+    private val voiceConnectionMutex = Mutex()
+    private val voiceGeneration = AtomicLong(0)
+    private val connectingToVoiceChannel = AtomicBoolean(false)
     private var leaveTimer: Timer? = null
-    private val player: AudioPlayer = audioPlayerManager.createPlayer().apply {
-        addListener(this@GuildLavaPlayerService)
-    }
-    private val replayTrackRetry = LinearRetry(
-        firstBackoff = Duration.parse(FIRST_BACK_OFF_DELAY),
-        maxBackoff = Duration.parse(MAX_BACK_OFF_DELAY),
-        maxTries = MAX_BACK_OFF_RETRIES
-    )
-    private var isRetrying = false
-    private var connectingToVoiceChannel: Boolean = false
-    private var isReconnecting: Boolean = false
+    private val isReconnecting = AtomicBoolean(false)
     private var playerMessage: Message? = null
-    private var seekTimerJob: Job? = null
     private val updateSeekChannel = Channel<Unit>(Channel.CONFLATED)
-    private var frameTimeOut = 20L
-    private var currentTrack: TrackBO? = null
 
     init {
+        coroutineScope.launch {
+            playerEngine.events.collect(::onPlayerEvent)
+        }
         coroutineScope.launch {
             for (event in updateSeekChannel) {
                 updatePlayerEmbed()
@@ -89,80 +87,26 @@ class GuildLavaPlayerService(
         }
     }
 
-    override fun onTrackEnd(player: AudioPlayer, track: AudioTrack?, endReason: AudioTrackEndReason?) {
-        Log.info(endReason?.name.orEmpty().plus(" ").plus(track?.state))
-        if (endReason in listOf(AudioTrackEndReason.LOAD_FAILED, AudioTrackEndReason.CLEANUP) && replayTrackRetry.hasNext) {
-            try {
-                coroutineScope.launch {
-                    replayTrackRetry.retry()
-                    isRetrying = true
-                    player.playTrack(track?.makeClone())
-                }
-            } catch (e: IllegalStateException) {
-                Log.error("An error has occurred on onTrackEnd", exception = e)
-                tryPlayNextTrack()
-            }
-            return
-        }
-        tryPlayNextTrack()
-    }
-
-    override fun onTrackStart(player: AudioPlayer?, track: AudioTrack?) {
-        if (isRetrying) return
-        coroutineScope.launch {
-            discordLocale = voiceChannel.getLocale()
-            val voiceChannelName = voiceChannel.asChannel().name
-            playerMessage?.let {
-                updateSeekChannel.send(Unit)
-            } ?: sendNowPlayingMessage(discordLocale, voiceChannelName)
-        }
-    }
-
     fun loadAndPlay(url: String, addToFront: Boolean = false) {
-        audioPlayerManager.loadItem(
-            url,
-            getAudioLoadResultHandler(url, addToFront)
-        )
+        coroutineScope.launch {
+            playerEngine.loadAndPlay(url, addToFront)
+        }
     }
 
     fun loadAndPlayMultiple(tracks: List<String>) {
-        tracks.forEachIndexed { index, track ->
-            audioPlayerManager.loadItemOrdered(
-                index,
-                track,
-                getAudioLoadResultHandler(track)
-            )
+        coroutineScope.launch {
+            playerEngine.loadAndPlayMultiple(tracks)
         }
     }
 
     fun loadAndPlayMultipleWithCustomName(tracks: List<String>, customName: String) {
-        tracks.forEachIndexed { index, track ->
-            audioPlayerManager.loadItemOrdered(
-                index,
-                track,
-                getAudioLoadResultHandlerWithCustomName(track, customName)
-            )
+        coroutineScope.launch {
+            playerEngine.loadAndPlayMultipleWithCustomName(tracks, customName)
         }
     }
 
     suspend fun loadAndPlayTts(message: String) {
-        audioPlayerManager.loadItemSync(message)?.let { item -> item as? AudioTrack }?.let {
-            TrackBO(audioTrack = it)
-        }?.let { tts ->
-            discordLocale = voiceChannel.getLocale()
-            connectToVoiceChannel()
-            textChannel.createMessage(
-                localizationService.getStringFormat(
-                    key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
-                    guildId = guildId,
-                    discordLocale = discordLocale,
-                    arguments = arrayOf(tts.audioTrack.info.title)
-                )
-            )
-            queue(
-                tracks = listOf(tts)
-            )
-        }
+        playerEngine.loadAndPlayTts(message)
     }
 
     fun searchAndPlay(searchTerm: String) {
@@ -170,122 +114,228 @@ class GuildLavaPlayerService(
     }
 
     suspend fun playRadio(radioName: String, radioUrl: String, customFavicon: String) {
-        audioPlayerManager.loadItemSync(radioUrl)?.let { item -> item as? AudioTrack }?.let {
-            TrackBO(
-                customName = radioName,
-                customFavicon = customFavicon,
-                audioTrack = it
-            )
-        }?.let {
-            connectToVoiceChannel()
-            discordLocale = voiceChannel.getLocale()
-            textChannel.createMessage(
-                localizationService.getStringFormat(
-                    key = LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
-                    guildId = guildId,
-                    discordLocale = discordLocale,
-                    arguments = arrayOf(radioName.toSanitizedMarkdownLink(radioUrl))
-                )
-            )
-            queue(listOf(it))
-        }
+        playerEngine.playRadio(radioName, radioUrl, customFavicon)
     }
 
-    fun getQueue(): List<TrackBO> = queue.toList()
+    fun getQueue(): List<TrackBO> = playerEngine.snapshot().queue
 
-    fun getCurrentPlayingTrack(): TrackBO? = currentTrack ?: player.playingTrack?.let { TrackBO(audioTrack = it) }
+    fun getCurrentPlayingTrack(): TrackBO? = playerEngine.snapshot().current
 
-    fun isPaused(): Boolean = player.isPaused
+    fun isPaused(): Boolean = playerEngine.isPaused()
 
-    fun resume() {
-        frameTimeOut = 20L
-        player.isPaused = false
+    suspend fun resume() {
+        playerEngine.resume()
+        updateSeekChannel.trySend(Unit)
     }
 
-    fun pause() {
-        frameTimeOut = 0L
-        player.isPaused = true
+    suspend fun pause() {
+        playerEngine.pause()
+        updateSeekChannel.trySend(Unit)
     }
 
-    fun skip() {
-        player.stopTrack()
+    suspend fun skip() {
+        playerEngine.skip()
+        updateSeekChannel.trySend(Unit)
     }
 
-    fun moveTrackToNext(searchTerm: String): TrackBO? {
-        val normalizedSearchTerm = searchTerm.lowercase()
+    suspend fun moveTrackToNext(searchTerm: String): TrackBO? = playerEngine.moveTrackToNext(searchTerm)
 
-        // First, try to find an exact match
-        val exactMatchIndex = queue.indexOfFirst { trackBO ->
-            trackBO.getDisplayTrackName().lowercase() == normalizedSearchTerm
-        }
-
-        // If no exact match, try to find a track that contains the search term
-        val trackIndex = if (exactMatchIndex != -1) {
-            exactMatchIndex
-        } else {
-            queue.indexOfFirst { trackBO ->
-                trackBO.getDisplayTrackName().lowercase().contains(normalizedSearchTerm)
-            }
-        }
-
-        return if (trackIndex != -1) {
-            val track = queue.removeAt(trackIndex)
-            queue.add(0, track)
-            updateSeekChannel.trySend(Unit)
-            track
-        } else {
-            null
-        }
-    }
-
-    fun isQueueEmpty(): Boolean = queue.isEmpty()
+    fun isQueueEmpty(): Boolean = playerEngine.isQueueEmpty()
 
     suspend fun stop() {
         handleDisconnectEvent()
     }
 
-    fun shuffle() {
-        queue.shuffle()
+    suspend fun shuffle() {
+        playerEngine.shuffle()
+        updateSeekChannel.trySend(Unit)
+    }
+
+    suspend fun shutdown() {
+        leaveTimer?.cancel()
+        leaveTimer = null
+        try {
+            resetVoiceConnection()
+        } finally {
+            playerEngine.close()
+            coroutineScope.cancel()
+        }
     }
 
     suspend fun handleDisconnectEvent() {
-        if (isReconnecting) return
-        isRetrying = false
-        queue.clear()
-        player.stopTrack()
+        if (isReconnecting.get()) return
+        playerEngine.stop()
         resetVoiceConnection()
-        replayTrackRetry.reset()
         resetLeaveTimer()
-        resetSeekTimerJob()
-        connectingToVoiceChannel = false
-        updatePlayerEmbed()
+        updateSeekChannel.trySend(Unit)
     }
 
     fun savePlayerMessage(message: Message) {
         this.playerMessage = message
     }
 
-    private fun tryPlayNextTrack() {
-        currentTrack = null
-        if (queue.isEmpty()) {
-            setUpTimer()
-        }
-        if (queue.isNotEmpty()) {
-            playNextTrack()
+    fun isConnected(): Boolean = voiceConnection != null
+
+    suspend fun reconnect() {
+        if (isReconnecting.get() || !isConnected()) return
+        if (!isReconnecting.compareAndSet(false, true)) return
+        try {
+            resetVoiceConnection()
+            kotlinx.coroutines.delay(RECONNECT_DELAY)
+            connectToVoiceChannel()
+        } finally {
+            isReconnecting.set(false)
         }
     }
 
-    private fun playNextTrack() {
+    private suspend fun onPlayerEvent(event: PlayerEvent) {
+        when (event) {
+            is PlayerEvent.TrackQueued -> onTrackQueued(event)
+
+            is PlayerEvent.PlaylistQueued -> onPlaylistQueued(event)
+
+            is PlayerEvent.NoMatches -> onNoMatches(event.input)
+
+            is PlayerEvent.LoadFailed -> onLoadFailed(event.message)
+
+            is PlayerEvent.PlaybackFailed -> onLoadFailed(event.message)
+
+            is PlayerEvent.TrackStarted -> onTrackStarted()
+
+            is PlayerEvent.TrackEnded -> {
+                if (event.queueEmpty) setUpTimer()
+                updateSeekChannel.trySend(Unit)
+            }
+
+            is PlayerEvent.QueueChanged -> updateSeekChannel.trySend(Unit)
+
+            PlayerEvent.Stopped -> updateSeekChannel.trySend(Unit)
+        }
+    }
+
+    private suspend fun onTrackQueued(event: PlayerEvent.TrackQueued) {
         resetLeaveTimer()
-        replayTrackRetry.reset()
-        isRetrying = false
-        nextTrack()
+        discordLocale = voiceChannel.getLocale()
+        val displayName = event.track.displayName
+        val uri = event.uri
+        val content = if (uri?.isValidUrl() == true) {
+            localizationService.getStringFormat(
+                key = if (event.addToFront) {
+                    LocalizationKeys.NEXT_ADDED_TO_QUEUE_WITH_LINK
+                } else {
+                    LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK
+                },
+                guildId = guildId,
+                discordLocale = discordLocale,
+                arguments = arrayOf(displayName.toSanitizedMarkdownLink(uri))
+            )
+        } else {
+            localizationService.getStringFormat(
+                key = if (event.addToFront) LocalizationKeys.NEXT_ADDED_TO_QUEUE else LocalizationKeys.ADDED_TRACK_TO_QUEUE,
+                guildId = guildId,
+                discordLocale = discordLocale,
+                arguments = arrayOf(displayName)
+            )
+        }
+        textChannel.createMessage(content)
+        connectToVoiceChannel()
+    }
+
+    private suspend fun onPlaylistQueued(event: PlayerEvent.PlaylistQueued) {
+        resetLeaveTimer()
+        discordLocale = voiceChannel.getLocale()
+        val message = textChannel.createMessage(
+            localizationService.getStringFormat(
+                key = LocalizationKeys.FOUND_TRACK_LIST,
+                guildId = guildId,
+                discordLocale = discordLocale,
+                arguments = arrayOf<Any>(event.name, event.trackCount)
+            )
+        )
+        connectToVoiceChannel()
+        val playlistUrl = event.playlistUrl
+        message.edit {
+            content = if (playlistUrl?.isValidUrl() == true) {
+                localizationService.getStringFormat(
+                    key = if (event.addToFront) {
+                        LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE_WITH_LINK
+                    } else {
+                        LocalizationKeys.ADDED_SONGS_TO_QUEUE_WITH_LINK
+                    },
+                    guildId = guildId,
+                    discordLocale = discordLocale,
+                    arguments = arrayOf<Any>(
+                        event.name.toSanitizedMarkdownLink(playlistUrl),
+                        event.trackCount
+                    )
+                )
+            } else {
+                localizationService.getStringFormat(
+                    key = if (event.addToFront) LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE else LocalizationKeys.ADDED_SONGS_TO_QUEUE,
+                    guildId = guildId,
+                    discordLocale = discordLocale,
+                    arguments = arrayOf<Any>(event.name, event.trackCount)
+                )
+            }
+        }
+    }
+
+    private suspend fun onNoMatches(input: String) {
+        discordLocale = voiceChannel.getLocale()
+        textChannel.createMessage(
+            localizationService.getStringFormat(
+                key = LocalizationKeys.NO_MATCHES,
+                guildId = guildId,
+                discordLocale = discordLocale,
+                arguments = arrayOf(input)
+            )
+        )
+    }
+
+    private suspend fun onLoadFailed(message: String?) {
+        Log.error("GuildLavaPlayerService onLoadFailed: ${message ?: UNKNOWN_ERROR}")
+        discordLocale = voiceChannel.getLocale()
+        textChannel.createMessage(
+            localizationService.getStringFormat(
+                key = LocalizationKeys.LOAD_FAILED,
+                guildId = guildId,
+                discordLocale = discordLocale,
+                arguments = arrayOf(message ?: UNKNOWN_ERROR)
+            )
+        )
+    }
+
+    private suspend fun onTrackStarted() {
+        discordLocale = voiceChannel.getLocale()
+        val voiceChannelName = voiceChannel.asChannel().name
+        if (playerMessage != null) {
+            updateSeekChannel.trySend(Unit)
+        } else {
+            sendNowPlayingMessage(discordLocale, voiceChannelName)
+        }
+    }
+
+    private suspend fun sendNowPlayingMessage(
+        discordLocale: Locale?,
+        voiceChannelName: String
+    ) {
+        textChannel.createMessage(
+            localizationService.getStringFormat(
+                key = LocalizationKeys.NOW_PLAYING,
+                guildId = guildId,
+                discordLocale = discordLocale,
+                arguments = arrayOf(playerEngine.snapshot().current?.displayName.orEmpty(), voiceChannelName)
+            )
+        )
     }
 
     private fun setUpTimer() {
-        leaveTimer = Timer().apply {
+        // Cancel any pending leave before arming the new one; repeated TrackEnded events must not
+        // leave duplicate timers racing to disconnect the voice connection.
+        resetLeaveTimer()
+        leaveTimer = Timer(true).apply {
             schedule(LEAVE_DELAY) {
-                if (queue.isNotEmpty()) return@schedule
+                if (!playerEngine.isQueueEmpty()) return@schedule
                 coroutineScope.launch {
                     resetVoiceConnection()
                 }
@@ -298,252 +348,53 @@ class GuildLavaPlayerService(
         leaveTimer = null
     }
 
-    // TODO: Take a look in the future to solve discord update request error or delete it
-    private fun startSeekUpdateTimer() {
-        if (playerMessage == null) return
-        resetSeekTimerJob()
-        seekTimerJob = coroutineScope.launch {
-            while (true) {
-                updateSeekChannel.send(Unit)
-                delay(SEEK_UPDATE_DELAY)
-            }
-        }
-    }
-    private suspend fun sendNowPlayingMessage(
-        discordLocale: Locale?,
-        voiceChannelName: String
-    ) {
-        textChannel.createMessage(
-            localizationService.getStringFormat(
-                key = LocalizationKeys.NOW_PLAYING,
-                guildId = guildId,
-                discordLocale = discordLocale,
-                arguments = arrayOf(currentTrack?.getDisplayTrackName().orEmpty(), voiceChannelName)
-            )
-        )
-    }
-
-
-    private fun queue(tracks: List<TrackBO>, addToFront: Boolean = false) {
-        resetLeaveTimer()
-        if (addToFront) {
-            queue.addAll(0, tracks)
-        } else {
-            queue.addAll(tracks)
-        }
-        if (player.playingTrack == null) {
-            nextTrack()
-        }
-        updateSeekChannel.trySend(Unit)
-    }
-
-    private fun nextTrack() {
-        val currentTrack = queue.removeAt(0).also {
-            currentTrack = it
-        }
-        player.startTrack(
-            currentTrack.audioTrack,
-            true
-        )
-    }
-
-    private fun getAudioLoadResultHandler(currentLoadTrack: String, addToFront: Boolean = false) = object : AudioLoadResultHandler {
-        override fun trackLoaded(track: AudioTrack) {
-            onTrackLoaded(track, addToFront)
-        }
-
-        override fun playlistLoaded(playlist: AudioPlaylist) {
-            onPlaylistLoaded(playlist, addToFront)
-        }
-
-        override fun noMatches() {
-            coroutineScope.launch {
-                discordLocale = voiceChannel.getLocale()
-                textChannel.createMessage(
-                    localizationService.getStringFormat(
-                        key = LocalizationKeys.NO_MATCHES,
-                        guildId = guildId,
-                        discordLocale = discordLocale,
-                        arguments = arrayOf(currentLoadTrack)
-                    )
-                )
-            }
-        }
-
-        override fun loadFailed(exception: FriendlyException) {
-            coroutineScope.launch {
-                onLoadFailed(exception)
-            }
-        }
-    }
-
-    private fun getAudioLoadResultHandlerWithCustomName(currentLoadTrack: String, customName: String) = object : AudioLoadResultHandler {
-        override fun trackLoaded(track: AudioTrack) {
-            onTrackLoadedWithCustomName(track, customName)
-        }
-
-        override fun playlistLoaded(playlist: AudioPlaylist) {
-            onPlaylistLoaded(playlist)
-        }
-
-        override fun noMatches() {
-            coroutineScope.launch {
-                discordLocale = voiceChannel.getLocale()
-                textChannel.createMessage(
-                    localizationService.getStringFormat(
-                        key = LocalizationKeys.NO_MATCHES,
-                        guildId = guildId,
-                        discordLocale = discordLocale,
-                        arguments = arrayOf(currentLoadTrack)
-                    )
-                )
-            }
-        }
-
-        override fun loadFailed(exception: FriendlyException) {
-            coroutineScope.launch {
-                onLoadFailed(exception)
-            }
-        }
-    }
-
-    private fun onTrackLoadedWithCustomName(track: AudioTrack, customName: String) {
-        coroutineScope.launch {
-            discordLocale = voiceChannel.getLocale()
-            val currentTrack = TrackBO(
-                customName = customName,
-                audioTrack = track
-            )
-            textChannel.createMessage(
-                localizationService.getStringFormat(
-                    key = LocalizationKeys.ADDED_TRACK_TO_QUEUE,
-                    guildId = guildId,
-                    discordLocale = discordLocale,
-                    arguments = arrayOf(currentTrack.getDisplayTrackName())
-                )
-            )
-            connectToVoiceChannel()
-            queue(listOf(currentTrack))
-        }
-    }
-
-    private fun onPlaylistLoaded(playlist: AudioPlaylist, addToFront: Boolean = false) {
-        coroutineScope.launch {
-            discordLocale = voiceChannel.getLocale()
-            val isCurrentlyPlaying = player.playingTrack != null
-            val message = textChannel.createMessage(
-                localizationService.getStringFormat(
-                    key = LocalizationKeys.FOUND_TRACK_LIST,
-                    guildId = guildId,
-                    discordLocale = discordLocale,
-                    arguments = arrayOf<Any>(playlist.name, playlist.tracks.size)
-                )
-            )
-            connectToVoiceChannel()
-            queue(playlist.tracks.map { TrackBO(audioTrack = it) }, addToFront)
-            if (addToFront && !isCurrentlyPlaying) {
-                nextTrack()
-            }
-            val playlistUrl = (playlist as? ExtendedAudioPlaylist)?.url
-            message.edit {
-                content = if (playlistUrl?.isValidUrl() == true) {
-                    localizationService.getStringFormat(
-                        key = if (addToFront) LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_SONGS_TO_QUEUE_WITH_LINK,
-                        guildId = guildId,
-                        discordLocale = discordLocale,
-                        arguments = arrayOf<Any>(playlist.name.toSanitizedMarkdownLink(playlistUrl), playlist.tracks.size)
-                    )
-                } else {
-                    localizationService.getStringFormat(
-                        key = if (addToFront) LocalizationKeys.NEXT_ADDED_SONGS_TO_QUEUE else LocalizationKeys.ADDED_SONGS_TO_QUEUE,
-                        guildId = guildId,
-                        discordLocale = discordLocale,
-                        arguments = arrayOf<Any>(playlist.name, playlist.tracks.size)
-                    )
-                }
-            }
-        }
-    }
-
-    private fun onTrackLoaded(track: AudioTrack, addToFront: Boolean = false) {
-        coroutineScope.launch {
-            discordLocale = voiceChannel.getLocale()
-            val currentTrack = TrackBO(audioTrack = track)
-            val isCurrentlyPlaying = player.playingTrack != null
-            textChannel.createMessage(
-                if (track.info.uri.isValidUrl()) {
-                    localizationService.getStringFormat(
-                        key = if (addToFront) LocalizationKeys.NEXT_ADDED_TO_QUEUE_WITH_LINK else LocalizationKeys.ADDED_TRACK_TO_QUEUE_WITH_LINK,
-                        guildId = guildId,
-                        discordLocale = discordLocale,
-                        arguments = arrayOf(currentTrack.getDisplayTrackName().toSanitizedMarkdownLink(track.info.uri))
-                    )
-                } else {
-                    localizationService.getStringFormat(
-                        key = if (addToFront) LocalizationKeys.NEXT_ADDED_TO_QUEUE else LocalizationKeys.ADDED_TRACK_TO_QUEUE,
-                        guildId = guildId,
-                        discordLocale = discordLocale,
-                        arguments = arrayOf(currentTrack.getDisplayTrackName())
-                    )
-                }
-            )
-            connectToVoiceChannel()
-            queue(listOf(currentTrack), addToFront)
-            if (addToFront && !isCurrentlyPlaying) {
-                nextTrack()
-            }
-        }
-    }
-
-    fun isConnected(): Boolean = voiceConnection != null
-
-    suspend fun reconnect() {
-        if (isReconnecting || !isConnected()) return
-        isReconnecting = true
-        resetVoiceConnection()
-        delay(RECONNECT_DELAY)
-        connectToVoiceChannel()
-        isReconnecting = false
-    }
-
     private suspend fun connectToVoiceChannel() {
-        if (voiceConnection == null && connectingToVoiceChannel.not()) {
-            connectingToVoiceChannel = true
-            voiceConnection = voiceChannel.connect {
-                audioProvider { AudioFrame.fromData(player.provide(frameTimeOut, TimeUnit.MILLISECONDS)?.data) }
-                selfDeaf = true
-            }.also {
-                connectingToVoiceChannel = false
+        if (voiceConnection != null) return
+        if (!connectingToVoiceChannel.compareAndSet(false, true)) return
+        val generation = voiceGeneration.get()
+
+        try {
+            voiceConnectionMutex.withLock {
+                // A disconnect/reset that happened while this connect was waiting must win.
+                if (voiceConnection != null || generation != voiceGeneration.get()) return@withLock
+                val stream = playerEngine.audioStream()
+                audioStream = stream
+                try {
+                    voiceConnection = voiceChannel.connect {
+                        audioProvider {
+                            when (val next = stream.next()) {
+                                is PlayerAudioState.Frame -> AudioFrame.fromData(next.frame.payloadCopy())
+                                PlayerAudioState.PausedSilence -> AudioFrame.SILENCE
+                                PlayerAudioState.Ended -> null
+                            }
+                        }
+                        selfDeaf = true
+                    }
+                } catch (error: Throwable) {
+                    stream.close()
+                    audioStream = null
+                    throw error
+                }
             }
+        } finally {
+            connectingToVoiceChannel.set(false)
         }
-    }
-
-    private suspend fun onLoadFailed(exception: FriendlyException) {
-        Log.error("GuildLavaPlayerService onLoadFailed", exception)
-        discordLocale = voiceChannel.getLocale()
-        textChannel.createMessage(
-            localizationService.getStringFormat(
-                key = LocalizationKeys.LOAD_FAILED,
-                guildId = guildId,
-                discordLocale = discordLocale,
-                arguments = arrayOf(exception.message ?: UNKNOWN_ERROR)
-            )
-        )
-    }
-
-    private fun resetSeekTimerJob() {
-        seekTimerJob?.cancel()
-        seekTimerJob = null
     }
 
     private suspend fun resetVoiceConnection() {
-        voiceConnection?.leave()
-        voiceConnection = null
+        voiceGeneration.incrementAndGet()
+        voiceConnectionMutex.withLock {
+            audioStream?.close()
+            audioStream = null
+            voiceConnection?.leave()
+            voiceConnection = null
+        }
     }
 
     private suspend fun updatePlayerEmbed() {
         playerMessage?.let {
             val guildName = textChannel.data.guildId.value?.let { guildId -> textChannel.kord.getGuild(guildId) }?.name.orEmpty()
+            val snapshot = playerEngine.snapshot()
             try {
                 it.edit {
                     createPlayerEmbed(
@@ -551,9 +402,9 @@ class GuildLavaPlayerService(
                         discordLocale = discordLocale,
                         guildName = guildName,
                         localizationService = localizationService,
-                        currentTrack = currentTrack,
-                        queue = queue,
-                        isPaused = player.isPaused
+                        currentTrack = snapshot.current,
+                        queue = snapshot.queue,
+                        isPaused = snapshot.paused
                     )
                 }
             } catch (t: Throwable) {

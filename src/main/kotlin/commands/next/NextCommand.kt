@@ -90,8 +90,8 @@ class NextCommand(
                     )
                 }
             } else {
-                // Track not found in queue, warn user and try lavaplayer anyway
-                // This handles special commands like dzrec:1090538082
+                // Track not found in queue, warn the user and retry through the neutral player
+                // engine. This handles special identifiers like dzrec:1090538082.
                 response.respond {
                     content = localizationService.getStringFormat(
                         key = LocalizationKeys.NEXT_TRACK_NOT_IN_QUEUE_TRYING_SEARCH,

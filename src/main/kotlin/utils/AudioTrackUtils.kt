@@ -1,10 +1,11 @@
 package es.wokis.utils
 
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import es.wokis.services.lavaplayer.model.TrackBO
 
-fun TrackBO.getDisplayTrackName(): String = when {
-    customName != null -> customName
-    audioTrack.info.title.contains(" - ") -> audioTrack.info.title
-    else -> "${audioTrack.info.author} - ${audioTrack.info.title}"
-}
+/**
+ * Display name used by the existing queue/player embeds.
+ *
+ * Kept as a Kord-side extension so command code keeps its previous import while the underlying
+ * value comes from the neutral [TrackBO] snapshot (`PlayerTrack.displayName`).
+ */
+fun TrackBO.getDisplayTrackName(): String = displayName

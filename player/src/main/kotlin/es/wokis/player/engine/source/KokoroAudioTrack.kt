@@ -1,4 +1,4 @@
-package services.lavaplayer.manager
+package es.wokis.player.engine.source
 
 import com.sedmelluq.discord.lavaplayer.container.mp3.Mp3AudioTrack
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager
@@ -13,7 +13,7 @@ import java.net.URI
 
 private const val KOKORO_SPEECH_ENDPOINT = "/v1/audio/speech"
 
-class KokoroAudioTrack(
+internal class KokoroAudioTrack(
     trackInfo: AudioTrackInfo,
     private val sourceManager: KokoroSourceManager
 ) : DelegatedAudioTrack(trackInfo) {

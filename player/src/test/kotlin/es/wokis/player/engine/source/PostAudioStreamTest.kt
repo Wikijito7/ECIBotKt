@@ -1,4 +1,4 @@
-package services.lavaplayer.manager
+package es.wokis.player.engine.source
 
 import com.sedmelluq.discord.lavaplayer.tools.Units
 import org.apache.http.Header
@@ -95,7 +95,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When stream is created with content length Then store content length`() {
+    fun `Given a PostAudioStream When stream is created with content length Then store content length`() {
         // Given
         val testData = "Hello".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -109,7 +109,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When stream is created with null content length Then use unknown content length`() {
+    fun `Given a PostAudioStream When stream is created with null content length Then use unknown content length`() {
         // Given
         val testData = "Hello".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -122,7 +122,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When read is called Then return byte from content`() {
+    fun `Given a PostAudioStream When read is called Then return byte from content`() {
         // Given
         val testData = byteArrayOf(0x01, 0x02, 0x03)
         val response = createResponse(createEntity(testData))
@@ -143,7 +143,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When read byte array is called Then fill buffer from content`() {
+    fun `Given a PostAudioStream When read byte array is called Then fill buffer from content`() {
         // Given
         val testData = "Hello World".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -160,7 +160,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When skip is called Then skip bytes in content`() {
+    fun `Given a PostAudioStream When skip is called Then skip bytes in content`() {
         // Given
         val testData = "Hello World".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -179,7 +179,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When available is called Then return available bytes from content`() {
+    fun `Given a PostAudioStream When available is called Then return available bytes from content`() {
         // Given
         val testData = "Hello World".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -193,7 +193,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When close is called Then close content and response`() {
+    fun `Given a PostAudioStream When close is called Then close content and response`() {
         // Given
         var contentClosed = false
         val testData = "Hello".toByteArray()
@@ -247,7 +247,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When close is called twice Then do not throw`() {
+    fun `Given a PostAudioStream When close is called twice Then do not throw`() {
         // Given
         val testData = "Hello".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -259,7 +259,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When read is called after close Then throw IOException`() {
+    fun `Given a PostAudioStream When read is called after close Then throw IOException`() {
         // Given
         val testData = "Hello".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -273,7 +273,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When read byte array is called after close Then throw IOException`() {
+    fun `Given a PostAudioStream When read byte array is called after close Then throw IOException`() {
         // Given
         val testData = "Hello".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -287,7 +287,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When skip is called after close Then throw IOException`() {
+    fun `Given a PostAudioStream When skip is called after close Then throw IOException`() {
         // Given
         val testData = "Hello".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -301,7 +301,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When available is called after close Then throw IOException`() {
+    fun `Given a PostAudioStream When available is called after close Then throw IOException`() {
         // Given
         val testData = "Hello".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -315,7 +315,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When canSeekHard is called Then return false`() {
+    fun `Given a PostAudioStream When canSeekHard is called Then return false`() {
         // Given
         val testData = "Hello".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -329,7 +329,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When getTrackInfoProviders is called Then return empty list`() {
+    fun `Given a PostAudioStream When getTrackInfoProviders is called Then return empty list`() {
         // Given
         val testData = "Hello".toByteArray()
         val response = createResponse(createEntity(testData))
@@ -344,7 +344,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When close encounters exception in content Then still close response`() {
+    fun `Given a PostAudioStream When close encounters exception in content Then still close response`() {
         // Given
         var responseClosed = false
         val customStream = object : InputStream() {
@@ -394,7 +394,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When close encounters exception in response Then do not throw`() {
+    fun `Given a PostAudioStream When close encounters exception in response Then do not throw`() {
         // Given
         val customStream = object : InputStream() {
             override fun read() = -1
@@ -438,7 +438,7 @@ class PostAudioStreamTest {
     }
 
     @Test
-    fun `When position is updated through multiple operations Then track correctly`() {
+    fun `Given a PostAudioStream When position is updated through multiple operations Then track correctly`() {
         // Given
         val testData = "Hello World This Is A Test".toByteArray()
         val response = createResponse(createEntity(testData))

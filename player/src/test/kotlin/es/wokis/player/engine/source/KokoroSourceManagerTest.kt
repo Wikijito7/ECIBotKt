@@ -1,4 +1,4 @@
-package services.lavaplayer.manager
+package es.wokis.player.engine.source
 
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.track.AudioReference
@@ -21,7 +21,7 @@ class KokoroSourceManagerTest {
     private val sourceManager = KokoroSourceManager()
 
     @Test
-    fun `When sourceName is called Then return kokoro`() {
+    fun `Given a KokoroSourceManager When sourceName is called Then return kokoro`() {
         // When
         val actual = sourceManager.sourceName
 
@@ -30,7 +30,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When loadItem is called with kokoro protocol Then return AudioTrack`() {
+    fun `Given a KokoroSourceManager When loadItem is called with kokoro protocol Then return AudioTrack`() {
         // Given
         val manager = mockk<DefaultAudioPlayerManager>()
         val reference = AudioReference("kokoro://?text=Hello+World", null)
@@ -48,7 +48,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When loadItem is called with kokoro protocol and long text Then truncate title to 30 chars`() {
+    fun `Given a KokoroSourceManager When loadItem is called with kokoro protocol and long text Then truncate title to 30 chars`() {
         // Given
         val manager = mockk<DefaultAudioPlayerManager>()
         val longText = "This is a very long text that should be truncated"
@@ -68,7 +68,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When loadItem is called with kokoro protocol and voice parameter Then use provided voice`() {
+    fun `Given a KokoroSourceManager When loadItem is called with kokoro protocol and voice parameter Then use provided voice`() {
         // Given
         val manager = mockk<DefaultAudioPlayerManager>()
         val reference = AudioReference("kokoro://?text=Hello&voice=af_sarah", null)
@@ -84,7 +84,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When loadItem is called with kokoro protocol and speed parameter Then use provided speed`() {
+    fun `Given a KokoroSourceManager When loadItem is called with kokoro protocol and speed parameter Then use provided speed`() {
         // Given
         val manager = mockk<DefaultAudioPlayerManager>()
         val reference = AudioReference("kokoro://?text=Hello&speed=1.5", null)
@@ -100,7 +100,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When loadItem is called with kokoro protocol and lang parameter Then use provided lang code`() {
+    fun `Given a KokoroSourceManager When loadItem is called with kokoro protocol and lang parameter Then use provided lang code`() {
         // Given
         val manager = mockk<DefaultAudioPlayerManager>()
         val reference = AudioReference("kokoro://?text=Hello&lang=a", null)
@@ -116,23 +116,23 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When loadItem is called with kokoro protocol without text parameter Then return null`() {
-        // Given - URL without text parameter
+    fun `Given a KokoroSourceManager When loadItem has no text parameter Then the full query is used as raw text`() {
+        // Given - URL without a text query parameter
         val manager = mockk<DefaultAudioPlayerManager>()
         val reference = AudioReference("kokoro://?voice=af_sarah", null)
 
         // When
         val actual = sourceManager.loadItem(manager, reference)
 
-        // Then - returns null because the text extraction fails silently
-        // The substringAfter("text=") returns the whole query string when "text=" is not found
-        // Then substringBefore("&") returns the whole string since there's no "&"
-        // URLDecoder.decode works on the query string, and it becomes the "text"
-        assertNotNull(actual)
+        // Then - current parser semantics treat the full query as the raw text
+        assertTrue(actual is KokoroAudioTrack)
+        val track = actual as KokoroAudioTrack
+        assertEquals("voice=af_sarah", track.rawText)
+        assertEquals("TTS Message: voice=af_sarah", track.info.title)
     }
 
     @Test
-    fun `When loadItem is called with non kokoro protocol Then return null`() {
+    fun `Given a KokoroSourceManager When loadItem is called with non kokoro protocol Then return null`() {
         // Given
         val manager = mockk<DefaultAudioPlayerManager>()
         val reference = AudioReference("https://youtube.com/watch?v=123", null)
@@ -145,7 +145,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When loadItem is called with configured defaults Then use default values`() {
+    fun `Given a KokoroSourceManager When loadItem is called with configured defaults Then use default values`() {
         // Given
         val manager = mockk<DefaultAudioPlayerManager>()
         val customSourceManager = KokoroSourceManager().apply {
@@ -168,7 +168,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When loadItem is called with empty defaults Then use internal defaults`() {
+    fun `Given a KokoroSourceManager When loadItem is called with empty defaults Then use internal defaults`() {
         // Given
         val manager = mockk<DefaultAudioPlayerManager>()
         val reference = AudioReference("kokoro://?text=Hello", null)
@@ -186,7 +186,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When loadItem is called with URL encoded text Then decode text correctly`() {
+    fun `Given a KokoroSourceManager When loadItem is called with URL encoded text Then decode text correctly`() {
         // Given
         val manager = mockk<DefaultAudioPlayerManager>()
         val reference = AudioReference("kokoro://?text=Hello%2C+World%21", null)
@@ -202,7 +202,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When isTrackEncodable is called Then return true`() {
+    fun `Given a KokoroSourceManager When isTrackEncodable is called Then return true`() {
         // Given
         val track = mockk<AudioTrack>()
 
@@ -214,7 +214,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When decodeTrack is called Then return KokoroAudioTrack`() {
+    fun `Given a KokoroSourceManager When decodeTrack is called Then return KokoroAudioTrack`() {
         // Given
         val trackInfo = mockk<com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo>()
 
@@ -228,23 +228,23 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When encodeTrack is called Then do nothing`() {
+    fun `Given a KokoroSourceManager When encodeTrack is called Then do nothing`() {
         // Given
         val track = mockk<AudioTrack>()
-        val output = mockk<java.io.DataOutput>(relaxed = true)
+        val output = mockk<java.io.DataOutput>()
 
         // When/Then - should not throw
         sourceManager.encodeTrack(track, output)
     }
 
     @Test
-    fun `When shutdown is called Then close http interface`() {
+    fun `Given a KokoroSourceManager When shutdown is called Then close http interface`() {
         // When/Then - should not throw
         sourceManager.shutdown()
     }
 
     @Test
-    fun `When getHttpInterface is called Then return interface`() {
+    fun `Given a KokoroSourceManager When getHttpInterface is called Then return interface`() {
         // When
         val actual = sourceManager.getHttpInterface()
 
@@ -253,7 +253,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When configureRequests is called Then apply configuration`() {
+    fun `Given a KokoroSourceManager When configureRequests is called Then apply configuration`() {
         // Given
         val sourceManager = KokoroSourceManager()
         var configured = false
@@ -269,7 +269,7 @@ class KokoroSourceManagerTest {
     }
 
     @Test
-    fun `When configureBuilder is called Then apply configuration`() {
+    fun `Given a KokoroSourceManager When configureBuilder is called Then apply configuration`() {
         // Given
         val sourceManager = KokoroSourceManager()
 

@@ -1,7 +1,9 @@
 package commands.skip
 
+import commands.discordMessage
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
+import dev.kord.common.entity.optional.OptionalSnowflake
 import dev.kord.core.Kord
 import dev.kord.core.behavior.interaction.response.DeferredPublicMessageInteractionResponseBehavior
 import dev.kord.core.entity.interaction.ChatInputCommandInteraction
@@ -34,7 +36,30 @@ class SkipCommandTest {
             }
             every { defaultSupplier } returns mockk()
             every { rest } returns mockk {
-                every { interaction } returns mockk(relaxed = true)
+                every { interaction } returns mockk {
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                }
+                every { channel } returns mockk {
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
+                    } returns discordMessage()
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
+                    } returns discordMessage()
+                }
             }
         }
         val interaction = mockk<ChatInputCommandInteraction> {
@@ -50,7 +75,7 @@ class SkipCommandTest {
             every { token } returns "testToken"
         }
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
-            justRun { skip() }
+            coJustRun { skip() }
         }
 
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } returns guildLavaPlayerService
@@ -60,7 +85,7 @@ class SkipCommandTest {
         skipCommand.onExecute(interaction, response)
 
         // Then
-        verify(exactly = 1) {
+        coVerify(exactly = 1) {
             guildLavaPlayerService.skip()
         }
     }
@@ -74,7 +99,30 @@ class SkipCommandTest {
             }
             every { defaultSupplier } returns mockk()
             every { rest } returns mockk {
-                every { interaction } returns mockk(relaxed = true)
+                every { interaction } returns mockk {
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.InteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                    coEvery {
+                        modifyInteractionResponse(
+                            any(),
+                            any(),
+                            any<dev.kord.rest.json.request.MultipartInteractionResponseModifyRequest>(),
+                        )
+                    } returns discordMessage()
+                }
+                every { channel } returns mockk {
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MessageEditPatchRequest>())
+                    } returns discordMessage()
+                    coEvery {
+                        editMessage(any(), any(), any<dev.kord.rest.json.request.MultipartMessagePatchRequest>())
+                    } returns discordMessage()
+                }
             }
         }
         val interaction = mockk<ChatInputCommandInteraction> {
@@ -91,7 +139,7 @@ class SkipCommandTest {
         }
 
         val guildLavaPlayerService: GuildLavaPlayerService = mockk {
-            justRun { skip() }
+            coJustRun { skip() }
         }
         coEvery { guildQueueService.getOrCreateLavaPlayerService(any()) } throws IllegalStateException()
         coEvery { localizationService.getString(any(), any(), any()) } returns "TestMessage"
@@ -102,7 +150,7 @@ class SkipCommandTest {
         }
 
         // Then - skip should not be called because exception is thrown before
-        verify(exactly = 0) {
+        coVerify(exactly = 0) {
             guildLavaPlayerService.skip()
         }
     }

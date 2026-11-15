@@ -10,4 +10,5 @@ rootProject.name = "ECIBotKt"
 
 include(":core")
 include(":locale-persistence")
+include(":player")
 include(":jda-runtime")

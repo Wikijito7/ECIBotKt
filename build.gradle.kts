@@ -30,6 +30,8 @@ dependencies {
     implementation(project(":core"))
     // Shared JSON locale persistence used by both the Kord and JDA runtimes.
     implementation(project(":locale-persistence"))
+    // Shared real-player engine used by the Kord adapter and the isolated JDA runtime.
+    implementation(project(":player"))
 
     // Kord - Local SNAPSHOT JARs (voice encryption branch)
     // TODO: Switch back to version catalog when Kord merges voice encryption to main (kord#1063)
@@ -121,7 +123,6 @@ sonar {
             "src/main/kotlin/Main.kt",
             "*.kts",
             "**/di/*.kt",
-            "src/main/kotlin/services/lavaplayer/GuildLavaPlayerService.kt", // TODO: Right now, we cannot test it because of how the class is made.,
             "src/main/kotlin/commands/player/PlayerCommons.kt" // This class needs a lot of mocking of Kord, which isn't really prepared for it
         )
         property("sonar.projectKey", projectKey)
@@ -133,7 +134,12 @@ sonar {
 
 tasks.named("sonar") {
     // Ensure each module produces its XML coverage report before analysis
-    dependsOn(":core:jacocoTestReport", ":locale-persistence:jacocoTestReport", ":jda-runtime:jacocoTestReport")
+    dependsOn(
+        ":core:jacocoTestReport",
+        ":locale-persistence:jacocoTestReport",
+        ":player:jacocoTestReport",
+        ":jda-runtime:jacocoTestReport",
+    )
 }
 
 kotlin {

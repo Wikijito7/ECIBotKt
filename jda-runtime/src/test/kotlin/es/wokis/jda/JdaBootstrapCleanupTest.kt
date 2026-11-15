@@ -2,16 +2,23 @@ package es.wokis.jda
 
 import es.wokis.domain.model.GuildId
 import es.wokis.jda.command.JdaCommandRouter
+import es.wokis.jda.player.JdaPlayerRuntime
+import es.wokis.player.engine.PlayerEngine
+import es.wokis.player.engine.PlayerEngineFactory
+import es.wokis.player.engine.PlayerEngines
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import io.mockk.verifyOrder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.isActive
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.audio.AudioModuleConfig
@@ -29,6 +36,7 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
@@ -369,6 +377,76 @@ class JdaBootstrapCleanupTest {
             BootstrapCleanupTargets(jda = null, router = router, shutdownHook = null),
         )
         assertEquals(listOf("command-router"), routerOnly.map { it.name })
+    }
+
+    @Test
+    fun `Given a player runtime When production cleanup steps are built Then it is closed first`() {
+        // Given
+        val events = mutableListOf<String>()
+        val playerRuntime = AutoCloseable { events += "player-runtime" }
+
+        // When
+        val steps = defaultBootstrapCleanupSteps(
+            BootstrapCleanupTargets(jda = null, router = null, shutdownHook = null, playerRuntime = playerRuntime),
+        )
+        steps.single().run()
+
+        // Then
+        assertEquals(listOf("player-runtime"), steps.map { it.name })
+        assertEquals(listOf("player-runtime"), events)
+    }
+
+    @Test
+    fun `Given a production player runtime When cleanup runs Then its shutdown is awaited before later steps`() {
+        // Given
+        val closeStarted = CountDownLatch(1)
+        val releaseClose = CountDownLatch(1)
+        val factoryClosed = CountDownLatch(1)
+        val engine: PlayerEngine = mockk {
+            every { events } returns emptyFlow()
+            every { close() } answers {
+                closeStarted.countDown()
+                releaseClose.await(5, TimeUnit.SECONDS)
+            }
+        }
+        val factory: PlayerEngineFactory = mockk {
+            every { create() } returns engine
+            every { close() } answers { factoryClosed.countDown() }
+        }
+        mockkObject(PlayerEngines)
+        every { PlayerEngines.factory(any()) } returns factory
+        val runtime = JdaPlayerRuntime()
+        val guild: Guild = mockk {
+            every { idLong } returns 42L
+        }
+        runtime.engineFor(guild)
+        val step = defaultBootstrapCleanupSteps(
+            BootstrapCleanupTargets(jda = null, router = null, shutdownHook = null, playerRuntime = runtime),
+        ).single()
+        val finished = CountDownLatch(1)
+        val cleanupThread = Thread({
+            try {
+                step.run()
+            } finally {
+                finished.countDown()
+            }
+        }, "player-runtime-cleanup")
+        try {
+            // When
+            cleanupThread.start()
+            assertTrue(closeStarted.await(2, TimeUnit.SECONDS), "player runtime shutdown never started")
+
+            // Then: the step is still awaiting the runtime and has not closed the shared factory.
+            assertEquals(1, factoryClosed.count)
+
+            releaseClose.countDown()
+            assertTrue(finished.await(2, TimeUnit.SECONDS), "player runtime cleanup was not awaited")
+            assertEquals(0, factoryClosed.count)
+        } finally {
+            releaseClose.countDown()
+            cleanupThread.join(5_000)
+            unmockkObject(PlayerEngines)
+        }
     }
 
     @Test

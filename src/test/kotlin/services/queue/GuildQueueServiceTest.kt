@@ -1,28 +1,31 @@
 package services.queue
 
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
-import com.sedmelluq.discord.lavaplayer.player.event.AudioEventListener
 import dev.kord.common.Locale
 import dev.kord.common.entity.Snowflake
 import dev.kord.core.behavior.channel.BaseVoiceChannelBehavior
 import dev.kord.core.entity.channel.MessageChannel
 import dev.kord.core.entity.interaction.ApplicationCommandInteraction
 import dev.kord.core.supplier.EntitySupplyStrategy
+import es.wokis.exceptions.BotException
+import es.wokis.player.engine.PlayerEngine
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import es.wokis.services.lavaplayer.GuildLavaPlayerService
 import es.wokis.services.localization.LocalizationService
-import es.wokis.exceptions.BotException
 import es.wokis.services.queue.GuildQueueService
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
+import io.mockk.verify
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import mock.TestDispatchers
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -45,12 +48,9 @@ class GuildQueueServiceTest {
         val guildId = Snowflake(123)
         val textChannel: MessageChannel = mockk()
         val voiceChannel: BaseVoiceChannelBehavior = mockk()
-        val audioPlayerManager: AudioPlayerManager = mockk()
+        val playerEngine: PlayerEngine = mockPlayerEngine()
 
-        every { audioPlayerManagerProvider.createAudioPlayerManager() } returns audioPlayerManager
-        every { audioPlayerManager.createPlayer() } returns mockk {
-            justRun { addListener(any<AudioEventListener>()) }
-        }
+        every { audioPlayerManagerProvider.createPlayerEngine() } returns playerEngine
 
         // When
         val actual = guildQueueService.getOrCreateLavaPlayerService(
@@ -70,12 +70,9 @@ class GuildQueueServiceTest {
         val guildId2 = Snowflake(456)
         val textChannel: MessageChannel = mockk()
         val voiceChannel: BaseVoiceChannelBehavior = mockk()
-        val audioPlayerManager: AudioPlayerManager = mockk()
+        val playerEngine: PlayerEngine = mockPlayerEngine()
 
-        every { audioPlayerManagerProvider.createAudioPlayerManager() } returns audioPlayerManager
-        every { audioPlayerManager.createPlayer() } returns mockk {
-            justRun { addListener(any<AudioEventListener>()) }
-        }
+        every { audioPlayerManagerProvider.createPlayerEngine() } returns playerEngine
 
         // When
         val lavaPlayerGuild1 = guildQueueService.getOrCreateLavaPlayerService(
@@ -101,12 +98,9 @@ class GuildQueueServiceTest {
         val guildId2 = Snowflake(123)
         val textChannel: MessageChannel = mockk()
         val voiceChannel: BaseVoiceChannelBehavior = mockk()
-        val audioPlayerManager: AudioPlayerManager = mockk()
+        val playerEngine: PlayerEngine = mockPlayerEngine()
 
-        every { audioPlayerManagerProvider.createAudioPlayerManager() } returns audioPlayerManager
-        every { audioPlayerManager.createPlayer() } returns mockk {
-            justRun { addListener(any<AudioEventListener>()) }
-        }
+        every { audioPlayerManagerProvider.createPlayerEngine() } returns playerEngine
 
         // When
         val lavaPlayerFirst = guildQueueService.getOrCreateLavaPlayerService(
@@ -130,12 +124,9 @@ class GuildQueueServiceTest {
     fun `Given dispatcher When getLavaPlayerService is called on an unknown guild Then return null`() {
         // Given
         val guildId = Snowflake(123)
-        val audioPlayerManager: AudioPlayerManager = mockk()
+        val playerEngine: PlayerEngine = mockPlayerEngine()
 
-        every { audioPlayerManagerProvider.createAudioPlayerManager() } returns audioPlayerManager
-        every { audioPlayerManager.createPlayer() } returns mockk {
-            justRun { addListener(any<AudioEventListener>()) }
-        }
+        every { audioPlayerManagerProvider.createPlayerEngine() } returns playerEngine
 
         // When
         val actual = guildQueueService.getLavaPlayerService(guildId = guildId)
@@ -150,12 +141,9 @@ class GuildQueueServiceTest {
         val guildId = Snowflake(123)
         val textChannel: MessageChannel = mockk()
         val voiceChannel: BaseVoiceChannelBehavior = mockk()
-        val audioPlayerManager: AudioPlayerManager = mockk()
+        val playerEngine: PlayerEngine = mockPlayerEngine()
 
-        every { audioPlayerManagerProvider.createAudioPlayerManager() } returns audioPlayerManager
-        every { audioPlayerManager.createPlayer() } returns mockk {
-            justRun { addListener(any<AudioEventListener>()) }
-        }
+        every { audioPlayerManagerProvider.createPlayerEngine() } returns playerEngine
         guildQueueService.getOrCreateLavaPlayerService(guildId, textChannel, voiceChannel)
 
         // When
@@ -173,7 +161,7 @@ class GuildQueueServiceTest {
             coEvery { asChannelOrNull() } returns mockk()
         }
         val voiceChannel: BaseVoiceChannelBehavior = mockk()
-        val audioPlayerManager: AudioPlayerManager = mockk()
+        val playerEngine: PlayerEngine = mockPlayerEngine()
         val interaction: ApplicationCommandInteraction = mockk {
             every { guildLocale } returns Locale.BULGARIAN
             every { kord } returns mockk {
@@ -196,10 +184,7 @@ class GuildQueueServiceTest {
                 every { guildId.value } returns mockGuildId
             }
         }
-        every { audioPlayerManagerProvider.createAudioPlayerManager() } returns audioPlayerManager
-        every { audioPlayerManager.createPlayer() } returns mockk {
-            justRun { addListener(any<AudioEventListener>()) }
-        }
+        every { audioPlayerManagerProvider.createPlayerEngine() } returns playerEngine
 
         // When
         val actual = guildQueueService.getOrCreateLavaPlayerService(interaction)
@@ -214,7 +199,7 @@ class GuildQueueServiceTest {
         val mockGuildId = Snowflake(123)
         val textChannel: MessageChannel = mockk()
         val voiceChannel: BaseVoiceChannelBehavior = mockk()
-        val audioPlayerManager: AudioPlayerManager = mockk()
+        val playerEngine: PlayerEngine = mockPlayerEngine()
         val interaction: ApplicationCommandInteraction = mockk {
             every { guildLocale } returns Locale.BULGARIAN
             every { kord } returns mockk {
@@ -237,10 +222,7 @@ class GuildQueueServiceTest {
                 every { guildId.value } returns mockGuildId
             }
         }
-        every { audioPlayerManagerProvider.createAudioPlayerManager() } returns audioPlayerManager
-        every { audioPlayerManager.createPlayer() } returns mockk {
-            justRun { addListener(any<AudioEventListener>()) }
-        }
+        every { audioPlayerManagerProvider.createPlayerEngine() } returns playerEngine
         coEvery { localizationService.getString(any(), any(), any()) } returns "No voice channel found"
 
         // When/Then
@@ -308,5 +290,79 @@ class GuildQueueServiceTest {
         assertThrows<BotException.UserException.NotInVoiceChannelException> {
             runBlocking { guildQueueService.getOrCreateLavaPlayerService(interaction) }
         }
+    }
+
+    @Test
+    fun `Given concurrent first access for the same guild When creation runs Then the factory is invoked once and no engine is leaked`() {
+        // Given
+        val guildId = Snowflake(123)
+        val firstEngine = mockPlayerEngine()
+        val losingEngine = mockPlayerEngine()
+        every { audioPlayerManagerProvider.createPlayerEngine() } returns firstEngine andThen losingEngine
+        val gate = CountDownLatch(1)
+        val results = CopyOnWriteArrayList<GuildLavaPlayerService>()
+        val threads = (0 until 8).map { index ->
+            Thread({
+                gate.await()
+                results += guildQueueService.getOrCreateLavaPlayerService(
+                    guildId = guildId,
+                    textChannel = mockk(),
+                    voiceChannel = mockk(),
+                )
+            }, "queue-first-access-$index")
+        }
+
+        // When
+        threads.forEach { it.start() }
+        gate.countDown()
+        threads.forEach { it.join(5_000) }
+
+        // Then
+        assertTrue(threads.none { it.isAlive })
+        assertEquals(1, results.distinct().size)
+        verify(exactly = 1) { audioPlayerManagerProvider.createPlayerEngine() }
+        verify(exactly = 0) { losingEngine.close() }
+    }
+
+    @Test
+    fun `Given created guild engines When shutdown runs Then every engine and the provider close once`() = runTest {
+        // Given
+        val firstGuildId = Snowflake(123)
+        val secondGuildId = Snowflake(456)
+        val firstEngine = mockPlayerEngine()
+        val secondEngine = mockPlayerEngine()
+        every { audioPlayerManagerProvider.createPlayerEngine() } returns firstEngine andThen secondEngine
+        justRun { audioPlayerManagerProvider.close() }
+        guildQueueService.getOrCreateLavaPlayerService(
+            guildId = firstGuildId,
+            textChannel = mockk(),
+            voiceChannel = mockk(),
+        )
+        guildQueueService.getOrCreateLavaPlayerService(
+            guildId = secondGuildId,
+            textChannel = mockk(),
+            voiceChannel = mockk(),
+        )
+
+        // When
+        guildQueueService.shutdown()
+        guildQueueService.shutdown()
+
+        // Then
+        verify(exactly = 1) { firstEngine.close() }
+        verify(exactly = 1) { secondEngine.close() }
+        verify(exactly = 1) { audioPlayerManagerProvider.close() }
+        assertThrows<IllegalStateException> {
+            guildQueueService.getOrCreateLavaPlayerService(
+                guildId = firstGuildId,
+                textChannel = mockk(),
+                voiceChannel = mockk(),
+            )
+        }
+    }
+
+    private fun mockPlayerEngine(): PlayerEngine = mockk {
+        every { events } returns emptyFlow()
+        justRun { close() }
     }
 }

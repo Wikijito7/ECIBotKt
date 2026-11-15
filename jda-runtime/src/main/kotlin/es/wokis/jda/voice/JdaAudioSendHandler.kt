@@ -1,5 +1,7 @@
 package es.wokis.jda.voice
 
+import es.wokis.player.engine.audio.ContinuousPlayerAudioStream
+import es.wokis.player.engine.audio.PlayerAudioState
 import es.wokis.voice.AudioFrame
 import es.wokis.voice.AudioFrameFormat
 import es.wokis.voice.AudioFrameSource
@@ -73,8 +75,8 @@ import java.util.concurrent.atomic.AtomicInteger
  * rethrows a fatal `Error` or [CancellationException], while only a timeout, an interruption, an
  * explicit [close] or a recoverable source `Exception` becomes an ordinary `false`.
  */
-internal class JdaAudioSendHandler(
-    private val source: AudioFrameSource,
+internal class JdaAudioSendHandler private constructor(
+    private val supply: FrameSupply,
     /**
      * Terminal signal published when the playback completes, is stopped or fails.
      *
@@ -87,11 +89,20 @@ internal class JdaAudioSendHandler(
      * [CompletableFuture.complete] and [CompletableFuture.completeExceptionally] on it, and never
      * while [stateLock] is held.
      */
-    private val completion: CompletableFuture<Unit> = CompletableFuture(),
+    private val completion: CompletableFuture<Unit>,
 ) : AudioSendHandler, AutoCloseable {
 
+    /**
+     * Finite Phase 2C path: the handler consumes a caller-owned [AudioFrameSource] exactly as
+     * before. The source is closed by the caller, never by this handler.
+     */
+    internal constructor(
+        source: AudioFrameSource,
+        completion: CompletableFuture<Unit> = CompletableFuture(),
+    ) : this(FrameSupply.from(source), completion)
+
     init {
-        require(source.format == AudioFrameFormat.OPUS_20MS) {
+        require(supply.format == AudioFrameFormat.OPUS_20MS) {
             "The JDA voice adapter only accepts ${AudioFrameFormat.OPUS_20MS} frames"
         }
     }
@@ -151,7 +162,7 @@ internal class JdaAudioSendHandler(
         }
 
         val frame = try {
-            source.nextFrame()
+            supply.nextFrame()
         } catch (cancellation: CancellationException) {
             // Signalling the failure first wakes the session waiter, so cleanup can start even
             // though this fatal failure is about to escape the audio thread.
@@ -207,7 +218,7 @@ internal class JdaAudioSendHandler(
         } ?: return null
 
         val count = provided.incrementAndGet()
-        if (count >= source.expectedFrameCount) {
+        if (count >= supply.expectedFrameCount) {
             completion.complete(Unit)
         }
         return buffer
@@ -424,4 +435,60 @@ internal class JdaAudioSendHandler(
         recordedFatalFailure()?.let { throw it }
         false
     }
+
+    internal companion object {
+        /**
+         * Extends this handler to the Phase 3 continuous player stream without adding a second
+         * [AudioSendHandler] type.
+         *
+         * Paused playback maps to a valid 20 ms Opus silence frame, never to `null`/EOF, so the
+         * JDA send loop keeps running and Lavaplayer keeps receiving `provide(0)` liveness polls.
+         * Only [PlayerAudioState.Ended] is terminal.
+         */
+        fun continuous(stream: ContinuousPlayerAudioStream): JdaAudioSendHandler =
+            JdaAudioSendHandler(ContinuousFrameSupply(stream), CompletableFuture())
+    }
 }
+
+/**
+ * Non-blocking frame supply behind [JdaAudioSendHandler].
+ *
+ * Keeping the source shape behind this tiny interface lets the finite Phase 2C path and the
+ * continuous Phase 3 path share the exact same claim/copy/close machinery.
+ */
+private interface FrameSupply {
+    val format: AudioFrameFormat
+    val expectedFrameCount: Int
+    fun nextFrame(): AudioFrame?
+
+    companion object {
+        fun from(source: AudioFrameSource): FrameSupply = AudioFrameSourceSupply(source)
+    }
+}
+
+private class AudioFrameSourceSupply(
+    private val source: AudioFrameSource,
+) : FrameSupply {
+    override val format: AudioFrameFormat get() = source.format
+    override val expectedFrameCount: Int get() = source.expectedFrameCount
+    override fun nextFrame(): AudioFrame? = source.nextFrame()
+}
+
+private class ContinuousFrameSupply(
+    private val stream: ContinuousPlayerAudioStream,
+) : FrameSupply {
+    override val format: AudioFrameFormat = AudioFrameFormat.OPUS_20MS
+    override val expectedFrameCount: Int = Int.MAX_VALUE
+
+    override fun nextFrame(): AudioFrame? = when (val state = stream.next()) {
+        is PlayerAudioState.Frame -> state.frame
+        PlayerAudioState.PausedSilence -> OPUS_SILENCE_FRAME
+        PlayerAudioState.Ended -> null
+    }
+}
+
+/** A valid 20 ms mono Opus packet carrying silence (same payload Lavaplayer uses). */
+private val OPUS_SILENCE_FRAME: AudioFrame = AudioFrame.of(
+    AudioFrameFormat.OPUS_20MS,
+    byteArrayOf(0xFC.toByte(), 0xFF.toByte(), 0xFE.toByte()),
+)
