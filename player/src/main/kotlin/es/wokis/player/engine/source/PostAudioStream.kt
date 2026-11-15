@@ -1,4 +1,4 @@
-package services.lavaplayer.manager
+package es.wokis.player.engine.source
 
 import com.sedmelluq.discord.lavaplayer.tools.Units
 import com.sedmelluq.discord.lavaplayer.tools.io.SeekableInputStream
@@ -25,7 +25,7 @@ private const val MAX_SKIP_DISTANCE = 512L * 1024L
  * - Sequential playback is sufficient
  * - Generation time may be long
  */
-class PostAudioStream(
+internal class PostAudioStream(
     private val response: CloseableHttpResponse,
     contentLength: Long?
 ) : SeekableInputStream(

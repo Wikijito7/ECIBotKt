@@ -1,11 +1,11 @@
 package services.lavaplayer
 
-import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager
 import es.wokis.services.config.ConfigService
 import es.wokis.services.lavaplayer.AudioPlayerManagerProvider
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Test
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class AudioPlayerManagerProviderTest {
@@ -14,7 +14,7 @@ class AudioPlayerManagerProviderTest {
     private val audioPlayerManagerProvider = AudioPlayerManagerProvider(configService)
 
     @Test
-    fun `When createAudioPlayerManager is called Then return DefaultAudioPlayerManager`() {
+    fun `When createPlayerEngine is called Then return a neutral player engine with empty state`() {
         // Given
         every { configService.config.youtube.oauth2Token } returns null
         every { configService.config.deezer.enabled } returns true
@@ -38,9 +38,14 @@ class AudioPlayerManagerProviderTest {
         every { configService.config.kokoro.defaultLangCode } returns ""
 
         // When
-        val actual = audioPlayerManagerProvider.createAudioPlayerManager()
+        val actual = audioPlayerManagerProvider.createPlayerEngine()
 
         // Then
-        assertTrue(actual is DefaultAudioPlayerManager)
+        try {
+            assertTrue(actual.isQueueEmpty())
+            assertNull(actual.snapshot().current)
+        } finally {
+            actual.close()
+        }
     }
 }

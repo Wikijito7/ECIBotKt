@@ -8,12 +8,16 @@ group = "es.wokis"
 version = rootProject.version
 
 repositories {
+    // Transitive source providers pulled in by the shared :player engine.
+    maven(url = "https://maven.lavalink.dev/releases")
+    maven(url = "https://maven.topi.wtf/releases")
     mavenCentral()
 }
 
 dependencies {
     implementation(project(":core"))
     implementation(project(":locale-persistence"))
+    implementation(project(":player"))
     implementation(libs.kotlinx.serialization)
     implementation(libs.jda)
     implementation(libs.libdaveV2Api)

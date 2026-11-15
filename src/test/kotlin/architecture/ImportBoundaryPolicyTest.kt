@@ -235,6 +235,7 @@ class ImportBoundaryPolicyTest {
     private fun gatewayFreeModules(): List<Pair<SourceModule, String>> = listOf(
         SourceModule.CORE to "es.wokis.core",
         SourceModule.LOCALE_PERSISTENCE to "es.wokis.data.locale",
+        SourceModule.PLAYER to "es.wokis.player.engine",
     )
 
     private fun jdaRuntimeAllowedPhase2(vendorImport: VendorImport, packageName: String): PolicyCase =

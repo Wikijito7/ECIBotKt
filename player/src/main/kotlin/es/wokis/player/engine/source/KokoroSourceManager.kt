@@ -1,4 +1,4 @@
-package services.lavaplayer.manager
+package es.wokis.player.engine.source
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager
@@ -22,7 +22,7 @@ import kotlin.text.Charsets.UTF_8
 private const val DEFAULT_VOICE = "em_santa"
 private const val DEFAULT_LANG_CODE = "e"
 
-class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
+internal class KokoroSourceManager : AudioSourceManager, HttpConfigurable {
     private val httpInterfaceManager: HttpInterfaceManager = HttpClientTools.createDefaultThreadLocalManager()
 
     var baseUrl: String = ""
