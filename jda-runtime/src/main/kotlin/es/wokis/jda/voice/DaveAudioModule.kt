@@ -42,12 +42,7 @@ internal object DaveAudioModule {
         return version
     }
 
-    /**
-     * Builds the immutable JDA audio configuration for [daveFactory].
-     *
-     * `AudioModuleConfig` is immutable, so the returned config is the one that must be passed
-     * to `JDABuilder.setAudioModuleConfig`.
-     */
+    /** Builds the immutable JDA audio configuration that must be passed to the builder. */
     fun audioModuleConfig(daveFactory: DaveFactory): AudioModuleConfig =
         AudioModuleConfig()
             .withDaveSessionFactory(LDJDADaveSessionFactory(daveFactory))

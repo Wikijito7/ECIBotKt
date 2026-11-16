@@ -35,17 +35,14 @@ class JdaVoiceWalkthroughCommandTest {
 
     @Test
     fun `Given a guild context When handled Then defer ephemerally before playing and respond ephemerally`() = runTest {
-        // Given
         val events = mutableListOf<String>()
         val responder = RecordingResponder(events)
         val source = TrackingFrameSource(events)
         val session = FakeVoiceSession(events) { VoicePlaybackResult.Completed(75, 75) }
         val command = JdaVoiceWalkthroughCommand(session, { source })
 
-        // When
         command.handle(context, responder)
 
-        // Then
         assertEquals(listOf(true), responder.defers)
         assertEquals(1, session.calls.get())
         assertSame(source, session.source)
@@ -64,16 +61,13 @@ class JdaVoiceWalkthroughCommandTest {
 
     @Test
     fun `Given the tone cannot be loaded When handled Then respond with the tone error and skip the session`() = runTest {
-        // Given
         val events = mutableListOf<String>()
         val responder = RecordingResponder(events)
         val session = FakeVoiceSession(events) { VoicePlaybackResult.Completed(75, 75) }
         val command = JdaVoiceWalkthroughCommand(session) { throw IllegalStateException("missing tone") }
 
-        // When
         command.handle(context, responder)
 
-        // Then
         assertEquals(listOf(true), responder.defers)
         assertEquals(0, session.calls.get())
         assertEquals(
@@ -84,16 +78,13 @@ class JdaVoiceWalkthroughCommandTest {
 
     @Test
     fun `Given the source factory is cancelled When handled Then rethrow and do not respond`() = runTest {
-        // Given
         val events = mutableListOf<String>()
         val responder = RecordingResponder(events)
         val session = FakeVoiceSession(events) { VoicePlaybackResult.Completed(75, 75) }
         val command = JdaVoiceWalkthroughCommand(session) { throw CancellationException("cancelled") }
 
-        // When
         val thrown = runCatching { command.handle(context, responder) }.exceptionOrNull()
 
-        // Then
         assertTrue(thrown is CancellationException, "expected the cancellation to be rethrown, got $thrown")
         assertEquals("cancelled", thrown?.message)
         assertEquals(0, session.calls.get())
@@ -102,17 +93,14 @@ class JdaVoiceWalkthroughCommandTest {
 
     @Test
     fun `Given the session throws When handled Then map to internal error and still close the source`() = runTest {
-        // Given
         val events = mutableListOf<String>()
         val responder = RecordingResponder(events)
         val source = TrackingFrameSource(events)
         val session = FakeVoiceSession(events) { throw IllegalStateException("gateway boom") }
         val command = JdaVoiceWalkthroughCommand(session, { source })
 
-        // When
         command.handle(context, responder)
 
-        // Then
         assertEquals(listOf("defer", "play", "respond", "close"), events)
         assertEquals(
             listOf(CommandResponse("The voice walkthrough failed.", ephemeral = true)),
@@ -123,17 +111,14 @@ class JdaVoiceWalkthroughCommandTest {
 
     @Test
     fun `Given the session is cancelled When handled Then rethrow and still close the source`() = runTest {
-        // Given
         val events = mutableListOf<String>()
         val responder = RecordingResponder(events)
         val source = TrackingFrameSource(events)
         val session = FakeVoiceSession(events) { throw CancellationException("cancelled") }
         val command = JdaVoiceWalkthroughCommand(session, { source })
 
-        // When
         val thrown = runCatching { command.handle(context, responder) }.exceptionOrNull()
 
-        // Then
         assertTrue(thrown is CancellationException, "expected the cancellation to be rethrown, got $thrown")
         assertEquals("cancelled", thrown?.message)
         assertEquals(1, source.closeCalls.get())
@@ -143,7 +128,6 @@ class JdaVoiceWalkthroughCommandTest {
 
     @Test
     fun `Given every rejection reason When handled Then respond with the documented ephemeral text`() = runTest {
-        // Given
         val expected = mapOf(
             VoiceRequestRejection.DIRECT_MESSAGE to
                 "This command must be used in a guild voice channel.",
@@ -169,7 +153,6 @@ class JdaVoiceWalkthroughCommandTest {
         )
 
         expected.forEach { (reason, message) ->
-            // Given
             val events = mutableListOf<String>()
             val responder = RecordingResponder(events)
             val source = TrackingFrameSource(events)
@@ -178,10 +161,8 @@ class JdaVoiceWalkthroughCommandTest {
                 { source },
             )
 
-            // When
             command.handle(context, responder)
 
-            // Then
             assertEquals(
                 listOf(CommandResponse(message, ephemeral = true)),
                 responder.responses,
@@ -193,7 +174,6 @@ class JdaVoiceWalkthroughCommandTest {
 
     @Test
     fun `Given every failure reason When handled Then respond with the documented ephemeral text`() = runTest {
-        // Given
         val expected = mapOf(
             VoiceFailureReason.MISSING_PERMISSION to
                 "The bot is missing permission to join or speak in that voice channel.",
@@ -217,7 +197,6 @@ class JdaVoiceWalkthroughCommandTest {
         )
 
         expected.forEach { (reason, message) ->
-            // Given
             val events = mutableListOf<String>()
             val responder = RecordingResponder(events)
             val source = TrackingFrameSource(events)
@@ -226,10 +205,8 @@ class JdaVoiceWalkthroughCommandTest {
                 { source },
             )
 
-            // When
             command.handle(context, responder)
 
-            // Then
             assertEquals(
                 listOf(CommandResponse(message, ephemeral = true)),
                 responder.responses,
@@ -241,13 +218,11 @@ class JdaVoiceWalkthroughCommandTest {
 
     @Test
     fun `Given the command definition When inspected Then expose the documented name and description`() {
-        // Given
         val command = JdaVoiceWalkthroughCommand(
             FakeVoiceSession(mutableListOf()) { VoicePlaybackResult.Completed(1, 1) },
             { TrackingFrameSource(mutableListOf()) },
         )
 
-        // Then
         assertEquals("jda-voice-walkthrough", command.name)
         assertEquals(JdaVoiceWalkthroughCommand.COMMAND_NAME, command.name)
         assertEquals(JdaVoiceWalkthroughCommand.COMMAND_DESCRIPTION, command.definition.description)
@@ -256,7 +231,6 @@ class JdaVoiceWalkthroughCommandTest {
 
     @Test
     fun `Given a guild id When registered Then use exactly that guild and no other destination`() = runTest {
-        // Given
         val registrar = RecordingRegistrar()
         val command = JdaVoiceWalkthroughCommand(
             FakeVoiceSession(mutableListOf()) { VoicePlaybackResult.Completed(1, 1) },
@@ -265,11 +239,9 @@ class JdaVoiceWalkthroughCommandTest {
         val firstGuild = GuildId(111uL)
         val secondGuild = GuildId(222uL)
 
-        // When
         command.registerIn(registrar, firstGuild)
         command.registerIn(registrar, secondGuild)
 
-        // Then
         assertEquals(listOf(firstGuild, secondGuild), registrar.registrations.map { it.guildId })
         assertEquals(
             listOf(command.definition, command.definition),

@@ -15,13 +15,10 @@ class PlayerSourceConfigurationTest {
 
     @Test
     fun `Given the default config When the source graph is built Then local and remote are available without optional providers`() {
-        // Given
         val manager = LavaAudioPlayerManagers.create(PlayerSourcesConfig())
 
-        // When
         val sourceNames = manager.sourceManagers.map { it.sourceName }
 
-        // Then
         try {
             assertTrue("local" in sourceNames)
             assertTrue("http" in sourceNames)
@@ -37,7 +34,6 @@ class PlayerSourceConfigurationTest {
 
     @Test
     fun `Given every optional provider enabled When the source graph is built Then each provider is registered`() {
-        // Given
         val manager = LavaAudioPlayerManagers.create(
             PlayerSourcesConfig(
                 youtube = YoutubeSourceConfig(enabled = true),
@@ -48,10 +44,8 @@ class PlayerSourceConfigurationTest {
             ),
         )
 
-        // When
         val sourceNames = manager.sourceManagers.map { it.sourceName }
 
-        // Then
         try {
             assertTrue("youtube" in sourceNames)
             assertTrue("deezer" in sourceNames)
@@ -65,10 +59,8 @@ class PlayerSourceConfigurationTest {
 
     @Test
     fun `Given a default config When an engine is created Then it owns an empty engine that can close`() {
-        // When
         val engine = PlayerEngines.fromConfig(PlayerSourcesConfig())
 
-        // Then
         try {
             assertTrue(engine.isQueueEmpty())
             assertTrue(engine.snapshot().queue.isEmpty())

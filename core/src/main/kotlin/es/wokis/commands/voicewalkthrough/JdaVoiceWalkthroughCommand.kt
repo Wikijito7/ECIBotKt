@@ -17,13 +17,10 @@ import kotlin.coroutines.cancellation.CancellationException
 /**
  * Neutral diagnostic handler for the Phase 2C voice port.
  *
- * It defers ephemerally, asks [voiceSession] to play a short pre-encoded Opus tone into the
- * invoking user's regular voice channel, reports the frame count supplied to the adapter's send
- * loop (a hand-off count, not a confirmation of network delivery) and always closes the
- * caller-owned [AudioFrameSource]. Gateway/DAVE types stay in the adapter module: this
- * handler only knows the neutral ports.
- *
- * User-facing text never includes a guild, channel, user or application identifier.
+ * Defers ephemerally, asks [voiceSession] to play a short pre-encoded Opus tone into the invoking
+ * user's regular voice channel, reports the frame count supplied to the send loop (hand-off, not
+ * delivery) and always closes the caller-owned [AudioFrameSource]. User-facing text never includes
+ * a guild, channel, user or application identifier.
  */
 class JdaVoiceWalkthroughCommand(
     private val voiceSession: VoiceSessionPort,
@@ -32,13 +29,12 @@ class JdaVoiceWalkthroughCommand(
 
     override val name: String = COMMAND_NAME
 
-    /** Gateway-neutral definition used by adapters to publish this command. */
     val definition: CommandDefinition = CommandDefinition(
         name = COMMAND_NAME,
         description = COMMAND_DESCRIPTION,
     )
 
-    /** Publishes this command into [guildId] through [registrar]; there is no global variant. */
+    /** Publishes this command into [guildId]; there is deliberately no global variant. */
     suspend fun registerIn(registrar: GuildCommandRegistrar, guildId: GuildId) {
         registrar.register(guildId, definition)
     }

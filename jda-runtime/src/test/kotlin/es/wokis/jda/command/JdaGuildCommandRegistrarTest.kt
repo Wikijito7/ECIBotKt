@@ -37,7 +37,6 @@ class JdaGuildCommandRegistrarTest {
 
     @Test
     fun `Given a member guild When registering Then publish the command only in that guild`() = runTest {
-        // Given the neutral guild id resolves to this exact JDA guild
         val guildId = GuildId(1234567890123456789uL)
         val jdaGuildId = 1234567890123456789L
         val command = CommandDefinition(
@@ -49,26 +48,21 @@ class JdaGuildCommandRegistrarTest {
         every { jda.getGuildById(jdaGuildId) } returns guild
         every { guild.upsertCommand(capture(published)) } returns upsertAction
 
-        // When
         JdaGuildCommandRegistrar(jda).register(guildId, command)
 
-        // Then the command is sent through that guild's upsert route...
         verify(exactly = 1) { jda.getGuildById(jdaGuildId) }
         verify(exactly = 1) { guild.upsertCommand(any<CommandData>()) }
         verify(exactly = 1) { upsertAction.queue(any(), any()) }
 
-        // ...with the neutral definition mapped onto the slash command payload
         assertEquals(command.name, published.captured.name)
         assertEquals(command.description, published.captured.description)
 
-        // ...and never through JDA's application-wide registration route
         verify(exactly = 0) { jda.upsertCommand(any<CommandData>()) }
         verify(exactly = 0) { jda.upsertCommand(any<String>(), any<String>()) }
     }
 
     @Test
     fun `Given the guild upsert emits a REST failure When registering Then propagate it without an application-wide fallback`() = runTest {
-        // Given an upsert whose failure callback fires with JDA's REST error
         val guildId = GuildId(1234567890123456789uL)
         val jdaGuildId = 1234567890123456789L
         val command = CommandDefinition(
@@ -89,25 +83,21 @@ class JdaGuildCommandRegistrarTest {
             secondArg<Consumer<Throwable>>().accept(expectedFailure)
         }
 
-        // When
         val failure = runCatching {
             JdaGuildCommandRegistrar(jda).register(guildId, command)
         }.exceptionOrNull()
 
-        // Then the guild-scoped REST failure reaches the caller unchanged...
         assertSame(expectedFailure, failure)
         verify(exactly = 1) { jda.getGuildById(jdaGuildId) }
         verify(exactly = 1) { guild.upsertCommand(any<CommandData>()) }
         verify(exactly = 1) { upsertAction.queue(any(), any()) }
 
-        // ...and no application-wide registration fallback is attempted
         verify(exactly = 0) { jda.upsertCommand(any<CommandData>()) }
         verify(exactly = 0) { jda.upsertCommand(any<String>(), any<String>()) }
     }
 
     @Test
     fun `Given a guild the bot is not in When registering Then fail without a global fallback`() = runTest {
-        // Given the requested guild cannot be resolved
         val guildId = GuildId(987654321uL)
         val jdaGuildId = 987654321L
         val command = CommandDefinition(
@@ -116,12 +106,10 @@ class JdaGuildCommandRegistrarTest {
         )
         every { jda.getGuildById(jdaGuildId) } returns null
 
-        // When
         val failure = runCatching {
             JdaGuildCommandRegistrar(jda).register(guildId, command)
         }.exceptionOrNull()
 
-        // Then the registration fails fast instead of publishing anywhere else
         assertTrue(failure is IllegalStateException)
         assertEquals(
             "The bot is not a member of guild $guildId, so /${command.name} cannot be registered",
@@ -134,19 +122,16 @@ class JdaGuildCommandRegistrarTest {
 
     @Test
     fun `Given a guild id outside JDA's signed range When registering Then reject before touching JDA`() = runTest {
-        // Given an id that cannot be represented by JDA's signed snowflake
         val outOfRangeGuildId = GuildId(Long.MAX_VALUE.toULong() + 1uL)
         val command = CommandDefinition(
             name = "walkthrough",
             description = "Start the guided server walkthrough",
         )
 
-        // When
         val failure = runCatching {
             JdaGuildCommandRegistrar(jda).register(outOfRangeGuildId, command)
         }.exceptionOrNull()
 
-        // Then the conversion boundary rejects it before any gateway lookup or registration
         assertTrue(failure is IllegalArgumentException)
         assertEquals(
             "Guild id does not fit in JDA's signed 64-bit id range",
@@ -164,7 +149,6 @@ class JdaGuildCommandRegistrarTest {
     @Test
     fun `Given the locale definition When registering Then publish an admin guild command with a required autocomplete option`() =
         runTest {
-            // Given
             val guildId = GuildId(1234567890123456789uL)
             val jdaGuildId = 1234567890123456789L
             val command = LocaleCommandHandler.definition(
@@ -189,10 +173,8 @@ class JdaGuildCommandRegistrarTest {
             every { jda.getGuildById(jdaGuildId) } returns guild
             every { guild.upsertCommand(capture(published)) } returns upsertAction
 
-            // When
             JdaGuildCommandRegistrar(jda).register(guildId, command)
 
-            // Then the command is published only in the configured guild
             verify(exactly = 1) { jda.getGuildById(jdaGuildId) }
             verify(exactly = 1) { guild.upsertCommand(any<CommandData>()) }
             verify(exactly = 0) { jda.upsertCommand(any<CommandData>()) }
@@ -234,7 +216,6 @@ class JdaGuildCommandRegistrarTest {
     @Test
     fun `Given a jda-player definition When registering Then publish an admin guild command with the required action option`() =
         runTest {
-            // Given
             val guildId = GuildId(1234567890123456789uL)
             val jdaGuildId = 1234567890123456789L
             val command = JdaPlayerControlCommand(mockk()).definition
@@ -243,10 +224,8 @@ class JdaGuildCommandRegistrarTest {
             every { jda.getGuildById(jdaGuildId) } returns guild
             every { guild.upsertCommand(capture(published)) } returns upsertAction
 
-            // When
             JdaGuildCommandRegistrar(jda).register(guildId, command)
 
-            // Then
             verify(exactly = 1) { jda.getGuildById(jdaGuildId) }
             verify(exactly = 1) { guild.upsertCommand(any<CommandData>()) }
             verify(exactly = 0) { jda.upsertCommand(any<CommandData>()) }

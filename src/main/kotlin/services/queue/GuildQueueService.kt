@@ -61,8 +61,8 @@ class GuildQueueService(
     fun getLavaPlayerService(guildId: Snowflake): GuildLavaPlayerService? = guildQueues[guildId]
 
     /**
-     * Closes every per-guild engine/voice connection exactly once and then shuts the shared
-     * Lavaplayer manager down. Safe to call from both normal shutdown and a JVM shutdown hook.
+     * Closes every per-guild engine/voice connection once, then shuts the shared manager down. Safe
+     * from both normal shutdown and a JVM shutdown hook.
      */
     suspend fun shutdown() {
         val services = synchronized(lock) {

@@ -9,7 +9,6 @@ import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.ChannelId
 import es.wokis.domain.model.GuildId
 import es.wokis.domain.model.UserId
-import es.wokis.jda.JdaRuntimeConfig
 import es.wokis.jda.registerPlayerCommands
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -24,20 +23,17 @@ import org.junit.jupiter.api.Test
 class JdaPlayerCommandsTest {
 
     @Test
-    fun `Given the player commands When registered Then publish both admin commands only in the configured guild`() = runTest {
-        // Given
+    fun `Given an explicit guild When the player commands register Then publish both admin commands only there`() = runTest {
         val controller = newController()
         val registrar = RecordingGuildCommandRegistrar()
-        val config = JdaRuntimeConfig(token = "fake-token", guildId = GuildId(987654321uL))
+        val guildId = GuildId(987654321uL)
         val play = JdaPlayCommand(controller)
         val control = JdaPlayerControlCommand(controller)
 
-        // When
-        registerPlayerCommands(registrar, config, play, control)
+        registerPlayerCommands(registrar, guildId, play, control)
 
-        // Then
         assertEquals(2, registrar.registrations.size)
-        assertTrue(registrar.registrations.all { it.guildId == config.guildId })
+        assertTrue(registrar.registrations.all { it.guildId == guildId })
         assertEquals(
             mapOf(
                 JdaPlayCommand.COMMAND_NAME to JdaPlayCommand.COMMAND_DESCRIPTION,
@@ -49,15 +45,41 @@ class JdaPlayerCommandsTest {
     }
 
     @Test
+    fun `Given two joined guilds When the player commands register Then each guild receives both admin commands`() = runTest {
+        val controller = newController()
+        val registrar = RecordingGuildCommandRegistrar()
+        val firstGuild = GuildId(111uL)
+        val secondGuild = GuildId(222uL)
+        val play = JdaPlayCommand(controller)
+        val control = JdaPlayerControlCommand(controller)
+
+        listOf(firstGuild, secondGuild).forEach { target ->
+            registerPlayerCommands(registrar, target, play, control)
+        }
+
+        assertEquals(
+            listOf(firstGuild, firstGuild, secondGuild, secondGuild),
+            registrar.registrations.map { it.guildId },
+        )
+        assertEquals(
+            listOf(
+                JdaPlayCommand.COMMAND_NAME,
+                JdaPlayerControlCommand.COMMAND_NAME,
+                JdaPlayCommand.COMMAND_NAME,
+                JdaPlayerControlCommand.COMMAND_NAME,
+            ),
+            registrar.registrations.map { it.command.name },
+        )
+        assertTrue(registrar.registrations.all { it.command.adminOnly })
+    }
+
+    @Test
     fun `Given the player definitions When inspected Then they are admin only guild commands with required string options`() {
-        // Given
         val controller = newController()
 
-        // When
         val play = JdaPlayCommand(controller).definition
         val control = JdaPlayerControlCommand(controller).definition
 
-        // Then
         assertEquals(JdaPlayCommand.COMMAND_NAME, play.name)
         assertEquals(JdaPlayerControlCommand.COMMAND_NAME, control.name)
         assertTrue(play.adminOnly)
@@ -78,7 +100,6 @@ class JdaPlayerCommandsTest {
 
     @Test
     fun `Given a jda-play invocation When handled Then defer before loading and reply with the controller result`() = runTest {
-        // Given
         val controller = newController()
         val order = mutableListOf<String>()
         val context = context(JdaPlayCommand.COMMAND_NAME, mapOf(JdaPlayCommand.OPTION_INPUT to "track"))
@@ -91,10 +112,8 @@ class JdaPlayerCommandsTest {
         }
         coEvery { responder.respond(capture(response)) } coAnswers { order += "respond" }
 
-        // When
         JdaPlayCommand(controller).handle(context, responder)
 
-        // Then
         assertEquals(listOf("defer", "load", "respond"), order)
         assertEquals(CommandResponse(content = "loaded", ephemeral = true), response.captured)
         coVerify(exactly = 1) {
@@ -107,7 +126,6 @@ class JdaPlayerCommandsTest {
 
     @Test
     fun `Given a jda-player invocation When handled Then defer before controlling and reply with the controller result`() = runTest {
-        // Given
         val controller = newController()
         val order = mutableListOf<String>()
         val context = context(
@@ -123,10 +141,8 @@ class JdaPlayerCommandsTest {
         }
         coEvery { responder.respond(capture(response)) } coAnswers { order += "respond" }
 
-        // When
         JdaPlayerControlCommand(controller).handle(context, responder)
 
-        // Then
         assertEquals(listOf("defer", "control", "respond"), order)
         assertEquals(CommandResponse(content = "paused", ephemeral = true), response.captured)
         coVerify(exactly = 1) {
@@ -139,7 +155,6 @@ class JdaPlayerCommandsTest {
 
     @Test
     fun `Given a missing option When the command is handled Then defer before playing and pass an empty string`() = runTest {
-        // Given
         val controller = newController()
         val order = mutableListOf<String>()
         val context = context(JdaPlayCommand.COMMAND_NAME, emptyMap())
@@ -153,10 +168,8 @@ class JdaPlayerCommandsTest {
             order += "respond"
         }
 
-        // When
         JdaPlayCommand(controller).handle(context, responder)
 
-        // Then: the interaction is acknowledged before the provider work starts and before the reply.
         assertEquals(listOf("defer", "play", "respond"), order)
         coVerify(exactly = 1) { responder.defer(ephemeral = true) }
         coVerify(exactly = 1) { controller.play(any(), "") }

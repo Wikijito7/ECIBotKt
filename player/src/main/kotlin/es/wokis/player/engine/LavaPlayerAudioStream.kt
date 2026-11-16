@@ -12,19 +12,15 @@ import com.sedmelluq.discord.lavaplayer.track.playback.AudioFrame as LavaAudioFr
 /**
  * Non-blocking [ContinuousPlayerAudioStream] over a Lavaplayer [AudioPlayer].
  *
- * Every call polls `provide(0)`, including while paused. Lavaplayer treats a zero-timeout poll
- * during pause as "no frame" but still refreshes its last-request clock, which keeps the player
- * from being cleaned up after the default ~60 s idle threshold. The audio send thread therefore
- * never blocks on audio data and never calls `provide(timeout > 0)`.
+ * Every call polls `provide(0)`, including while paused: Lavaplayer returns "no frame" but still
+ * refreshes its cleanup liveness clock, keeping the player alive past the ~60 s idle threshold. The
+ * send thread never blocks and never calls `provide(timeout > 0)`.
  *
- * A paused player, or a momentarily unbuffered active player, maps to
- * [PlayerAudioState.PausedSilence]. A provider exception or a malformed provider packet is **not**
- * silence: it is reported once through [onFailure] and the stream becomes terminal
- * ([PlayerAudioState.Ended]), so the engine can advance its queue or report the failure instead of
- * hiding a broken provider forever.
- *
- * [onFailure] is invoked on the audio thread. Implementations must only enqueue (for example into
- * the engine mailbox) and must never block or perform I/O.
+ * Paused or momentarily unbuffered active playback maps to [PlayerAudioState.PausedSilence]. A
+ * provider exception or malformed packet is **not** silence: it is reported once through
+ * [onFailure] and the stream becomes [PlayerAudioState.Ended], so the engine advances or reports
+ * instead of hiding a broken provider. [onFailure] runs on the audio thread and must only enqueue,
+ * never block or perform I/O.
  */
 internal class LavaPlayerAudioStream(
     private val player: AudioPlayer,

@@ -10,17 +10,9 @@ import es.wokis.commands.neutral.StringOptionDefinition
 import es.wokis.domain.model.GuildId
 
 /**
- * Minimal, administrator-only `/jda-play` command for the isolated JDA real-player slice.
+ * Administrator-only, guild-scoped `/jda-play` player command.
  *
- * It exists to enable the deferred Phase 3 staging matrix, not to port the production music
- * commands (that remains Phase 4 work). The command is published only into the development guild
- * and carries one required string option:
- *
- * - `input`: a track name, URL or playlist URL handed to the shared player engine.
- *
- * The handler rejects direct messages, defers the interaction before the provider load starts (a
- * load can take seconds; an unacknowledged interaction would expire), and replies ephemerally with
- * the adapter-local result.
+ * The interaction is deferred before the provider load, which can take long enough to expire.
  */
 internal class JdaPlayCommand(
     private val controller: JdaPlayerCommandController,
@@ -28,7 +20,6 @@ internal class JdaPlayCommand(
 
     override val name: String = COMMAND_NAME
 
-    /** Guild-scoped, administrator-only definition used by the JDA adapter to publish it. */
     val definition: CommandDefinition = CommandDefinition(
         name = COMMAND_NAME,
         description = COMMAND_DESCRIPTION,
@@ -40,7 +31,6 @@ internal class JdaPlayCommand(
         ),
     )
 
-    /** Publishes this command into [guildId]; there is deliberately no global variant. */
     suspend fun registerIn(registrar: GuildCommandRegistrar, guildId: GuildId) {
         registrar.register(guildId, definition)
     }

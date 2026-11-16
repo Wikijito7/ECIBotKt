@@ -16,42 +16,32 @@ import org.junit.jupiter.api.Test
 
 class JdaBootstrapVoiceTest {
 
-    private val config = JdaRuntimeConfig(
-        token = "fake-token",
-        guildId = GuildId(987654321uL),
-    )
+    private val guildId = GuildId(987654321uL)
 
     @Test
-    fun `Given a validated config When the voice walkthrough registers Then use exactly the configured guild`() =
-        runTest {
-            // Given
-            val registrar = RecordingGuildCommandRegistrar()
-            val command = voiceCommand()
+    fun `Given an explicit guild When the voice walkthrough registers Then use exactly that guild`() = runTest {
+        val registrar = RecordingGuildCommandRegistrar()
+        val command = voiceCommand()
 
-            // When
-            registerVoiceWalkthroughCommand(registrar, config, command)
+        registerVoiceWalkthroughCommand(registrar, guildId, command)
 
-            // Then
-            assertEquals(1, registrar.registrations.size)
-            assertEquals(config.guildId, registrar.registrations.single().guildId)
-            assertEquals(command.definition, registrar.registrations.single().command)
-            assertEquals(JdaVoiceWalkthroughCommand.COMMAND_NAME, registrar.registrations.single().command.name)
-        }
+        assertEquals(1, registrar.registrations.size)
+        assertEquals(guildId, registrar.registrations.single().guildId)
+        assertEquals(command.definition, registrar.registrations.single().command)
+        assertEquals(JdaVoiceWalkthroughCommand.COMMAND_NAME, registrar.registrations.single().command.name)
+    }
 
     @Test
-    fun `Given both diagnostics When registered Then each is published only into the configured guild`() = runTest {
-        // Given
+    fun `Given both diagnostics When registered Then each is published only into the supplied guild`() = runTest {
         val registrar = RecordingGuildCommandRegistrar()
         val walkthrough = WalkthroughCommand()
         val voiceWalkthrough = voiceCommand()
 
-        // When
-        registerWalkthroughCommand(registrar, config, walkthrough)
-        registerVoiceWalkthroughCommand(registrar, config, voiceWalkthrough)
+        registerWalkthroughCommand(registrar, guildId, walkthrough)
+        registerVoiceWalkthroughCommand(registrar, guildId, voiceWalkthrough)
 
-        // Then
         assertEquals(2, registrar.registrations.size)
-        assertTrue(registrar.registrations.all { it.guildId == config.guildId })
+        assertTrue(registrar.registrations.all { it.guildId == guildId })
         assertEquals(
             setOf(WalkthroughCommand.COMMAND_NAME, JdaVoiceWalkthroughCommand.COMMAND_NAME),
             registrar.registrations.map { it.command.name }.toSet(),
@@ -66,18 +56,31 @@ class JdaBootstrapVoiceTest {
     }
 
     @Test
-    fun `Given the guild registrar port When inspected Then it exposes no global registration path`() {
-        // When
-        val methods = GuildCommandRegistrar::class.java.declaredMethods
+    fun `Given two joined guilds When the diagnostics register Then every guild receives both commands`() = runTest {
+        val registrar = RecordingGuildCommandRegistrar()
+        val firstGuild = GuildId(111uL)
+        val secondGuild = GuildId(222uL)
+        val walkthrough = WalkthroughCommand()
+        val voiceWalkthrough = voiceCommand()
 
-        // Then: the value class mangles the JVM name, but there is exactly one registration
-        // entry point and it always takes a guild destination.
-        assertEquals(1, methods.size)
-        assertTrue(
-            methods.single().name.startsWith("register"),
-            "unexpected registrar method name: ${methods.single().name}",
+        listOf(firstGuild, secondGuild).forEach { target ->
+            registerWalkthroughCommand(registrar, target, walkthrough)
+            registerVoiceWalkthroughCommand(registrar, target, voiceWalkthrough)
+        }
+
+        assertEquals(
+            listOf(firstGuild, firstGuild, secondGuild, secondGuild),
+            registrar.registrations.map { it.guildId },
         )
-        assertTrue(!methods.single().name.contains("global", ignoreCase = true))
+        assertEquals(
+            listOf(
+                WalkthroughCommand.COMMAND_NAME,
+                JdaVoiceWalkthroughCommand.COMMAND_NAME,
+                WalkthroughCommand.COMMAND_NAME,
+                JdaVoiceWalkthroughCommand.COMMAND_NAME,
+            ),
+            registrar.registrations.map { it.command.name },
+        )
     }
 
     private fun voiceCommand(): JdaVoiceWalkthroughCommand = JdaVoiceWalkthroughCommand(

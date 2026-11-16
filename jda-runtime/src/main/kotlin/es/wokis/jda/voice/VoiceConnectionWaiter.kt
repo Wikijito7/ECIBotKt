@@ -179,7 +179,6 @@ internal class VoiceConnectionWaiter : ConnectionListener {
         else -> StatusDecision()
     }
 
-    /** Must be called while holding [stateLock]; see [onStatusChange]. */
     private fun classifyNotConnectedLocked(
         observedState: ConnectionState,
         observedRequest: DisconnectRequest?,
@@ -210,7 +209,6 @@ internal class VoiceConnectionWaiter : ConnectionListener {
         )
     }
 
-    /** Must be called while holding [stateLock]; see [onStatusChange]. */
     private fun terminal(reason: String): StatusDecision =
         StatusDecision(terminal = recordTerminalLocked(reason))
 

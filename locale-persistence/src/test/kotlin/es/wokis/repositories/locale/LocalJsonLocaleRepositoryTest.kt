@@ -35,54 +35,44 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given no custom locale When getGuildLocale is called Then return null`() = runTest {
-        // Given
         val repository = newRepository()
         val guildId = GuildId(123uL)
 
-        // When
         val result = repository.getGuildLocale(guildId)
 
-        // Then
         assertNull(result)
         assertFalse(dataFile.exists(), "A read must not create the backing file")
     }
 
     @Test
     fun `Given custom locale set When getGuildLocale is called Then return locale`() = runTest {
-        // Given
         val repository = newRepository()
         val guildId = GuildId(123uL)
         val locale = LocaleCode("es-ES")
 
-        // When
         repository.setGuildLocale(guildId, locale)
         val result = repository.getGuildLocale(guildId)
 
-        // Then
         assertEquals(locale, result)
         assertTrue(dataFile.isFile)
     }
 
     @Test
     fun `Given custom locale set When removeGuildLocale is called Then return null`() = runTest {
-        // Given
         val repository = newRepository()
         val guildId = GuildId(123uL)
         val locale = LocaleCode("es-ES")
         repository.setGuildLocale(guildId, locale)
 
-        // When
         repository.removeGuildLocale(guildId)
         val result = repository.getGuildLocale(guildId)
 
-        // Then
         assertNull(result)
         assertTrue(dataFile.isFile)
     }
 
     @Test
     fun `Given multiple guilds When getAllGuildLocales is called Then return all mappings`() = runTest {
-        // Given
         val repository = newRepository()
         val guildId1 = GuildId(123uL)
         val guildId2 = GuildId(456uL)
@@ -92,10 +82,8 @@ class LocalJsonLocaleRepositoryTest {
         repository.setGuildLocale(guildId1, locale1)
         repository.setGuildLocale(guildId2, locale2)
 
-        // When
         val result = repository.getAllGuildLocales()
 
-        // Then
         assertEquals(2, result.size)
         assertEquals(locale1, result[guildId1])
         assertEquals(locale2, result[guildId2])
@@ -103,23 +91,19 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given locale set When repository recreated Then locale persists`() = runTest {
-        // Given
         val repository = newRepository()
         val guildId = GuildId(123uL)
         val locale = LocaleCode("es-ES")
         repository.setGuildLocale(guildId, locale)
 
-        // When
         val recreatedRepository = newRepository()
         val result = recreatedRepository.getGuildLocale(guildId)
 
-        // Then
         assertEquals(locale, result)
     }
 
     @Test
     fun `Given legacy JSON fixture with decimal keys When repository loads it Then locales are read`() = runTest {
-        // Given
         writeRawFile(
             """
             {
@@ -132,10 +116,8 @@ class LocalJsonLocaleRepositoryTest {
             """.trimIndent()
         )
 
-        // When
         val repository = newRepository()
 
-        // Then
         assertEquals(LocaleCode("es-ES"), repository.getGuildLocale(GuildId(123uL)))
         assertEquals(LocaleCode("fr"), repository.getGuildLocale(GuildId(456uL)))
         assertEquals(LocaleCode("de"), repository.getGuildLocale(GuildId(ULong.MAX_VALUE)))
@@ -144,18 +126,15 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given locales set When written to file Then preserve legacy JSON shape and exact strings`() = runTest {
-        // Given
         val repository = newRepository()
         val guildId = GuildId(123uL)
         val maxGuildId = GuildId(ULong.MAX_VALUE)
         val locale = LocaleCode("es-ES")
         val maxLocale = LocaleCode("fr")
 
-        // When
         repository.setGuildLocale(guildId, locale)
         repository.setGuildLocale(maxGuildId, maxLocale)
 
-        // Then
         val root = json.parseToJsonElement(dataFile.readText()).jsonObject
         assertEquals(setOf("guild_locales"), root.keys)
 
@@ -172,7 +151,6 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given ULong edge guild ids When file is reloaded Then keys round-trip exactly`() = runTest {
-        // Given
         val repository = newRepository()
         val expected = mapOf(
             GuildId(0uL) to LocaleCode("es-ES"),
@@ -185,10 +163,8 @@ class LocalJsonLocaleRepositoryTest {
             repository.setGuildLocale(guildId, locale)
         }
 
-        // When
         val recreatedRepository = newRepository()
 
-        // Then
         assertEquals(expected, recreatedRepository.getAllGuildLocales())
         expected.forEach { (guildId, locale) ->
             assertEquals(locale, recreatedRepository.getGuildLocale(guildId))
@@ -202,22 +178,17 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given invalid persisted locale When read Then exact string is returned`() = runTest {
-        // Given
         writeRawFile("""{"guild_locales":{"123":"not-a-locale"}}""")
 
-        // When
         val repository = newRepository()
 
-        // Then
         assertEquals(LocaleCode("not-a-locale"), repository.getGuildLocale(GuildId(123uL)))
     }
 
     @Test
     fun `Given a raw invalid persisted value When all mappings are read Then preserve it unchanged`() = runTest {
-        // Given
         writeRawFile("""{"guild_locales":{"123":"not-a-locale"}}""")
 
-        // When
         val repository = newRepository()
 
         // Then the persistence layer never sanitizes or replaces stored values
@@ -229,14 +200,11 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given a raw invalid locale When set Then persist the exact string and reload it`() = runTest {
-        // Given
         val repository = newRepository()
         val guildId = GuildId(123uL)
 
-        // When
         repository.setGuildLocale(guildId, LocaleCode("invalid-locale"))
 
-        // Then
         val persistedLocales = json.parseToJsonElement(dataFile.readText()).jsonObject
             .getValue("guild_locales")
             .jsonObject
@@ -249,15 +217,12 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given an existing locale When a new locale is set Then replace it in memory and on disk`() = runTest {
-        // Given
         val repository = newRepository()
         val guildId = GuildId(123uL)
         repository.setGuildLocale(guildId, LocaleCode("es-ES"))
 
-        // When
         repository.setGuildLocale(guildId, LocaleCode("he"))
 
-        // Then
         assertEquals(LocaleCode("he"), repository.getGuildLocale(guildId))
         assertEquals(LocaleCode("he"), newRepository().getGuildLocale(guildId))
 
@@ -269,17 +234,14 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given several guilds When one locale is removed Then only that guild is removed`() = runTest {
-        // Given
         val repository = newRepository()
         val removedGuild = GuildId(123uL)
         val keptGuild = GuildId(456uL)
         repository.setGuildLocale(removedGuild, LocaleCode("es-ES"))
         repository.setGuildLocale(keptGuild, LocaleCode("fr"))
 
-        // When
         repository.removeGuildLocale(removedGuild)
 
-        // Then
         assertNull(repository.getGuildLocale(removedGuild))
         assertEquals(LocaleCode("fr"), repository.getGuildLocale(keptGuild))
 
@@ -295,39 +257,30 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given empty file When repository is created Then start with empty map`() = runTest {
-        // Given
         writeRawFile("")
 
-        // When
         val repository = newRepository()
 
-        // Then
         assertTrue(repository.getAllGuildLocales().isEmpty())
         assertNull(repository.getGuildLocale(GuildId(123uL)))
     }
 
     @Test
     fun `Given missing file When repository is created Then start with empty map without creating a file`() = runTest {
-        // Given
         assertFalse(dataFile.exists())
 
-        // When
         val repository = newRepository()
 
-        // Then
         assertTrue(repository.getAllGuildLocales().isEmpty())
         assertFalse(dataFile.exists(), "Loading an absent file must not create it")
     }
 
     @Test
     fun `Given corrupt file When repository is created Then start with empty map and overwrite on write`() = runTest {
-        // Given
         writeRawFile("{ this is not valid json")
 
-        // When
         val repository = newRepository()
 
-        // Then
         assertTrue(repository.getAllGuildLocales().isEmpty())
 
         repository.setGuildLocale(GuildId(123uL), LocaleCode("es-ES"))
@@ -341,7 +294,6 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given a legacy file with unknown fields When loaded Then known locales are still read`() = runTest {
-        // Given
         writeRawFile(
             """
             {
@@ -353,10 +305,8 @@ class LocalJsonLocaleRepositoryTest {
             """.trimIndent()
         )
 
-        // When
         val repository = newRepository()
 
-        // Then
         assertEquals(LocaleCode("es-ES"), repository.getGuildLocale(GuildId(123uL)))
     }
 
@@ -386,12 +336,10 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given concurrent writes When they complete Then every locale is kept`() = runTest {
-        // Given
         val repository = newRepository()
         val guildIds = (1..20).map { GuildId(it.toULong()) }
         val locale = LocaleCode("es-ES")
 
-        // When
         coroutineScope {
             guildIds.map { guildId ->
                 async(Dispatchers.Default) {
@@ -400,7 +348,6 @@ class LocalJsonLocaleRepositoryTest {
             }.awaitAll()
         }
 
-        // Then
         val result = repository.getAllGuildLocales()
         assertEquals(guildIds.toSet(), result.keys)
         assertTrue(result.values.all { it == locale })
@@ -412,12 +359,10 @@ class LocalJsonLocaleRepositoryTest {
 
     @Test
     fun `Given concurrent writes and reads When they complete Then no mapping is lost or corrupted`() = runTest {
-        // Given
         val repository = newRepository()
         val guildIds = (1..10).map { GuildId(it.toULong()) }
         val locale = LocaleCode("fr")
 
-        // When
         coroutineScope {
             val writers = guildIds.map { guildId ->
                 async(Dispatchers.Default) { repository.setGuildLocale(guildId, locale) }
@@ -428,7 +373,6 @@ class LocalJsonLocaleRepositoryTest {
             (writers + readers).awaitAll()
         }
 
-        // Then
         assertEquals(guildIds.toSet(), repository.getAllGuildLocales().keys)
         assertTrue(repository.getAllGuildLocales().values.all { it == locale })
     }

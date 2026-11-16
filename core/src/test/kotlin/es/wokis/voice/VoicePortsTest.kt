@@ -22,10 +22,8 @@ class VoicePortsTest {
         // Given: a well-formed 20 ms code-0 Opus packet.
         val payload = opus20msPacket(0x01, 0x02)
 
-        // When
         val frame = AudioFrame.of(AudioFrameFormat.OPUS_20MS, payload)
 
-        // Then
         assertEquals(AudioFrameFormat.OPUS_20MS, frame.format)
         assertEquals(3, frame.size)
         assertArrayEquals(opus20msPacket(0x01, 0x02), frame.payloadCopy())
@@ -44,11 +42,9 @@ class VoicePortsTest {
         val payload = opus20msPacket(0x11, 0x22, 0x33)
         val frame = AudioFrame.of(AudioFrameFormat.OPUS_20MS, payload)
 
-        // When
         val first = frame.payloadCopy()
         val second = frame.payloadCopy()
 
-        // Then
         assertNotSame(first, second, "every payload copy must be a distinct array")
         assertArrayEquals(opus20msPacket(0x11, 0x22, 0x33), first)
         assertArrayEquals(opus20msPacket(0x11, 0x22, 0x33), second)
@@ -66,7 +62,6 @@ class VoicePortsTest {
         val payload = opus20msPacket(0x11, 0x22, 0x33)
         val frame = AudioFrame.of(AudioFrameFormat.OPUS_20MS, payload)
 
-        // When
         val first = frame.payloadBuffer()
         val second = frame.payloadBuffer()
 
@@ -102,12 +97,10 @@ class VoicePortsTest {
 
     @Test
     fun `Given an empty payload When a frame is built Then it is rejected`() {
-        // When
         val error = assertThrows(IllegalArgumentException::class.java) {
             AudioFrame.of(AudioFrameFormat.OPUS_20MS, ByteArray(0))
         }
 
-        // Then
         assertTrue(error.message.orEmpty().contains("cannot be empty"))
     }
 
@@ -116,12 +109,10 @@ class VoicePortsTest {
         // Given: a structurally valid 20 ms packet that is one byte over the limit.
         val oversized = ByteArray(AudioFrame.MAX_OPUS_PACKET_BYTES + 1).also { it[0] = 0x78 }
 
-        // When
         val error = assertThrows(IllegalArgumentException::class.java) {
             AudioFrame.of(AudioFrameFormat.OPUS_20MS, oversized)
         }
 
-        // Then
         assertTrue(error.message.orEmpty().contains(AudioFrame.MAX_OPUS_PACKET_BYTES.toString()))
     }
 
@@ -130,30 +121,24 @@ class VoicePortsTest {
         // Given: a code-1 packet whose 1274 frame bytes split evenly across two 10 ms frames.
         val payload = ByteArray(AudioFrame.MAX_OPUS_PACKET_BYTES).also { it[0] = 0x01 }
 
-        // When
         val frame = AudioFrame.of(AudioFrameFormat.OPUS_20MS, payload)
 
-        // Then
         assertEquals(1275, AudioFrame.MAX_OPUS_PACKET_BYTES)
         assertEquals(AudioFrame.MAX_OPUS_PACKET_BYTES, frame.size)
     }
 
     @Test
     fun `Given the Opus format When inspected Then it is twenty milliseconds of pre-encoded audio`() {
-        // Then
         assertEquals(20, AudioFrameFormat.OPUS_20MS.frameDurationMillis)
         assertTrue(AudioFrameFormat.OPUS_20MS.isOpus)
     }
 
     @Test
     fun `Given a simple fake source When drained Then it returns its frames and then null forever`() {
-        // Given
         val source = FakeAudioFrameSource(frameCount = 3)
 
-        // When
         val frames = generateSequence { source.nextFrame() }.toList()
 
-        // Then
         assertEquals(3, source.expectedFrameCount)
         assertEquals(AudioFrameFormat.OPUS_20MS, source.format)
         assertEquals(3, frames.size)
@@ -169,28 +154,22 @@ class VoicePortsTest {
 
     @Test
     fun `Given a closed fake source When next frame is requested Then it returns null`() {
-        // Given
         val source = FakeAudioFrameSource(frameCount = 2)
 
-        // When
         source.close()
 
-        // Then
         assertNull(source.nextFrame())
     }
 
     @Test
     fun `Given a text-only fake port When send edit and delete are used Then the exact values reach it`() = runTest {
-        // Given
         val port = RecordingPlayerMessagePort()
         val channelId = ChannelId(987654321uL)
 
-        // When
         val messageId = port.send(channelId, "Now playing")
         port.edit(channelId, messageId, "Finished")
         port.delete(channelId, messageId)
 
-        // Then
         assertEquals(
             listOf(
                 "send:987654321:Now playing",
@@ -204,7 +183,6 @@ class VoicePortsTest {
 
     @Test
     fun `Given the full unsigned message id When rendered Then the decimal value is preserved`() {
-        // Then
         assertEquals(
             "18446744073709551615",
             PlayerMessageId(ULong.MAX_VALUE).toString(),
@@ -214,7 +192,6 @@ class VoicePortsTest {
 
     @Test
     fun `Given a playback result When compared Then it is a plain value object`() {
-        // Then
         assertEquals(VoicePlaybackResult.Completed(75, 75), VoicePlaybackResult.Completed(75, 75))
         assertEquals(
             VoicePlaybackResult.Rejected(VoiceRequestRejection.DIRECT_MESSAGE),

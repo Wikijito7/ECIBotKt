@@ -16,7 +16,6 @@ class ConfigPlayerSourcesTest {
 
     @Test
     fun `Given every provider configured When mapped Then carry every field to the neutral source configuration`() {
-        // Given
         val config = Config(
             discordBotToken = "mapping-token",
             debug = false,
@@ -54,16 +53,13 @@ class ConfigPlayerSourcesTest {
             ),
         )
 
-        // When
         val sources = config.toPlayerSourcesConfig()
 
-        // Then
         assertEquals(everyProviderSources(), sources)
     }
 
     @Test
     fun `Given nullable and empty provider credentials When mapped Then null stays null and empty stays empty`() {
-        // Given
         val config = Config(
             discordBotToken = "mapping-token",
             debug = false,
@@ -83,10 +79,8 @@ class ConfigPlayerSourcesTest {
             kokoro = KokoroConfig(baseUrl = "", defaultVoice = "", defaultSpeed = 1.0f, defaultLangCode = ""),
         )
 
-        // When
         val sources = config.toPlayerSourcesConfig()
 
-        // Then
         assertNull(sources.youtube.oauth2Token)
         assertEquals("", sources.youtube.poToken)
         assertNull(sources.youtube.visitorData)

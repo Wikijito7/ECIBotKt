@@ -25,7 +25,6 @@ class JdaPlayerMessagePortTest {
 
     @Test
     fun `Given a text channel When sending Then use the exact channel and content and return the message id`() = runTest {
-        // Given
         val jda = mockk<JDA>()
         val channel = mockk<TextChannel>()
         val action = mockk<MessageCreateAction>()
@@ -37,10 +36,8 @@ class JdaPlayerMessagePortTest {
         }
         every { message.idLong } returns 900L
 
-        // When
         val result = JdaPlayerMessagePort(jda).send(channelId, "Now playing")
 
-        // Then
         assertEquals(PlayerMessageId(900uL), result)
         verify(exactly = 1) { jda.getTextChannelById(42L) }
         verify(exactly = 1) { channel.sendMessage("Now playing") }
@@ -49,7 +46,6 @@ class JdaPlayerMessagePortTest {
 
     @Test
     fun `Given an existing message When editing Then use the exact channel message and content`() = runTest {
-        // Given
         val jda = mockk<JDA>()
         val channel = mockk<TextChannel>()
         val action = mockk<MessageEditAction>()
@@ -59,17 +55,14 @@ class JdaPlayerMessagePortTest {
             firstArg<Consumer<Message?>>().accept(null)
         }
 
-        // When
         JdaPlayerMessagePort(jda).edit(channelId, messageId, "Finished")
 
-        // Then
         verify(exactly = 1) { channel.editMessageById(900L, "Finished") }
         verify(exactly = 1) { action.queue(any(), any()) }
     }
 
     @Test
     fun `Given an existing message When deleting Then use the exact channel and message`() = runTest {
-        // Given
         val jda = mockk<JDA>()
         val channel = mockk<TextChannel>()
         val action = mockk<AuditableRestAction<Void>>()
@@ -79,17 +72,14 @@ class JdaPlayerMessagePortTest {
             firstArg<Consumer<Void?>>().accept(null)
         }
 
-        // When
         JdaPlayerMessagePort(jda).delete(channelId, messageId)
 
-        // Then
         verify(exactly = 1) { channel.deleteMessageById(900L) }
         verify(exactly = 1) { action.queue(any(), any()) }
     }
 
     @Test
     fun `Given a REST failure When sending Then propagate the original error`() = runTest {
-        // Given
         val jda = mockk<JDA>()
         val channel = mockk<TextChannel>()
         val action = mockk<MessageCreateAction>()
@@ -100,19 +90,16 @@ class JdaPlayerMessagePortTest {
             secondArg<Consumer<Throwable>>().accept(expected)
         }
 
-        // When
         val actual = runCatching {
             JdaPlayerMessagePort(jda).send(channelId, "Now playing")
         }.exceptionOrNull()
 
-        // Then
         assertTrue(actual is IllegalStateException)
         assertEquals(expected.message, actual?.message)
     }
 
     @Test
     fun `Given a REST failure When editing Then propagate the original error`() = runTest {
-        // Given
         val jda = mockk<JDA>()
         val channel = mockk<TextChannel>()
         val action = mockk<MessageEditAction>()
@@ -123,19 +110,16 @@ class JdaPlayerMessagePortTest {
             secondArg<Consumer<Throwable>>().accept(expected)
         }
 
-        // When
         val actual = runCatching {
             JdaPlayerMessagePort(jda).edit(channelId, messageId, "Finished")
         }.exceptionOrNull()
 
-        // Then
         assertTrue(actual is IllegalArgumentException)
         assertEquals(expected.message, actual?.message)
     }
 
     @Test
     fun `Given a REST failure When deleting Then propagate the original error`() = runTest {
-        // Given
         val jda = mockk<JDA>()
         val channel = mockk<TextChannel>()
         val action = mockk<AuditableRestAction<Void>>()
@@ -146,29 +130,24 @@ class JdaPlayerMessagePortTest {
             secondArg<Consumer<Throwable>>().accept(expected)
         }
 
-        // When
         val actual = runCatching {
             JdaPlayerMessagePort(jda).delete(channelId, messageId)
         }.exceptionOrNull()
 
-        // Then
         assertTrue(actual is IllegalStateException)
         assertEquals(expected.message, actual?.message)
     }
 
     @Test
     fun `Given an unknown channel When any operation runs Then fail without another channel fallback`() = runTest {
-        // Given
         val jda = mockk<JDA>()
         every { jda.getTextChannelById(any<Long>()) } returns null
         val port = JdaPlayerMessagePort(jda)
 
-        // When
         val send = runCatching { port.send(channelId, "text") }.exceptionOrNull()
         val edit = runCatching { port.edit(channelId, messageId, "text") }.exceptionOrNull()
         val delete = runCatching { port.delete(channelId, messageId) }.exceptionOrNull()
 
-        // Then
         listOf(send, edit, delete).forEach { error ->
             assertTrue(error is IllegalStateException)
             assertTrue(error?.message.orEmpty().contains("not available"))
@@ -178,12 +157,10 @@ class JdaPlayerMessagePortTest {
 
     @Test
     fun `Given an id above the signed JDA range When sending Then fail before touching the JDA cache`() = runTest {
-        // Given
         val jda = mockk<JDA>()
         val port = JdaPlayerMessagePort(jda)
         val oversizedChannelId = ChannelId(ULong.MAX_VALUE)
 
-        // When
         val error = runCatching {
             port.send(oversizedChannelId, "text")
         }.exceptionOrNull()
@@ -197,14 +174,12 @@ class JdaPlayerMessagePortTest {
 
     @Test
     fun `Given an id above the signed JDA range When editing Then fail before issuing the REST call`() = runTest {
-        // Given
         val jda = mockk<JDA>()
         val channel = mockk<TextChannel>()
         every { jda.getTextChannelById(42L) } returns channel
         val port = JdaPlayerMessagePort(jda)
         val oversizedMessageId = PlayerMessageId(ULong.MAX_VALUE)
 
-        // When
         val error = runCatching {
             port.edit(channelId, oversizedMessageId, "text")
         }.exceptionOrNull()
@@ -218,14 +193,12 @@ class JdaPlayerMessagePortTest {
 
     @Test
     fun `Given an id above the signed JDA range When deleting Then fail before issuing the REST call`() = runTest {
-        // Given
         val jda = mockk<JDA>()
         val channel = mockk<TextChannel>()
         every { jda.getTextChannelById(42L) } returns channel
         val port = JdaPlayerMessagePort(jda)
         val oversizedMessageId = PlayerMessageId(ULong.MAX_VALUE)
 
-        // When
         val error = runCatching {
             port.delete(channelId, oversizedMessageId)
         }.exceptionOrNull()

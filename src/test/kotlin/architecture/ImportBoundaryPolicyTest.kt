@@ -30,14 +30,11 @@ class ImportBoundaryPolicyTest {
             DynamicTest.dynamicTest(
                 "Given ${case.label} When the policy evaluates Then allowed is ${case.expectedAllowed}",
             ) {
-                // Given
                 val policy = ImportBoundaryPolicy(case.mode)
                 val imported = importOf(case.importName)
 
-                // When
                 val decision = policy.evaluate(case.module, case.packageName, imported)
 
-                // Then
                 assertEquals(case.expectedAllowed, decision.allowed, case.label)
                 assertEquals(case.expectedVendor, decision.vendor, case.label)
             }
@@ -45,7 +42,6 @@ class ImportBoundaryPolicyTest {
 
     @Test
     fun `Given the Phase 2 and Phase 6 configurations When configuration roots are inspected Then each is classified once`() {
-        // Given
         val configurations = listOf(ImportBoundaryConfigs.phase2(), ImportBoundaryConfigs.phase6())
         val expectedPaths = listOf(
             "configuration/src/main/kotlin",
@@ -53,11 +49,9 @@ class ImportBoundaryPolicyTest {
         )
 
         configurations.forEach { config ->
-            // When
             val configurationRoots = config.roots.filter { it.module == SourceModule.CONFIGURATION }
             val paths = configurationRoots.map { it.path }
 
-            // Then
             assertEquals(expectedPaths, paths)
             assertEquals(paths.distinct(), paths, "a source root must be classified exactly once")
             assertEquals(2, configurationRoots.size)
@@ -66,17 +60,14 @@ class ImportBoundaryPolicyTest {
 
     @Test
     fun `Given a semicolon inside a backtick identifier When evaluated Then it is not Kord and the following vendor import is denied`() {
-        // Given
         val header = KotlinFileHeaderParser.parse(
             "import dev.`kord;legacy`.core.Type; import net.dv8tion.jda.api.JDA\n",
         )
         val policy = ImportBoundaryPolicy(ScanMode.PHASE_2)
 
-        // When
         val backticked = policy.evaluate(SourceModule.ROOT, "solid.root", header.imports[0])
         val vendor = policy.evaluate(SourceModule.ROOT, "solid.root", header.imports[1])
 
-        // Then
         assertTrue(backticked.allowed)
         assertNull(backticked.vendor)
         assertFalse(vendor.allowed)

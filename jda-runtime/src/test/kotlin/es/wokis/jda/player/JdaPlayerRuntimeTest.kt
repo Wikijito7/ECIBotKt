@@ -29,7 +29,6 @@ class JdaPlayerRuntimeTest {
 
     @Test
     fun `Given an active runtime When close signals Then engines and factory close and new access is rejected`() = runTest {
-        // Given
         val engine: PlayerEngine = mockk {
             every { events } returns emptyFlow()
             justRun { close() }
@@ -53,10 +52,8 @@ class JdaPlayerRuntimeTest {
             runtime.engineFor(guild)
             runtime.voiceAdapterFor(guild)
 
-            // When
             runtime.close()
 
-            // Then
             verify(exactly = 1) { engine.close() }
             verify(exactly = 1) { factory.close() }
             assertFailsWith<IllegalStateException> { runtime.engineFor(guild) }
@@ -69,7 +66,6 @@ class JdaPlayerRuntimeTest {
 
     @Test
     fun `Given two guild adapters When requested repeatedly Then one dispatcher per guild is created and retained`() = runTest {
-        // Given
         val engine: PlayerEngine = mockk {
             every { events } returns emptyFlow()
             justRun { close() }
@@ -95,14 +91,12 @@ class JdaPlayerRuntimeTest {
             },
         )
         try {
-            // When
             val firstAdapter = runtime.voiceAdapterFor(firstGuild)
             val secondAdapter = runtime.voiceAdapterFor(secondGuild)
             val firstAgain = runtime.voiceAdapterFor(firstGuild)
             val secondAgain = runtime.voiceAdapterFor(secondGuild)
             runtime.shutdown()
 
-            // Then
             assertSame(firstAdapter, firstAgain)
             assertSame(secondAdapter, secondAgain)
             assertEquals(2, dispatchers.size)
@@ -115,7 +109,6 @@ class JdaPlayerRuntimeTest {
 
     @Test
     fun `Given a fast close When shutdown follows Then awaited cleanup remains callable`() = runTest {
-        // Given
         val engine: PlayerEngine = mockk {
             every { events } returns emptyFlow()
             justRun { close() }
@@ -139,12 +132,10 @@ class JdaPlayerRuntimeTest {
             runtime.engineFor(guild)
             runtime.voiceAdapterFor(guild)
 
-            // When
             runtime.close()
             assertFailsWith<IllegalStateException> { runtime.engineFor(guild) }
             runtime.shutdown()
 
-            // Then
             verify(exactly = 1) { engine.close() }
             verify(atLeast = 1) { factory.close() }
         } finally {
@@ -155,7 +146,6 @@ class JdaPlayerRuntimeTest {
 
     @Test
     fun `Given engine and factory close failures When shutdown runs Then both failures are reported`() = runTest {
-        // Given
         val engineFailure = IllegalStateException("engine close failed")
         val factoryFailure = IllegalStateException("factory close failed")
         val engine: PlayerEngine = mockk {
@@ -180,12 +170,10 @@ class JdaPlayerRuntimeTest {
         try {
             runtime.engineFor(guild)
 
-            // When
             val thrown = assertFailsWith<IllegalStateException> {
                 runtime.shutdown()
             }
 
-            // Then
             assertSame(engineFailure, thrown)
             assertEquals(listOf(factoryFailure), thrown.suppressed.toList())
             verify(exactly = 1) { factory.close() }
@@ -197,7 +185,6 @@ class JdaPlayerRuntimeTest {
 
     @Test
     fun `Given a guild requested twice When shutdown runs twice Then engines and the shared factory close once`() = runTest {
-        // Given
         val engine: PlayerEngine = mockk {
             every { events } returns emptyFlow()
             justRun { close() }
@@ -218,7 +205,6 @@ class JdaPlayerRuntimeTest {
             serialDispatcherFactory = { UnconfinedTestDispatcher(testScheduler) },
         )
         try {
-            // When
             val firstEngine = runtime.engineFor(guild)
             val secondEngine = runtime.engineFor(guild)
             val firstAdapter = runtime.voiceAdapterFor(guild)
@@ -226,7 +212,6 @@ class JdaPlayerRuntimeTest {
             runtime.shutdown()
             runtime.shutdown()
 
-            // Then
             assertSame(firstEngine, secondEngine)
             assertSame(firstAdapter, secondAdapter)
             verify(exactly = 1) { factory.create() }

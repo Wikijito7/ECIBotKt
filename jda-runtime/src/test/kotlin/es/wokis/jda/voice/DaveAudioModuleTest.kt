@@ -16,23 +16,19 @@ class DaveAudioModuleTest {
 
     @Test
     fun `Given a positive protocol version When validated Then it is returned unchanged`() {
-        // When
         val version = DaveAudioModule.requirePositiveProtocolVersion(1)
 
-        // Then
         assertEquals(1, version)
         assertEquals(42, DaveAudioModule.requirePositiveProtocolVersion(42))
     }
 
     @Test
     fun `Given a non-positive protocol version When validated Then the runtime fails fast`() {
-        // When
         listOf(0, -1, Int.MIN_VALUE).forEach { version ->
             val error = assertThrows(IllegalStateException::class.java) {
                 DaveAudioModule.requirePositiveProtocolVersion(version)
             }
 
-            // Then
             assertTrue(error.message.orEmpty().contains("maxSupportedProtocolVersion=$version"))
             assertTrue(error.message.orEmpty().contains("DAVE cannot be negotiated"))
         }
@@ -44,10 +40,8 @@ class DaveAudioModuleTest {
         // config must not load or query the native implementation.
         val factory = mockk<DaveFactory>()
 
-        // When
         val config = DaveAudioModule.audioModuleConfig(factory)
 
-        // Then
         assertIs<LDJDADaveSessionFactory>(config.daveSessionFactory)
         assertIs<DefaultSendFactory>(
             config.audioSendFactory,
@@ -61,14 +55,11 @@ class DaveAudioModuleTest {
 
     @Test
     fun `Given a DAVE factory When the audio module config is built twice Then each call gets its own factory wrapper`() {
-        // Given
         val factory = mockk<DaveFactory>()
 
-        // When
         val first = DaveAudioModule.audioModuleConfig(factory)
         val second = DaveAudioModule.audioModuleConfig(factory)
 
-        // Then
         assertNotSame(first, second)
         assertIs<LDJDADaveSessionFactory>(first.daveSessionFactory)
         assertIs<LDJDADaveSessionFactory>(second.daveSessionFactory)

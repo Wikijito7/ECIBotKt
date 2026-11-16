@@ -50,13 +50,10 @@ class JdaGuildPlayerVoiceAdapterTest {
 
     @Test
     fun `Given a guild voice channel When connect runs Then the existing send handler is installed`() = runTest {
-        // Given
         val fixture = testFixture(testDispatcher())
 
-        // When
         fixture.adapter.connect(fixture.channel)
 
-        // Then
         assertNotNull(fixture.installedHandler)
         assertTrue(fixture.installedHandler is JdaAudioSendHandler)
         verify(exactly = 1) { fixture.audioManager.openAudioConnection(fixture.channel) }
@@ -64,16 +61,13 @@ class JdaGuildPlayerVoiceAdapterTest {
 
     @Test
     fun `Given a connected adapter When disconnect runs Then handler and stream are closed`() = runTest {
-        // Given
         val fixture = testFixture(testDispatcher())
         fixture.adapter.connect(fixture.channel)
         clearMocks(fixture.audioManager, answers = false)
         val handler = requireNotNull(fixture.installedHandler) as JdaAudioSendHandler
 
-        // When
         fixture.adapter.disconnect()
 
-        // Then
         assertFalse(handler.canProvide(), "the adapter must close the send handler")
         verify(exactly = 1) { fixture.audioManager.setSendingHandler(null) }
         verify(exactly = 1) { fixture.audioManager.closeAudioConnection() }
@@ -82,55 +76,45 @@ class JdaGuildPlayerVoiceAdapterTest {
 
     @Test
     fun `Given a connected adapter When close signals Then JDA cleanup waits for shutdown`() = runTest {
-        // Given
         val fixture = testFixture(testDispatcher())
         fixture.adapter.connect(fixture.channel)
         clearMocks(fixture.audioManager, answers = false)
 
-        // When
         fixture.adapter.close()
 
         // Then: close is only the fast signal and does not touch JDA.
         verify(exactly = 0) { fixture.audioManager.setSendingHandler(null) }
         verify(exactly = 0) { fixture.audioManager.closeAudioConnection() }
 
-        // When
         fixture.adapter.shutdown()
 
-        // Then
         verify(exactly = 1) { fixture.audioManager.setSendingHandler(null) }
         verify(exactly = 1) { fixture.audioManager.closeAudioConnection() }
     }
 
     @Test
     fun `Given an active adapter When the engine emits stopped Then the voice connection disconnects`() = runTest {
-        // Given
         val fixture = testFixture(testDispatcher())
         fixture.adapter.connect(fixture.channel)
         clearMocks(fixture.audioManager, answers = false)
 
-        // When
         fixture.events.emit(PlayerEvent.Stopped)
         advanceUntilIdle()
 
-        // Then
         verify(exactly = 1) { fixture.audioManager.setSendingHandler(null) }
         verify(exactly = 1) { fixture.audioManager.closeAudioConnection() }
     }
 
     @Test
     fun `Given an adapter When shutdown runs Then its event collector no longer reacts`() = runTest {
-        // Given
         val fixture = testFixture(testDispatcher())
         fixture.adapter.connect(fixture.channel)
         clearMocks(fixture.audioManager, answers = false)
         fixture.adapter.shutdown()
 
-        // When
         fixture.events.emit(PlayerEvent.Stopped)
         advanceUntilIdle()
 
-        // Then
         verify(exactly = 1) { fixture.audioManager.closeAudioConnection() }
     }
 
@@ -182,10 +166,8 @@ class JdaGuildPlayerVoiceAdapterTest {
         fixture.stream.nextState = PlayerAudioState.Ended
         assertFalse(drained.canProvide(), "an Ended stream must exhaust the old handler")
 
-        // When
         val connected = fixture.adapter.connect(fixture.channel)
 
-        // Then
         assertTrue(connected)
         val fresh = requireNotNull(fixture.installedHandler) as JdaAudioSendHandler
         assertNotSame(drained, fresh, "a drained handler must never be reused")
@@ -200,10 +182,8 @@ class JdaGuildPlayerVoiceAdapterTest {
         // Given: JDA already reports a connected session this adapter never opened.
         val fixture = testFixture(testDispatcher(), initiallyConnected = true)
 
-        // When
         val connected = fixture.adapter.connect(fixture.channel)
 
-        // Then
         assertFalse(connected)
         assertNull(fixture.installedHandler)
         assertTrue(fixture.streams.isEmpty(), "a foreign session must not create an audio pipeline")

@@ -9,20 +9,15 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy
 import net.dv8tion.jda.api.utils.cache.CacheFlag
 
 /**
- * Narrow, injectable DAVE preflight seam for the isolated bootstrap.
- *
- * Production uses [NativeDavePreflight], which performs the native load, creates the 0.2.0
- * factory, validates its protocol version and builds the immutable [AudioModuleConfig]. Tests
- * can substitute a failing or recording implementation without loading a native library, and
- * the gateway client is only created after this call returns successfully.
+ * Injectable DAVE preflight seam. Production [NativeDavePreflight] loads the native library,
+ * validates its protocol version and builds the immutable [AudioModuleConfig]; the gateway client
+ * is only created after this succeeds.
  */
 internal fun interface DavePreflight {
 
     /**
-     * Performs the DAVE preflight and returns the immutable JDA audio configuration.
-     *
-     * Implementations must throw when DAVE cannot be used; the bootstrap must then abort before
-     * any client is built or any gateway login is attempted.
+     * Returns the immutable JDA audio configuration. Implementations must throw when DAVE cannot be
+     * used, so the bootstrap aborts before any client or gateway login.
      */
     fun audioModuleConfig(): AudioModuleConfig
 }
@@ -41,11 +36,8 @@ internal object NativeDavePreflight : DavePreflight {
 }
 
 /**
- * Production client factory.
- *
- * Only the non-privileged `GUILD_VOICE_STATES` intent and the voice-state cache are enabled;
- * no privileged intent is ever requested. The preflight-produced [AudioModuleConfig] is passed
- * to the immutable builder chain before `JDABuilder.build`.
+ * Production client factory. Only the non-privileged `GUILD_VOICE_STATES` intent and voice-state
+ * cache are enabled; no privileged intent is ever requested.
  */
 internal object DefaultJdaClientFactory : JdaClientFactory {
     override fun create(config: JdaRuntimeConfig, audioModuleConfig: AudioModuleConfig): JDA =
@@ -60,10 +52,8 @@ internal object DefaultJdaClientFactory : JdaClientFactory {
 internal val VOICE_GATEWAY_INTENTS: Set<GatewayIntent> = setOf(GatewayIntent.GUILD_VOICE_STATES)
 
 /**
- * Runs the DAVE preflight and only then creates the gateway client.
- *
- * This is the single composition point that guarantees a failed preflight aborts before
- * [JdaClientFactory.create] (and therefore before `JDABuilder.build`/gateway login).
+ * Runs the DAVE preflight and only then creates the gateway client, so a failed preflight aborts
+ * before [JdaClientFactory.create] and gateway login.
  */
 internal fun buildGatewayClient(
     config: JdaRuntimeConfig,

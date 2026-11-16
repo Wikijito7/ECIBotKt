@@ -9,13 +9,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Kord-side adapter over the shared source-provider configuration.
  *
- * The root application does not register Lavaplayer sources itself anymore: it maps its existing
- * JSON `Config` sections onto the neutral [PlayerSourcesConfig], and the shared `:player` module
- * builds the same YouTube/LavaSrc/Kokoro/local/remote graph it always used.
- *
- * One provider (one Koin singleton) owns one Lavaplayer manager for all guilds, avoiding a thread
- * pool per guild. Per-guild [PlayerEngine]s share that manager and are closed independently; the
- * manager itself is shut down once by [close].
+ * Maps the root `Config` onto the neutral `PlayerSourcesConfig`; the shared `:player` module builds
+ * the source graph. One Koin singleton owns one Lavaplayer manager for all guilds, avoiding a
+ * thread pool per guild: per-guild [PlayerEngine]s share it and close independently, and [close]
+ * shuts the manager down once.
  */
 class AudioPlayerManagerProvider(
     private val configService: ConfigService,

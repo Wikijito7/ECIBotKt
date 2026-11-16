@@ -1,12 +1,14 @@
 package es.wokis.jda
 
-import es.wokis.domain.model.GuildId
+import es.wokis.exceptions.EmptyDeezerMasterDecryptionKeyException
+import es.wokis.exceptions.EmptyDiscordTokenException
 import es.wokis.player.engine.config.DeezerSourceConfig
 import es.wokis.player.engine.config.KokoroSourceConfig
 import es.wokis.player.engine.config.PlayerSourcesConfig
 import es.wokis.player.engine.config.SpotifySourceConfig
 import es.wokis.player.engine.config.TidalSourceConfig
 import es.wokis.player.engine.config.YoutubeSourceConfig
+import es.wokis.player.engine.config.toPlayerSourcesConfig
 import es.wokis.services.config.Config
 import es.wokis.services.config.ConfigLoader
 import es.wokis.services.config.DEFAULT_CONFIG_PATH
@@ -20,9 +22,11 @@ import es.wokis.services.config.YouTubeConfig
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import kotlinx.serialization.descriptors.elementNames
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -36,9 +40,8 @@ class JdaRuntimeConfigTest {
     lateinit var tempDir: Path
 
     @Test
-    fun `Given a valid shared configuration file When fromEnv Then read the token guild and provider sources from it`() {
-        // Given
-        val config = sampleConfig(
+    fun `Given a shared config When fromConfig Then map its token and provider sources`() {
+        val sharedConfig = sampleConfig(
             token = SECRET_TOKEN,
             youtube = YouTubeConfig(
                 enabled = true,
@@ -63,308 +66,171 @@ class JdaRuntimeConfigTest {
                 defaultLangCode = "es",
             ),
         )
-        val path = writeConfig(config)
 
-        // When
-        val runtimeConfig = JdaRuntimeConfig.fromEnv(env(configPath = path.toString(), guildId = "42"))
+        val runtimeConfig = JdaRuntimeConfig.fromConfig(sharedConfig)
 
-        // Then
         assertEquals(SECRET_TOKEN, runtimeConfig.token)
-        assertEquals(GuildId(42uL), runtimeConfig.guildId)
         assertEquals(expectedProviderSources(), runtimeConfig.sources)
+        assertEquals(sharedConfig.toPlayerSourcesConfig(), runtimeConfig.sources)
     }
 
     @Test
-    fun `Given a token only in the environment When fromEnv Then the shared configuration file is the token source`() {
-        // Given
-        val path = writeConfig(sampleConfig(token = FILE_TOKEN_SENTINEL))
+    fun `Given a shared config token When fromConfig Then keep it unchanged and out of the rendered value`() {
+        val sharedConfig = sampleConfig(token = FILE_TOKEN_SENTINEL)
 
-        // When
-        val runtimeConfig = JdaRuntimeConfig.fromEnv(
-            env(configPath = path.toString(), guildId = "42") +
-                mapOf("DISCORD_BOT_TOKEN" to ENV_TOKEN_SENTINEL),
-        )
+        val runtimeConfig = JdaRuntimeConfig.fromConfig(sharedConfig)
 
-        // Then
         assertEquals(FILE_TOKEN_SENTINEL, runtimeConfig.token)
-        assertFalse(runtimeConfig.toString().contains(ENV_TOKEN_SENTINEL))
+        assertEquals("JdaRuntimeConfig(tokenSet=true)", runtimeConfig.toString())
+        assertFalse(runtimeConfig.toString().contains(FILE_TOKEN_SENTINEL))
     }
 
     @Test
-    fun `Given a blank config path When fromEnv Then fall back to the documented default path`() {
-        // Given
+    fun `Given a blank token in the shared config When fromConfig Then fail safely without echoing it`() {
+        val sharedConfig = sampleConfig(token = "   ")
+
+        val error = assertThrows(JdaRuntimeConfigException::class.java) {
+            JdaRuntimeConfig.fromConfig(sharedConfig)
+        }
+
+        val message = error.message.orEmpty()
+        assertTrue(message.contains("discord_bot_token"), "the failure must name the token property: $message")
+        assertFalse(message.contains(SECRET_TOKEN), "the failure leaked a token: $message")
+    }
+
+    @Test
+    fun `Given a built config When rendered Then never include the token or provider secrets`() {
+        val sharedConfig = sampleConfig(
+            token = SECRET_TOKEN,
+            youtube = YouTubeConfig(
+                enabled = true,
+                oauth2Token = YOUTUBE_OAUTH2_SENTINEL,
+                poToken = "",
+                visitorData = null,
+                remoteCipherUrl = "",
+                remoteCipherPassword = null,
+            ),
+        )
+        val config = JdaRuntimeConfig.fromConfig(sharedConfig)
+
+        val rendered = config.toString()
+
+        assertEquals("JdaRuntimeConfig(tokenSet=true)", rendered)
+        assertFalse(rendered.contains(SECRET_TOKEN))
+        assertFalse(rendered.contains(YOUTUBE_OAUTH2_SENTINEL))
+    }
+
+    @Test
+    fun `Given the runtime config type When inspected Then it declares no guild configuration at all`() {
+        // Commands are registered in every guild the client is in, so no guild id is configured.
+        val guildMembers = (
+            JdaRuntimeConfig::class.java.declaredFields.map { field -> field.name } +
+                JdaRuntimeConfig::class.java.declaredMethods.map { method -> method.name } +
+                JdaRuntimeConfig::class.java.declaredClasses.flatMap { declared ->
+                    declared.declaredFields.map { field -> field.name } +
+                        declared.declaredMethods.map { method -> method.name }
+                }
+            ).filter { name -> name.contains("guild", ignoreCase = true) }
+
+        assertTrue(
+            guildMembers.isEmpty(),
+            "JdaRuntimeConfig must not configure a guild destination: $guildMembers",
+        )
+    }
+
+    @Test
+    fun `Given the shared Config schema When inspected Then it declares no JDA development guild field`() {
+        val elementNames = Config.serializer().descriptor.elementNames
+        assertFalse(
+            elementNames.contains("discord_dev_guild_id"),
+            "the shared schema must not declare a JDA guild id: $elementNames",
+        )
+        assertTrue(elementNames.contains("discord_bot_token"))
+    }
+
+    @Test
+    fun `Given a custom path When loadSharedConfig runs Then load exactly that path`() {
+        val loader = mockk<ConfigLoader>()
+        val capturedPath = slot<Path>()
+        val customPath = tempDir.resolve("jda-shared-config.json")
+        every { loader.load(capture(capturedPath)) } returns sampleConfig()
+
+        loadSharedConfig(path = customPath, loader = loader)
+
+        assertEquals(customPath, capturedPath.captured)
+    }
+
+    @Test
+    fun `Given no path When loadSharedConfig runs Then use the shared default path`() {
         val loader = mockk<ConfigLoader>()
         val capturedPath = slot<Path>()
         every { loader.load(capture(capturedPath)) } returns sampleConfig()
 
-        // When
-        JdaRuntimeConfig.fromEnv(env(configPath = "   ", guildId = "42"), loader)
+        loadSharedConfig(loader = loader)
 
-        // Then
-        assertEquals(DEFAULT_CONFIG_PATH, capturedPath.captured)
-    }
-
-    @Test
-    fun `Given an absent config path When fromEnv Then fall back to the documented default path`() {
-        // Given
-        val loader = mockk<ConfigLoader>()
-        val capturedPath = slot<Path>()
-        every { loader.load(capture(capturedPath)) } returns sampleConfig()
-
-        // When
-        JdaRuntimeConfig.fromEnv(env(configPath = null, guildId = "42"), loader)
-
-        // Then
         assertEquals(DEFAULT_CONFIG_PATH, capturedPath.captured)
         assertEquals(Path.of("./data", "config.json"), DEFAULT_CONFIG_PATH)
     }
 
     @Test
-    fun `Given a surrounding whitespace config path When fromEnv Then trim the path`() {
-        // Given
+    fun `Given a synthetic shared JSON file When loadSharedConfig runs Then the token only comes from the JSON`() {
+        val target = tempDir.resolve("data").resolve("config.json")
+        Files.createDirectories(target.parent)
+        val sharedConfig = sampleConfig(token = JSON_TOKEN_SENTINEL)
+        Files.writeString(target, Json.encodeToString(Config.serializer(), sharedConfig))
+
+        val runtimeConfig = JdaRuntimeConfig.fromConfig(loadSharedConfig(path = target, loader = ConfigLoader()))
+
+        assertEquals(JSON_TOKEN_SENTINEL, runtimeConfig.token)
+        assertFalse(runtimeConfig.toString().contains(JSON_TOKEN_SENTINEL))
+    }
+
+    @Test
+    fun `Given a loader failure carrying raw content When loadSharedConfig runs Then sanitize it without a cause`() {
+        // A decoder-style failure whose message could echo the raw configuration.
         val loader = mockk<ConfigLoader>()
-        val capturedPath = slot<Path>()
-        every { loader.load(capture(capturedPath)) } returns sampleConfig()
+        every { loader.load(any<Path>()) } throws IllegalArgumentException("raw $SECRET_TOKEN")
 
-        // When
-        JdaRuntimeConfig.fromEnv(env(configPath = "  /tmp/jda-staging.json  ", guildId = "42"), loader)
-
-        // Then
-        assertEquals(Path.of("/tmp/jda-staging.json"), capturedPath.captured)
-    }
-
-    @Test
-    fun `Given a surrounding whitespace guild id When fromEnv Then trim it`() {
-        // Given
-        val path = writeConfig(sampleConfig())
-
-        // When
-        val runtimeConfig = JdaRuntimeConfig.fromEnv(env(configPath = path.toString(), guildId = "  42  "))
-
-        // Then
-        assertEquals(GuildId(42uL), runtimeConfig.guildId)
-    }
-
-    @Test
-    fun `Given missing guild id When fromEnv Then fail naming the variable without the token`() {
-        // When
-        val error = expectConfigError(
-            env(configPath = writeConfig(sampleConfig()).toString(), guildId = null),
-        )
-
-        // Then
-        assertTrue(error.message.orEmpty().contains(JdaRuntimeConfig.ENV_GUILD_ID))
-        assertFalse(error.message.orEmpty().contains(SECRET_TOKEN))
-    }
-
-    @Test
-    fun `Given blank guild id When fromEnv Then fail naming the variable without the token`() {
-        // When
-        val error = expectConfigError(
-            env(configPath = writeConfig(sampleConfig()).toString(), guildId = "   "),
-        )
-
-        // Then
-        assertTrue(error.message.orEmpty().contains(JdaRuntimeConfig.ENV_GUILD_ID))
-        assertFalse(error.message.orEmpty().contains(SECRET_TOKEN))
-    }
-
-    @Test
-    fun `Given a non numeric guild id When fromEnv Then fail without the token`() {
-        // When
-        val error = expectConfigError(
-            env(configPath = writeConfig(sampleConfig()).toString(), guildId = "not-a-guild"),
-        )
-
-        // Then
-        assertTrue(error.message.orEmpty().contains(JdaRuntimeConfig.ENV_GUILD_ID))
-        assertFalse(error.message.orEmpty().contains(SECRET_TOKEN))
-    }
-
-    @Test
-    fun `Given a zero guild id When fromEnv Then reject global registration`() {
-        // When
-        val error = expectConfigError(
-            env(configPath = writeConfig(sampleConfig()).toString(), guildId = "0"),
-        )
-
-        // Then
-        assertTrue(error.message.orEmpty().contains(JdaRuntimeConfig.ENV_GUILD_ID))
-        assertTrue(error.message.orEmpty().contains("positive"))
-        assertFalse(error.message.orEmpty().contains(SECRET_TOKEN))
-    }
-
-    @Test
-    fun `Given a negative guild id When fromEnv Then reject it`() {
-        // When
-        val error = expectConfigError(
-            env(configPath = writeConfig(sampleConfig()).toString(), guildId = "-1"),
-        )
-
-        // Then
-        assertTrue(error.message.orEmpty().contains(JdaRuntimeConfig.ENV_GUILD_ID))
-        assertTrue(error.message.orEmpty().contains("positive"))
-        assertFalse(error.message.orEmpty().contains(SECRET_TOKEN))
-    }
-
-    @Test
-    fun `Given a guild id larger than Long max When fromEnv Then reject the overflow`() {
-        // When
-        val error = expectConfigError(
-            env(configPath = writeConfig(sampleConfig()).toString(), guildId = "9223372036854775808"),
-        )
-
-        // Then
-        assertTrue(error.message.orEmpty().contains(JdaRuntimeConfig.ENV_GUILD_ID))
-        assertFalse(error.message.orEmpty().contains(SECRET_TOKEN))
-    }
-
-    @Test
-    fun `Given an unsigned overflow guild id When fromEnv Then reject the overflow`() {
-        // When
-        val error = expectConfigError(
-            env(configPath = writeConfig(sampleConfig()).toString(), guildId = "18446744073709551616"),
-        )
-
-        // Then
-        assertTrue(error.message.orEmpty().contains(JdaRuntimeConfig.ENV_GUILD_ID))
-        assertFalse(error.message.orEmpty().contains(SECRET_TOKEN))
-    }
-
-    @Test
-    fun `Given an empty token in the shared file When fromEnv Then fail naming the file without any secret`() {
-        // Given
-        val path = writeConfig(sampleConfig(token = ""))
-
-        // When
-        val error = expectConfigError(env(configPath = path.toString(), guildId = "42"))
-
-        // Then
-        assertTrue(error.message.orEmpty().contains(path.toString()))
-        assertTrue(error.message.orEmpty().contains("empty or blank"))
-        assertTrue(error.message.orEmpty().contains("discord_bot_token"))
-        assertFalse(error.message.orEmpty().contains(SECRET_TOKEN))
-    }
-
-    @Test
-    fun `Given Deezer enabled without its key When fromEnv Then name the file without echoing provider secrets`() {
-        // Given
-        val path = writeConfig(
-            sampleConfig(
-                token = SECRET_TOKEN,
-                deezer = DeezerConfig(enabled = true, masterDecryptionKey = "", arlToken = DEEZER_ARL_SENTINEL),
-                spotify = SpotifyConfig(
-                    enabled = false,
-                    clientId = "",
-                    clientSecret = SPOTIFY_CLIENT_SECRET_SENTINEL,
-                    customEndpoint = "",
-                ),
-            ),
-        )
-
-        // When
-        val error = expectConfigError(env(configPath = path.toString(), guildId = "42"))
-
-        // Then
-        assertTrue(error.message.orEmpty().contains(path.toString()))
-        assertTrue(error.message.orEmpty().contains("Deezer"))
-        assertFalse(error.message.orEmpty().contains(SECRET_TOKEN))
-        assertFalse(error.message.orEmpty().contains(DEEZER_ARL_SENTINEL))
-        assertFalse(error.message.orEmpty().contains(SPOTIFY_CLIENT_SECRET_SENTINEL))
-    }
-
-    @Test
-    fun `Given a malformed shared file When fromEnv Then report its type without echoing the raw content`() {
-        // Given
-        val path = tempDir.resolve("config.json")
-        Files.writeString(path, "{ \"discord_bot_token\": \"$SECRET_TOKEN\", \"debug\": ")
-
-        // When
-        val error = expectConfigError(env(configPath = path.toString(), guildId = "42"))
-
-        // Then
-        assertTrue(error.message.orEmpty().contains(path.toString()))
-        assertTrue(error.message.orEmpty().contains("invalid"))
-        assertFalse(error.message.orEmpty().contains(SECRET_TOKEN))
-
-        // Then: every cause in the chain is inspected, not only the top-level runtime message.
-        val causeChain = generateSequence<Throwable>(error) { it.cause }.toList()
-        assertTrue(causeChain.isNotEmpty(), "the thrown failure must be the first cause-chain element")
-        val renderedChain = causeChain.joinToString(separator = "\n") { cause ->
-            "${cause.javaClass.name}: ${cause.message}"
+        val error = assertThrows(JdaRuntimeConfigException::class.java) {
+            loadSharedConfig(loader = loader)
         }
-        assertFalse(
-            renderedChain.contains(SECRET_TOKEN),
-            "the failure cause chain leaked the raw configuration secret: $renderedChain",
-        )
-        causeChain.forEach { cause ->
-            assertFalse(
-                cause.message.orEmpty().contains(SECRET_TOKEN),
-                "a nested cause leaked the raw configuration secret: ${cause.javaClass.name}",
-            )
+
+        val message = error.message.orEmpty()
+        assertTrue(message.contains(DEFAULT_CONFIG_PATH.toString()), "the failure must name the file: $message")
+        assertTrue(message.contains("invalid"), "the failure must name the decoding category: $message")
+        assertFalse(message.contains(SECRET_TOKEN), "the failure leaked the raw configuration: $message")
+        assertNull(error.cause, "a decoder-originated failure must not be chained")
+    }
+
+    @Test
+    fun `Given an empty token failure When loadSharedConfig runs Then name the file and chain the safe validation cause`() {
+        val loader = mockk<ConfigLoader>()
+        every { loader.load(any<Path>()) } throws EmptyDiscordTokenException()
+
+        val error = assertThrows(JdaRuntimeConfigException::class.java) {
+            loadSharedConfig(loader = loader)
         }
+
+        val message = error.message.orEmpty()
+        assertTrue(message.contains(DEFAULT_CONFIG_PATH.toString()), "the failure must name the file: $message")
+        assertTrue(message.contains("empty or blank"), "the failure must name the token rule: $message")
+        assertTrue(error.cause is EmptyDiscordTokenException)
     }
 
     @Test
-    fun `Given a whitespace-only token in the shared file When fromEnv Then reject it as empty or blank`() {
-        // Given
-        val path = writeConfig(sampleConfig(token = "   "))
+    fun `Given a Deezer key failure When loadSharedConfig runs Then name the file without provider secrets`() {
+        val loader = mockk<ConfigLoader>()
+        every { loader.load(any<Path>()) } throws EmptyDeezerMasterDecryptionKeyException()
 
-        // When
-        val error = expectConfigError(env(configPath = path.toString(), guildId = "42"))
+        val error = assertThrows(JdaRuntimeConfigException::class.java) {
+            loadSharedConfig(loader = loader)
+        }
 
-        // Then: the runtime reports the file and the empty-or-blank rule, never the configured token value.
-        assertTrue(error.message.orEmpty().contains(path.toString()))
-        assertTrue(error.message.orEmpty().contains("empty or blank"))
-        assertTrue(error.message.orEmpty().contains("discord_bot_token"))
-        assertFalse(error.message.orEmpty().contains(SECRET_TOKEN))
-    }
-
-    @Test
-    fun `Given a padded nonblank token in the shared file When fromEnv Then keep it unchanged`() {
-        // Given
-        val paddedToken = "  $SECRET_TOKEN  "
-        val path = writeConfig(sampleConfig(token = paddedToken))
-
-        // When
-        val runtimeConfig = JdaRuntimeConfig.fromEnv(env(configPath = path.toString(), guildId = "42"))
-
-        // Then: rejecting blanks must not trim or rewrite a valid token.
-        assertEquals(paddedToken, runtimeConfig.token)
-    }
-
-    @Test
-    fun `Given a built config When rendered Then never include the token or provider secrets`() {
-        // Given
-        val path = writeConfig(
-            sampleConfig(
-                token = SECRET_TOKEN,
-                youtube = YouTubeConfig(
-                    enabled = true,
-                    oauth2Token = YOUTUBE_OAUTH2_SENTINEL,
-                    poToken = "",
-                    visitorData = null,
-                    remoteCipherUrl = "",
-                    remoteCipherPassword = null,
-                ),
-            ),
-        )
-        val config = JdaRuntimeConfig.fromEnv(env(configPath = path.toString(), guildId = "42"))
-
-        // When
-        val rendered = config.toString()
-
-        // Then
-        assertEquals("JdaRuntimeConfig(guildId=42)", rendered)
-        assertFalse(rendered.contains(SECRET_TOKEN))
-        assertFalse(rendered.contains(YOUTUBE_OAUTH2_SENTINEL))
-    }
-
-    private fun writeConfig(config: Config): Path {
-        val path = tempDir.resolve("config.json")
-        Files.createDirectories(path.parent)
-        Files.writeString(path, Json.encodeToString(config))
-        return path
+        val message = error.message.orEmpty()
+        assertTrue(message.contains(DEFAULT_CONFIG_PATH.toString()), "the failure must name the file: $message")
+        assertTrue(message.contains("Deezer"), "the failure must name the provider rule: $message")
+        assertTrue(error.cause is EmptyDeezerMasterDecryptionKeyException)
+        assertFalse(message.contains(SECRET_TOKEN), "the failure leaked a configured secret: $message")
     }
 
     private fun expectedProviderSources(): PlayerSourcesConfig = PlayerSourcesConfig(
@@ -417,21 +283,12 @@ class JdaRuntimeConfigTest {
         kokoro = kokoro,
     )
 
-    private fun env(configPath: String?, guildId: String?): Map<String, String> = buildMap {
-        configPath?.let { put(JdaRuntimeConfig.ENV_CONFIG_PATH, it) }
-        guildId?.let { put(JdaRuntimeConfig.ENV_GUILD_ID, it) }
-    }
-
-    private fun expectConfigError(env: Map<String, String>): JdaRuntimeConfigException =
-        assertThrows(JdaRuntimeConfigException::class.java) { JdaRuntimeConfig.fromEnv(env) }
-
     private companion object {
         private const val SECRET_TOKEN = "synthetic-jda-token-sentinel"
         private const val FILE_TOKEN_SENTINEL = "file-token-sentinel"
-        private const val ENV_TOKEN_SENTINEL = "environment-token-must-not-be-used"
+        private const val JSON_TOKEN_SENTINEL = "json-only-token-sentinel"
         private const val YOUTUBE_OAUTH2_SENTINEL = "youtube-oauth2-sentinel"
         private const val DEEZER_KEY_SENTINEL = "deezer-key-sentinel"
-        private const val DEEZER_ARL_SENTINEL = "deezer-arl-sentinel"
         private const val SPOTIFY_CLIENT_ID_SENTINEL = "spotify-client-id-sentinel"
         private const val SPOTIFY_CLIENT_SECRET_SENTINEL = "spotify-client-secret-sentinel"
         private const val TIDAL_TOKEN_SENTINEL = "tidal-token-sentinel"

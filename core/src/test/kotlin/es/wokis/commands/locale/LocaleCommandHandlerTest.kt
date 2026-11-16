@@ -25,13 +25,11 @@ class LocaleCommandHandlerTest {
 
     @Test
     fun `Given a canonical locale When handled Then persist it before confirming`() = runTest {
-        // Given
         val order = mutableListOf<String>()
         val repository = RecordingLocaleRepository(order)
         val responder = RecordingResponder(order)
         val handler = handler(repository)
 
-        // When
         handler.handle(context(input = "es-ES"), responder)
 
         // Then the persistence happened before the confirmation was sent
@@ -45,13 +43,11 @@ class LocaleCommandHandlerTest {
 
     @Test
     fun `Given Arabic When handled Then persist it and answer with the English fallback`() = runTest {
-        // Given
         val order = mutableListOf<String>()
         val repository = RecordingLocaleRepository(order)
         val responder = RecordingResponder(order)
         val handler = handler(repository)
 
-        // When
         handler.handle(context(input = "ar"), responder)
 
         // Then Arabic is selectable even though it has no translation yet
@@ -62,16 +58,13 @@ class LocaleCommandHandlerTest {
 
     @Test
     fun `Given a locale with non-canonical case When handled Then reject it without persisting`() = runTest {
-        // Given
         val order = mutableListOf<String>()
         val repository = RecordingLocaleRepository(order)
         val responder = RecordingResponder(order)
         val handler = handler(repository)
 
-        // When
         handler.handle(context(input = "es-es", guildDefaultLocale = LocaleCode("es-ES")), responder)
 
-        // Then
         assertEquals(listOf("respond"), order)
         assertTrue(repository.locales.isEmpty())
         assertEquals(
@@ -87,16 +80,13 @@ class LocaleCommandHandlerTest {
 
     @Test
     fun `Given an unknown locale When handled Then reject it without persisting`() = runTest {
-        // Given
         val order = mutableListOf<String>()
         val repository = RecordingLocaleRepository(order)
         val responder = RecordingResponder(order)
         val handler = handler(repository)
 
-        // When
         handler.handle(context(input = "not-a-locale"), responder)
 
-        // Then
         assertEquals(listOf("respond"), order)
         assertTrue(repository.locales.isEmpty())
         assertEquals(
@@ -107,17 +97,14 @@ class LocaleCommandHandlerTest {
 
     @Test
     fun `Given reset in any case When handled Then remove the override before confirming`() = runTest {
-        // Given
         listOf("reset", "RESET", "ReSeT").forEach { input ->
             val order = mutableListOf<String>()
             val repository = RecordingLocaleRepository(order, mapOf(guildId to LocaleCode("ar")))
             val responder = RecordingResponder(order)
             val handler = handler(repository)
 
-            // When
             handler.handle(context(input = input), responder)
 
-            // Then
             assertEquals(listOf("remove", "respond"), order, input)
             assertTrue(repository.locales.isEmpty(), input)
             assertEquals(
@@ -130,16 +117,13 @@ class LocaleCommandHandlerTest {
 
     @Test
     fun `Given reset with a guild default When handled Then answer in that guild locale`() = runTest {
-        // Given
         val order = mutableListOf<String>()
         val repository = RecordingLocaleRepository(order)
         val responder = RecordingResponder(order)
         val handler = handler(repository)
 
-        // When
         handler.handle(context(input = "reset", guildDefaultLocale = LocaleCode("es-ES")), responder)
 
-        // Then
         assertEquals(
             listOf(
                 CommandResponse("El idioma del servidor se ha restablecido al valor predeterminado de Discord"),
@@ -150,13 +134,11 @@ class LocaleCommandHandlerTest {
 
     @Test
     fun `Given no guild When handled Then answer a public error and never touch persistence`() = runTest {
-        // Given
         val order = mutableListOf<String>()
         val repository = RecordingLocaleRepository(order)
         val responder = RecordingResponder(order)
         val handler = handler(repository)
 
-        // When
         handler.handle(context(input = "es-ES", guildId = null), responder)
 
         // Then the legacy command answers publicly, without an ephemeral flag
@@ -171,20 +153,17 @@ class LocaleCommandHandlerTest {
 
     @Test
     fun `Given no option value When handled Then answer a public required-field error in the guild locale`() = runTest {
-        // Given
         listOf(null, "").forEach { input ->
             val order = mutableListOf<String>()
             val repository = RecordingLocaleRepository(order)
             val responder = RecordingResponder(order)
             val handler = handler(repository)
 
-            // When
             handler.handle(
                 context(input = input, guildDefaultLocale = LocaleCode("es-ES")),
                 responder,
             )
 
-            // Then
             assertEquals(listOf("respond"), order, "input=$input")
             assertTrue(repository.locales.isEmpty())
             assertEquals(
@@ -203,7 +182,6 @@ class LocaleCommandHandlerTest {
 
     @Test
     fun `Given a guild context When handled Then never persist the user locale as the guild default`() = runTest {
-        // Given
         val order = mutableListOf<String>()
         val repository = RecordingLocaleRepository(order)
         val responder = RecordingResponder(order)
@@ -233,7 +211,6 @@ class LocaleCommandHandlerTest {
         val descriptionLocalizations = catalog.getLocalizations(descriptionKey)
         val optionLocalizations = catalog.getLocalizations(optionDescriptionKey)
 
-        // When
         val definition = LocaleCommandHandler.definition(
             description = catalog.getDefaultString(descriptionKey),
             optionDescription = catalog.getDefaultString(optionDescriptionKey),

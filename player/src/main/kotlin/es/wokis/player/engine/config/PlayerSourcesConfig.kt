@@ -1,14 +1,6 @@
 package es.wokis.player.engine.config
 
-/**
- * Gateway-neutral source-provider configuration for the shared Lavaplayer engine.
- *
- * The root Kord application maps its existing `Config` sections onto this type, so the same
- * source registration (YouTube, LavaSrc providers, Kokoro TTS, local and remote sources) is used
- * by both the Kord adapter and the isolated JDA runtime. Defaults leave every optional provider
- * disabled; local files and the generic remote fallback stay available because they need no
- * credentials.
- */
+/** Gateway-neutral source-provider configuration shared by the Kord and JDA adapters. */
 data class PlayerSourcesConfig(
     val youtube: YoutubeSourceConfig = YoutubeSourceConfig(),
     val deezer: DeezerSourceConfig = DeezerSourceConfig(),

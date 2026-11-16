@@ -32,10 +32,8 @@ import org.junit.jupiter.api.Test
 import kotlin.coroutines.coroutineContext
 
 /**
- * Failure and lifecycle paths of [JdaCommandRouter].
- *
- * Every scenario drives the router with an eagerly dispatched, injected scope so the assertions
- * run after the launched coroutine already finished. The default collaborators are exercised
+ * Failure and lifecycle paths of [JdaCommandRouter]. The injected scope dispatches eagerly so
+ * assertions run after the launched coroutine finished; default collaborators are exercised
  * separately with real wait points instead of assuming a dispatch order.
  */
 class JdaCommandRouterFailurePathsTest {
@@ -54,7 +52,6 @@ class JdaCommandRouterFailurePathsTest {
 
     @Test
     fun `Given a handler that is cancelled When the event arrives Then propagate it without replying`() {
-        // Given
         val failures = mutableListOf<Throwable>()
         val responder = ThrowingResponder { IllegalStateException("the router must not reply") }
         var commandJob: Job? = null
@@ -71,11 +68,9 @@ class JdaCommandRouterFailurePathsTest {
         )
         every { mapper.map(event) } returns context
 
-        // When
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertTrue(responder.responses.isEmpty(), "A cancelled handler must not receive a failure reply")
         assertTrue(requireNotNull(commandJob).isCancelled, "The cancellation must reach the launched coroutine")
         assertTrue(failures.isEmpty(), "Cancellation must not surface as an uncaught coroutine error")
@@ -83,7 +78,6 @@ class JdaCommandRouterFailurePathsTest {
 
     @Test
     fun `Given a cancelled failure reply When the handler fails Then propagate it without a second attempt`() {
-        // Given
         val responder = ThrowingResponder { CancellationException("the interaction was cancelled") }
         val router = JdaCommandRouter(
             handlers = listOf(handler { _, _ -> throw IllegalStateException("boom") }),
@@ -93,11 +87,9 @@ class JdaCommandRouterFailurePathsTest {
         )
         every { mapper.map(event) } returns context
 
-        // When
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertEquals(
             listOf(CommandResponse(GENERIC_FAILURE_MESSAGE, ephemeral = true)),
             responder.responses,
@@ -108,7 +100,6 @@ class JdaCommandRouterFailurePathsTest {
 
     @Test
     fun `Given a failing unsupported reply When handled Then log it and complete the coroutine`() {
-        // Given
         val failures = mutableListOf<Throwable>()
         val responder = ThrowingResponder { IllegalStateException("interaction already acknowledged") }
         val router = JdaCommandRouter(
@@ -118,11 +109,9 @@ class JdaCommandRouterFailurePathsTest {
             scope = collectingScope(failures),
         )
 
-        // When
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertEquals(
             listOf(CommandResponse(UNSUPPORTED_COMMAND_MESSAGE, ephemeral = true)),
             responder.responses,
@@ -135,7 +124,6 @@ class JdaCommandRouterFailurePathsTest {
 
     @Test
     fun `Given a cancelled unsupported reply When handled Then propagate the cancellation`() {
-        // Given
         val failures = mutableListOf<Throwable>()
         val responder = ThrowingResponder { CancellationException("interaction cancelled") }
         val router = JdaCommandRouter(
@@ -145,11 +133,9 @@ class JdaCommandRouterFailurePathsTest {
             scope = collectingScope(failures),
         )
 
-        // When
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertEquals(
             listOf(CommandResponse(UNSUPPORTED_COMMAND_MESSAGE, ephemeral = true)),
             responder.responses,
@@ -160,7 +146,6 @@ class JdaCommandRouterFailurePathsTest {
 
     @Test
     fun `Given repeated handler and fallback failures When events arrive Then keep the router alive`() {
-        // Given
         val failures = mutableListOf<Throwable>()
         val responder = ThrowingResponder { IllegalStateException("interaction already acknowledged") }
         val router = JdaCommandRouter(
@@ -171,19 +156,16 @@ class JdaCommandRouterFailurePathsTest {
         )
         every { mapper.map(event) } returns context
 
-        // When
         router.onSlashCommandInteraction(event)
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertEquals(2, responder.responses.size, "Every event must be routed even after a double failure")
         assertTrue(failures.isEmpty())
     }
 
     @Test
     fun `Given only handlers When the event arrives Then use the default mapper, responder and scope`() {
-        // Given
         val realEvent = guildEvent()
         val handled = CompletableDeferred<CommandContext>()
         var receivedResponder: CommandResponder? = null
@@ -197,11 +179,9 @@ class JdaCommandRouterFailurePathsTest {
         )
 
         try {
-            // When
             router.onSlashCommandInteraction(realEvent)
             val mappedContext = runBlocking { withTimeout(TEST_TIMEOUT_MILLIS) { handled.await() } }
 
-            // Then
             assertEquals(COMMAND_NAME, mappedContext.commandName)
             assertEquals(GuildId(10uL), mappedContext.guildId)
             assertEquals(ChannelId(20uL), mappedContext.channelId)
@@ -215,7 +195,6 @@ class JdaCommandRouterFailurePathsTest {
 
     @Test
     fun `Given the default scope When the router closes Then cancel the in-flight command`() {
-        // Given
         val realEvent = guildEvent()
         val started = CompletableDeferred<Job>()
         val router = JdaCommandRouter(
@@ -228,13 +207,11 @@ class JdaCommandRouterFailurePathsTest {
         )
 
         try {
-            // When
             router.onSlashCommandInteraction(realEvent)
             val commandJob = runBlocking { withTimeout(TEST_TIMEOUT_MILLIS) { started.await() } }
             router.close()
             runBlocking { withTimeout(TEST_TIMEOUT_MILLIS) { commandJob.join() } }
 
-            // Then
             assertTrue(commandJob.isCancelled)
             assertTrue(commandJob.isCompleted)
         } finally {

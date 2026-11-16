@@ -8,7 +8,6 @@ class ConfigRedactionTest {
 
     @Test
     fun `Given sentinel credentials When Config is rendered Then no token provider or database secret is exposed`() {
-        // Given
         val config = Config(
             discordBotToken = TOKEN_SENTINEL,
             debug = true,
@@ -55,10 +54,8 @@ class ConfigRedactionTest {
             ),
         )
 
-        // When
         val rendered = config.toString()
 
-        // Then
         SENSITIVE_VALUES.forEach { sentinel ->
             assertFalse(rendered.contains(sentinel), "Config.toString leaked a configured secret: $sentinel")
         }
@@ -74,7 +71,6 @@ class ConfigRedactionTest {
 
     @Test
     fun `Given a Kokoro section When rendered standalone Then hide its endpoint voice language and speed values`() {
-        // Given
         val kokoro = KokoroConfig(
             baseUrl = KOKORO_URL_SENTINEL,
             defaultVoice = KOKORO_VOICE_SENTINEL,
@@ -89,7 +85,6 @@ class ConfigRedactionTest {
             defaultLangCode = KOKORO_LANG_SENTINEL,
         )
 
-        // When
         val rendered = kokoro.toString()
         val renderedWithoutSpeed = kokoroWithoutSpeed.toString()
 
@@ -123,7 +118,6 @@ class ConfigRedactionTest {
             token = TIDAL_TOKEN_SENTINEL,
         )
 
-        // When
         val rendered = tidal.toString()
 
         // Then: neither the token nor the country code may appear in the rendered section.
@@ -140,7 +134,6 @@ class ConfigRedactionTest {
 
     @Test
     fun `Given a rendered database section When inspected Then its credentials and database name stay out of the text`() {
-        // Given
         val database = DatabaseConfig(
             enabled = true,
             username = DATABASE_USER_SENTINEL,
@@ -148,7 +141,6 @@ class ConfigRedactionTest {
             database = DATABASE_NAME_SENTINEL,
         )
 
-        // When
         val rendered = database.toString()
 
         // Then: the standalone section withholds every configured value...
@@ -188,7 +180,6 @@ class ConfigRedactionTest {
             customEndpoint = SPOTIFY_ENDPOINT_SENTINEL,
         )
 
-        // When
         val huggingChatRendered = huggingChat.toString()
         val deezerRendered = deezer.toString()
         val spotifyRendered = spotify.toString()
@@ -253,7 +244,6 @@ class ConfigRedactionTest {
             remoteCipherPassword = null,
         )
 
-        // When
         val rendered = youtube.toString()
         val renderedWithoutPassword = youtubeWithoutPassword.toString()
 

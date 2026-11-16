@@ -12,15 +12,7 @@ repositories {
     mavenCentral()
 }
 
-/*
- * Framework-independent configuration module.
- *
- * It only uses kotlinx-serialization and the JDK: no Koin, Kord, JDA, Lavaplayer, `:core`,
- * `:player` or `:locale-persistence` dependency, so the same strict JSON schema can be loaded by
- * the root Kord runtime, the isolated JDA runtime and future composition roots. Keeping the module
- * free of gateways is what lets the configuration surface survive the Phase 6 cutover without a
- * second copy of the schema.
- */
+// Framework-independent schema module: no gateway, Koin, Lavaplayer or sibling module dependency.
 dependencies {
     implementation(libs.kotlinx.serialization)
 

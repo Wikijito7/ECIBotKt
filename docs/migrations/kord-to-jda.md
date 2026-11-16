@@ -25,11 +25,22 @@ time-qualified; the epic then advanced to `6d14167` (`Recorded Phase 2 import-ru
 the base of the Phase 3 child branch and of its stacked Detekt branch. It later advanced to
 `795c56e` (regular merge of **PR #121**) and to `8c1eeff` (regular merge of **PR #122**, the
 ktlint→Detekt tooling replacement), which is the verified base of the Phase 4 staging-enabler branch.
-That staging-enabler branch is pushed at head `c549ff3` and is **open as draft PR #123** against the
-epic branch (base `8c1eeff`). All four of its checks passed on that final head on **2026-11-16** —
-Check Code Quality 08:33:27Z, SonarCloud Code Analysis 08:36:48Z, SonarCloud 08:36:55Z and
-Build and analyze 08:36:56Z — while the PR **remains an open draft**; that CI result does **not** close
-Phase 3 or replace its staging matrix. Later heads
+That staging-enabler branch is pushed at head `2f636fd`, its **pre-change passed head**: all four
+checks of **draft PR #123** (against the epic branch, base `8c1eeff`) passed on that pushed head on
+**2026-11-16** — Check Code Quality 08:45:16Z, Build and analyze 08:47:44Z, SonarCloud Code Analysis
+08:47:40Z and SonarCloud 08:47:48Z. The earlier implementation head `c549ff3` is a dated green
+checkpoint superseded by `2f636fd`. The working tree
+now carries the uncommitted shared-config change: the JDA runtime reads only the root
+`./data/config.json` from the repository-root working directory (sharing `./data/guild_locales.json`
+with Kord), registers its commands guild-scoped in **every guild present at
+startup** (a guild joined later needs a restart) — the **two newly added** administrator-only
+controls `/jda-play` and `/jda-player`, plus the existing administrator-only `/locale`, while the
+`/jda-walkthrough` and `/jda-voice-walkthrough` diagnostics stay unrestricted — and
+reads **no** environment variable and **no**
+guild-id config field, so **the branch has pending CI until the coordinator refreshes it after the
+commit**; the Kord and JDA runtimes must not run concurrently against that same mutable data
+directory/token. The PR **remains an open draft** and no CI result closes
+Phase 3 or replaces its staging matrix. Later heads
 are read from live Git/GitHub. `master` remains `4badb92`. The live tip is read from fetched Git/GitHub. The epic remains the merge baseline
 for this migration. Phase 2A working branch
 `feature/114-kord-to-jda-migration` **no longer exists on the remote**: PR
@@ -167,17 +178,19 @@ merged into the epic branch by **PR #121** (merge commit `795c56e`), and the ktl
 replacement was merged by **PR #122** (merge commit `8c1eeff`, the epic tip this staging-enabler
 branch starts from); both PRs' checks passed. Phase 3 still has **no PASS** — its acceptance gate
 stays **open/not passed** because the **Phase 3 staging matrix is deferred behind the narrow Phase 4
-staging enabler** on `feature/114-phase4-player-staging` (base `8c1eeff`, pushed head `c549ff3`,
-open as **draft PR #123**, whose four checks all passed on that head on 2026-11-16 while the PR stayed
-a draft). Full Phase 4 has not started.
+staging enabler** on `feature/114-phase4-player-staging` (base `8c1eeff`, pushed pre-change head
+`2f636fd`, open as **draft PR #123**, whose four checks passed on that pushed head on 2026-11-16
+while the PR stayed a draft; the current no-env/all-guild WIP is unpushed and has **no CI verdict**).
+Full Phase 4 has not started.
 
-#### Current status — 2026-11-16, after PR #123's checks passed on `c549ff3` (supersedes the 2026-11-15 pre-PR and pre-CI snapshots)
+#### Current status — 2026-11-16, at the pre-change passed head `2f636fd` (supersedes the 2026-11-15 pre-PR and pre-CI snapshots)
 
 This block is the **authoritative current state**; where an older paragraph, table row or dated
 snapshot below still says PR #121 is open, that the Detekt migration is uncommitted, that the
-staging-enabler branch has no PR, or that PR #123's checks are in progress/pending with no verdict,
-that text is **superseded history** — the "no PR exists" and "checks in progress" wordings are dated
-**pre-PR / pre-CI snapshots**, not standing statements about the branch.
+staging-enabler branch has no PR, or that PR #123's pushed head has no CI verdict, that text is
+**superseded history** — the "no PR exists" and "checks in progress" wordings are dated
+**pre-PR / pre-CI snapshots**, not standing statements about the branch. The **unpushed**
+no-env/all-guild WIP described below is a separate, later state with **no CI verdict yet**.
 
 - **PR #121** (`feature/114-phase-3-player-engine` → epic) is **MERGED** by the regular merge commit
   `795c56e` (head `a830bb6`, base `6d14167`); the four checks passed on the **final merged head**
@@ -190,33 +203,54 @@ that text is **superseded history** — the "no PR exists" and "checks in progre
   force. The migration is **no longer local-only or uncommitted**.
 - The verified **epic tip** used as the base of this slice is `8c1eeffe063f266b0da73c14658c95b1a0dae960`;
   the staging-enabler branch `feature/114-phase4-player-staging` was created from it and its
-  implementation is **committed and pushed** at head `c549ff3`
-  (`c549ff3b88846a2e06014b55ec0a6943e7838b0b`, `Added shared config and JDA player staging commands`).
+  implementation is **committed and pushed** through head `2f636fd`, the **pre-change passed head**
+  (implementation commit `c549ff3`, `Added shared config and JDA player staging commands`, followed by
+  the documentation commit `2f636fd`, `Updated Phase 3 staging handoff after PR 123 checks`). The
+  working tree now adds the uncommitted shared-config change described below.
 - **PR #123 is still OPEN as a DRAFT** (`feature/114-phase4-player-staging` → epic `feature/114-migrate-to-jda-jda-ktx`,
-  head `c549ff3`, base `8c1eeff`). Draft means it is **not** ready for review or merge yet; it carries
+  head `2f636fd` as pushed, base `8c1eeff`). Draft means it is **not** ready for review or merge yet; it carries
   only the narrow staging enabler described below.
-- **PR #123 CI is green on the final head `c549ff3` (2026-11-16):** all four checks passed — Check Code
-  Quality 08:33:27Z, SonarCloud Code Analysis 08:36:48Z, SonarCloud 08:36:55Z and Build and analyze
-  08:36:56Z. This is PR CI evidence for that head only. It does **not** close Phase 3, does **not**
+- **PR #123 CI is green on the pushed head `2f636fd` (2026-11-16):** the four checks passed there —
+  Check Code Quality 08:45:16Z, Build and analyze 08:47:44Z, SonarCloud Code Analysis 08:47:40Z and
+  SonarCloud 08:47:48Z. The earlier implementation head `c549ff3` is a dated green checkpoint
+  superseded by `2f636fd`. This is PR CI evidence for that pushed head only and does **not** cover
+  the later no-env/all-guild WIP. After the
+  shared-config change is committed/pushed, **CI is pending** (no verdict) until the coordinator refreshes
+  the pull request. It does **not** close Phase 3, does **not**
   replace or shorten the Phase 3 staging matrix, and is **not** Phase 4 acceptance; the PR remains a
   draft. The earlier "checks were in progress / no verdict" wording is a **superseded pre-CI snapshot**.
 - **Phase 3 is still OPEN — no PASS is claimed.** The staging matrix is **deferred** behind this
   narrowly scoped Phase 4 prerequisite: without real player commands and a shared configuration
   path there is no way to run the matrix against the isolated runtime.
 - **This slice is not Phase 3 PASS and not full Phase 4 acceptance.** It adds a
-  framework-independent `:configuration` module, the shared config-file path for the JDA bootstrap,
-  and two administrator-only, dev-guild-scoped commands (`/jda-play`, `/jda-player`). It does **not**
-  port the remaining Phase 4 command families, components, hidden-channel handling or locale
-  coverage.
-- **Local verification (2026-11-15, local only — not CI):** clean **57-task** build, **1,100 cases
-  (1,096 executed + 4 pre-existing skips, 0 failures/errors)** across root 542, `:core` 134,
-  `:configuration` 21, `:locale-persistence` 21, `:player` 87 and `:jda-runtime` 295, plus Detekt
+  framework-independent `:configuration` module, the shared root config-file path for the JDA
+  bootstrap, and two administrator-only commands (`/jda-play`, `/jda-player`) registered
+  guild-scoped in every guild the JDA client has joined. It does **not** port the remaining Phase 4
+  command families, components, hidden-channel handling or locale coverage.
+- **Local verification (2026-11-16, local only — not CI):** clean **57-task** build, **1,107 cases
+  (1,103 executed + 4 pre-existing skips, 0 failures/errors)** across root 542, `:core` 134,
+  `:configuration` 25, `:locale-persistence` 21, `:player` 87 and `:jda-runtime` 298, plus Detekt
   **34/40** (root 16, `:configuration` 0, `:core` 4, `:jda-runtime` 5, `:locale-persistence` 0,
-  `:player` 9). These are **local evidence only, not PR CI and not Sonar/new-code evidence**: they
-  were recorded on 2026-11-15, **before** PR #123's checks concluded, and remain distinct from the
-  2026-11-16 PR CI result on `c549ff3` (all four checks passed) recorded above. The earlier
-  **1,093 cases** local reading is superseded, and the **1,026 cases / 33/40** readings are dated
-  history from the pre-merge Detekt tree and merged epic tip.
+  `:player` 9). These are **local evidence only, not PR CI and not Sonar/new-code evidence**, and
+  remain distinct from the 2026-11-16 PR CI result on the pushed head `2f636fd` (all four checks
+  passed) recorded above; they are also **not** the CI verdict for this uncommitted WIP. The earlier
+  **1,109 cases (1,105 executed + 4 pre-existing skips)** reading is superseded, as are the
+  **1,100 cases (1,096 executed + 4 pre-existing skips)**, **1,093 cases** and
+  **1,026 cases / 33/40** readings from earlier trees.
+- **Uncommitted shared-config follow-up (2026-11-16, local only):** the JDA runtime now reads the
+  root `./data/config.json` only, through `ConfigLoader` at the shared `DEFAULT_CONFIG_PATH`, and
+  registers the **two newly added** administrator-only commands `/jda-play` and `/jda-player`, plus
+  the existing administrator-only `/locale`, as **guild-scoped commands in every guild present at
+  startup**, alongside the unrestricted `/jda-walkthrough` and `/jda-voice-walkthrough` diagnostics. There is zero JDA environment-variable
+  reading, no `discord_dev_guild_id` property in the shared JSON/template and no alternate JDA data
+  directory; `:jda-runtime:run` uses the repository root as `workingDir`, so `./data/config.json` and
+  `./data/guild_locales.json` are the same files Kord uses. Two consequences: **a guild joined after
+  startup is not covered until the JDA runtime restarts**, and because the data directory and token
+  are shared, **do not run the Kord and JDA runtimes concurrently against the same mutable
+  `./data` directory**. `:jda-runtime:compileKotlin` succeeds and the aggregate Detekt budget stays
+  within the ceiling, with no new dependency or module. These changes are **local and unpushed**
+  (the pushed PR head is still `2f636fd`), so the branch's CI stays **pending** until the coordinator
+  refreshes it after the commit.
 - After this enabler lands, the order is: run the **full Phase 3 staging matrix** → **Phase 3 PASS**
   → the rest of **Phase 4** (commands/components/messages/channels/locales) → Phase 5 → Phase 6
   root code/build switch and Kord removal → Phase 7 deployment. Root production stays **Kord**; the
@@ -233,8 +267,8 @@ that text is **superseded history** — the "no PR exists" and "checks in progre
 | Phase 2B — neutral command context + responder/response port | **PASS — gate closed (2026-11-13)** | Implementation and unit tests are present on `feature/114-phase-2b-command-port` as the initial implementation checkpoint `fbd9f5a`, originally stacked on Phase 1B `feature/114-native-failfast-check`. PR #116 has since been **squash-merged** into the epic branch (`c00bdf1`), so PR #117 was retargeted to the epic branch and was later **merged** into it by the regular merge commit `255893a`; its only conflict — this plan — was resolved by an ancestry merge that changed no code. The branch adds isolated Gradle modules `:core` (gateway-free neutral ports and a pure walkthrough handler) and `:jda-runtime` (JDA 6.7.0 adapter, guild-only `/jda-walkthrough`); **at the Phase 2B snapshot** the root project depended on `:core` only and remained Kord-based and JDA-free. **Phase 2D later added the shared `:locale-persistence` module to both the root project and `:jda-runtime`**, so that 2B dependency statement is historical and does not describe the current graph. On head `001e722` **Check Code Quality**, **Build and analyze** and the separately named **SonarCloud** check passed, while **SonarCloud Code Analysis** failed its Quality Gate at 0.0% coverage on new code (required >=50%) because the modules emitted no JaCoCo XML; the JaCoCo 0.8.12 fix then passed CI on the covered checkpoint `e607ff7` — all four #117 checks green, including both SonarCloud checks, with 75.0% Coverage on New Code, 0 new issues and 0 hotspots. The later docs-only checkpoints `2850907`, `16247f8` and `d353113` also passed all four #117 checks, as did `988a7cd` (last check completed 2026-11-13 16:38:44Z), and `e4a9e29` was observed in progress at 16:41:06Z (the observation time, when only Check Code Quality had concluded successfully) and later completed all four checks successfully (last at 16:44:11Z). `7bf5419` (`Corrected Phase 2B CI status record`) is the latest verified all-green checkpoint before the subsequent docs-only updates: all four checks passed on 2026-11-13 — Check Code Quality 16:47:15Z, SonarCloud Code Analysis 16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z — with 75.0% Coverage on New Code, 0 new issues and 0 hotspots; it was the head at that point, not afterwards. The later docs-only `f5f04d1` (`Recorded passing Phase 2B CI runs`) was the head in a dated snapshot observed on 2026-11-13 in which only Check Code Quality had concluded successfully (16:53:24Z), Build and analyze was still in progress and the SonarCloud checks were not yet listed — so it was **not green at that snapshot**; GitHub holds the status of the head after this docs-only follow-up. All of these are historical verified checkpoints, not a guarantee for later commits, so CI status for any newer head must be read from the GitHub check runs. Local QA and reviewer agents satisfied the independent review criterion while no GitHub PR review has been submitted. The user ran the isolated runtime on 2026-11-13 against staging and the guild-scoped `/jda-walkthrough` replied `JDA walkthrough OK`, closing the gate. PR #117 was subsequently **merged** into the epic branch by a regular merge commit at `255893a`, so the Phase 2B pass is now on the epic integration branch. The root runtime is still Kord-based and JDA-free |
 | Phase 2C — voice/session/player message ports and adapters | **PASS — gate closed (2026-11-14)** | Acceptance criteria, scope limits and sanitized staging evidence are recorded in the Phase 2C section. Branch `feature/114-phase-2c-voice-ports` was created from the fetched epic head `255893a` (the regular merge commit that brought PR #117 into the epic branch). The neutral voice/audio/player-message ports, their JDA adapters, the DAVE 0.2.0 wiring, `/jda-voice-walkthrough` and the unit tests were merged into the epic branch through PR #118 by the regular merge commit `5fa9c63` (PR head `3e50248`); the implementation head is `8eb0349` (`Fixed ktlint violations in Phase 2C`). All four checks on that head **succeeded** — Check Code Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud — and the Sonar Quality Gate **passed** with **90.1% new-code coverage, 11 new issues (10 major, 1 critical), 0 security hotspots and 0.0% duplication** (no zero-issue claim). The earlier head `c893567` is kept as history: **Check Code Quality failed** there on 25 ktlint formatting findings while the other three checks passed with the same Sonar figures; the formatting-only repairs were committed and pushed as `8eb0349`. The docs-only `9fd1826` (`Recorded Phase 2C CI checkpoint`) is a **dated historical green checkpoint** too: all four checks succeeded on 2026-11-14 — Check Code Quality 08:28:21Z, SonarCloud Code Analysis 08:31:00Z, Build and analyze 08:31:04Z, SonarCloud 08:31:05Z — with the Sonar Quality Gate passed at 90.1% Coverage on New Code, 11 new issues, 0 security hotspots and 0.0% duplication. Those checkpoints are historical; the merged PR head `3e50248` also passed all four checks, and later epic heads are read live from GitHub. Latest **local** run on the formatted tree: `:core:test` 81 tests, `:jda-runtime:test` 224 tests and the root suite 380 tests (5 pre-existing skips) all pass with 0 failures/errors — **685 cases total (680 executed + 5 skips)**; local JaCoCo **module** line coverage is `:core` **207/219 = 94.52%** (branch **108/115 = 93.91%**) and `:jda-runtime` **870/948 = 91.77%** (branch **342/418 = 81.82%**), and the full `./gradlew build` passed locally. All coverage figures here are **local module JaCoCo report readings only — not Sonar, new-code or CI evidence**. Phase 2C is **PASS — gate closed (2026-11-14)** on the recorded user-run staging playback evidence (sanitized in the Phase 2C section); the 11 Sonar new issues remain recorded as **tracked follow-up debt** rather than being described as resolved or zero, because under the **owner-approved 2026-11-14 interpretation** the repository's configured Quality Gate is the criterion and it passed. `master` is untouched |
 | Phase 2D — channel/message/locale edge adapters | **PASS — gate closed (2026-11-14)** | Branch `feature/114-phase-2d-locale-edge-adapters` was created from the **live remote epic tip verified at branch creation**: `1304aa6` (`Clarified Phase 2C staging provenance`), not from `master` (`4badb92`) and not from a stale/hardcoded SHA such as `5fa9c63` or `269acc1`. The worktree was clean and on the epic branch before branching; no 2D branch existed locally or remotely. 2C remains **PASS**; Phase 6 — root code/build switch plus artifact/digest gates — remains **OPEN**; issue #114 remains open. The implementation in this branch moves the locale port, use cases and catalog into `:core`, extracts the JSON persistence adapter into the shared `:locale-persistence` module, moves the unchanged `lang.yml`/`lang_es-ES.yml` resources onto the shared runtime classpath, and adds a guild-scoped JDA `/locale` command with neutral command/locale boundaries. **2D is PASS — gate closed (2026-11-14)**: the tested code/test snapshot `4ff8167` is pushed, the `a4bc1ae` time-qualified green snapshot has all four checks green and the Sonar Quality Gate OK, and the sanitized user-run staging/restart evidence is recorded in the Phase 2D section. Final local QA recorded **758 test cases: 753 executed, 5 skipped (pre-existing), 0 failures/errors**, with a clean local build, local module JaCoCo readings and a local ktlint check scoped to changed files showing **0 findings**. One new MAJOR `kotlin:S6524` Sonar code smell is disclosed as tracked follow-up debt under the configured gate criterion. The root runtime stays Kord-based; no Phase 6 wiring. PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` on 2026-11-14 (head `0b365aa`, base `1304aa6`). Details, accepted scope and gate evidence are recorded in the Phase 2D section |
-| Phase 3 — per-guild serialized voice (isolated JDA real-player slice) | **IN PROGRESS — implementation merged by PR #121 (`795c56e`), gate remains open/not passed (2026-11-15)** | Phase 2 is **PASS — gate closed 2026-11-15** via PR #120. The owner approved the two former blockers on 2026-11-15: (a) pause stops the position and resume reuses the same track at that position; skip while paused stays paused; (b) the real player lives in a new gateway-free `:player` module (`es.wokis.player.engine`) shared by the root Kord adapter and `:jda-runtime`, with Lavaplayer kept internal. Production source landed on `feature/114-phase-3-player-engine` at base `6d14167`: per-guild mailbox/actor, enqueue-only Lavaplayer callbacks, neutral track/queue/event snapshots, continuous player-audio stream with `Frame`/`PausedSilence`/`Ended`, extended (not duplicated) `JdaAudioSendHandler`, preserved source providers and root Kord behaviour, and manual JDA runtime/voice-adapter wiring. **The gate stays open**: the Test Agent added the `:player` scanner classification, engine/stream tests and JDA lifecycle coverage, and the dispatcher/test-determinism fix is **committed and pushed in `a830bb6`** with no assertion weakened. **PR #121 is MERGED** into the epic branch by the regular merge commit `795c56e` (head `a830bb6`, base `6d14167`), and **all four checks passed on that head** — Check Code Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud. The earlier `4eb84b5` run stays **historical**: Check Code Quality succeeded 14:44:23Z, **Build and analyze failed** 14:47:27Z in `:jda-runtime:test` with two `JdaGuildPlayerVoiceAdapterTest` cleanup assertions failing, and **both SonarCloud checks did not run** because the Gradle build aborted; no root cause was confirmed there, and `a830bb6` is the later head whose checks passed. Green PR CI is **not** a Phase 3 PASS: the **staging matrix is still pending**, so the gate remains open. The Phase 3 **base local snapshot at `a830bb6`** recorded **1,025 cases (1,021 executed + 4 pre-existing skips, 0 failures/errors)**, a clean local build and **no new external dependency or version**; the earlier **1,024 cases (1,020 + 4 skips)** figure is the **historical pre-dispatcher-test snapshot**. The **historical pre-merge Detekt-branch local snapshot** (`chore/114-detekt-tooling-migration`, then uncommitted on top of `a830bb6`, superseded by the merged PR #122 `8c1eeff`; the current work is the Phase 4 staging-enabler branch, pushed at `c549ff3` and open as draft PR #123) records **1,026 cases (1,022 executed + 4 pre-existing skips, 0 failures/errors)** and a clean **48-task** build; its per-module coverage and the Detekt budget are recorded in the Phase 3 local verification snapshots, which is the authoritative detailed breakdown (summaries elsewhere may repeat headline totals). The `GuildLavaPlayerService.kt` Sonar exclusion was removed, so its new-code coverage is measured by the passing `SonarCloud Code Analysis`/`SonarCloud` checks on `a830bb6`; the local JaCoCo line reading for that file stays **72/242 lines = 29.75%** from the Phase 3 base clean-build snapshot (**local JaCoCo only, not Sonar or new-code coverage**). This row does **not** claim PASS. Details are in the Phase 3 implementation-scope subsection |
-| Phase 4 — commands, components, messages, channels, locales | **IN PROGRESS — narrow staging enabler only (2026-11-16); full phase not started** | The staging-enabler slice on `feature/114-phase4-player-staging` (base epic tip `8c1eeff`, pushed head `c549ff3`) adds the framework-independent `:configuration` module, the shared config-file loading path for the JDA bootstrap, and the administrator-only, dev-guild-scoped `/jda-play` and `/jda-player` commands. It exists to make the deferred Phase 3 staging matrix runnable; it is **not** Phase 4 acceptance. **PR #123 is open as a DRAFT** against the epic branch (head `c549ff3`, base `8c1eeff`); all four checks passed on that head on 2026-11-16 (Check Code Quality 08:33:27Z, SonarCloud Code Analysis 08:36:48Z, SonarCloud 08:36:55Z, Build and analyze 08:36:56Z), but the PR remains a draft and that green CI does not close Phase 3 or replace its staging matrix. The remaining command groups, component IDs, message/player-channel management and hidden/obfuscated-channel work still start only after Phase 3 exit. Root Kord commands remain production until Phase 6 |
+| Phase 3 — per-guild serialized voice (isolated JDA real-player slice) | **IN PROGRESS — implementation merged by PR #121 (`795c56e`), gate remains open/not passed (2026-11-15)** | Phase 2 is **PASS — gate closed 2026-11-15** via PR #120. The owner approved the two former blockers on 2026-11-15: (a) pause stops the position and resume reuses the same track at that position; skip while paused stays paused; (b) the real player lives in a new gateway-free `:player` module (`es.wokis.player.engine`) shared by the root Kord adapter and `:jda-runtime`, with Lavaplayer kept internal. Production source landed on `feature/114-phase-3-player-engine` at base `6d14167`: per-guild mailbox/actor, enqueue-only Lavaplayer callbacks, neutral track/queue/event snapshots, continuous player-audio stream with `Frame`/`PausedSilence`/`Ended`, extended (not duplicated) `JdaAudioSendHandler`, preserved source providers and root Kord behaviour, and manual JDA runtime/voice-adapter wiring. **The gate stays open**: the Test Agent added the `:player` scanner classification, engine/stream tests and JDA lifecycle coverage, and the dispatcher/test-determinism fix is **committed and pushed in `a830bb6`** with no assertion weakened. **PR #121 is MERGED** into the epic branch by the regular merge commit `795c56e` (head `a830bb6`, base `6d14167`), and **all four checks passed on that head** — Check Code Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud. The earlier `4eb84b5` run stays **historical**: Check Code Quality succeeded 14:44:23Z, **Build and analyze failed** 14:47:27Z in `:jda-runtime:test` with two `JdaGuildPlayerVoiceAdapterTest` cleanup assertions failing, and **both SonarCloud checks did not run** because the Gradle build aborted; no root cause was confirmed there, and `a830bb6` is the later head whose checks passed. Green PR CI is **not** a Phase 3 PASS: the **staging matrix is still pending**, so the gate remains open. The Phase 3 **base local snapshot at `a830bb6`** recorded **1,025 cases (1,021 executed + 4 pre-existing skips, 0 failures/errors)**, a clean local build and **no new external dependency or version**; the earlier **1,024 cases (1,020 + 4 skips)** figure is the **historical pre-dispatcher-test snapshot**. The **historical pre-merge Detekt-branch local snapshot** (`chore/114-detekt-tooling-migration`, then uncommitted on top of `a830bb6`, superseded by the merged PR #122 `8c1eeff`; the current work is the Phase 4 staging-enabler branch, pushed through pre-change head `2f636fd` and open as draft PR #123) records **1,026 cases (1,022 executed + 4 pre-existing skips, 0 failures/errors)** and a clean **48-task** build; its per-module coverage and the Detekt budget are recorded in the Phase 3 local verification snapshots, which is the authoritative detailed breakdown (summaries elsewhere may repeat headline totals). The `GuildLavaPlayerService.kt` Sonar exclusion was removed, so its new-code coverage is measured by the passing `SonarCloud Code Analysis`/`SonarCloud` checks on `a830bb6`; the local JaCoCo line reading for that file stays **72/242 lines = 29.75%** from the Phase 3 base clean-build snapshot (**local JaCoCo only, not Sonar or new-code coverage**). This row does **not** claim PASS. Details are in the Phase 3 implementation-scope subsection |
+| Phase 4 — commands, components, messages, channels, locales | **IN PROGRESS — narrow staging enabler only (2026-11-16); full phase not started** | The staging-enabler slice on `feature/114-phase4-player-staging` (base epic tip `8c1eeff`, pushed pre-change head `2f636fd`) adds the framework-independent `:configuration` module, the shared root `./data/config.json` and `./data/guild_locales.json` paths for the JDA bootstrap (no environment read, no guild-id field, the same working directory Kord uses), and the administrator-only `/jda-play` and `/jda-player` commands registered guild-scoped in every guild the JDA client has joined **at startup — a guild joined later needs a restart**. Since the data directory and token are shared, the Kord and JDA runtimes must not run concurrently against the same mutable `./data` directory. It exists to make the deferred Phase 3 staging matrix runnable; it is **not** Phase 4 acceptance. **PR #123 is open as a DRAFT** against the epic branch (head `2f636fd` as pushed, base `8c1eeff`); its four checks passed on that pushed head on 2026-11-16 (Check Code Quality 08:45:16Z, Build and analyze 08:47:44Z, SonarCloud Code Analysis 08:47:40Z, SonarCloud 08:47:48Z), and the all-guild/no-env changes are **local and unpushed**, so CI is **pending** until the coordinator refreshes the PR. The PR remains a draft and no green CI closes Phase 3 or replaces its staging matrix. The remaining command groups, component IDs, message/player-channel management and hidden/obfuscated-channel work still start only after Phase 3 exit. Root Kord commands remain production until Phase 6 |
 | Phase 5 — test/staging gate on the full isolated JDA implementation | **OPEN** | Starts after Phases 3–4 exit. Tests and stages the complete isolated JDA implementation while the Kord dependency and the untouched root Kord suite are still present. Not the root production cutover |
 | Phase 6 — root Kord→JDA code/build switch, Kord removal, repo-wide import rule, artifact gates | **OPEN** | Not started. Owns the root code/build switch, removal of Kord dependencies/local Kord JARs, the **same custom import scanner** extended repo-wide on the Kord-free tree, and the JDK 21 / packaging / digest / staging gates; Phase 7 deploys the verified artifact. Conditional jda-ktx gate (not required if direct JDA is selected) |
 | Phase 7 — production deployment of the Phase 6-verified artifact | **OPEN** | Blocked by the Phase 6 gates. Deploys the exact Phase 6-verified artifact with the same digest verification |
@@ -571,11 +605,13 @@ What the branch contained at the Phase 2B snapshot (historical layout):
   back safely) and the coroutine `RestActionBridge`. Phase 2D later added `:locale-persistence` to
   its dependencies; the gateway-adapter role remains true.
 - **Guild-only walkthrough command (historical at 2B).** At that snapshot, the only registered
-  command was `/jda-walkthrough`, upserted
-  guild-scoped from `DISCORD_DEV_GUILD_ID`; `DISCORD_BOT_TOKEN` and `DISCORD_DEV_GUILD_ID` were
-  mandatory and the isolated runtime failed fast without them. No global command was published, no
-  gateway intents were enabled, and the isolated JDA entry point was **not** wired into the root
-  runtime. Later phases added the 2C/2D diagnostic and `/locale` commands.
+  command was `/jda-walkthrough`, upserted guild-scoped from the then-required
+  `DISCORD_DEV_GUILD_ID` environment variable; `DISCORD_BOT_TOKEN` was mandatory too. That
+  environment-based setup is **superseded**: both runtimes now read only the shared root
+  `./data/config.json`, there is no guild-id field, and registration covers every joined guild. No
+  global command was published, no gateway intents were enabled, and the isolated JDA entry point
+  was **not** wired into the root runtime. Later phases added the 2C/2D diagnostic and `/locale`
+  commands.
 - **Deliberately out of scope for 2B (historical):** the **root Kord** `/locale` and root
   `LocalizationService` stayed Kord-facing at 2B closure; Phase 2D later completed the neutral/shared
   locale contracts and isolated JDA `/locale` (passed 2026-11-14). The root Kord service/command
@@ -724,7 +760,9 @@ Acceptance for closing 2B — **all criteria met, gate closed 2026-11-13**:
   state so the router fallback stays reachable.
 - The bootstrap registers exactly one guild-scoped command and refuses to start without a token and
   a development guild id; no global registration path exists. **Confirmed on staging 2026-11-13** —
-  guild-scoped `/jda-walkthrough` registered, no intents enabled, no global command published.
+  guild-scoped `/jda-walkthrough` registered, no intents enabled, no global command published. This is
+  the **Phase 2B posture**; the later Phase 4 staging enabler removes the guild-id field and registers
+  in every guild joined at startup, still with no global registration path.
 - Independent final QA/review passes, and any required manual staging login plus a
   `/jda-walkthrough` interaction are recorded. Local Code Quality and reviewer agents passed, #117 CI
   is green on the latest verified all-green checkpoint `7bf5419` (the last verified all-green
@@ -1489,7 +1527,8 @@ beyond what is recorded above.
 | `feature/114-phase-2b-command-port` → draft PR #117 (base: the Phase 1B branch, PR #116) | Latest verified all-green CI checkpoint before the subsequent docs-only updates: `7bf5419` (`Corrected Phase 2B CI status record`, docs-only), where all four checks passed on 2026-11-13 — Check Code Quality 16:47:15Z, SonarCloud Code Analysis 16:48:52Z, Build and analyze 16:48:56Z, SonarCloud 16:48:58Z — with 75.0% new-code coverage, 0 new issues and 0 hotspots; it was the head at that point, not afterwards. The earlier docs-only `988a7cd` is also green (all four checks, last completed 16:38:44Z), and `e4a9e29` completed all four checks successfully after an in-progress observation at 16:41:06Z. A later dated snapshot of `f5f04d1` (docs-only) was **not green** — only Check Code Quality had concluded at 16:53:24Z, with Build and analyze running and the SonarCloud checks unlisted. These are dated checkpoints only; the current head is whatever this follow-up produced, so GitHub's live check runs on PR #117 are authoritative for it. Carries the isolated `:core`/`:jda-runtime` modules, the neutral command boundary, the JDA 6.7.0 adapter and the guild-only `/jda-walkthrough`, with unit tests, plus JaCoCo 0.8.12 coverage for both modules wired into root `sonar`. **Phase 2B PASS — gate closed 2026-11-13**: all four #117 checks passed on `7bf5419`, `e4a9e29` and `988a7cd` (and earlier on `cd9d6db`, `e607ff7`, `2850907`, `16247f8`, `d353113`; 75.0% new-code coverage, 0 new issues, 0 hotspots), local QA and reviewer agents satisfied the independent review criterion, and the user-run staging `/jda-walkthrough` interaction succeeded. No GitHub PR review is submitted; that is not itself a required gate. **Historical instruction at that date: keep #117 draft and do not merge it ahead of parent PR #116.** It was later marked ready and **merged** into the epic branch by the regular merge commit `255893a` (Phase 2B PASS) |
 
 - **Phase 2B staging evidence (2026-11-13, sanitized).** The user ran
-  `./gradlew :jda-runtime:run` on the Phase 2B branch with staging environment variables. The
+  `./gradlew :jda-runtime:run` on the Phase 2B branch with the then-required staging environment
+  variables (that environment-based setup is superseded by the shared root `./data/config.json`). The
   isolated runtime completed JDA login, WebSocket connection, ready state and guild-scoped
   `/jda-walkthrough` registration, and logged no gateway intents enabled. Invoking
   `/jda-walkthrough` returned `JDA walkthrough OK` with the expected context and `locale=en-US`,
@@ -1547,7 +1586,7 @@ deploys the exact Phase 6-verified artifact.
 | `feature/114-phase-2c-voice-ports` → PR #118 (base: epic) | **PASS — gate closed (2026-11-14); CLOSED / MERGED.** Created from the fetched epic head `255893a` — the correct 2C base, not the stale local `4badb92` (`master`) and not the old Phase 2B branch. The plan, neutral voice/audio/player-message ports, their JDA adapters, DAVE 0.2.0 wiring, tone resource, unit tests and formatting-only ktlint repairs were merged into the epic branch by the regular merge commit `5fa9c63` (parents `255893a` and PR head `3e50248`); the implementation head is `8eb0349c4f65997d0dd69ffdc2b245268c207074` (`Fixed ktlint violations in Phase 2C`). All four checks on `8eb0349` **succeeded** — Check Code Quality, Build and analyze, SonarCloud Code Analysis and SonarCloud — and the Sonar Quality Gate **passed** with 90.1% new-code coverage, 11 new issues (10 major, 1 critical), 0 security hotspots and 0.0% duplication. Under the **owner-approved 2026-11-14 interpretation** the repository's configured Quality Gate is the criterion, so those 11 maintainability issues are **tracked follow-up debt**, not a failed gate. The earlier `c893567` is kept as history: **Check Code Quality FAILED** there on 25 formatting findings while the other three checks succeeded with the same Sonar figures; the formatting-only repairs were committed and pushed as `8eb0349`. The docs-only `9fd1826` (`Recorded Phase 2C CI checkpoint`) and the final PR head `3e50248` (`Recorded passing Phase 2C CI checkpoint`) also passed all four checks on 2026-11-14. Local results on the formatted tree remain local-only: 685 cases (680 executed + 5 pre-existing skips, 0 failures/errors) all passing; local module JaCoCo line coverage `:core` 207/219 = 94.52% (branch 108/115 = 93.91%) and `:jda-runtime` 870/948 = 91.77% (branch 342/418 = 81.82%) — local module reports only, not Sonar/new-code CI evidence — and the clean full `./gradlew build` passed locally. Local QA/reviewer agents report PASS; that is internal review, not a GitHub review, and no human review is recorded here. The gate was closed by the **sanitized 2026-11-14 staging run recorded in the Phase 2C section** — local macOS arm64 with the DAVE 0.2.0 native loaded and protocol version 1, only `GUILD_VOICE_STATES`, guild-scoped `/jda-walkthrough` and `/jda-voice-walkthrough`, voice connect to the invoking user's channel, the Phase 2C reply `Voice walkthrough OK \| handed 75/75 frames to JDA's send loop (delivery not confirmed)` (a hand-off count, not delivery proof), an audible beep reported by the invoking user's own Discord client, separate from the bot (the delivery evidence, distinct from the hand-off), completion-path disconnect cleanup and a deliberate Ctrl+C stop; no receive path, root wiring or Phase 6 artifact was exercised. `master` is untouched |
 | `feature/114-phase-2d-locale-edge-adapters` → PR #119 (base: epic) | **PASS — gate closed (2026-11-14); CLOSED / MERGED.** Created from the fetched epic tip `1304aa6`; the tested code/test snapshot `4ff8167`, the `a4bc1ae` time-qualified green snapshot, the docs-only `8c20a1f` and the final head `0b365aa` (`Finalized Phase 2D gate record`) were pushed. PR #119 is **merged** into the epic branch by the regular merge commit `f56d225` (parents `1304aa6` and `0b365aa`; merge recorded 2026-11-14 16:38:21Z). All four checks on `0b365aa` were green on 2026-11-14 — Check Code Quality 16:14:50Z, SonarCloud Code Analysis 16:17:23Z, Build and analyze 16:17:25Z, SonarCloud 16:17:29Z; the `a4bc1ae` snapshot's Sonar Quality Gate was OK with 91.5% new-code coverage, 0.0% duplication, 100% hotspots reviewed and **1 new MAJOR `kotlin:S6524`** code smell recorded as tracked follow-up debt. Final local QA: **758 cases (753 executed + 5 pre-existing skips), 0 failures/errors**, with local changed-file ktlint **0 findings**. The remote 2D branch was **deleted** after the merge; a local ref remains at `0b365aa`. The root runtime stays Kord-based through Phase 5 and the root code/build switch (Phase 6) and production deployment (Phase 7) remain **OPEN** |
 | `feature/114-import-declaration-scanner` → PR #120 (base: epic) | **Phase 2 exit criterion 4 — scoped import-rule gate: PASS — gate closed (2026-11-15); CLOSED / MERGED.** Branch created from the verified live epic tip `955ac49` (`Clarified migration phase gates and adapter boundaries`), not from `master`. Head `66f7783` (`Added Phase 2 import boundary scanner`, one commit, 8 files, +2460/−31) carried the **test-source-only** root JUnit scanner (`src/test/kotlin/architecture/`: `ImportBoundaryConfig`, `ImportBoundaryPolicy`, `KotlinFileHeaderParser`, `SourceTreeScanner` plus three test classes) and the plan update; it changed **no production source, dependency, build script or CI workflow**, and needed **no new Gradle task**. PR #120 is **MERGED** into the epic branch by the **regular merge commit** `96e5fbb` on **2026-11-15 08:03:45Z** (parents `955ac49` + `66f7783`; not a squash or rebase). All four checks on `66f7783` succeeded — Check Code Quality **2026-11-14 21:52:37Z**, SonarCloud Code Analysis **21:56:59Z**, Build and analyze **21:57:10Z**, SonarCloud **21:57:06Z**; no Sonar issue-count or coverage figure is asserted here for this PR. Local evidence (pre-merge working tree, historical): **949 cases = 944 executed + 5 pre-existing skips, 0 failures/errors** (root 557, `:core` 134, `:locale-persistence` 21, `:jda-runtime` 237), **191** architecture tests passing (policy 148, parser 21, source-tree 22), local ktlint **1.8.0** **0 findings** on the changed Kotlin test files, and because it is tests-only no production coverage change is claimed. The remote scanner branch was deleted after the merge; a local ref remains at `66f7783` |
-| `feature/114-phase-3-player-engine` → PR #121 (base: epic) | **Phase 3 IN PROGRESS — gate open/not passed; PR #121 is MERGED as `795c56e`** (superseding the "open and not a draft" wording recorded at the time). Head **`a830bb6`**, base epic **`6d14167`**, with **all four checks passed on that head** (Check Code Quality, Build and analyze, SonarCloud Code Analysis, SonarCloud). The dispatcher/test-determinism fix is **committed and pushed in `a830bb6`** (dispatcher injection with `UnconfinedTestDispatcher` in the deterministic tests, one real-thread stress test still on the production default, no assertion weakened). The **old head `4eb84b5` failure is historical**: Check Code Quality succeeded (14:44:23Z), **Build and analyze failed** (14:47:27Z) at `:jda-runtime:test` with two `JdaGuildPlayerVoiceAdapterTest` cleanup assertions, and **both SonarCloud checks did not run** because the Gradle build aborted. The Phase 3 **base local snapshot at `a830bb6`** recorded **1,025 cases (1,021 executed + 4 pre-existing skips, 0 failures/errors)** with local `:jda-runtime` JaCoCo **1,094/1,183 = 92.48%**, root **61.10%** and `GuildLavaPlayerService.kt` **72/242 = 29.75%** — local only, not Sonar/new-code. The **historical pre-merge Detekt-branch local snapshot** (`chore/114-detekt-tooling-migration`, then uncommitted, superseded by the merged PR #122 `8c1eeff`) records **1,026 cases (1,022 executed + 4 pre-existing skips, 0 failures/errors)**, a clean **48-task** build and the Detekt budget **33/40** (no baselines) — **dated/historical values, not current**; the **current staging-enabler tree** reports **1,100 cases (1,096 executed + 4 pre-existing skips, 0 failures/errors)**, a clean **57-task** build and Detekt **34/40** (its earlier **1,093 cases (1,089 executed + 4 pre-existing skips)** reading is a superseded time-qualified local snapshot, not the current count), detailed in the Phase 3 and Phase 4 staging-enabler local verification snapshots. Green PR CI is not a Phase 3 PASS: **Phase 3 staging remains pending**. Details in the Phase 3 historical CI failure snapshot, local follow-up and local verification snapshot subsections |
+| `feature/114-phase-3-player-engine` → PR #121 (base: epic) | **Phase 3 IN PROGRESS — gate open/not passed; PR #121 is MERGED as `795c56e`** (superseding the "open and not a draft" wording recorded at the time). Head **`a830bb6`**, base epic **`6d14167`**, with **all four checks passed on that head** (Check Code Quality, Build and analyze, SonarCloud Code Analysis, SonarCloud). The dispatcher/test-determinism fix is **committed and pushed in `a830bb6`** (dispatcher injection with `UnconfinedTestDispatcher` in the deterministic tests, one real-thread stress test still on the production default, no assertion weakened). The **old head `4eb84b5` failure is historical**: Check Code Quality succeeded (14:44:23Z), **Build and analyze failed** (14:47:27Z) at `:jda-runtime:test` with two `JdaGuildPlayerVoiceAdapterTest` cleanup assertions, and **both SonarCloud checks did not run** because the Gradle build aborted. The Phase 3 **base local snapshot at `a830bb6`** recorded **1,025 cases (1,021 executed + 4 pre-existing skips, 0 failures/errors)** with local `:jda-runtime` JaCoCo **1,094/1,183 = 92.48%**, root **61.10%** and `GuildLavaPlayerService.kt` **72/242 = 29.75%** — local only, not Sonar/new-code. The **historical pre-merge Detekt-branch local snapshot** (`chore/114-detekt-tooling-migration`, then uncommitted, superseded by the merged PR #122 `8c1eeff`) records **1,026 cases (1,022 executed + 4 pre-existing skips, 0 failures/errors)**, a clean **48-task** build and the Detekt budget **33/40** (no baselines) — **dated/historical values, not current**; the **current staging-enabler tree** reports **1,107 cases (1,103 executed + 4 pre-existing skips, 0 failures/errors)**, a clean **57-task** build and Detekt **34/40** (its earlier **1,109, 1,100 and 1,093 cases** readings are superseded time-qualified local snapshots, not the current count), detailed in the Phase 3 and Phase 4 staging-enabler local verification snapshots. Green PR CI is not a Phase 3 PASS: **Phase 3 staging remains pending**. Details in the Phase 3 historical CI failure snapshot, local follow-up and local verification snapshot subsections |
 
 - **Phase 2B staging evidence** remains the sanitized 2026-11-13 record in the Phase 2B section:
   isolated `:jda-runtime` login, ready state, guild-scoped `/jda-walkthrough` registration, the
@@ -1632,10 +1671,11 @@ Next actions, in order:
    pre-dispatcher-test snapshot. The **historical pre-merge Detekt-branch local snapshot** (base
    `a830bb6`, superseded by PR #122 `8c1eeff`) records **1,026 cases (1,022 executed + 4 pre-existing
    skips, 0 failures/errors)** and a clean **48-task** build — **dated/historical values, not the
-   current tree**. The **current Phase 4 staging-enabler tree** instead records **1,100 cases (1,096
+   current tree**. The **current Phase 4 staging-enabler tree** instead records **1,107 cases (1,103
    executed + 4 pre-existing skips, 0 failures/errors)**, a clean **57-task** build and Detekt
-   **34/40**; its earlier **1,093 cases (1,089 executed + 4 pre-existing skips)** reading is a
-   superseded time-qualified local snapshot. Every snapshot, with its per-module breakdown, is
+   **34/40**; its earlier **1,109 cases (1,105 executed + 4 pre-existing skips)** and
+   **1,100 cases (1,096 executed + 4 pre-existing skips)** readings are
+   superseded time-qualified local snapshots. Every snapshot, with its per-module breakdown, is
    recorded in full in the Phase 3 local verification snapshots and the Phase 4 staging-enabler
    local verification snapshot, the authoritative detailed breakdowns (summaries elsewhere may
    repeat the headline totals).
@@ -1646,18 +1686,27 @@ Next actions, in order:
    send path; root Kord regression tests. Receive-audio stays out of scope. The matrix runs **after**
    the staging enabler lands; Phase 4 (beyond that enabler) starts only after Phase 3 exit.
 4. **Phase 4 staging enabler is IN PROGRESS (2026-11-16) — PR #123 open as a draft; not Phase 4
-   acceptance.** On `feature/114-phase4-player-staging` (base `8c1eeff`, pushed head `c549ff3`) it
-   adds the framework-independent
+   acceptance.** On `feature/114-phase4-player-staging` (base `8c1eeff`, pushed pre-change head
+   `2f636fd`) it adds the framework-independent
    `:configuration` module (same JSON schema/file, strict loading, startup-only snapshot, redacted
-   `Config.toString()`), the shared player-source mapping in `:player`, the JDA config-file path
-   (`./data/config.json` by default, optional `JDA_CONFIG_PATH`) with the token read from that file,
-   and the administrator-only, guild-scoped `/jda-play` and `/jda-player` commands that make the
-   matrix runnable. **Draft PR #123** is open against the epic branch and its four checks passed on
-   `c549ff3` on 2026-11-16; the PR remains a draft, and that CI does not close Phase 3 or replace its
-   staging matrix. It adds **no** hot reload, config mutation, config get/set/reload commands, file
-   watcher, event flow, config migration or remaining Phase 4 command families. After it lands: run
-   the **full Phase 3 staging matrix** → **Phase 3 PASS** → the rest of Phase 4, which ports the
-   remaining command groups and component IDs into neutral `:core` contracts plus JDA adapters in the
+   `Config.toString()`), the shared player-source mapping in `:player`, and the JDA config-file path
+   that reads **only** the root `./data/config.json` — the exact `DEFAULT_CONFIG_PATH` and working
+   directory the root Kord runtime uses, with the shared `./data/guild_locales.json` — plus the
+   administrator-only `/jda-play` and `/jda-player` commands, registered guild-scoped in **every guild
+   the JDA client has joined at startup** (a guild joined later requires a restart), that make the
+   matrix runnable. There is **no** `JDA_CONFIG_PATH`, no
+   `DISCORD_DEV_GUILD_ID`, no `discord_dev_guild_id` field and no environment fallback: the JDA
+   runtime performs **zero** environment reads. Because the data directory and token are shared with
+   Kord, do not run both runtimes concurrently against the same mutable `./data` directory. **Draft
+   PR #123**
+   is open against the epic branch; its four checks passed on the pushed head `2f636fd` on 2026-11-16,
+   and the all-guild/no-env changes are **local and unpushed**,
+   so the branch has **pending
+   CI** until the coordinator refreshes the PR. The PR remains a draft, and no CI result closes Phase 3
+   or replaces its staging matrix. It adds **no** hot reload, config mutation, config get/set/reload
+   commands, file watcher, event flow, config migration or remaining Phase 4 command families. After it
+   lands: run the **full Phase 3 staging matrix** → **Phase 3 PASS** → the rest of Phase 4, which ports
+   the remaining command groups and component IDs into neutral `:core` contracts plus JDA adapters in the
    isolated `:jda-runtime`; root Kord stays production. **Phase 5** (after Phases 3–4) tests and
    stages the full isolated JDA implementation, **retaining the root Kord app and its Kord-root
    tests** until Phase 6 — it is **not** the root production cutover.
@@ -1700,9 +1749,9 @@ Next actions, in order:
 | --- | --- |
 | Baseline commit | Clean `master` @ `4badb92` |
 | Epic integration branch | `feature/114-migrate-to-jda-jda-ktx`, based on `master` @ `4badb92`; it contains `5fa9c63bc85ad3d5df1ed9c43c05f3e9b7d72e85`, the regular merge commit of PR #118 whose parents are `255893a` (the regular merge commit of PR #117, whose parents are `c00bdf1` — squash merge of PR #116 on top of `5aad7c7`, the squash merge of PR #115 — and `7d8661d`, the Phase 2B head) and `3e50248` (the final Phase 2C PR head), plus the documentation-only `269acc1` that recorded the Phase 2C staging pass and was the epic tip when the earlier documentation update was written. That merge carries the Phase 2B and Phase 2C passes; the `269acc1` tip statement is **historical**. The Phase 2D child branch was based on `1304aa6`; its tested implementation snapshot `4ff8167` and the `a4bc1ae` time-qualified green snapshot were pushed, and PR #119 is **MERGED** into the epic branch by the regular merge commit `f56d2252506617ae282c50a3cc95fb830c644424` (parents `1304aa6` and `0b365aa`) on 2026-11-14, so the epic branch advanced to `f56d225` at that recorded snapshot; **`f56d225` was the epic tip before that earlier documentation update**. A later documentation-only commit `38bdba1` (`Recorded Phase 2D merge and next steps`) was followed by `955ac49f6e397d5d59198c5fa4c6e3e14e94c634` (`Clarified migration phase gates and adapter boundaries`), the base of the import-scanner child branch. **PR #120 is MERGED** into the epic branch on **2026-11-15 08:03:45Z** by the regular merge commit `96e5fbbd7c3660b53414f4cc67033060749fcbe1` (parents `955ac49` and `66f7783`), and the epic branch later advanced by the documentation-only `6d14167` (`Recorded Phase 2 import-rule closure`), which was the **verified live epic tip at Phase 3 branch creation** (the `96e5fbb` tip statement is historical); after that it advanced to `795c56e` (regular merge of **PR #121**) and to `8c1eeff` (regular merge of **PR #122**, the tip the staging-enabler branch starts from), so `6d14167` is not the current tip; `master` remains `4badb92`. The live tip is read from fetched Git/GitHub, and no SHA recorded here is asserted as the current head |
-| Working branch (current) | At the **time-qualified 2026-11-15 snapshot** the working branch is the **Phase 3 child branch** `feature/114-phase-3-player-engine`, created from the epic tip `6d14167` (`Recorded Phase 2 import-rule closure`), with uncommitted Phase 3 source, test, build and documentation working-tree changes; **at that snapshot it had not been pushed and no Phase 3 PR existed**. That dated state has since been superseded: **PR #121 is MERGED** into the epic branch by the regular merge commit `795c56e` (head `a830bb6`, base `6d14167`), the dispatcher-injection follow-up is **committed and pushed in `a830bb6`**, and **all four checks passed on that head**; the ktlint→Detekt tooling replacement was then **merged by PR #122** as `8c1eeff`, so it is **not** a local/uncommitted branch either. The current checkout is the **Phase 4 staging-enabler branch** `feature/114-phase4-player-staging`, created from `8c1eeff`, pushed at head `c549ff3` and open as **draft PR #123**. The snapshot record therefore does **not** assert a standing no-PR state and does **not** assert that the child branch is the epic head. The **epic integration branch** `feature/114-migrate-to-jda-jda-ktx` had advanced to **`96e5fbbd7c3660b53414f4cc67033060749fcbe1`** (the regular merge commit of **PR #120**) and then to `6d14167`; it has since advanced again by the regular merge commits **`795c56e`** (**PR #121**) and **`8c1eeff`** (**PR #122**), which is the epic tip this staging-enabler branch starts from — so the Phase 3 base `6d14167` is **not** the current epic tip, and the authoritative state is the **"Current branch (2026-11-16, supersedes the rows above)"** row below. `master` remains **`4badb92`** and is untouched. **PR #120 is MERGED** on **2026-11-15 08:03:45Z** (head `66f77831f9b1271f030969acd27933b7049f94ad`, base `955ac49f6e397d5d59198c5fa4c6e3e14e94c634`, parents `955ac49` + `66f7783`; regular merge, no squash/rebase); all four checks succeeded on `66f7783` (Check Code Quality 2026-11-14 21:52:37Z, SonarCloud Code Analysis 21:56:59Z, Build and analyze 21:57:10Z, SonarCloud 21:57:06Z). The scanner branch `feature/114-import-declaration-scanner` is preserved locally at `66f7783`; its remote ref was deleted by the merge. **Phase 2 is PASS — gate closed (2026-11-15)**: the scanner was **test-source-only** under `src/test/kotlin/architecture/` (no production source, dependency, build-script or CI-workflow change, no new Gradle task), and its earlier **local test-source working-tree snapshot of 2026-11-14 based on `955ac49`, before the branch was committed or pushed,** recorded **949 cases (944 executed + 5 pre-existing skips, 0 failures/errors)** with the **191** scanner tests all passing and local ktlint 1.8.0 at **0 findings** on the 7 changed Kotlin test files — that snapshot is **historical** (at it no PR/CI existed), since PR #120 later merged with green CI. **2D is PASS — gate closed (2026-11-14)**; PR #119 is **merged** by the regular merge commit `f56d225` (head `0b365aa`, base `1304aa6`), and the Phase 2D branch `feature/114-phase-2d-locale-edge-adapters` is preserved locally at `0b365aa` with its remote ref deleted after the merge. Final local 2D QA on 2026-11-14 recorded **758 test cases: 753 executed, 5 skipped (pre-existing), 0 failures/errors**, a clean local build, local module JaCoCo readings and local changed-file ktlint **0 findings**; the merged head `0b365aa` had all four checks green. 2C remains **PASS — gate closed (2026-11-14)** and merged into the epic branch by PR #118 at `5fa9c63`; no open 2C PR remains. The remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain); PRs #115, #116, #117, #118, #119 and #120 are merged. The root gateway/runtime stays Kord-based through Phase 5; the root code/build switch is Phase 6 and production deployment is Phase 7, both still open. The **Detekt tooling follow-up** was a branch **stacked on PR #121's head `a830bb6`** and is now **MERGED by PR #122** as the regular merge commit `8c1eeff` (the epic tip this staging-enabler branch starts from); Detekt is the active quality gate, and the pre-merge local budget was **33/40** findings with no baseline |
-| Current branch (2026-11-15 — dated pre-PR snapshot, superseded by the 2026-11-16 row below) | Staging-enabler branch `feature/114-phase4-player-staging`, created from the fetched epic tip `8c1eeffe063f266b0da73c14658c95b1a0dae960` (after **PR #121** merged as `795c56e` and **PR #122** merged as `8c1eeff`). At that dated snapshot its work was **uncommitted** and no PR/CI verdict existed; that is **not** a standing statement. The work was later **committed and pushed as `c549ff3`** and **draft PR #123** was opened. Root Kord remains production; Phase 3 remains **OPEN** with its staging matrix deferred until this enabler lands |
-| Current branch (2026-11-16, supersedes the rows above) | Staging-enabler branch `feature/114-phase4-player-staging`, created from the fetched epic tip `8c1eeffe063f266b0da73c14658c95b1a0dae960` (after **PR #121** merged as `795c56e` and **PR #122** merged as `8c1eeff`), with its implementation **committed and pushed** at head `c549ff3` (`Added shared config and JDA player staging commands`). **PR #123 is OPEN as a DRAFT** against the epic branch (head `c549ff3`, base `8c1eeff`); all four checks passed on that head on 2026-11-16 (Check Code Quality 08:33:27Z, SonarCloud Code Analysis 08:36:48Z, SonarCloud 08:36:55Z, Build and analyze 08:36:56Z), so CI is green, but the PR remains a draft and that result does not close Phase 3 or replace its staging matrix. Root Kord remains production; Phase 3 remains **OPEN** with its staging matrix deferred until this enabler lands |
+| Working branch (current) | At the **time-qualified 2026-11-15 snapshot** the working branch is the **Phase 3 child branch** `feature/114-phase-3-player-engine`, created from the epic tip `6d14167` (`Recorded Phase 2 import-rule closure`), with uncommitted Phase 3 source, test, build and documentation working-tree changes; **at that snapshot it had not been pushed and no Phase 3 PR existed**. That dated state has since been superseded: **PR #121 is MERGED** into the epic branch by the regular merge commit `795c56e` (head `a830bb6`, base `6d14167`), the dispatcher-injection follow-up is **committed and pushed in `a830bb6`**, and **all four checks passed on that head**; the ktlint→Detekt tooling replacement was then **merged by PR #122** as `8c1eeff`, so it is **not** a local/uncommitted branch either. The current checkout is the **Phase 4 staging-enabler branch** `feature/114-phase4-player-staging`, created from `8c1eeff`, pushed at pre-change head `2f636fd` and open as **draft PR #123**. The snapshot record therefore does **not** assert a standing no-PR state and does **not** assert that the child branch is the epic head. The **epic integration branch** `feature/114-migrate-to-jda-jda-ktx` had advanced to **`96e5fbbd7c3660b53414f4cc67033060749fcbe1`** (the regular merge commit of **PR #120**) and then to `6d14167`; it has since advanced again by the regular merge commits **`795c56e`** (**PR #121**) and **`8c1eeff`** (**PR #122**), which is the epic tip this staging-enabler branch starts from — so the Phase 3 base `6d14167` is **not** the current epic tip, and the authoritative state is the **"Current branch (2026-11-16, supersedes the rows above)"** row below. `master` remains **`4badb92`** and is untouched. **PR #120 is MERGED** on **2026-11-15 08:03:45Z** (head `66f77831f9b1271f030969acd27933b7049f94ad`, base `955ac49f6e397d5d59198c5fa4c6e3e14e94c634`, parents `955ac49` + `66f7783`; regular merge, no squash/rebase); all four checks succeeded on `66f7783` (Check Code Quality 2026-11-14 21:52:37Z, SonarCloud Code Analysis 21:56:59Z, Build and analyze 21:57:10Z, SonarCloud 21:57:06Z). The scanner branch `feature/114-import-declaration-scanner` is preserved locally at `66f7783`; its remote ref was deleted by the merge. **Phase 2 is PASS — gate closed (2026-11-15)**: the scanner was **test-source-only** under `src/test/kotlin/architecture/` (no production source, dependency, build-script or CI-workflow change, no new Gradle task), and its earlier **local test-source working-tree snapshot of 2026-11-14 based on `955ac49`, before the branch was committed or pushed,** recorded **949 cases (944 executed + 5 pre-existing skips, 0 failures/errors)** with the **191** scanner tests all passing and local ktlint 1.8.0 at **0 findings** on the 7 changed Kotlin test files — that snapshot is **historical** (at it no PR/CI existed), since PR #120 later merged with green CI. **2D is PASS — gate closed (2026-11-14)**; PR #119 is **merged** by the regular merge commit `f56d225` (head `0b365aa`, base `1304aa6`), and the Phase 2D branch `feature/114-phase-2d-locale-edge-adapters` is preserved locally at `0b365aa` with its remote ref deleted after the merge. Final local 2D QA on 2026-11-14 recorded **758 test cases: 753 executed, 5 skipped (pre-existing), 0 failures/errors**, a clean local build, local module JaCoCo readings and local changed-file ktlint **0 findings**; the merged head `0b365aa` had all four checks green. 2C remains **PASS — gate closed (2026-11-14)** and merged into the epic branch by PR #118 at `5fa9c63`; no open 2C PR remains. The remote `feature/114-kord-to-jda-migration` branch was deleted (a stale local ref may remain); PRs #115, #116, #117, #118, #119 and #120 are merged. The root gateway/runtime stays Kord-based through Phase 5; the root code/build switch is Phase 6 and production deployment is Phase 7, both still open. The **Detekt tooling follow-up** was a branch **stacked on PR #121's head `a830bb6`** and is now **MERGED by PR #122** as the regular merge commit `8c1eeff` (the epic tip this staging-enabler branch starts from); Detekt is the active quality gate, and the pre-merge local budget was **33/40** findings with no baseline |
+| Current branch (2026-11-15 — dated pre-PR snapshot, superseded by the 2026-11-16 row below) | Staging-enabler branch `feature/114-phase4-player-staging`, created from the fetched epic tip `8c1eeffe063f266b0da73c14658c95b1a0dae960` (after **PR #121** merged as `795c56e` and **PR #122** merged as `8c1eeff`). At that dated snapshot its work was **uncommitted** and no PR/CI verdict existed; that is **not** a standing statement. The work was later **committed and pushed as `c549ff3`** and **draft PR #123** was opened; that head was later superseded by the final green head `2f636fd`. Root Kord remains production; Phase 3 remains **OPEN** with its staging matrix deferred until this enabler lands |
+| Current branch (2026-11-16, supersedes the rows above) | Staging-enabler branch `feature/114-phase4-player-staging`, created from the fetched epic tip `8c1eeffe063f266b0da73c14658c95b1a0dae960` (after **PR #121** merged as `795c56e` and **PR #122** merged as `8c1eeff`), with its implementation **committed and pushed** through the pre-change head `2f636fd` (implementation commit `c549ff3`, `Added shared config and JDA player staging commands`, then the documentation commit `2f636fd`, `Updated Phase 3 staging handoff after PR 123 checks`). **PR #123 is OPEN as a DRAFT** against the epic branch (head `2f636fd` as pushed, base `8c1eeff`); the four checks passed on that pushed head on 2026-11-16 (Check Code Quality 08:45:16Z, Build and analyze 08:47:44Z, SonarCloud Code Analysis 08:47:40Z, SonarCloud 08:47:48Z). The working tree now carries the shared-config change (JDA reads only `./data/config.json`), so the branch has **pending CI** until the coordinator refreshes the PR; that green head does **not** cover the all-guild/no-env WIP. The PR remains a draft and no result closes Phase 3 or replaces its staging matrix. Root Kord remains production; Phase 3 remains **OPEN** with its staging matrix deferred until this enabler lands |
 | Assistant receive-audio | Stays separately stashed; **out of scope** for this migration |
 | Parked PRs | #106, #109, #111 remain **parked and untouched**; Phase 8 (post-Phase 7 follow-up) ports each individually from a new child branch off the verified live epic tip, without rebasing or rewriting the parked branches. Not a prerequisite for Phase 2, Phase 6 or issue #114 closure |
 | Docker / deployment | Deployment stays a fat JAR. Do **not** add a `Dockerfile` to this repo |
@@ -2499,11 +2548,12 @@ test-determinism fix that addressed that failure is **committed and pushed in `a
 against the isolated runtime without (a) a shared configuration path so the JDA process reads the
 same `discord_bot_token`/provider sections as the root runtime and (b) the minimal real-player
 command surface. Both are delivered by the narrowly scoped enabler on
-`feature/114-phase4-player-staging` (base `8c1eeff`, pushed head `c549ff3`), which is **open as draft
-PR #123** against the epic branch and whose four checks all passed on that head on 2026-11-16. That
+`feature/114-phase4-player-staging` (base `8c1eeff`, pushed pre-change head `2f636fd`), which is **open as draft
+PR #123** against the epic branch and whose four checks passed on that pushed head on 2026-11-16;
+the later all-guild/no-env WIP is unpushed and has **no CI verdict**. That
 green CI does not close Phase 3 or replace the matrix, and the PR remains a draft. That enabler adds
 the framework-independent `:configuration`
-module plus administrator-only, dev-guild-scoped `/jda-play` and `/jda-player`. The matrix items below
+module plus administrator-only `/jda-play` and `/jda-player`, registered guild-scoped in every guild the client has joined. The matrix items below
 are **unchanged**; they run only **after** that enabler lands, and passing them is what can then make
 Phase 3 **PASS**. The enabler itself is **not** a Phase 3 PASS, **not** Phase 4 acceptance, and a
 draft PR is not a merge or a gate closure.
@@ -2610,7 +2660,7 @@ by PR #122 `8c1eeff`; this is the **old Detekt snapshot**, not the current branc
 - Detekt local budget: **33/40 findings** — root **16**, `:core` **4**, `:locale-persistence` **0**,
   `:player` **9**, `:jda-runtime` **4** — with **no baseline**.
 - Those **1,026 cases / 48 tasks / 33-40** readings are **dated historical values**. The current
-  Phase 4 staging-enabler tree reports **1,100 cases**, **57 tasks** and Detekt **34/40**, recorded in
+  Phase 4 staging-enabler tree reports **1,107 cases**, **57 tasks** and Detekt **34/40**, recorded in
   its own snapshot in the Phase 4 staging-enabler slice. Do not quote these numbers as current.
 - Those Detekt tooling changes were local-only **at the time of that snapshot**. They are now
   **committed, pushed and merged** through **PR #122** (merge commit `8c1eeff`), and Detekt is the
@@ -2652,9 +2702,9 @@ paused Opus silence and the `provide(0)` liveness poll; reconnect/disconnect und
 call on the audio send path; and the untouched root Kord regression suite. Receive-audio remains out of
 scope. Detekt migration is **not** a Phase 3 acceptance item (it is merged and active as the code
 gate). **Execution order (2026-11-16):** the matrix is **deferred** until the Phase 4 staging enabler
-(`:configuration` + `/jda-play` + `/jda-player`) lands; that enabler is **draft PR #123** (head
-`c549ff3`, base `8c1eeff`, all four checks passed on that head on 2026-11-16 — but the PR is still a
-draft and green CI does not replace the matrix). Only after it lands can the matrix run, and only a clean run can
+(`:configuration` + `/jda-play` + `/jda-player`) lands; that enabler is **draft PR #123** (pushed
+pre-change head `2f636fd`, base `8c1eeff`, whose four checks passed on that pushed head on 2026-11-16 —
+but the PR is still a draft and green CI does not replace the matrix). Only after it lands can the matrix run, and only a clean run can
 close Phase 3. The enabler does not replace, shrink or pre-approve any matrix item.
 
 **Approved decisions implemented.**
@@ -2804,12 +2854,17 @@ the Phase 4 command families, components, message/player-channel management or h
 
 **Branch.** `feature/114-phase4-player-staging`, created from the fetched epic tip
 `8c1eeffe063f266b0da73c14658c95b1a0dae960` (after PR #121 `795c56e` and PR #122 `8c1eeff` merged).
-The work is **committed and pushed** at head `c549ff3`
-(`c549ff3b88846a2e06014b55ec0a6943e7838b0b`, `Added shared config and JDA player staging commands`),
-and **PR #123 is open as a DRAFT** against the epic branch (head `c549ff3`, base `8c1eeff`). On
-2026-11-16 the four checks all passed on that head (Check Code Quality 08:33:27Z, SonarCloud Code
-Analysis 08:36:48Z, SonarCloud 08:36:55Z, Build and analyze 08:36:56Z), but the PR is still a draft,
-so it is not ready to merge; that CI does not close Phase 3 or replace its staging matrix.
+The work is **committed and pushed** through the pre-change head `2f636fd`
+(implementation commit `c549ff3`, `Added shared config and JDA player staging commands`, followed by
+the documentation commit `2f636fd`, `Updated Phase 3 staging handoff after PR 123 checks`),
+and **PR #123 is open as a DRAFT** against the epic branch (head `2f636fd` as pushed, base `8c1eeff`).
+On 2026-11-16 the four checks passed on that pushed head (Check Code Quality 08:45:16Z, Build and
+analyze 08:47:44Z, SonarCloud Code Analysis 08:47:40Z, SonarCloud 08:47:48Z); the earlier
+implementation head `c549ff3` is a dated green checkpoint superseded by `2f636fd`. The working tree
+now additionally carries the shared-config change described
+below, so the branch has **pending CI** until the coordinator refreshes the PR. That green head does
+**not** cover the all-guild/no-env WIP. The PR is still a
+draft, so it is not ready to merge; no CI result closes Phase 3 or replaces its staging matrix.
 *Superseded dated pre-PR/pre-CI snapshot (2026-11-15):* at that snapshot the work was uncommitted
 locally, no PR existed and no CI verdict existed; that is history, not the current state.
 
@@ -2846,11 +2901,28 @@ locally, no PR existed and no CI verdict existed; that is history, not the curre
   `Config`, `:configuration` is published as an `api` dependency, so downstream modules do not have
   to add a transitive `:configuration` dependency by hand just to compile against `:player`. Every
   provider field and `null`/empty distinction is preserved.
-- **JDA bootstrap reads the shared file.** `JdaRuntimeConfig.fromEnv` loads `./data/config.json` (or
-  `JDA_CONFIG_PATH` for a staging copy), takes the Discord token from that file, maps the provider
-  sections to `PlayerSourcesConfig` and passes them to `JdaPlayerRuntime`. `DISCORD_DEV_GUILD_ID`
-  stays **environment-only** and registration stays guild-scoped. Configuration values are never
+- **JDA bootstrap reads the root shared file.** `main` loads the shared configuration with
+  `ConfigLoader` from the exact `DEFAULT_CONFIG_PATH` (`./data/config.json`) the root Kord runtime
+  uses — no `jda-runtime/data`, no alternate directory and no path override — then
+  `JdaRuntimeConfig.fromConfig(config)` takes the Discord token, maps the provider sections to
+  `PlayerSourcesConfig` and passes them to `JdaPlayerRuntime`. **No environment variable is read**:
+  `JDA_CONFIG_PATH`, `DISCORD_DEV_GUILD_ID` and a `DISCORD_BOT_TOKEN` fallback do not exist, and the
+  shared JSON/template has **no `discord_dev_guild_id` property**. A local config that still
+  contains that removed key must drop it: the shared loader decodes strictly and rejects unknown
+  properties. `./gradlew :jda-runtime:run` uses the repository root as `workingDir` (matching root
+  Kord's `run`), so `./data/config.json` and `./data/guild_locales.json` resolve to the same data
+  folder for both runtimes; a packaged JDA artifact must likewise be launched from that same
+  data-directory CWD. Consequence: the two runtimes **share** locale persistence and must **not**
+  run concurrently against the same mutable data directory/token. Configuration values are never
   logged.
+- **All-joined-guild command registration.** `JdaBootstrap` upserts `/jda-walkthrough`,
+  `/jda-voice-walkthrough`, `/locale`, `/jda-play` and `/jda-player` with
+  `guild.upsertCommand(...)` for **every guild in `client.guilds` at startup**; `JdaGuildCommandRegistrar`
+  never calls `jda.upsertCommand(...)`, so nothing is published globally and no guild id is
+  configured. `adminOnly` definitions (`/jda-play`, `/jda-player`, `/locale`) remain
+  administrator-only; `/jda-walkthrough` and `/jda-voice-walkthrough` stay unrestricted. A guild
+  joined after startup receives its commands on the next restart; no `GuildJoinEvent` registration is
+  installed.
 - **Minimal command surface.** Two guild-only, administrator-only commands with one string option
   each: `/jda-play input:<string>` and `/jda-player action:<queue|pause|resume|skip|stop|disconnect|reconnect>`.
   The handlers defer the interaction before the load wait, never block a thread, and never collect
@@ -2906,20 +2978,18 @@ reference, never cherry-picked: concrete security/functional defects were found 
 run the **full Phase 3 staging matrix** → Phase 3 **PASS** → the rest of Phase 4. Root Kord stays
 production through Phase 5; Phase 6 owns the root code/build switch and Kord removal.
 
-**Local verification snapshot — current staging-enabler tree (verification run 2026-11-15; carried forward and documented 2026-11-16; local only, not CI).**
+**Local verification snapshot — current staging-enabler tree (latest QA/test-agent run 2026-11-16; local only, not CI).**
 
-This is the **authoritative current snapshot** for `feature/114-phase4-player-staging`. The
-verification run itself was performed on **2026-11-15**; this snapshot was carried forward unchanged
-and documented in the **2026-11-16** record, so the metrics below are the 2026-11-15 results and not a
-re-run. It is a local run, **not** GitHub CI, SonarCloud, staging or a Phase 3 PASS. The older
+This is the **authoritative current snapshot** for `feature/114-phase4-player-staging`. It is a local
+QA/test-agent run, **not** GitHub CI, SonarCloud, staging or a Phase 3 PASS. The older
 Phase 3-era totals stay in the Phase 3 local verification snapshots **above** as **dated history**,
 not current numbers.
 
 - Clean local `./gradlew build`: **57 tasks, success**.
-- **1,100 test cases: 1,096 executed + 4 pre-existing skips, 0 failures/errors.**
-  Module breakdown: root **542**, `:core` **134**, `:configuration` **21**,
-  `:locale-persistence` **21**, `:player` **87**, `:jda-runtime` **295**. The new module contributes
-  its own 21 cases; the 4 pre-existing skips are unchanged from the earlier snapshots.
+- **1,107 test cases: 1,103 executed + 4 pre-existing skips, 0 failures/errors.**
+  Module breakdown: root **542**, `:core` **134**, `:configuration` **25**,
+  `:locale-persistence` **21**, `:player` **87**, `:jda-runtime` **298**. The new module contributes
+  its own 25 cases; the 4 pre-existing skips are unchanged from the earlier snapshots.
 - Detekt local budget: **34/40 findings** — root **16**, `:configuration` **0**, `:core` **4**,
   `:jda-runtime` **5**, `:locale-persistence` **0**, `:player` **9** — with **no baseline**, still
   under the repository-wide ceiling of 40, and the count expected after the test-format fix. The
@@ -2928,13 +2998,17 @@ not current numbers.
 - **Dated/historical, not current:** the **1,026 cases (1,022 executed + 4 pre-existing skips)** and
   **33/40** Detekt readings belong to the pre-merge Detekt-tooling tree
   (`chore/114-detekt-tooling-migration`, base `a830bb6`, merged as PR #122 `8c1eeff`) and the merged
-  epic tip; they must not be quoted as this branch's current numbers. The earlier **1,093 cases
-  (1,089 executed + 4 pre-existing skips)** reading of this same branch is likewise a **superseded
-  time-qualified local snapshot** (`:configuration` 19, `:jda-runtime` 290), not the current count.
-- **PR CI status for this branch:** **PR #123** is **open as a draft** (head `c549ff3`, base
-  `8c1eeff`), and all four checks passed on that head on 2026-11-16 — Check Code Quality 08:33:27Z,
-  SonarCloud Code Analysis 08:36:48Z, SonarCloud 08:36:55Z, Build and analyze 08:36:56Z. The local
-  snapshot below is dated 2026-11-15 and is **local only**, not this CI. **PR #121** and **PR #122**
+  epic tip; they must not be quoted as this branch's current numbers. The earlier **1,109 cases
+  (1,105 executed + 4 pre-existing skips)**, **1,100 cases (1,096 executed + 4 pre-existing skips)**
+  and **1,093 cases (1,089 executed + 4 pre-existing
+  skips)** readings of this same branch are likewise **superseded time-qualified local snapshots**,
+  not the current count.
+- **PR CI status for this branch:** **PR #123** is **open as a draft** (pushed pre-change head
+  `2f636fd`, base `8c1eeff`). The four checks passed on that pushed head on 2026-11-16 — Check Code
+  Quality 08:45:16Z, Build and analyze 08:47:44Z, SonarCloud Code Analysis 08:47:40Z, SonarCloud
+  08:47:48Z. The current working tree adds the
+  shared-config change (**local and unpushed**), so CI is **pending** until the coordinator refreshes
+  the PR, and that green head does **not** cover the all-guild/no-env WIP. The local snapshot above is **local only**, not this CI. **PR #121** and **PR #122**
   are merged, but the **Phase 3 staging matrix remains deferred** behind this narrow enabler, so
   **no Phase 3 PASS** is claimed and this work is **not** Phase 4 acceptance.
 
@@ -3137,23 +3211,35 @@ accepted risk, and a documented blocker does not close a gate.
   was **switched to the local `feature/114-phase4-player-staging` branch**, and the coordinator's
   earlier unrelated local documentation edit on `chore/114-detekt-tooling-migration` was **preserved
   in stash `phase4-transfer/primary-doc-edit`** (still present, not lost and not applied). The enabler
-  changes are **committed and pushed** at head `c549ff3`
-  (`c549ff3b88846a2e06014b55ec0a6943e7838b0b`, `Added shared config and JDA player staging commands`).
+  changes are **committed and pushed** through the pre-change head `2f636fd`
+  (implementation commit `c549ff3`, `Added shared config and JDA player staging commands`, followed by
+  the documentation commit `2f636fd`, `Updated Phase 3 staging handoff after PR 123 checks`).
   The local branch is based at `8c1eeff`, and the **remote branch ref now carries that head**
-  (`origin/feature/114-phase4-player-staging` → `c549ff3`; it previously pointed at the same `8c1eeff`
+  (`origin/feature/114-phase4-player-staging` → `2f636fd`; it previously pointed at the same `8c1eeff`
   base before the implementation commit was pushed). **PR #123 exists against the epic branch and is
-  OPEN as a DRAFT** (head `c549ff3`, base `8c1eeff`); all four checks passed on that head on
-  2026-11-16 (Check Code Quality 08:33:27Z, SonarCloud Code Analysis 08:36:48Z, SonarCloud 08:36:55Z,
-  Build and analyze 08:36:56Z), while the PR remains a draft and that CI does not close Phase 3 or
-  replace its staging matrix. The earlier "uncommitted locally with no PR/CI verdict" record is a
+  OPEN as a DRAFT** (pushed pre-change head `2f636fd`, base `8c1eeff`); the four checks passed on
+  that pushed head on 2026-11-16 (Check Code Quality 08:45:16Z, Build and analyze 08:47:44Z,
+  SonarCloud Code Analysis 08:47:40Z, SonarCloud 08:47:48Z). The working tree now adds the shared-config change (see below), so **CI is pending** until the
+  coordinator refreshes the PR; the PR remains a draft and no CI result closes Phase 3 or replaces its
+  staging matrix. The earlier "uncommitted locally with no PR/CI verdict" record is a
   dated **pre-PR/pre-CI snapshot**, not the current state. The branch adds
   `configuration/` (new module plus `src/main/resources/template/config_template.json`), moves the
   `Config` DTOs/validation/template out of the root sources, adds the shared
   `Config.toPlayerSourcesConfig()` mapping to `player/`, and adds the JDA config-file loading plus the
-  `/jda-play` and `/jda-player` commands to `jda-runtime/`. The local snapshot recorded 2026-11-15
-  (local only — taken before PR #123's checks concluded, not PR CI and distinct from the 2026-11-16
-  CI result on `c549ff3`) is a clean
-  **57-task** build and **1,100 cases (1,096 executed + 4 pre-existing skips, 0 failures/errors)**.
+  `/jda-play` and `/jda-player` commands to `jda-runtime/`. The uncommitted shared-config follow-up
+  removes every JDA environment read: `main` loads the root `./data/config.json` through
+  `ConfigLoader` at the shared `DEFAULT_CONFIG_PATH`, `JdaRuntimeConfig.fromConfig(config)` takes the
+  token (the shared JSON/template carries no guild-id field), and `:jda-runtime:run` was given the
+  repository root as `workingDir` so `./data/config.json` and `./data/guild_locales.json` resolve like
+  the root Kord `run`; commands are registered guild-scoped in every guild the client has joined **at
+  startup, so a guild joined later needs a restart**. The
+  JDA process therefore shares the root locale data file instead of a module-local
+  `jda-runtime/data` directory (no such directory is created or read), and the two runtimes must not
+  run concurrently against the same mutable data directory/token. A packaged JDA artifact must be
+  launched from that same data-directory CWD. The latest local QA/test-agent
+  snapshot recorded 2026-11-16
+  (local only — not PR CI) is a clean
+  **57-task** build and **1,107 cases (1,103 executed + 4 pre-existing skips, 0 failures/errors)**.
   Detekt reports **34/40** locally (`:configuration` 0; root 16, `:core` 4, `:locale-persistence` 0,
   `:player` 9 and `:jda-runtime` 5 — the extra `:jda-runtime` finding is the documented no-cause
   config-error translation, and the aggregated ceiling of 40 is still respected).
@@ -3199,11 +3285,11 @@ accepted risk, and a documented blocker does not close a gate.
   snapshot** (base `a830bb6`, superseded by PR #122 `8c1eeff`) records **1,026 cases (1,022 executed
   + 4 pre-existing skips, 0 failures/errors)** with a clean **48-task** build — **dated/historical
   values, not the current tree**; the **1,024 / 1,020 + 4** counts are the historical
-  pre-dispatcher-test snapshot. The **current staging-enabler tree** reports **1,100 cases (1,096
+  pre-dispatcher-test snapshot. The **current staging-enabler tree** reports **1,107 cases (1,103
   executed + 4 pre-existing skips, 0 failures/errors)**, a clean **57-task** build and Detekt
   **34/40** (root 16, `:configuration` 0, `:core` 4, `:jda-runtime` 5, `:locale-persistence` 0,
-  `:player` 9); its earlier **1,093 cases (1,089 executed + 4 pre-existing skips)** reading is a
-  **superseded time-qualified local snapshot**, not the current count. Per-module coverage
+  `:player` 9); its earlier **1,109, 1,100 and 1,093 cases** readings are **superseded time-qualified local
+  snapshots**, not the current count. Per-module coverage
   (historical local readings only) and the Detekt budget are recorded in full in the Phase 3 local
   verification snapshots and the Phase 4 staging-enabler local verification snapshot, the
   authoritative detailed breakdowns (summaries elsewhere may repeat the headline totals). Phase 3 is **IN PROGRESS — implementation landed, gate open/not

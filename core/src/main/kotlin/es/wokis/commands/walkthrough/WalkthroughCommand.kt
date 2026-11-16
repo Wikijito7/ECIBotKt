@@ -18,19 +18,12 @@ class WalkthroughCommand : CommandHandler {
 
     override val name: String = COMMAND_NAME
 
-    /**
-     * Gateway-neutral definition used by adapters to publish this command.
-     */
     val definition: CommandDefinition = CommandDefinition(
         name = COMMAND_NAME,
         description = COMMAND_DESCRIPTION,
     )
 
-    /**
-     * Publishes this command into [guildId] through [registrar].
-     *
-     * There is deliberately no global registration variant.
-     */
+    /** Publishes this command into [guildId]; there is deliberately no global variant. */
     suspend fun registerIn(registrar: GuildCommandRegistrar, guildId: GuildId) {
         registrar.register(guildId, definition)
     }

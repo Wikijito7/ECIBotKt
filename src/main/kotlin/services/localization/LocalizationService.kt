@@ -10,11 +10,8 @@ import es.wokis.utils.toKordLocaleOrNull
 import es.wokis.utils.toLocaleCodeOrNull
 
 /**
- * Kord-facing localization adapter.
- *
- * The catalog, fallback rules and guild-locale resolution live in the neutral
- * [GuildLocalizationService] in `:core`; this class only converts Kord [Snowflake] and [Locale]
- * values at the edge and keeps the legacy public signatures used by the root runtime.
+ * Kord-facing localization adapter over the neutral [GuildLocalizationService] in `:core`; it only
+ * converts Kord [Snowflake] and [Locale] at the edge and keeps the legacy public signatures.
  */
 class LocalizationService(
     getGuildLocaleUseCase: GetGuildLocaleUseCase,
@@ -49,10 +46,7 @@ class LocalizationService(
     ): String = getString(key, guildId, discordLocale).format(*arguments)
 }
 
-/**
- * Compatibility aliases for the pre-extraction exception names used by the root test suite and
- * error-handling code. The actual exceptions are now owned by `:core`.
- */
+/** Compatibility aliases for the pre-extraction exception names used by the root runtime. */
 typealias LocalizationFolderNotFoundException = es.wokis.localization.LocalizationFolderNotFoundException
 typealias NoLocalizationFileFoundException = es.wokis.localization.NoLocalizationFileFoundException
 typealias NoLocalizationFoundException = es.wokis.localization.NoLocalizationFoundException

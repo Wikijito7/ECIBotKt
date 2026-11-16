@@ -294,7 +294,6 @@ class GuildQueueServiceTest {
 
     @Test
     fun `Given concurrent first access for the same guild When creation runs Then the factory is invoked once and no engine is leaked`() {
-        // Given
         val guildId = Snowflake(123)
         val firstEngine = mockPlayerEngine()
         val losingEngine = mockPlayerEngine()
@@ -312,12 +311,10 @@ class GuildQueueServiceTest {
             }, "queue-first-access-$index")
         }
 
-        // When
         threads.forEach { it.start() }
         gate.countDown()
         threads.forEach { it.join(5_000) }
 
-        // Then
         assertTrue(threads.none { it.isAlive })
         assertEquals(1, results.distinct().size)
         verify(exactly = 1) { audioPlayerManagerProvider.createPlayerEngine() }
@@ -326,7 +323,6 @@ class GuildQueueServiceTest {
 
     @Test
     fun `Given created guild engines When shutdown runs Then every engine and the provider close once`() = runTest {
-        // Given
         val firstGuildId = Snowflake(123)
         val secondGuildId = Snowflake(456)
         val firstEngine = mockPlayerEngine()
@@ -344,11 +340,9 @@ class GuildQueueServiceTest {
             voiceChannel = mockk(),
         )
 
-        // When
         guildQueueService.shutdown()
         guildQueueService.shutdown()
 
-        // Then
         verify(exactly = 1) { firstEngine.close() }
         verify(exactly = 1) { secondEngine.close() }
         verify(exactly = 1) { audioPlayerManagerProvider.close() }

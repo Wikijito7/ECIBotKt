@@ -14,7 +14,6 @@ class JdaContinuousAudioSendHandlerTest {
 
     @Test
     fun `Given a frame followed by paused silence When the handler polls Then both are handed to JDA`() {
-        // Given
         val frame = AudioFrame.of(AudioFrameFormat.OPUS_20MS, byteArrayOf(0x78, 0x01))
         val stream = FakeContinuousStream(
             listOf(PlayerAudioState.Frame(frame), PlayerAudioState.PausedSilence),
@@ -34,7 +33,6 @@ class JdaContinuousAudioSendHandlerTest {
 
     @Test
     fun `Given sustained pause When the send loop keeps polling Then silence never exhausts the handler`() {
-        // Given
         val stream = FakeContinuousStream(List(20) { PlayerAudioState.PausedSilence })
         val handler = JdaAudioSendHandler.continuous(stream)
 
@@ -50,7 +48,6 @@ class JdaContinuousAudioSendHandlerTest {
 
     @Test
     fun `Given an ended stream When the handler polls Then it terminates without silence`() {
-        // Given
         val stream = FakeContinuousStream(listOf(PlayerAudioState.Ended))
         val handler = JdaAudioSendHandler.continuous(stream)
 
@@ -62,10 +59,8 @@ class JdaContinuousAudioSendHandlerTest {
 
     @Test
     fun `Given the continuous stream When queried Then the handler keeps the Opus contract`() {
-        // Given
         val handler = JdaAudioSendHandler.continuous(FakeContinuousStream(emptyList()))
 
-        // Then
         assertTrue(handler.isOpus())
     }
 

@@ -14,36 +14,14 @@ import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel
 import org.slf4j.LoggerFactory
 
 /**
- * Adapter-local orchestration for the minimal JDA player command surface.
- *
- * It resolves the invoking member's voice channel, drives the shared [PlayerEngine] and the
- * per-guild [JdaGuildPlayerVoiceAdapter], and returns plain text so the command handlers stay thin
- * and gateway-free. All waits are coroutine suspensions on the command/router scope: no thread is
- * blocked, and the interaction is deferred by the handler before the long provider load starts.
- *
- * **Load-then-connect.** `/jda-play` loads first and connects only after the adapter reports an
- * active track. Connecting earlier would build the audio stream against a player that is not
- * playing yet and, in the worst case, leave the send handler permanently exhausted.
- *
- * **Deliberate semantics.** `disconnect` clears the queue (owner decision) and closes the voice
- * connection; `reconnect` rejoins the caller's channel without touching the current track or the
- * pending queue; `stop` clears the queue and stops playback, after which the adapter closes the
- * voice connection on the engine's `Stopped` event. Commands never collect the engine event stream:
- * the adapter is its only subscriber, and this class only reads the adapter's derived presentation.
- *
- * `pause` and `resume` are additionally guarded by a controller-level snapshot: an idle player has
- * no owning track, so the reply is a fixed no-active-playback message and the engine is never asked
- * to transition. A rejected transition on an active track still reports the unchanged state.
- *
- * There is no hot reload, configuration mutation or owner/admin config command here: configuration
- * is read once at startup, and changing it requires a restart.
+ * Orchestrates `/jda-play` and `/jda-player`. Load happens before connect, so voice is joined only
+ * once the adapter reports an active track.
  */
 internal class JdaPlayerCommandController(
     private val jda: JDA,
     private val runtime: JdaPlayerRuntime,
 ) {
 
-    /** Loads [rawInput] and joins the caller's voice channel once playback is active. */
     suspend fun play(context: CommandContext, rawInput: String): String {
         val input = rawInput.trim()
         if (input.isEmpty()) return EMPTY_INPUT_MESSAGE
@@ -53,7 +31,6 @@ internal class JdaPlayerCommandController(
         }
     }
 
-    /** Applies one control [rawAction], returning a user-facing result message. */
     suspend fun control(context: CommandContext, rawAction: String): String {
         val action = JdaPlayerAction.parse(rawAction) ?: return unknownActionMessage()
         val guild = context.guildId?.let { guildId -> jda.getGuildById(guildId.toJdaId()) }
@@ -75,7 +52,6 @@ internal class JdaPlayerCommandController(
         val adapter = runtime.voiceAdapterFor(target.guild)
         val baseRevision = adapter.presentation.value.revision
 
-        // Non-blocking: the engine queues the load on its actor and returns once it was accepted.
         engine.loadAndPlay(input)
 
         return when (val start = awaitPlaybackStart(adapter, baseRevision)) {
@@ -100,13 +76,6 @@ internal class JdaPlayerCommandController(
         return if (failure == null) JdaPlayerPlaybackStart.Started else JdaPlayerPlaybackStart.Failed(failure)
     }
 
-    /**
-     * Connects and renders the outcome.
-     *
-     * A refused connection (another voice path owns the session) and a failed one (permissions,
-     * closed runtime) are reported separately so a staging run can tell them apart. Cancellation is
-     * rethrown; no gateway exception message is echoed.
-     */
     private suspend fun connectMessage(
         target: JdaPlayerVoiceTarget.Ready,
         onConnected: () -> String,
@@ -120,7 +89,6 @@ internal class JdaPlayerCommandController(
     }
 
     private suspend fun disconnect(guild: Guild, engine: PlayerEngine): String {
-        // Owner decision: disconnecting also clears the queue instead of resuming it later.
         engine.stop()
         runtime.disconnect(guild)
         return DISCONNECTED_MESSAGE
@@ -135,14 +103,6 @@ internal class JdaPlayerCommandController(
             }
         }
 
-    /**
-     * Guards a transport transition behind the presence of an owning track.
-     *
-     * An idle player has nothing to pause or resume, so the engine is not asked to transition and
-     * the fixed no-active-playback reply is returned instead of a success acknowledgement. The
-     * snapshot read is cheap and synchronous, and the engine remains the single owner of the
-     * transition: a rejected transition on an active track still reports the unchanged state.
-     */
     private suspend fun pause(engine: PlayerEngine): String {
         if (!engine.snapshot().hasActiveTrack) return NO_ACTIVE_PLAYBACK_MESSAGE
         return if (engine.pause()) PAUSED_MESSAGE else PLAYBACK_STATE_UNCHANGED_MESSAGE
@@ -161,13 +121,7 @@ internal class JdaPlayerCommandController(
         return STOPPED_MESSAGE
     }
 
-    /**
-     * Renders queue diagnostics for the administrator-only, ephemeral staging command.
-     *
-     * Track display names are shown here and only here: the caller is the staging administrator
-     * diagnosing this guild's queue. Raw provider failure diagnostics stay suppressed at the
-     * presentation boundary, so no exception reason is ever echoed.
-     */
+    /** Queue details are rendered only here; provider failure text is never echoed. */
     private fun describeQueue(snapshot: PlayerSnapshot): String {
         val current = snapshot.current?.displayName ?: "Nothing is playing."
         val state = if (snapshot.paused) "paused" else "playing"
@@ -208,7 +162,7 @@ internal class JdaPlayerCommandController(
 
         private const val EMPTY_INPUT_MESSAGE = "Provide a track name, URL or playlist for the player."
         private const val GUILD_ONLY_MESSAGE =
-            "Run this in the development guild, from the voice channel the bot should join."
+            "Run this in a guild, from the voice channel the bot should join."
         private const val NOT_IN_VOICE_MESSAGE =
             "Join a regular voice channel first; stage channels are not supported by the player."
         private const val TIMEOUT_MESSAGE =
@@ -236,13 +190,6 @@ internal class JdaPlayerCommandController(
     }
 }
 
-/**
- * Converts the neutral unsigned user id into JDA's signed 64-bit id.
- *
- * Discord snowflakes fit in the signed range in practice; a larger value is rejected instead of
- * wrapping around and addressing a different member. The failure message is deliberately
- * value-free, like every other JDA snowflake range check, so the rejected id is never echoed.
- */
 private fun UserId.toJdaId(): Long {
     require(value <= Long.MAX_VALUE.toULong()) {
         "User id does not fit in JDA's signed 64-bit id range"

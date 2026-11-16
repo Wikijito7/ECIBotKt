@@ -1,21 +1,16 @@
 package es.wokis.voice
 
 /**
- * Minimal parser for the Opus packet framing defined by RFC 6716 section 3.2.
+ * Minimal parser for the Opus packet framing in RFC 6716 section 3.2.
  *
- * The voice ports only carry pre-encoded packets, so an [AudioFrame] must not trust an
- * arbitrary byte array that merely fits in [MAX_PACKET_BYTES]: [AudioFrame] uses [validate]
- * to reject packets whose TOC framing is malformed, truncated or does not carry exactly the
- * duration of its format.
+ * The ports carry pre-encoded packets, so [AudioFrame] uses [validate] to reject a byte array that
+ * merely fits in [MAX_PACKET_BYTES]: the TOC framing must be well-formed and carry exactly the
+ * format's duration. The parser reads only the TOC, frame-count and frame-length headers; it never
+ * decodes audio and depends on no audio library.
  *
- * The parser reads only the TOC byte, the frame-count byte and the frame-length headers. It
- * never decodes audio and depends on no audio library, so it stays gateway-neutral and cheap
- * enough to run while a packet source is loaded.
- *
- * Durations are expressed in decoded samples at the 48 kHz rate Opus always decodes to:
- * 2.5 ms = 120 samples, 5 ms = 240, 10 ms = 480, 20 ms = 960, 40 ms = 1920 and 60 ms = 2880.
- * A packet may legally carry zero-length frames (DTX), so an empty *frame* is accepted; an
- * empty *packet* is not, and neither is a code 3 packet that declares zero frames.
+ * Durations are decoded samples at 48 kHz: 2.5 ms = 120, 5 ms = 240, 10 ms = 480, 20 ms = 960,
+ * 40 ms = 1920 and 60 ms = 2880. A zero-length *frame* is legal (DTX), but an empty *packet* is
+ * not, nor is a code 3 packet declaring zero frames.
  */
 object OpusPacketValidator {
 
@@ -37,11 +32,10 @@ object OpusPacketValidator {
     )
 
     /**
-     * Parses the framing of [payload] and returns its frame count and duration.
+     * Parses [payload] into its frame count and duration.
      *
-     * @throws IllegalArgumentException when the packet is empty, exceeds [MAX_PACKET_BYTES],
-     * has truncated or inconsistent framing headers, declares zero code 3 frames or claims
-     * more than the RFC limit of 120 ms of audio.
+     * @throws IllegalArgumentException when the packet is empty, too large, has inconsistent
+     * framing headers, declares zero code 3 frames or claims more than the RFC limit of 120 ms.
      */
     fun parse(payload: ByteArray): Framing {
         require(payload.isNotEmpty()) { "An Opus packet payload cannot be empty" }
@@ -83,8 +77,7 @@ object OpusPacketValidator {
     }
 
     /**
-     * Parses [payload] and rejects it unless it carries exactly [expectedDurationSamples]
-     * decoded samples at 48 kHz.
+     * Rejects [payload] unless it carries exactly [expectedDurationSamples] decoded samples.
      *
      * @throws IllegalArgumentException when the packet is malformed or has a different duration.
      */

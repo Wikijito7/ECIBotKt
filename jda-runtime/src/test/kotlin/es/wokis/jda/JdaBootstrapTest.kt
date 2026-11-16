@@ -20,57 +20,43 @@ import org.junit.jupiter.api.Test
 class JdaBootstrapTest {
 
     @Test
-    fun `Given a validated config When walkthrough is registered Then use exactly the configured guild`() = runTest {
-        // Given
+    fun `Given an explicit guild When walkthrough is registered Then use exactly that guild`() = runTest {
         val registrar = RecordingGuildCommandRegistrar()
-        val config = JdaRuntimeConfig(
-            token = "fake-token",
-            guildId = GuildId(987654321uL),
-        )
+        val guildId = GuildId(987654321uL)
         val walkthrough = WalkthroughCommand()
 
-        // When
-        registerWalkthroughCommand(registrar, config, walkthrough)
+        registerWalkthroughCommand(registrar, guildId, walkthrough)
 
-        // Then
         assertEquals(1, registrar.registrations.size)
-        assertEquals(config.guildId, registrar.registrations.single().guildId)
+        assertEquals(guildId, registrar.registrations.single().guildId)
         assertEquals(walkthrough.definition, registrar.registrations.single().command)
     }
 
     @Test
     fun `Given the default walkthrough When registered Then pass the documented command definition`() = runTest {
-        // Given
         val registrar = RecordingGuildCommandRegistrar()
-        val config = JdaRuntimeConfig(
-            token = "fake-token",
-            guildId = GuildId(42uL),
-        )
+        val guildId = GuildId(42uL)
 
-        // When
-        registerWalkthroughCommand(registrar, config)
+        registerWalkthroughCommand(registrar, guildId)
 
-        // Then
         assertEquals(1, registrar.registrations.size)
         val registration = registrar.registrations.single()
-        assertEquals(config.guildId, registration.guildId)
+        assertEquals(guildId, registration.guildId)
         assertEquals(WalkthroughCommand.COMMAND_NAME, registration.command.name)
         assertEquals(WalkthroughCommand.COMMAND_DESCRIPTION, registration.command.description)
         assertTrue(registration.command.description.isNotBlank())
     }
 
     @Test
-    fun `Given the guild registrar port When walkthrough registers Then use no other destination`() = runTest {
-        // Given
+    fun `Given every joined guild When walkthrough registers Then each guild is a destination`() = runTest {
         val registrar = RecordingGuildCommandRegistrar()
         val firstGuild = GuildId(111uL)
         val secondGuild = GuildId(222uL)
+        val walkthrough = WalkthroughCommand()
 
-        // When
-        registerWalkthroughCommand(registrar, JdaRuntimeConfig(token = "fake-token", guildId = firstGuild))
-        registerWalkthroughCommand(registrar, JdaRuntimeConfig(token = "fake-token", guildId = secondGuild))
+        registerWalkthroughCommand(registrar, firstGuild, walkthrough)
+        registerWalkthroughCommand(registrar, secondGuild, walkthrough)
 
-        // Then
         assertEquals(listOf(firstGuild, secondGuild), registrar.registrations.map { it.guildId })
         assertEquals(
             listOf(WalkthroughCommand().definition, WalkthroughCommand().definition),
@@ -79,24 +65,18 @@ class JdaBootstrapTest {
     }
 
     @Test
-    fun `Given a validated config When locale is registered Then publish the admin guild command in that guild only`() = runTest {
-        // Given
+    fun `Given an explicit guild When locale is registered Then publish the admin guild command there`() = runTest {
         val registrar = RecordingGuildCommandRegistrar()
-        val config = JdaRuntimeConfig(
-            token = "fake-token",
-            guildId = GuildId(987654321uL),
-        )
+        val guildId = GuildId(987654321uL)
         val localizationService = GuildLocalizationService(
             getGuildLocaleUseCase = GetGuildLocaleUseCase(EmptyLocaleRepository()),
             catalog = LocalizationCatalog.load(),
         )
 
-        // When
-        registerLocaleCommand(registrar, config, localizationService)
+        registerLocaleCommand(registrar, guildId, localizationService)
 
-        // Then
         val registration = registrar.registrations.single()
-        assertEquals(config.guildId, registration.guildId)
+        assertEquals(guildId, registration.guildId)
         val command = registration.command
         assertEquals(LocaleCommandHandler.COMMAND_NAME, command.name)
         assertEquals("locale", command.name)

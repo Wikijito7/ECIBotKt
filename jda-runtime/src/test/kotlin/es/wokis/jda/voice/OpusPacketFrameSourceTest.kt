@@ -18,10 +18,8 @@ class OpusPacketFrameSourceTest {
 
     @Test
     fun `Given the committed tone resource When loaded Then it contains 75 valid 20 ms Opus packets`() {
-        // When
         val source = OpusPacketFrameSource.fromResource()
 
-        // Then
         assertEquals(AudioFrameFormat.OPUS_20MS, source.format)
         assertEquals(75, source.expectedFrameCount)
 
@@ -53,11 +51,9 @@ class OpusPacketFrameSourceTest {
 
     @Test
     fun `Given the committed resource When drained Then it returns null forever after the last frame`() {
-        // Given
         val source = OpusPacketFrameSource.fromResource()
         repeat(source.expectedFrameCount) { source.nextFrame() }
 
-        // Then
         assertNull(source.nextFrame())
         assertNull(source.nextFrame())
         assertNull(source.nextFrame())
@@ -65,26 +61,20 @@ class OpusPacketFrameSourceTest {
 
     @Test
     fun `Given a closed source When nextFrame is called Then it returns null`() {
-        // Given
         val source = OpusPacketFrameSource.fromResource()
 
-        // When
         source.close()
 
-        // Then
         assertNull(source.nextFrame())
     }
 
     @Test
     fun `Given a valid single packet resource When loaded Then it exposes one frame`() {
-        // Given
         val packet = opus20msPacket(0x01, 0x02, 0x03)
         val loader = BytesClassLoader(mapOf("single.opuspackets" to lengthPrefixed(packet)))
 
-        // When
         val source = OpusPacketFrameSource.fromResource("single.opuspackets", loader)
 
-        // Then
         assertEquals(1, source.expectedFrameCount)
         val frame = source.nextFrame()
         assertEquals(4, frame?.size)
@@ -93,52 +83,42 @@ class OpusPacketFrameSourceTest {
 
     @Test
     fun `Given a missing resource When loaded Then it fails with a clear message`() {
-        // When
         val error = assertThrows(IllegalStateException::class.java) {
             OpusPacketFrameSource.fromResource("missing.opuspackets", BytesClassLoader(emptyMap()))
         }
 
-        // Then
         assertTrue(error.message.orEmpty().contains("Missing walkthrough tone resource"))
         assertTrue(error.message.orEmpty().contains("missing.opuspackets"))
     }
 
     @Test
     fun `Given an empty resource When loaded Then it is rejected`() {
-        // When
         val error = assertThrows(IllegalStateException::class.java) {
             OpusPacketFrameSource.fromResource("empty.opuspackets", loaderFor(ByteArray(0)))
         }
 
-        // Then
         assertTrue(error.message.orEmpty().contains("empty"))
     }
 
     @Test
     fun `Given a truncated length prefix When loaded Then it is rejected`() {
-        // Given
         val resource = byteArrayOf(0x00)
 
-        // When
         val error = assertThrows(IllegalStateException::class.java) {
             OpusPacketFrameSource.fromResource("malformed.opuspackets", loaderFor(resource))
         }
 
-        // Then
         assertTrue(error.message.orEmpty().contains("Truncated packet length"))
     }
 
     @Test
     fun `Given a zero packet length When loaded Then it is rejected`() {
-        // Given
         val resource = byteArrayOf(0x00, 0x00)
 
-        // When
         val error = assertThrows(IllegalStateException::class.java) {
             OpusPacketFrameSource.fromResource("malformed.opuspackets", loaderFor(resource))
         }
 
-        // Then
         assertTrue(error.message.orEmpty().contains("Invalid Opus packet length 0"))
     }
 
@@ -147,12 +127,10 @@ class OpusPacketFrameSourceTest {
         // Given: a declared length of 1276 bytes with no payload at all.
         val resource = byteArrayOf((1276 shr 8).toByte(), (1276 and 0xFF).toByte())
 
-        // When
         val error = assertThrows(IllegalStateException::class.java) {
             OpusPacketFrameSource.fromResource("malformed.opuspackets", loaderFor(resource))
         }
 
-        // Then
         assertTrue(error.message.orEmpty().contains("Invalid Opus packet length 1276"))
     }
 
@@ -161,12 +139,10 @@ class OpusPacketFrameSourceTest {
         // Given: the prefix declares 4 bytes but only 2 are present.
         val resource = byteArrayOf(0x00, 0x04, 0x01, 0x02)
 
-        // When
         val error = assertThrows(IllegalStateException::class.java) {
             OpusPacketFrameSource.fromResource("malformed.opuspackets", loaderFor(resource))
         }
 
-        // Then
         assertTrue(error.message.orEmpty().contains("Truncated Opus packet"))
     }
 
@@ -239,12 +215,10 @@ class OpusPacketFrameSourceTest {
             }
             assertTrue(started.await(5, TimeUnit.SECONDS), "the readers did not start")
 
-            // When
             source.close()
             stopped.set(true)
             readers.forEach { it.get(5, TimeUnit.SECONDS) }
 
-            // Then
             assertEquals(0, violations.get(), "a frame was yielded after close() returned")
             assertTrue(
                 framesYielded.get() <= source.expectedFrameCount,

@@ -4,15 +4,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Serializable shared configuration.
+ * Shared `./data/config.json` schema; the [SerialName]s are part of the deployed contract.
  *
- * The JSON property names are part of the public contract: the same `./data/config.json` schema is
- * read by the root Kord runtime and the isolated JDA runtime, so every [SerialName] must stay
- * byte-compatible with the deployed files. Adding an optional field requires a default value;
- * required fields stay required so a partial file fails fast.
- *
- * [toString] is deliberately redacted. `Config` holds the Discord token and every provider secret,
- * so logging it must never print the values; only booleans and "is set" presence flags are rendered.
+ * [toString] is redacted so the Discord token and provider secrets never reach logs.
  */
 @Serializable
 data class Config(
@@ -33,7 +27,7 @@ data class Config(
     @SerialName("tidal")
     val tidal: TidalConfig,
     @SerialName("kokoro")
-    val kokoro: KokoroConfig
+    val kokoro: KokoroConfig,
 ) {
     override fun toString(): String =
         "Config(debug=$debug, databaseEnabled=${database.enabled}, youtubeEnabled=${youtube.enabled}, " +
@@ -41,11 +35,6 @@ data class Config(
             "spotifyEnabled=${spotify.enabled}, tidalEnabled=${tidal.enabled}, kokoroBaseUrlSet=${kokoro.baseUrl.isNotEmpty()})"
 }
 
-/**
- * Redacted like every other section: only the structural [enabled] boolean and derived
- * "is set" presence flags are rendered. Credentials **and** the database name are withheld, so
- * logging a configuration can never print a deployment detail.
- */
 @Serializable
 data class DatabaseConfig(
     @SerialName("enabled")
@@ -62,12 +51,6 @@ data class DatabaseConfig(
             "passwordSet=${password.isNotEmpty()}, databaseSet=${database.isNotEmpty()})"
 }
 
-/**
- * Redacted like every other section. The remote-cipher endpoint and its password are reported
- * separately — [remoteCipherUrl] as `remoteCipherConfigured` and [remoteCipherPassword] as
- * `remoteCipherPasswordSet` — because an endpoint without a password (or the reverse) is a
- * misconfiguration worth seeing in a log, while neither value may ever be rendered.
- */
 @Serializable
 data class YouTubeConfig(
     @SerialName("enabled")
@@ -134,11 +117,6 @@ data class SpotifyConfig(
             "customEndpointSet=${customEndpoint.isNotEmpty()})"
 }
 
-/**
- * Redacted like every other section: only the structural [enabled] boolean and derived
- * "is set" flags are rendered, so logging a configuration can never print the country code
- * or the token value.
- */
 @Serializable
 data class TidalConfig(
     @SerialName("enabled")
@@ -152,12 +130,6 @@ data class TidalConfig(
         "TidalConfig(enabled=$enabled, countryCodeSet=${countryCode.isNotEmpty()}, tokenSet=${token.isNotEmpty()})"
 }
 
-/**
- * Redacted like every other section: [baseUrl], [defaultVoice], [defaultSpeed] and
- * [defaultLangCode] are only reported as "is set" flags. The speed is a number, so it is never
- * rendered either: a configured non-zero speed yields `defaultSpeedSet=true`, and the value
- * itself stays out of the log line.
- */
 @Serializable
 data class KokoroConfig(
     @SerialName("base_url")

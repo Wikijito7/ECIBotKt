@@ -16,10 +16,8 @@ class LocalizationCatalogTest {
 
     @Test
     fun `Given the moved resources When the catalog loads Then both languages are visible`() {
-        // When
         val localizations = catalog.getLocalizations("locale_command_description")
 
-        // Then
         assertEquals(
             setOf(LocaleCode("en-US"), LocaleCode("es-ES")),
             localizations.keys,
@@ -30,7 +28,6 @@ class LocalizationCatalogTest {
 
     @Test
     fun `Given the moved resource files When compared Then every key is parsed from its own language`() {
-        // Given
         val englishKeys = resourceKeys("lang.yml")
         val spanishKeys = resourceKeys("lang_es-ES.yml")
 
@@ -64,7 +61,6 @@ class LocalizationCatalogTest {
 
     @Test
     fun `Given the neutral locale command keys When read Then they resolve from the shared classpath`() {
-        // Then
         listOf(
             LocaleMessageKeys.LOCALE_COMMAND_DESCRIPTION,
             LocaleMessageKeys.LOCALE_COMMAND_INPUT_DESCRIPTION,
@@ -81,7 +77,6 @@ class LocalizationCatalogTest {
 
     @Test
     fun `Given a Spanish localization When requested Then return the Spanish value`() {
-        // Then
         assertEquals(
             "Establecer el idioma preferido para este servidor",
             catalog.getString("locale_command_description", LocaleCode("es-ES")),
@@ -90,10 +85,8 @@ class LocalizationCatalogTest {
 
     @Test
     fun `Given Arabic or Hebrew When requested Then fall back per key to English without fabricated translations`() {
-        // Given
         val english = catalog.getDefaultString("locale_command_description")
 
-        // Then
         listOf("ar", "he").forEach { tag ->
             assertTrue(DiscordLocaleCatalog.isSupported(LocaleCode(tag)))
             assertEquals(english, catalog.getString("locale_command_description", LocaleCode(tag)), tag)
@@ -106,7 +99,6 @@ class LocalizationCatalogTest {
 
     @Test
     fun `Given an explicit catalog When the key is missing in the requested locale Then fall back to English`() {
-        // Given
         val explicit = LocalizationCatalog.of(
             mapOf(
                 "key" to mapOf(
@@ -116,7 +108,6 @@ class LocalizationCatalogTest {
             ),
         )
 
-        // Then
         assertEquals("spanish", explicit.getString("key", LocaleCode("es-ES")))
         assertEquals("english", explicit.getString("key", LocaleCode("fr")))
         assertEquals("english", explicit.getString("key", LocaleCode("ar")))
@@ -126,22 +117,18 @@ class LocalizationCatalogTest {
 
     @Test
     fun `Given an explicit catalog When inspected Then only canonical locales are accepted`() {
-        // Given
         val explicit = LocalizationCatalog.of(
             mapOf("key" to mapOf(LocaleCode("en-US") to "english")),
         )
 
-        // Then
         assertEquals(setOf(LocaleCode("en-US")), explicit.getLocalizations("key").keys)
         assertFalse(explicit.getLocalizations("key").containsKey(LocaleCode("unknown")))
     }
 
     @Test
     fun `Given the shared resources When error_unexpected_with_debug is read Then preserve delimiter and placeholder`() {
-        // Given
         val key = "error_unexpected_with_debug"
 
-        // When
         val english = catalog.getString(key, LocaleCode("en-US"))
         val spanish = catalog.getString(key, LocaleCode("es-ES"))
 
@@ -158,7 +145,6 @@ class LocalizationCatalogTest {
 
     @Test
     fun `Given an unknown key When requested Then fail loudly`() {
-        // Then
         assertThrows<NoLocalizationFoundException> {
             catalog.getLocalizations("totally_unknown_key")
         }
@@ -172,7 +158,6 @@ class LocalizationCatalogTest {
 
     @Test
     fun `Given the shared resources When resolved Then the locale folder exists on the runtime classpath`() {
-        // Then
         assertNotNull(LocalizationCatalog::class.java.getResource("/lang"))
         assertNotNull(LocalizationCatalog::class.java.getResource("/lang/lang.yml"))
         assertNotNull(LocalizationCatalog::class.java.getResource("/lang/lang_es-ES.yml"))

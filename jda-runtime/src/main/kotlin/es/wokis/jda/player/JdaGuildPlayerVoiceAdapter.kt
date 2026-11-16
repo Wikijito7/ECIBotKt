@@ -25,44 +25,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 private const val CLOSE_TIMEOUT_MILLIS = 5_000L
 
 /**
- * Long-lived JDA voice adapter for one guild's shared [PlayerEngine].
+ * Long-lived voice adapter for one guild's [PlayerEngine]; the sole collector of
+ * [PlayerEngine.events] and sole owner of the voice connection and audio pipeline.
  *
- * The adapter owns the voice connection and the continuous audio stream, and reuses the existing
- * [JdaAudioSendHandler] for the send path. It does not create a second `AudioSendHandler` and does
- * not own the engine's queue; it only maps the neutral continuous stream (frame / paused silence /
- * ended) to JDA's 20 ms send ticks.
- *
- * [connect], [disconnect] and [shutdown] are suspend and run on a single-coroutine dispatcher, so
- * no JDA event/coroutine caller blocks a thread and connect/disconnect/close cannot interleave.
- * [close] is only a fast idempotent signal: it prevents new operations and cancels the event
- * collector without touching JDA. Production shutdown awaits [shutdown].
- *
- * **Event ownership.** This class is the single subscriber of [PlayerEngine.events]; it derives the
- * [presentation] state from those events. Nothing else may collect the stream.
- *
- * **Stream lifecycle hazards this class handles:**
- *
- * - A handler/stream that observed [es.wokis.player.engine.audio.PlayerAudioState.Ended] stays
- *   exhausted forever; [JdaAudioSendHandler.canProvide] then always returns `false`. Connecting or
- *   reconnecting therefore always installs a **fresh** stream and handler, instead of reusing the
- *   one left behind by a drained queue or a stopped engine, which would otherwise leave a later
- *   play silently mute.
- * - [connect] is only called after a load produced an active track (see the command controller), so
- *   a voice connection is not opened against an engine whose playback already terminated. Open a
- *   connection too early and the initial `Ended` stream would be exhausted before the first frame.
- * - An [net.dv8tion.jda.api.managers.AudioManager] may already own a session started by another
- *   owner, for example the Phase 2C diagnostic walkthrough. Taking it over would move a session this
- *   adapter does not own, so [connect] refuses (`false`) and logs instead of racing it. The
- *   diagnostic port applies the reverse guard by rejecting a request when any session is active, so
- *   the two voice paths stay mutually exclusive: run the walkthrough and the real player one at a
- *   time in a guild.
- *
- * [serialDispatcher] is that single-coroutine dispatcher and is owned by this adapter: the default
- * expression creates a **fresh** `Dispatchers.Default.limitedParallelism(1)` view for every adapter
- * instance, so unrelated guilds never share a serialization queue. Never pass one process-wide
- * single-thread dispatcher from a multi-guild composition root — do that and every guild's
- * connect/disconnect queues behind the slowest one. Inject a dispatcher to observe or control
- * serialization without changing connect/disconnect/close semantics.
+ * A stream/handler that observed `Ended` stays exhausted, so every connect installs a fresh
+ * pipeline after a load produced an active track. [connect] refuses a session opened by another
+ * voice path instead of racing it. Suspend operations run on a per-adapter serial dispatcher, so
+ * guilds never share a serialization queue.
  */
 internal class JdaGuildPlayerVoiceAdapter(
     private val guild: Guild,
@@ -76,7 +45,6 @@ internal class JdaGuildPlayerVoiceAdapter(
     private val shutdownComplete = AtomicBoolean(false)
     private val presentationState = MutableStateFlow(JdaPlayerPresentation())
 
-    /** Event-derived presentation state; the adapter remains the only engine-event subscriber. */
     val presentation: StateFlow<JdaPlayerPresentation> = presentationState.asStateFlow()
 
     private var stream: ContinuousPlayerAudioStream? = null
@@ -84,12 +52,7 @@ internal class JdaGuildPlayerVoiceAdapter(
     private var eventJob: Job? = null
     private var channelId: Long? = null
 
-    /**
-     * Last channel this adapter asked JDA to join.
-     *
-     * Kept after a disconnect because JDA closes the connection asynchronously: an immediate
-     * reconnect to the same channel must not be mistaken for a session owned by somebody else.
-     */
+    /** Kept after disconnect: async close means a same-channel reconnect must not look foreign. */
     private var requestedChannelId: Long? = null
 
     init {
@@ -103,22 +66,12 @@ internal class JdaGuildPlayerVoiceAdapter(
         }
     }
 
-    /**
-     * Opens or refreshes the voice connection to [channel] and feeds it the player stream.
-     *
-     * The audio pipeline is recreated on every call; see the class documentation for why an
-     * exhausted handler must never be reused. The voice connection itself is only reopened when the
-     * target channel differs from the one currently connected.
-     *
-     * @return `true` when this adapter owns the connection after the call, `false` when it refused
-     * to take over a session owned by another voice path, or when the adapter is closing.
-     */
+    /** @return `false` when another voice path owns the session or the adapter is closing. */
     suspend fun connect(channel: VoiceChannel): Boolean {
         if (closeRequested.get()) return false
         return withContext(serial) { connectLocked(channel) }
     }
 
-    /** Closes the handler/stream and requests the voice connection to close. */
     suspend fun disconnect() {
         if (closeRequested.get()) return
         withContext(serial) {
@@ -128,11 +81,7 @@ internal class JdaGuildPlayerVoiceAdapter(
         }
     }
 
-    /**
-     * Full adapter teardown: serialized disconnect and stream/handler close.
-     *
-     * Idempotent; callers that need the JDA session closed must use this method, not [close].
-     */
+    /** Full teardown; use this instead of [close] when the JDA session must close. */
     suspend fun shutdown() {
         if (!shutdownComplete.compareAndSet(false, true)) return
         closeRequested.set(true)
@@ -157,7 +106,7 @@ internal class JdaGuildPlayerVoiceAdapter(
 
         val sameChannelSession = channelId == channel.idLong && isConnectedOrConnecting()
         if (sameChannelSession) {
-            // Keep the JDA connection, replace only the exhausted/terminated audio pipeline.
+            // Keep the connection; only the exhausted pipeline is replaced.
             releasePipeline()
         } else {
             disconnectLocked()
@@ -176,8 +125,7 @@ internal class JdaGuildPlayerVoiceAdapter(
                 guild.audioManager.openAudioConnection(channel)
             }
 
-            // A fast close() may have won while this connect was queued; never leave the stale
-            // session installed.
+            // A queued close() may have won; never leave the stale session installed.
             if (closeRequested.get()) {
                 disconnectLocked()
             }
@@ -188,16 +136,10 @@ internal class JdaGuildPlayerVoiceAdapter(
         }
     }
 
-    /**
-     * True when the guild's audio manager holds a session this adapter did not open.
-     *
-     * JDA closing a connection is asynchronous, so the last channel this adapter joined is always
-     * accepted; only a session on a channel this adapter never requested is treated as foreign.
-     */
+    /** Only a session on a channel this adapter never requested is foreign. */
     private fun isForeignSession(channel: VoiceChannel): Boolean =
         channelId == null && requestedChannelId != channel.idLong && isConnectedOrConnecting()
 
-    /** Drops the audio pipeline without touching the JDA connection (used before a re-install). */
     private fun releasePipeline() {
         val handlerToClose = handler
         val streamToClose = stream
@@ -237,13 +179,7 @@ internal class JdaGuildPlayerVoiceAdapter(
         }
     }
 
-    /**
-     * Folds one engine event into [presentation].
-     *
-     * The state is derived from the events themselves (`QueueChanged` carries the authoritative
-     * snapshot) instead of polling the engine, so the adapter does not read engine state from a
-     * different thread than the engine actor.
-     */
+    /** Derives state from events (the queue snapshot is authoritative) instead of polling. */
     private fun record(event: PlayerEvent) {
         presentationState.update { current ->
             val updated = when (event) {
@@ -273,7 +209,7 @@ internal class JdaGuildPlayerVoiceAdapter(
         return audioManager.isConnected || audioManager.connectionStatus != ConnectionStatus.NOT_CONNECTED
     }
 
-    /** Fast, non-blocking signal. Use [shutdown] to await JDA cleanup. */
+    /** Fast signal; use [shutdown] to await JDA cleanup. */
     override fun close() {
         closeRequested.set(true)
         eventJob?.cancel()

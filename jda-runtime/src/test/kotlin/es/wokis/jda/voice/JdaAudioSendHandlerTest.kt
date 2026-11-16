@@ -31,15 +31,12 @@ class JdaAudioSendHandlerTest {
 
     @Test
     fun `Given a fresh handler When canProvide is called Then prefetch exactly one frame`() {
-        // Given
         val source = CountingFrameSource(frameCount = 2)
         val handler = JdaAudioSendHandler(source)
 
-        // When
         val first = handler.canProvide()
         val second = handler.canProvide()
 
-        // Then
         assertTrue(first)
         assertTrue(second)
         assertEquals(1, source.calls.get(), "canProvide must not consume a second frame while one is prefetched")
@@ -48,16 +45,13 @@ class JdaAudioSendHandlerTest {
 
     @Test
     fun `Given a prefetched frame When provide20MsAudio is called twice Then the source is read only once`() {
-        // Given
         val source = CountingFrameSource(frameCount = 2)
         val handler = JdaAudioSendHandler(source)
         assertTrue(handler.canProvide())
 
-        // When
         val first = handler.provide20MsAudio()
         val second = handler.provide20MsAudio()
 
-        // Then
         assertEquals(0x78.toByte(), first!!.array()[0])
         assertNull(second)
         assertEquals(1, source.calls.get())
@@ -70,12 +64,10 @@ class JdaAudioSendHandlerTest {
 
     @Test
     fun `Given a prefetched frame When the audio buffer is inspected Then it is an independent array-backed copy`() {
-        // Given
         val source = CountingFrameSource(frameCount = 1)
         val handler = JdaAudioSendHandler(source)
         assertTrue(handler.canProvide())
 
-        // When
         val buffer = handler.provide20MsAudio()!!
 
         // Then: JDA receives an array-backed heap buffer over exactly the frame bytes.
@@ -101,26 +93,21 @@ class JdaAudioSendHandlerTest {
 
     @Test
     fun `Given pre-encoded Opus frames When isOpus is queried Then no re-encoding is requested`() {
-        // Given
         val handler = JdaAudioSendHandler(CountingFrameSource(frameCount = 1))
 
-        // Then
         assertTrue(handler.isOpus())
     }
 
     @Test
     fun `Given an exhausted source When canProvide is called again Then it stays false`() {
-        // Given
         val source = CountingFrameSource(frameCount = 1)
         val handler = JdaAudioSendHandler(source)
         assertTrue(handler.canProvide())
         handler.provide20MsAudio()
 
-        // When
         val afterExhaustion = handler.canProvide()
         val again = handler.canProvide()
 
-        // Then
         assertFalse(afterExhaustion)
         assertFalse(again)
         assertNull(handler.provide20MsAudio())
@@ -130,28 +117,22 @@ class JdaAudioSendHandlerTest {
 
     @Test
     fun `Given a completed playback When awaitCompletion is called Then it returns true immediately`() {
-        // Given
         val handler = JdaAudioSendHandler(CountingFrameSource(frameCount = 2))
 
-        // When
         while (handler.canProvide()) {
             handler.provide20MsAudio()
         }
 
-        // Then
         assertTrue(handler.awaitCompletion(50))
         assertEquals(2, handler.framesProvided)
     }
 
     @Test
     fun `Given a source that fails When canProvide is called Then the handler records the failure`() {
-        // Given
         val handler = JdaAudioSendHandler(FailingFrameSource(IllegalStateException("source boom")))
 
-        // When
         val canProvide = handler.canProvide()
 
-        // Then
         assertFalse(canProvide)
         assertTrue(handler.failed)
         assertFalse(handler.awaitCompletion(50))
@@ -167,7 +148,6 @@ class JdaAudioSendHandlerTest {
         val source = FailingFrameSource(fatal)
         val handler = JdaAudioSendHandler(source)
 
-        // When
         val thrown = assertThrows(AssertionError::class.java) { handler.canProvide() }
 
         // Then: the fatal failure propagates unchanged and is still recorded, so the session
@@ -210,10 +190,8 @@ class JdaAudioSendHandlerTest {
         val source = FailingFrameSource(fatal)
         val handler = JdaAudioSendHandler(source)
 
-        // When
         val thrown = assertThrows(CancellationException::class.java) { handler.canProvide() }
 
-        // Then
         assertSame(fatal, thrown, "canProvide must not downgrade a source cancellation to an ordinary failure")
         assertTrue(handler.failed)
         assertNull(handler.provide20MsAudio())
@@ -259,10 +237,8 @@ class JdaAudioSendHandlerTest {
         val source = FailingFrameSource(fatal)
         val handler = JdaAudioSendHandler(source)
 
-        // When
         val fromSendThread = captureThrowable { handler.canProvide() }
 
-        // Then
         assertSame(fatal, fromSendThread, "canProvide must not downgrade a source cancellation")
         assertTrue(handler.failed, "the fatal failure must be recorded before it propagates")
 
@@ -318,10 +294,8 @@ class JdaAudioSendHandlerTest {
             assertFalse(handler.canProvide())
             assertTrue(handler.failed)
 
-            // When
             val completed = handler.awaitCompletionCancellable(100)
 
-            // Then
             assertFalse(completed, "a recoverable failure must be reported as an incomplete playback")
             assertNull(handler.provide20MsAudio())
             assertEquals(0, handler.framesProvided)
@@ -331,16 +305,13 @@ class JdaAudioSendHandlerTest {
 
     @Test
     fun `Given a source that ends early When awaited Then completion still reports exhaustion`() {
-        // Given
         val source = CountingFrameSource(frameCount = 2, expectedCount = 5)
         val handler = JdaAudioSendHandler(source)
 
-        // When
         while (handler.canProvide()) {
             handler.provide20MsAudio()
         }
 
-        // Then
         assertTrue(handler.awaitCompletion(50))
         assertFalse(handler.failed)
         assertEquals(2, handler.framesProvided)
@@ -349,15 +320,12 @@ class JdaAudioSendHandlerTest {
 
     @Test
     fun `Given the waiting thread is interrupted When awaiting Then return false and preserve the interrupt flag`() {
-        // Given
         val handler = JdaAudioSendHandler(CountingFrameSource(frameCount = 1))
 
-        // When
         Thread.currentThread().interrupt()
         try {
             val completed = handler.awaitCompletion(50)
 
-            // Then
             assertFalse(completed)
             assertTrue(Thread.currentThread().isInterrupted)
         } finally {
@@ -367,13 +335,11 @@ class JdaAudioSendHandlerTest {
 
     @Test
     fun `Given a prefetched frame When close runs Then the frame is discarded and the source stays open`() {
-        // Given
         val source = CountingFrameSource(frameCount = 1)
         val handler = JdaAudioSendHandler(source)
         assertTrue(handler.canProvide())
         assertEquals(1, source.calls.get())
 
-        // When
         handler.close()
 
         // Then: the prefetched frame dies with the handler and the source is never consulted again.
@@ -386,16 +352,13 @@ class JdaAudioSendHandlerTest {
 
     @Test
     fun `Given a closed handler When the send loop keeps polling Then it never receives audio`() {
-        // Given
         val source = CountingFrameSource(frameCount = 1)
         val handler = JdaAudioSendHandler(source)
         handler.close()
 
-        // When
         repeat(3) { assertFalse(handler.canProvide()) }
         repeat(3) { assertNull(handler.provide20MsAudio()) }
 
-        // Then
         assertEquals(0, source.calls.get(), "post-close polling must not touch the source")
         assertEquals(0, handler.framesProvided)
         assertEquals(0, source.closeCalls.get())
@@ -404,7 +367,6 @@ class JdaAudioSendHandlerTest {
 
     @Test
     fun `Given a closed handler When close is called again Then it is idempotent`() {
-        // Given
         val source = CountingFrameSource(frameCount = 1)
         val handler = JdaAudioSendHandler(source)
         handler.close()
@@ -419,13 +381,10 @@ class JdaAudioSendHandlerTest {
 
     @Test
     fun `Given close before any prefetch When awaited Then the waiter reports a stop not a completion`() {
-        // Given
         val handler = JdaAudioSendHandler(CountingFrameSource(frameCount = 2))
 
-        // When
         handler.close()
 
-        // Then
         assertFalse(handler.awaitCompletion(50))
         assertEquals(0, handler.framesProvided)
     }
@@ -439,7 +398,6 @@ class JdaAudioSendHandlerTest {
         assertTrue(handler.canProvide())
         val claimed = handler.provide20MsAudio()!!
 
-        // When
         handler.close()
 
         // Then: the already-claimed copy remains valid and finishes exactly once, while no
