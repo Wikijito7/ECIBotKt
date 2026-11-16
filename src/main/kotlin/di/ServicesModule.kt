@@ -19,7 +19,9 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val servicesModule = module {
-    singleOf(::ConfigService)
+    // Built explicitly (not `singleOf`) so the loader's default `./data/config.json` path and the
+    // default strict JSON instance are used without registering build-time-only collaborators.
+    single { ConfigService() }
     factoryOf(::MessageProcessorService)
     singleOf(::AudioPlayerManagerProvider)
     singleOf(::GuildQueueService)

@@ -1,31 +1,18 @@
 package es.wokis.services.config
 
-import es.wokis.exceptions.EmptyDeezerMasterDecryptionKeyException
-import es.wokis.exceptions.EmptyDiscordTokenException
-import es.wokis.utils.getOrCreateFile
-import kotlinx.serialization.json.Json
+/**
+ * Root (Kord) adapter over the shared [ConfigLoader].
+ *
+ * The root application keeps its startup-only, immutable configuration snapshot: the file is read
+ * once when Koin builds this singleton, and nothing here watches, mutates or reloads it. Reloadable
+ * configuration is explicitly out of scope for this slice; a change requires a restart.
+ *
+ * The loader itself lives in the framework-independent `:configuration` module so the isolated JDA
+ * runtime reads the exact same schema, defaults and validation rules.
+ */
+class ConfigService(
+    loader: ConfigLoader = ConfigLoader(),
+) {
 
-private const val CONFIG_PATH = "./data/"
-private const val FILE_NAME = "config.json"
-private val CONFIG_TEMPLATE = {}::class.java.getResourceAsStream("/template/config_template.json")
-
-class ConfigService {
-
-    val config: Config = loadFromFile()
-
-    private fun loadFromFile(): Config {
-        val file = getOrCreateFile(CONFIG_PATH, FILE_NAME, CONFIG_TEMPLATE)
-        val config = Json.decodeFromString<Config>(file.readText())
-        config.validate()
-        return config
-    }
-}
-
-fun Config.validate() {
-    if (discordBotToken.isEmpty()) {
-        throw EmptyDiscordTokenException()
-    }
-    if (deezer.enabled && deezer.masterDecryptionKey.isEmpty()) {
-        throw EmptyDeezerMasterDecryptionKeyException()
-    }
+    val config: Config = loader.load()
 }

@@ -17,6 +17,7 @@ repositories {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":configuration"))
     implementation(project(":locale-persistence"))
     implementation(project(":player"))
     implementation(libs.kotlinx.serialization)

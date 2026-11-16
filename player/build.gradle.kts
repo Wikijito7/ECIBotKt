@@ -15,6 +15,11 @@ repositories {
 
 dependencies {
     implementation(project(":core"))
+    // `Config.toPlayerSourcesConfig()` is part of this module's public API, so its receiver type
+    // (`Config`, owned by `:configuration`) must be on the consumers' compile classpath rather than
+    // only on ours. Publishing it as `api` keeps downstream modules from having to add `:configuration`
+    // themselves just to call the mapping.
+    api(project(":configuration"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.lavaplayer)
     implementation(libs.lavaplayer.youtube)

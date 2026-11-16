@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.requests.restaction.AuditableRestAction
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.function.Consumer
@@ -180,16 +181,39 @@ class JdaPlayerMessagePortTest {
         // Given
         val jda = mockk<JDA>()
         val port = JdaPlayerMessagePort(jda)
+        val oversizedChannelId = ChannelId(ULong.MAX_VALUE)
 
         // When
         val error = runCatching {
-            port.send(ChannelId(ULong.MAX_VALUE), "text")
+            port.send(oversizedChannelId, "text")
         }.exceptionOrNull()
 
-        // Then
+        // Then: the guard stays, and the message is generic instead of echoing the snowflake.
         assertTrue(error is IllegalArgumentException)
-        assertTrue(error?.message.orEmpty().contains("does not fit"))
+        assertEquals("Channel id does not fit in JDA's signed 64-bit id range", error?.message)
+        assertFalse(error?.message.orEmpty().contains(oversizedChannelId.value.toString()))
         verify(exactly = 0) { jda.getTextChannelById(any<Long>()) }
+    }
+
+    @Test
+    fun `Given an id above the signed JDA range When editing Then fail before issuing the REST call`() = runTest {
+        // Given
+        val jda = mockk<JDA>()
+        val channel = mockk<TextChannel>()
+        every { jda.getTextChannelById(42L) } returns channel
+        val port = JdaPlayerMessagePort(jda)
+        val oversizedMessageId = PlayerMessageId(ULong.MAX_VALUE)
+
+        // When
+        val error = runCatching {
+            port.edit(channelId, oversizedMessageId, "text")
+        }.exceptionOrNull()
+
+        // Then: the guard stays, and the message is generic instead of echoing the snowflake.
+        assertTrue(error is IllegalArgumentException)
+        assertEquals("Message id does not fit in JDA's signed 64-bit id range", error?.message)
+        assertFalse(error?.message.orEmpty().contains(oversizedMessageId.value.toString()))
+        verify(exactly = 0) { channel.editMessageById(any<Long>(), any<String>()) }
     }
 
     @Test
@@ -199,15 +223,17 @@ class JdaPlayerMessagePortTest {
         val channel = mockk<TextChannel>()
         every { jda.getTextChannelById(42L) } returns channel
         val port = JdaPlayerMessagePort(jda)
+        val oversizedMessageId = PlayerMessageId(ULong.MAX_VALUE)
 
         // When
         val error = runCatching {
-            port.delete(channelId, PlayerMessageId(ULong.MAX_VALUE))
+            port.delete(channelId, oversizedMessageId)
         }.exceptionOrNull()
 
-        // Then
+        // Then: the guard stays, and the message is generic instead of echoing the snowflake.
         assertTrue(error is IllegalArgumentException)
-        assertTrue(error?.message.orEmpty().contains("does not fit"))
+        assertEquals("Message id does not fit in JDA's signed 64-bit id range", error?.message)
+        assertFalse(error?.message.orEmpty().contains(oversizedMessageId.value.toString()))
         verify(exactly = 0) { channel.deleteMessageById(any<Long>()) }
     }
 }

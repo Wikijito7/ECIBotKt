@@ -6,6 +6,8 @@ import es.wokis.jda.player.JdaPlayerRuntime
 import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.PlayerEngineFactory
 import es.wokis.player.engine.PlayerEngines
+import es.wokis.player.engine.config.PlayerSourcesConfig
+import es.wokis.player.engine.config.YoutubeSourceConfig
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.just
@@ -814,6 +816,45 @@ class JdaBootstrapCleanupTest {
         assertTrue(fixture.events.contains("voice-disconnect"), "the fallback must still clean the created resources")
     }
 
+    @Test
+    fun `Given a validated config When bootstrapping Then the token reaches the client and provider sources reach the runtime`() {
+        // Given
+        val sources = PlayerSourcesConfig(
+            youtube = YoutubeSourceConfig(
+                enabled = true,
+                oauth2Token = "bootstrap-oauth2-sentinel",
+                poToken = null,
+            ),
+        )
+        val config = JdaRuntimeConfig(
+            token = "bootstrap-token-sentinel",
+            guildId = GuildId(987654321uL),
+            sources = sources,
+        )
+        val fixture = BootstrapFixture(config)
+
+        // When
+        val exitCode = fixture.run { defaultBootstrapCleanupSteps(it) }
+
+        // Then
+        assertEquals(0, exitCode)
+        val clientConfig = requireNotNull(fixture.observedClientConfig) {
+            "the validated config must reach the JDA client factory"
+        }
+        assertSame(config, clientConfig)
+        assertEquals(config.token, clientConfig.token)
+        assertEquals(config.guildId, clientConfig.guildId)
+
+        val runtime = requireNotNull(fixture.observedPlayerRuntime) {
+            "the player runtime created by the bootstrap must reach cleanup"
+        }
+        val runtimeSources = JdaPlayerRuntime::class.java
+            .getDeclaredField("sources")
+            .apply { isAccessible = true }
+            .get(runtime)
+        assertSame(sources, runtimeSources, "the loaded provider sources must be wired into the player runtime")
+    }
+
     private fun JdaCommandRouter.isClosed(): Boolean {
         val scope = JdaCommandRouter::class.java
             .getDeclaredField("scope")
@@ -841,6 +882,12 @@ class JdaBootstrapCleanupTest {
             private set
 
         var observedRouter: JdaCommandRouter? = null
+            private set
+
+        var observedClientConfig: JdaRuntimeConfig? = null
+            private set
+
+        var observedPlayerRuntime: JdaPlayerRuntime? = null
             private set
 
         init {
@@ -892,9 +939,13 @@ class JdaBootstrapCleanupTest {
                 return runBootstrap(
                     config = config,
                     davePreflight = DavePreflight { AudioModuleConfig() },
-                    clientFactory = JdaClientFactory { _, _ -> jda },
+                    clientFactory = JdaClientFactory { clientConfig, _ ->
+                        observedClientConfig = clientConfig
+                        jda
+                    },
                     cleanupStepsFactory = { targets ->
                         observedRouter = targets.router as? JdaCommandRouter
+                        observedPlayerRuntime = targets.playerRuntime as? JdaPlayerRuntime
                         cleanupStepsFactory(targets)
                     },
                 )

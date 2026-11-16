@@ -73,11 +73,12 @@ private fun Map<LocaleCode, String>.toJdaLocalizationsOrNull(): Map<DiscordLocal
  *
  * Discord snowflakes fit in the signed range in practice. A value above [Long.MAX_VALUE] is
  * rejected instead of wrapping around, because the wrapped id would silently address a
- * different guild and register the command there.
+ * different guild and register the command there. The message is value-free, consistent with
+ * every other snowflake range check, so the rejected id is not echoed.
  */
 internal fun GuildId.toJdaId(): Long {
     require(value <= Long.MAX_VALUE.toULong()) {
-        "Guild id $value does not fit in JDA's signed 64-bit guild id range"
+        "Guild id does not fit in JDA's signed 64-bit id range"
     }
     return value.toLong()
 }

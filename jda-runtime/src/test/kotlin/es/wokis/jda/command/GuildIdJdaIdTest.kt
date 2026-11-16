@@ -2,6 +2,7 @@ package es.wokis.jda.command
 
 import es.wokis.domain.model.GuildId
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
@@ -45,8 +46,12 @@ class GuildIdJdaIdTest {
         // Given
         val guildId = GuildId(Long.MAX_VALUE.toULong() + 1uL)
 
-        // Then
-        assertThrows(IllegalArgumentException::class.java) { guildId.toJdaId() }
+        // When
+        val failure = assertThrows(IllegalArgumentException::class.java) { guildId.toJdaId() }
+
+        // Then: the guard stays, and the message is generic instead of echoing the snowflake.
+        assertEquals("Guild id does not fit in JDA's signed 64-bit id range", failure.message)
+        assertFalse(failure.message.orEmpty().contains(guildId.value.toString()))
     }
 
     @Test
@@ -54,7 +59,11 @@ class GuildIdJdaIdTest {
         // Given
         val guildId = GuildId(ULong.MAX_VALUE)
 
-        // Then
-        assertThrows(IllegalArgumentException::class.java) { guildId.toJdaId() }
+        // When
+        val failure = assertThrows(IllegalArgumentException::class.java) { guildId.toJdaId() }
+
+        // Then: the guard stays, and the message is generic instead of echoing the snowflake.
+        assertEquals("Guild id does not fit in JDA's signed 64-bit id range", failure.message)
+        assertFalse(failure.message.orEmpty().contains(guildId.value.toString()))
     }
 }

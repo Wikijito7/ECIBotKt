@@ -30,6 +30,44 @@ class SourceTreeScannerTest {
     }
 
     @Test
+    fun `Given the configuration module sources When scanned Then they import no gateway or audio vendor`() {
+        // Given
+        val roots = listOf(
+            repositoryRoot().resolve("configuration/src/main/kotlin"),
+            repositoryRoot().resolve("configuration/src/test/kotlin"),
+        )
+        val forbiddenPrefixes = listOf(
+            listOf("dev", "kord"),
+            listOf("net", "dv8tion"),
+            listOf("dev", "minn", "jda", "ktx"),
+            listOf("moe", "kyokobot", "libdave"),
+            listOf("com", "sedmelluq", "discord", "lavaplayer"),
+            listOf("com", "github", "topi314", "lavasrc"),
+        )
+
+        // When
+        val imports = roots.flatMap { root ->
+            Files.walk(root).use { paths ->
+                paths
+                    .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".kt") }
+                    .flatMap { path -> KotlinFileHeaderParser.parse(Files.readString(path)).imports.stream() }
+                    .toList()
+            }
+        }
+
+        // Then
+        assertTrue(imports.isNotEmpty(), "the configuration sources must have been scanned")
+        imports.forEach { imported ->
+            forbiddenPrefixes.forEach { prefix ->
+                assertFalse(
+                    imported.startsWithSegments(prefix),
+                    "the framework-independent configuration module imported '${imported.statement}'",
+                )
+            }
+        }
+    }
+
+    @Test
     fun `Given a real header import and fake import text When scanned Then only the real import is a violation`(
         @TempDir tempDir: Path
     ) {

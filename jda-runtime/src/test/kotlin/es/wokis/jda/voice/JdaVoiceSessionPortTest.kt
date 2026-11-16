@@ -235,6 +235,49 @@ class JdaVoiceSessionPortTest {
     }
 
     @Test
+    fun `Given a guild id above the signed JDA range When playing Then fail with a generic message`() = runBlocking {
+        // Given: a guild id that cannot fit JDA's signed 64-bit range.
+        val fixture = Fixture()
+        val oversizedGuildId = GuildId(ULong.MAX_VALUE)
+
+        // When
+        val error = runCatching {
+            fixture.port().play(
+                fixture.context.copy(guildId = oversizedGuildId),
+                FakeFrameSource(actualFrames = 1),
+            )
+        }.exceptionOrNull()
+
+        // Then: the guard stays, and the message is generic instead of echoing the snowflake.
+        assertTrue(error is IllegalArgumentException)
+        assertEquals("Guild id does not fit in JDA's signed 64-bit id range", error?.message)
+        assertFalse(error?.message.orEmpty().contains(oversizedGuildId.value.toString()))
+        verify(exactly = 0) { fixture.jda.getGuildById(any<Long>()) }
+    }
+
+    @Test
+    fun `Given a user id above the signed JDA range When playing Then fail with a generic message`() = runBlocking {
+        // Given: a user id that cannot fit JDA's signed 64-bit range.
+        val fixture = Fixture()
+        val oversizedUserId = UserId(ULong.MAX_VALUE)
+
+        // When
+        val error = runCatching {
+            fixture.port().play(
+                fixture.context.copy(userId = oversizedUserId),
+                FakeFrameSource(actualFrames = 1),
+            )
+        }.exceptionOrNull()
+
+        // Then: the guard stays, and the message is generic instead of echoing the snowflake.
+        assertTrue(error is IllegalArgumentException)
+        assertEquals("User id does not fit in JDA's signed 64-bit id range", error?.message)
+        assertFalse(error?.message.orEmpty().contains(oversizedUserId.value.toString()))
+        verify(exactly = 1) { fixture.jda.getGuildById(100L) }
+        verify(exactly = 0) { fixture.guild.getMemberById(any<Long>()) }
+    }
+
+    @Test
     fun `Given an unavailable guild When playing Then reject as another guild`() = runBlocking {
         // Given
         val fixture = Fixture()

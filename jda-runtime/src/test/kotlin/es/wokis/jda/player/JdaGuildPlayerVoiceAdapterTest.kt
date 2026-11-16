@@ -5,10 +5,8 @@ import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.audio.ContinuousPlayerAudioStream
 import es.wokis.player.engine.audio.PlayerAudioState
 import es.wokis.player.engine.event.PlayerEvent
-import io.mockk.Runs
 import io.mockk.clearMocks
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -35,6 +33,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -174,19 +173,73 @@ class JdaGuildPlayerVoiceAdapterTest {
         }
     }
 
+    @Test
+    fun `Given a drained handler When play connects again Then install a fresh live pipeline`() = runTest {
+        // Given: the first connection observed the natural end of playback, exhausting its handler.
+        val fixture = testFixture(testDispatcher())
+        fixture.adapter.connect(fixture.channel)
+        val drained = requireNotNull(fixture.installedHandler) as JdaAudioSendHandler
+        fixture.stream.nextState = PlayerAudioState.Ended
+        assertFalse(drained.canProvide(), "an Ended stream must exhaust the old handler")
+
+        // When
+        val connected = fixture.adapter.connect(fixture.channel)
+
+        // Then
+        assertTrue(connected)
+        val fresh = requireNotNull(fixture.installedHandler) as JdaAudioSendHandler
+        assertNotSame(drained, fresh, "a drained handler must never be reused")
+        assertTrue(fresh.canProvide(), "the fresh handler must be able to send audio again")
+        verify(exactly = 1) { fixture.audioManager.openAudioConnection(fixture.channel) }
+        assertTrue(fixture.streams.size >= 2)
+        assertTrue(fixture.streams.first().closeCalls > 0, "the drained stream must be released")
+    }
+
+    @Test
+    fun `Given a voice session owned by another path When connect runs Then refuse without replacing it`() = runTest {
+        // Given: JDA already reports a connected session this adapter never opened.
+        val fixture = testFixture(testDispatcher(), initiallyConnected = true)
+
+        // When
+        val connected = fixture.adapter.connect(fixture.channel)
+
+        // Then
+        assertFalse(connected)
+        assertNull(fixture.installedHandler)
+        assertTrue(fixture.streams.isEmpty(), "a foreign session must not create an audio pipeline")
+        verify(exactly = 0) { fixture.audioManager.setSendingHandler(any()) }
+        verify(exactly = 0) { fixture.audioManager.openAudioConnection(any()) }
+        verify(exactly = 0) { fixture.audioManager.closeAudioConnection() }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun TestScope.testDispatcher(): CoroutineDispatcher = UnconfinedTestDispatcher(testScheduler)
 
-    private fun testFixture(dispatcher: CoroutineDispatcher): Fixture =
-        Fixture(dispatcher).also { testFixtures += it }
+    private fun testFixture(
+        dispatcher: CoroutineDispatcher,
+        initiallyConnected: Boolean = false,
+    ): Fixture =
+        Fixture(dispatcher, initiallyConnected).also { testFixtures += it }
 
     private class Fixture(
         dispatcher: CoroutineDispatcher? = null,
+        initiallyConnected: Boolean = false,
     ) {
         val events = MutableSharedFlow<PlayerEvent>(extraBufferCapacity = 4)
         val stream = FakeStream()
         val streams = CopyOnWriteArrayList<FakeStream>()
         private var streamCalls = 0
+
+        @Volatile
+        private var connected = initiallyConnected
+
+        @Volatile
+        private var connectionStatus = if (initiallyConnected) {
+            ConnectionStatus.CONNECTED
+        } else {
+            ConnectionStatus.NOT_CONNECTED
+        }
+
         val engine: PlayerEngine = mockk()
         val audioManager: AudioManager = mockk()
         val guild: Guild = mockk()
@@ -218,10 +271,16 @@ class JdaGuildPlayerVoiceAdapterTest {
             every { audioManager.setSendingHandler(null) } answers {
                 installedHandler = null
             }
-            every { audioManager.isConnected } returns true
-            every { audioManager.connectionStatus } returns ConnectionStatus.CONNECTED
-            every { audioManager.openAudioConnection(channel) } just Runs
-            every { audioManager.closeAudioConnection() } just Runs
+            every { audioManager.isConnected } answers { connected }
+            every { audioManager.connectionStatus } answers { connectionStatus }
+            every { audioManager.openAudioConnection(channel) } answers {
+                connected = true
+                connectionStatus = ConnectionStatus.CONNECTED
+            }
+            every { audioManager.closeAudioConnection() } answers {
+                connected = false
+                connectionStatus = ConnectionStatus.NOT_CONNECTED
+            }
         }
 
         fun dispose() {
@@ -230,10 +289,11 @@ class JdaGuildPlayerVoiceAdapterTest {
     }
 
     private class FakeStream : ContinuousPlayerAudioStream {
+        var nextState: PlayerAudioState = PlayerAudioState.PausedSilence
         var closeCalls = 0
             private set
 
-        override fun next(): PlayerAudioState = PlayerAudioState.PausedSilence
+        override fun next(): PlayerAudioState = nextState
 
         override fun close() {
             closeCalls++

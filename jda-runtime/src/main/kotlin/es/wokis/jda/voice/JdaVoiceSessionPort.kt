@@ -569,7 +569,7 @@ private fun Throwable.isFatal(): Boolean = this is Error || this is Cancellation
 
 private fun ULong.toJdaLong(label: String): Long {
     require(this <= Long.MAX_VALUE.toULong()) {
-        "$label $this does not fit in JDA's signed 64-bit id range"
+        "$label does not fit in JDA's signed 64-bit id range"
     }
     return toLong()
 }

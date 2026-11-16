@@ -26,14 +26,15 @@ import java.util.concurrent.atomic.AtomicBoolean
  * single-subscriber `PlayerEngine.events` stream. Phase 4 consumers must go through the adapter
  * rather than collecting the engine stream themselves.
  *
- * Phase 3 deliberately does not expose a production command here. The runtime is created by the
- * bootstrap so engine/voice lifecycle and cleanup are wired, while command coverage remains Phase 4
- * work. The Phase 2C diagnostic walkthrough still uses its own finite `AudioFrameSource` path.
+ * The Phase 4 staging enabler adds the minimal command surface (`/jda-play` and `/jda-player`) in
+ * this module; it does not port the remaining command families, which stay Phase 4 work. The Phase
+ * 2C diagnostic walkthrough still uses its own finite `AudioFrameSource` path and is mutually
+ * exclusive with the real player's voice connection.
  *
  * [sources] is the same neutral source-provider configuration the root Kord adapter maps from its
- * JSON config. The isolated runtime's bootstrap passes the default (local/remote enabled, optional
- * providers disabled) until Phase 4/5 supplies runtime configuration; every provider option remains
- * injectable through this parameter.
+ * JSON config. The isolated runtime's bootstrap now loads the shared configuration file and passes
+ * the mapped providers here, so both runtimes register the same YouTube/LavaSrc/Kokoro/local/remote
+ * sources. Every provider option remains injectable through this parameter.
  *
  * **Serialization scope:** each guild adapter owns its own single-coroutine dispatcher so a slow or
  * blocked connect/disconnect in one guild never stalls another. [serialDispatcherFactory] is
@@ -82,10 +83,14 @@ internal class JdaPlayerRuntime(
         }
     }
 
-    /** Opens the guild's long-lived player voice connection to [channel]. */
-    suspend fun connect(guild: Guild, channel: VoiceChannel) {
+    /**
+     * Opens the guild's long-lived player voice connection to [channel].
+     *
+     * @return `true` when the adapter owns the connection after the call; `false` when it refused
+     * to take over a voice session owned by another voice path or the runtime is closing.
+     */
+    suspend fun connect(guild: Guild, channel: VoiceChannel): Boolean =
         voiceAdapterFor(guild).connect(channel)
-    }
 
     /** Closes the guild's player voice connection without destroying its queue/engine. */
     suspend fun disconnect(guild: Guild) {

@@ -16,8 +16,10 @@ This document covers both **formatting standards** (enforced by Detekt and its f
 Detekt is configured in `config/detekt/detekt.yml`, with the `detekt-formatting` ruleset
 (ktlint-backed formatting rules) applied to the root project and to every subproject that applies
 the Detekt plugin. The scope is discovered from the build instead of a maintained module list, so a
-module is covered as soon as it is Detekt-enabled; today those modules are `:core`,
-`:locale-persistence`, `:player` and `:jda-runtime`. The gate has **no baseline file**, no
+module is covered as soon as it is Detekt-enabled. The enabled set is therefore an observation, not
+an invariant: at the time of writing it is the **root project** plus `:core`, `:configuration`,
+`:locale-persistence`, `:player` and `:jda-runtime` — adding a Detekt-enabled module extends the
+gate automatically, with no document edit required. The gate has **no baseline file**, no
 `ignoreFailures`, and no broad source exclusions.
 
 Detekt's `build.maxIssues = 40` is evaluated **per Gradle project**, so it alone cannot enforce a

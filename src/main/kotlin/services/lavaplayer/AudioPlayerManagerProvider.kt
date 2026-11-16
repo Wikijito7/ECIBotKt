@@ -2,13 +2,7 @@ package es.wokis.services.lavaplayer
 
 import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.PlayerEngines
-import es.wokis.player.engine.config.DeezerSourceConfig
-import es.wokis.player.engine.config.KokoroSourceConfig
-import es.wokis.player.engine.config.PlayerSourcesConfig
-import es.wokis.player.engine.config.SpotifySourceConfig
-import es.wokis.player.engine.config.TidalSourceConfig
-import es.wokis.player.engine.config.YoutubeSourceConfig
-import es.wokis.services.config.Config
+import es.wokis.player.engine.config.toPlayerSourcesConfig
 import es.wokis.services.config.ConfigService
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -48,36 +42,3 @@ class AudioPlayerManagerProvider(
         }
     }
 }
-
-private fun Config.toPlayerSourcesConfig(): PlayerSourcesConfig = PlayerSourcesConfig(
-    youtube = YoutubeSourceConfig(
-        enabled = youtube.enabled,
-        oauth2Token = youtube.oauth2Token,
-        poToken = youtube.poToken,
-        visitorData = youtube.visitorData,
-        remoteCipherUrl = youtube.remoteCipherUrl,
-        remoteCipherPassword = youtube.remoteCipherPassword,
-    ),
-    deezer = DeezerSourceConfig(
-        enabled = deezer.enabled,
-        masterDecryptionKey = deezer.masterDecryptionKey,
-        arlToken = deezer.arlToken,
-    ),
-    spotify = SpotifySourceConfig(
-        enabled = spotify.enabled,
-        clientId = spotify.clientId,
-        clientSecret = spotify.clientSecret,
-        customEndpoint = spotify.customEndpoint,
-    ),
-    tidal = TidalSourceConfig(
-        enabled = tidal.enabled,
-        countryCode = tidal.countryCode,
-        token = tidal.token,
-    ),
-    kokoro = KokoroSourceConfig(
-        baseUrl = kokoro.baseUrl,
-        defaultVoice = kokoro.defaultVoice,
-        defaultSpeed = kokoro.defaultSpeed,
-        defaultLangCode = kokoro.defaultLangCode,
-    ),
-)

@@ -44,6 +44,27 @@ class ImportBoundaryPolicyTest {
         }
 
     @Test
+    fun `Given the Phase 2 and Phase 6 configurations When configuration roots are inspected Then each is classified once`() {
+        // Given
+        val configurations = listOf(ImportBoundaryConfigs.phase2(), ImportBoundaryConfigs.phase6())
+        val expectedPaths = listOf(
+            "configuration/src/main/kotlin",
+            "configuration/src/test/kotlin",
+        )
+
+        configurations.forEach { config ->
+            // When
+            val configurationRoots = config.roots.filter { it.module == SourceModule.CONFIGURATION }
+            val paths = configurationRoots.map { it.path }
+
+            // Then
+            assertEquals(expectedPaths, paths)
+            assertEquals(paths.distinct(), paths, "a source root must be classified exactly once")
+            assertEquals(2, configurationRoots.size)
+        }
+    }
+
+    @Test
     fun `Given a semicolon inside a backtick identifier When evaluated Then it is not Kord and the following vendor import is denied`() {
         // Given
         val header = KotlinFileHeaderParser.parse(
@@ -242,6 +263,7 @@ class ImportBoundaryPolicyTest {
 
     private fun gatewayFreeModules(): List<Pair<SourceModule, String>> = listOf(
         SourceModule.CORE to "es.wokis.core",
+        SourceModule.CONFIGURATION to "es.wokis.services.config",
         SourceModule.LOCALE_PERSISTENCE to "es.wokis.data.locale",
         SourceModule.PLAYER to "es.wokis.player.engine",
     )

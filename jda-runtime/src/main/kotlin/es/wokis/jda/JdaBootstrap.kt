@@ -9,6 +9,9 @@ import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.jda.command.JdaCommandRouter
 import es.wokis.jda.command.JdaGuildCommandRegistrar
 import es.wokis.jda.command.JdaLocaleAutocompleteListener
+import es.wokis.jda.player.JdaPlayCommand
+import es.wokis.jda.player.JdaPlayerCommandController
+import es.wokis.jda.player.JdaPlayerControlCommand
 import es.wokis.jda.player.JdaPlayerRuntime
 import es.wokis.jda.voice.JdaVoiceSessionPort
 import es.wokis.jda.voice.OpusPacketFrameSource
@@ -32,8 +35,14 @@ private const val EXIT_FAILURE = 1
  *
  * It performs the DAVE native/protocol preflight **before** creating the gateway client,
  * enables only the non-privileged `GUILD_VOICE_STATES` intent and the voice-state cache, and
- * registers the diagnostics plus the guild-scoped `/locale` command. No global command and no
- * privileged intent is used. The root Kord runtime is not involved.
+ * registers the diagnostics plus the guild-scoped `/locale`, `/jda-play` and `/jda-player`
+ * commands. No global command and no privileged intent is used. The root Kord runtime is not
+ * involved.
+ *
+ * The Discord token and every player provider setting are read from the shared
+ * `./data/config.json` file (same schema as the root Kord runtime); only the development guild id
+ * and an optional `JDA_CONFIG_PATH` come from the environment. The configuration is loaded once —
+ * there is no reload or watch behaviour, so a change requires a restart.
  *
  * The process exits with a non-zero code when configuration, DAVE or startup fails. Even then,
  * every applicable cleanup step is attempted independently after startup completes or fails
@@ -96,23 +105,13 @@ internal fun runBootstrap(
         jda = client
 
         // Manual wiring for the isolated runtime (no Koin): one shared player engine and one
-        // long-lived voice adapter per guild, created lazily when a player command arrives.
-        playerRuntime = JdaPlayerRuntime()
+        // long-lived voice adapter per guild, created lazily when a player command arrives. The
+        // source providers come from the same shared configuration file the root Kord runtime reads.
+        playerRuntime = JdaPlayerRuntime(sources = config.sources)
 
-        val walkthrough = WalkthroughCommand()
-        val voiceWalkthrough = JdaVoiceWalkthroughCommand(
-            voiceSession = JdaVoiceSessionPort(client),
-            frameSourceFactory = { OpusPacketFrameSource.fromResource() },
-        )
-        val localeRepository = LocalJsonLocaleRepository(LocaleJson.json)
-        val localizationService = GuildLocalizationService(GetGuildLocaleUseCase(localeRepository))
-        val localeCommand = LocaleCommandHandler(
-            setGuildLocaleUseCase = SetGuildLocaleUseCase(localeRepository),
-            localizationService = localizationService,
-        )
-        val commandRouter = JdaCommandRouter(listOf(walkthrough, voiceWalkthrough, localeCommand))
-        router = commandRouter
-        client.addEventListener(commandRouter)
+        val commands = buildCommands(client, playerRuntime)
+        router = commands.router
+        client.addEventListener(commands.router)
         client.addEventListener(JdaLocaleAutocompleteListener())
 
         shutdownHook = Thread({ client.shutdown() }, "jda-shutdown").also {
@@ -123,17 +122,20 @@ internal fun runBootstrap(
 
         runBlocking {
             val registrar = JdaGuildCommandRegistrar(client)
-            registerWalkthroughCommand(registrar, config, walkthrough)
-            registerVoiceWalkthroughCommand(registrar, config, voiceWalkthrough)
-            registerLocaleCommand(registrar, config, localizationService)
+            registerWalkthroughCommand(registrar, config, commands.walkthrough)
+            registerVoiceWalkthroughCommand(registrar, config, commands.voiceWalkthrough)
+            registerLocaleCommand(registrar, config, commands.localizationService)
+            registerPlayerCommands(registrar, config, commands.playCommand, commands.controlCommand)
         }
 
         LOG.info(
-            "JDA ready as {}; guild-scoped /{}, /{} and /{} registered; intents=[GUILD_VOICE_STATES]",
+            "JDA ready as {}; guild-scoped /{}, /{}, /{}, /{} and /{} registered; intents=[GUILD_VOICE_STATES]",
             client.selfUser.name,
-            walkthrough.name,
-            voiceWalkthrough.name,
-            localeCommand.name,
+            commands.walkthrough.name,
+            commands.voiceWalkthrough.name,
+            commands.localeCommand.name,
+            commands.playCommand.name,
+            commands.controlCommand.name,
         )
 
         client.awaitShutdown()
@@ -150,6 +152,59 @@ internal fun runBootstrap(
     val cleanupReport = runBootstrapCleanupWithFallback(cleanupStepsFactory, targets)
 
     return finishBootstrap(primaryFailure, cleanupReport)
+}
+
+/**
+ * Everything the bootstrap publishes and later registers, assembled once.
+ *
+ * [router] is the single JDA listener that dispatches every neutral command handler; the remaining
+ * members are kept so registration and the ready log reuse the exact instances that were wired,
+ * without a second composition path.
+ */
+private class BootstrapCommands(
+    val walkthrough: WalkthroughCommand,
+    val voiceWalkthrough: JdaVoiceWalkthroughCommand,
+    val localeCommand: LocaleCommandHandler,
+    val localizationService: GuildLocalizationService,
+    val playCommand: JdaPlayCommand,
+    val controlCommand: JdaPlayerControlCommand,
+    val router: JdaCommandRouter,
+)
+
+/**
+ * Builds the neutral command handlers and the JDA router for one gateway client.
+ *
+ * Keeping this wiring out of [runBootstrap] leaves the startup/cleanup sequence readable while
+ * adding no second composition root: the router still owns every handler, and the guild-scoped
+ * registration below reuses these exact instances.
+ */
+private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): BootstrapCommands {
+    val walkthrough = WalkthroughCommand()
+    val voiceWalkthrough = JdaVoiceWalkthroughCommand(
+        voiceSession = JdaVoiceSessionPort(client),
+        frameSourceFactory = { OpusPacketFrameSource.fromResource() },
+    )
+    val localeRepository = LocalJsonLocaleRepository(LocaleJson.json)
+    val localizationService = GuildLocalizationService(GetGuildLocaleUseCase(localeRepository))
+    val localeCommand = LocaleCommandHandler(
+        setGuildLocaleUseCase = SetGuildLocaleUseCase(localeRepository),
+        localizationService = localizationService,
+    )
+    val playerController = JdaPlayerCommandController(jda = client, runtime = playerRuntime)
+    val playCommand = JdaPlayCommand(playerController)
+    val controlCommand = JdaPlayerControlCommand(playerController)
+
+    return BootstrapCommands(
+        walkthrough = walkthrough,
+        voiceWalkthrough = voiceWalkthrough,
+        localeCommand = localeCommand,
+        localizationService = localizationService,
+        playCommand = playCommand,
+        controlCommand = controlCommand,
+        router = JdaCommandRouter(
+            listOf(walkthrough, voiceWalkthrough, localeCommand, playCommand, controlCommand),
+        ),
+    )
 }
 
 /**
@@ -297,4 +352,22 @@ internal suspend fun registerLocaleCommand(
         optionDescriptionLocalizations = localizationService.getLocalizations(optionDescriptionKey),
     )
     registrar.register(config.guildId, definition)
+}
+
+/**
+ * Registers the minimal Phase 4 staging commands through [registrar] using validated [config].
+ *
+ * Both commands are administrator-only and are published **only** into [JdaRuntimeConfig.guildId];
+ * there is no global registration path. They exist to drive the real player during the deferred
+ * Phase 3 staging matrix and do not port the production command families, which remain Phase 4
+ * scope.
+ */
+internal suspend fun registerPlayerCommands(
+    registrar: GuildCommandRegistrar,
+    config: JdaRuntimeConfig,
+    playCommand: JdaPlayCommand,
+    controlCommand: JdaPlayerControlCommand,
+) {
+    playCommand.registerIn(registrar, config.guildId)
+    controlCommand.registerIn(registrar, config.guildId)
 }

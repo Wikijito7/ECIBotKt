@@ -4,6 +4,7 @@ import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.neutral.CommandDefinition
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.GuildId
+import es.wokis.jda.player.JdaPlayerControlCommand
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -23,6 +24,7 @@ import net.dv8tion.jda.api.requests.ErrorResponse
 import net.dv8tion.jda.api.requests.Response
 import net.dv8tion.jda.api.requests.RestAction
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -146,6 +148,14 @@ class JdaGuildCommandRegistrarTest {
 
         // Then the conversion boundary rejects it before any gateway lookup or registration
         assertTrue(failure is IllegalArgumentException)
+        assertEquals(
+            "Guild id does not fit in JDA's signed 64-bit id range",
+            failure?.message,
+        )
+        assertFalse(
+            failure?.message.orEmpty().contains(outOfRangeGuildId.value.toString()),
+            "the failure message echoed the invalid guild id: ${failure?.message}",
+        )
         verify(exactly = 0) { jda.getGuildById(any<Long>()) }
         verify(exactly = 0) { jda.getGuildById(any<String>()) }
         verify(exactly = 0) { jda.upsertCommand(any<CommandData>()) }
@@ -219,6 +229,42 @@ class JdaGuildCommandRegistrarTest {
                 ),
                 option.descriptionLocalizations.toMap(),
             )
+        }
+
+    @Test
+    fun `Given a jda-player definition When registering Then publish an admin guild command with the required action option`() =
+        runTest {
+            // Given
+            val guildId = GuildId(1234567890123456789uL)
+            val jdaGuildId = 1234567890123456789L
+            val command = JdaPlayerControlCommand(mockk()).definition
+            val published = slot<SlashCommandData>()
+            val upsertAction = successfulUpsertAction()
+            every { jda.getGuildById(jdaGuildId) } returns guild
+            every { guild.upsertCommand(capture(published)) } returns upsertAction
+
+            // When
+            JdaGuildCommandRegistrar(jda).register(guildId, command)
+
+            // Then
+            verify(exactly = 1) { jda.getGuildById(jdaGuildId) }
+            verify(exactly = 1) { guild.upsertCommand(any<CommandData>()) }
+            verify(exactly = 0) { jda.upsertCommand(any<CommandData>()) }
+            verify(exactly = 0) { jda.upsertCommand(any<String>(), any<String>()) }
+
+            val data = published.captured
+            assertEquals(JdaPlayerControlCommand.COMMAND_NAME, data.name)
+            assertEquals(JdaPlayerControlCommand.COMMAND_DESCRIPTION, data.description)
+            assertEquals(
+                DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR),
+                data.defaultPermissions,
+            )
+
+            val option = data.options.single()
+            assertEquals(OptionType.STRING, option.type)
+            assertEquals(JdaPlayerControlCommand.OPTION_ACTION, option.name)
+            assertTrue(option.isRequired)
+            assertFalse(option.isAutoComplete)
         }
 
     private fun successfulUpsertAction(): RestAction<Command> {
