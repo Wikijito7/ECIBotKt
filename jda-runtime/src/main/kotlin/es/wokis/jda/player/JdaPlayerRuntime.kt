@@ -53,6 +53,9 @@ internal class JdaPlayerRuntime(
     suspend fun connect(guild: Guild, channel: VoiceChannel): Boolean =
         voiceAdapterFor(guild).connect(channel)
 
+    suspend fun reconnect(guild: Guild, channel: VoiceChannel): JdaPlayerReconnectResult =
+        voiceAdapterFor(guild).reconnect(channel)
+
     suspend fun disconnect(guild: Guild) {
         adapters[guild.idLong]?.disconnect()
     }

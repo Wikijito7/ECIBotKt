@@ -399,9 +399,10 @@ class JdaPlayerCommandControllerTest {
     }
 
     @Test
-    fun `Given an active track When reconnect runs Then reconnect without stopping or clearing it`() = runTest {
+    fun `Given an active track When reconnect runs Then use the dedicated reconnect path without stopping or clearing it`() = runTest {
         val fixture = Fixture(started = true)
-        coEvery { fixture.runtime.connect(fixture.guild, fixture.channel) } returns true
+        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
+            JdaPlayerReconnectResult.Reconnected
         every { fixture.engine.snapshot() } returns PlayerSnapshot(
             current = track("current", "Song"),
             queue = listOf(track("queued", "Queued")),
@@ -414,7 +415,8 @@ class JdaPlayerCommandControllerTest {
             "Reconnected to your voice channel; the current track and queue were preserved.",
             message,
         )
-        coVerify(exactly = 1) { fixture.runtime.connect(fixture.guild, fixture.channel) }
+        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
         coVerify(exactly = 0) { fixture.engine.stop() }
         coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
         coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
@@ -423,12 +425,117 @@ class JdaPlayerCommandControllerTest {
     @Test
     fun `Given an idle player When reconnect runs Then report the reconnect without a track`() = runTest {
         val fixture = Fixture(started = true)
-        coEvery { fixture.runtime.connect(fixture.guild, fixture.channel) } returns true
+        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
+            JdaPlayerReconnectResult.Reconnected
         every { fixture.engine.snapshot() } returns PlayerSnapshot()
 
         val message = fixture.controller.control(context(), "reconnect")
 
         assertEquals("Reconnected to your voice channel; nothing is playing right now.", message)
+        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+    }
+
+    @Test
+    fun `Given an already disconnected player When reconnect runs Then report the reconnect-specific refusal`() = runTest {
+        val fixture = Fixture()
+        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
+            JdaPlayerReconnectResult.NotConnected
+
+        val message = fixture.controller.control(context(), "reconnect")
+
+        assertEquals("The bot is not connected to voice, so there is nothing to reconnect.", message)
+        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+        coVerify(exactly = 0) { fixture.engine.stop() }
+        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+    }
+
+    @Test
+    fun `Given a foreign voice session When reconnect runs Then report the reconnect-specific refusal`() = runTest {
+        val fixture = Fixture()
+        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
+            JdaPlayerReconnectResult.ForeignSession
+
+        val message = fixture.controller.control(context(), "reconnect")
+
+        assertEquals(
+            "Reconnect cannot touch this session: another voice path owns the bot's voice connection.",
+            message,
+        )
+        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+        coVerify(exactly = 0) { fixture.engine.stop() }
+        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+    }
+
+    @Test
+    fun `Given a disconnect that is not confirmed When reconnect runs Then report the timeout without false success`() = runTest {
+        val fixture = Fixture()
+        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
+            JdaPlayerReconnectResult.TimedOut
+
+        val message = fixture.controller.control(context(), "reconnect")
+
+        assertEquals(
+            "The old voice connection did not close in time, so the bot did not reconnect.",
+            message,
+        )
+        assertNotEquals(
+            "Reconnected to your voice channel; the current track and queue were preserved.",
+            message,
+        )
+        assertNotEquals("Reconnected to your voice channel; nothing is playing right now.", message)
+        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+        coVerify(exactly = 0) { fixture.engine.stop() }
+        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+    }
+
+    @Test
+    fun `Given a reconnect already pending When reconnect runs Then report the in-progress refusal without mutation`() = runTest {
+        val fixture = Fixture()
+        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
+            JdaPlayerReconnectResult.InProgress
+
+        val message = fixture.controller.control(context(), "reconnect")
+
+        assertEquals(
+            "A voice reconnect is already closing the old connection; try again in a moment.",
+            message,
+        )
+        assertNotEquals(
+            "Reconnected to your voice channel; the current track and queue were preserved.",
+            message,
+        )
+        assertNotEquals("Reconnected to your voice channel; nothing is playing right now.", message)
+        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+        coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
+        coVerify(exactly = 0) { fixture.engine.stop() }
+        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+        coVerify(exactly = 0) { fixture.engine.pause() }
+        coVerify(exactly = 0) { fixture.engine.resume() }
+        coVerify(exactly = 0) { fixture.engine.skip() }
+        verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
+    }
+
+    @Test
+    fun `Given a reconnect exception When reconnect runs Then report the reconnect-specific failure`() = runTest {
+        val fixture = Fixture()
+        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } throws
+            IllegalStateException("gateway boom")
+
+        val message = fixture.controller.control(context(), "reconnect")
+
+        assertEquals(
+            "The voice reconnect could not be completed; check the bot's voice permissions.",
+            message,
+        )
+        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+        coVerify(exactly = 0) { fixture.engine.stop() }
+        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
     }
 
     private fun context(

@@ -43,7 +43,7 @@ internal class JdaPlayerCommandController(
             JdaPlayerAction.SKIP -> skip(engine)
             JdaPlayerAction.STOP -> stop(engine)
             JdaPlayerAction.DISCONNECT -> disconnect(guild, engine)
-            JdaPlayerAction.RECONNECT -> reconnect(context)
+            JdaPlayerAction.RECONNECT -> reconnect(guild, context)
         }
     }
 
@@ -94,14 +94,28 @@ internal class JdaPlayerCommandController(
         return DISCONNECTED_MESSAGE
     }
 
-    private suspend fun reconnect(context: CommandContext): String =
-        when (val target = resolveTarget(context)) {
-            is JdaPlayerVoiceTarget.Unavailable -> target.message
-            is JdaPlayerVoiceTarget.Ready -> connectMessage(target) {
-                val snapshot = runtime.engineFor(target.guild).snapshot()
+    private suspend fun reconnect(guild: Guild, context: CommandContext): String {
+        val channel = callerVoiceChannel(guild, context) ?: return NOT_IN_VOICE_MESSAGE
+        val result = try {
+            runtime.reconnect(guild, channel)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (error: Exception) {
+            LOG.warn("The player voice reconnect failed ({})", error.javaClass.simpleName)
+            return RECONNECT_FAILED_MESSAGE
+        }
+        return when (result) {
+            JdaPlayerReconnectResult.Reconnected -> {
+                val snapshot = runtime.engineFor(guild).snapshot()
                 if (snapshot.hasActiveTrack) RECONNECTED_PLAYING_MESSAGE else RECONNECTED_IDLE_MESSAGE
             }
+
+            JdaPlayerReconnectResult.NotConnected -> RECONNECT_NOT_CONNECTED_MESSAGE
+            JdaPlayerReconnectResult.ForeignSession -> RECONNECT_FOREIGN_SESSION_MESSAGE
+            JdaPlayerReconnectResult.InProgress -> RECONNECT_IN_PROGRESS_MESSAGE
+            JdaPlayerReconnectResult.TimedOut -> RECONNECT_TIMEOUT_MESSAGE
         }
+    }
 
     private suspend fun pause(engine: PlayerEngine): String {
         if (!engine.snapshot().hasActiveTrack) return NO_ACTIVE_PLAYBACK_MESSAGE
@@ -146,13 +160,16 @@ internal class JdaPlayerCommandController(
     private fun resolveTarget(context: CommandContext): JdaPlayerVoiceTarget {
         val guild = context.guildId?.let { guildId -> jda.getGuildById(guildId.toJdaId()) }
             ?: return JdaPlayerVoiceTarget.Unavailable(GUILD_ONLY_MESSAGE)
-        val channel = guild.getMemberById(context.userId.toJdaId())?.voiceState?.channel
-        return if (channel is VoiceChannel) {
+        val channel = callerVoiceChannel(guild, context)
+        return if (channel != null) {
             JdaPlayerVoiceTarget.Ready(guild, channel)
         } else {
             JdaPlayerVoiceTarget.Unavailable(NOT_IN_VOICE_MESSAGE)
         }
     }
+
+    private fun callerVoiceChannel(guild: Guild, context: CommandContext): VoiceChannel? =
+        guild.getMemberById(context.userId.toJdaId())?.voiceState?.channel as? VoiceChannel
 
     private companion object {
         private val LOG = LoggerFactory.getLogger(JdaPlayerCommandController::class.java)
@@ -172,6 +189,16 @@ internal class JdaPlayerCommandController(
             "Reconnected to your voice channel; the current track and queue were preserved."
         private const val RECONNECTED_IDLE_MESSAGE =
             "Reconnected to your voice channel; nothing is playing right now."
+        private const val RECONNECT_NOT_CONNECTED_MESSAGE =
+            "The bot is not connected to voice, so there is nothing to reconnect."
+        private const val RECONNECT_FOREIGN_SESSION_MESSAGE =
+            "Reconnect cannot touch this session: another voice path owns the bot's voice connection."
+        private const val RECONNECT_IN_PROGRESS_MESSAGE =
+            "A voice reconnect is already closing the old connection; try again in a moment."
+        private const val RECONNECT_TIMEOUT_MESSAGE =
+            "The old voice connection did not close in time, so the bot did not reconnect."
+        private const val RECONNECT_FAILED_MESSAGE =
+            "The voice reconnect could not be completed; check the bot's voice permissions."
         private const val SESSION_REFUSED_MESSAGE =
             "Playback started, but the voice session is owned by another voice path. " +
                 "Disconnect it and use reconnect."

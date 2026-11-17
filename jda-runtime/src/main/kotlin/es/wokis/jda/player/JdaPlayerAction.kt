@@ -15,7 +15,7 @@ internal enum class JdaPlayerAction {
     /** Clears the queue and disconnects from voice, keeping the runtime reusable. */
     DISCONNECT,
 
-    /** Rejoins the caller's voice channel, preserving the current track and queue. */
+    /** Leaves and rejoins the caller's voice channel when a session exists, preserving the current track and queue. */
     RECONNECT;
 
     companion object {
