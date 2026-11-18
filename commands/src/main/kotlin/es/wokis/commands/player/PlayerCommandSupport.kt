@@ -14,7 +14,7 @@ import es.wokis.localization.PlayerMessageKeys
  */
 internal suspend fun CommandResponder.requireVoiceActor(
     context: CommandContext,
-    actions: PlayerActionsPort,
+    actions: PlayerVoiceGate,
     localizationService: GuildLocalizationService,
 ): PlayerActor? {
     val guildId = context.guildId

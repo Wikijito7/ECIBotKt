@@ -209,6 +209,64 @@ class JdaPlayerActionsPortTest {
     }
 
     @Test
+    fun `Given a voice caller When a sound plays Then announce in the command channel before the custom-name load`() = runTest {
+        givenGuildAndVoice()
+        justRun { coordinator.recordCommand(any(), any(), any(), any()) }
+        coEvery { engine.loadAndPlayMultipleWithCustomName(any(), any()) } returns Unit
+
+        port.playSound(actor(GUILD_LOCALE), "rain")
+
+        coVerifyOrder {
+            coordinator.recordCommand(
+                ChannelId(CHANNEL_ID.toULong()),
+                GuildId(GUILD_ID.toULong()),
+                GUILD_LOCALE,
+                "General",
+            )
+            engine.loadAndPlayMultipleWithCustomName(listOf("./audio/rain.mp3"), "rain")
+        }
+    }
+
+    @Test
+    fun `Given an unreachable guild When a sound plays Then load nothing`() = runTest {
+        givenUnknownGuild()
+
+        port.playSound(actor(), "rain")
+
+        verify(exactly = 0) { runtime.messagesFor(any()) }
+        verify(exactly = 0) { runtime.engineFor(any()) }
+    }
+
+    @Test
+    fun `Given a voice caller When tts loads Then announce before the encoded Kokoro load`() = runTest {
+        givenGuildAndVoice()
+        justRun { coordinator.recordCommand(any(), any(), any(), any()) }
+        coEvery { engine.loadAndPlayTts(any()) } returns Unit
+
+        port.loadTts(actor(GUILD_LOCALE), "hola mundo & adiós")
+
+        coVerifyOrder {
+            coordinator.recordCommand(
+                ChannelId(CHANNEL_ID.toULong()),
+                GuildId(GUILD_ID.toULong()),
+                GUILD_LOCALE,
+                "General",
+            )
+            engine.loadAndPlayTts("kokoro://?text=hola%20mundo%20%26%20adi%C3%B3s")
+        }
+    }
+
+    @Test
+    fun `Given an unreachable guild When tts loads Then load nothing`() = runTest {
+        givenUnknownGuild()
+
+        port.loadTts(actor(), "hola")
+
+        verify(exactly = 0) { runtime.messagesFor(any()) }
+        verify(exactly = 0) { runtime.engineFor(any()) }
+    }
+
+    @Test
     fun `Given a reachable guild When disconnect runs Then delegate to the runtime once`() = runTest {
         givenGuildAndVoice()
         coEvery { runtime.disconnect(guild) } returns Unit

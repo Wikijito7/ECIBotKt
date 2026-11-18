@@ -53,14 +53,11 @@ data class PlayerQueueSnapshot(
  * Gateway-neutral seam over one guild's player transport, implemented by each gateway adapter.
  *
  * Every action requires the caller to be in a voice channel, which is Kord's
- * `getOrCreateLavaPlayerService` precondition; [isVoiceAvailable] lets handlers reply the matching
- * localized error before acting. Implementations must not throw for an unusable guild: they report
- * it through the return value instead.
+ * `getOrCreateLavaPlayerService` precondition; [PlayerVoiceGate.isVoiceAvailable] lets handlers reply
+ * the matching localized error before acting. Implementations must not throw for an unusable guild:
+ * they report it through the return value instead.
  */
-interface PlayerActionsPort : PlayerPlaybackToggles {
-
-    /** True when the actor's guild is reachable and the actor is in a voice channel of that guild. */
-    suspend fun isVoiceAvailable(actor: PlayerActor): Boolean
+interface PlayerActionsPort : PlayerPlaybackToggles, PlayerVoiceGate {
 
     /** Skips the current track; false when nothing plays. */
     suspend fun skip(actor: PlayerActor): Boolean
@@ -85,6 +82,23 @@ interface PlayerActionsPort : PlayerPlaybackToggles {
 
     /** Current state of the actor's guild, or null when the guild is unreachable. */
     suspend fun snapshot(actor: PlayerActor): PlayerQueueSnapshot?
+}
+
+/** Voice precondition shared by every audio command seam. */
+interface PlayerVoiceGate {
+
+    /** True when the actor's guild is reachable and the actor is in a voice channel of that guild. */
+    suspend fun isVoiceAvailable(actor: PlayerActor): Boolean
+}
+
+/** Gateway-neutral seam for non-search audio: local sounds and synthesized speech. */
+interface AudioContentActionsPort : PlayerVoiceGate {
+
+    /** Plays the local sound named [soundName]; the adapter owns the folder and file format. */
+    suspend fun playSound(actor: PlayerActor, soundName: String)
+
+    /** Queues [text] as synthesized speech; the adapter owns the provider URI shape. */
+    suspend fun loadTts(actor: PlayerActor, text: String)
 }
 
 /** Transport state toggles of the player seam. */

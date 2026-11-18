@@ -20,6 +20,15 @@ object PlayerMessageKeys {
     const val DISCONNECT_COMMAND_DESCRIPTION = "disconnect_command_description"
     const val RECONNECT_COMMAND_DESCRIPTION = "reconnect_command_description"
 
+    const val SOUND_COMMAND_DESCRIPTION = "sound_command_description"
+    const val SOUND_COMMAND_INPUT_DESCRIPTION = "sound_command_input_description"
+    const val SOUNDS_DESCRIPTION = "sounds_description"
+    const val SOUNDS_EMBED_TITLE = "sounds_embed_title"
+    const val SOUNDS_EMBED_DESCRIPTION = "sounds_embed_description"
+    const val TTS_COMMAND_DESCRIPTION = "tts_command_description"
+    const val TTS_COMMAND_INPUT_DESCRIPTION = "tts_command_input_description"
+    const val TTS_COMMAND_RESPONSE = "tts_command_response"
+
     const val PLAYER_TITLE = "player_title"
     const val PLAYER_CURRENT_TRACK = "player_current_track"
     const val PLAYER_PLAYBACK_POSITION = "player_playback_position"

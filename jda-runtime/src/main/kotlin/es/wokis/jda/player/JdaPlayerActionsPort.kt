@@ -1,5 +1,6 @@
 package es.wokis.jda.player
 
+import es.wokis.commands.player.AudioContentActionsPort
 import es.wokis.commands.player.NextTrackResult
 import es.wokis.commands.player.PlayerActionsPort
 import es.wokis.commands.player.PlayerActor
@@ -14,7 +15,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel
 import org.slf4j.LoggerFactory
 
 /**
- * JDA implementation of the neutral player action seam.
+ * JDA implementation of the neutral player action seams.
  *
  * It acts through the same runtime seams the `/play` and `/player` controllers use, so every
  * surface shares one engine, one voice adapter and one `#player` message per guild. No gateway type
@@ -23,7 +24,7 @@ import org.slf4j.LoggerFactory
 internal class JdaPlayerActionsPort(
     private val jda: JDA,
     private val runtime: JdaPlayerRuntime,
-) : PlayerActionsPort {
+) : PlayerActionsPort, AudioContentActionsPort {
 
     override suspend fun isVoiceAvailable(actor: PlayerActor): Boolean =
         guildFor(actor)?.let { guild -> callerVoiceChannel(guild, actor) != null } == true
@@ -55,14 +56,23 @@ internal class JdaPlayerActionsPort(
 
     override suspend fun loadNext(actor: PlayerActor, input: String) {
         val guild = guildFor(actor) ?: return
-        // Kord parity: the load announces into the channel the command was used in.
-        runtime.messagesFor(guild).recordCommand(
-            channelId = actor.channelId,
-            guildId = actor.guildId,
-            guildLocale = actor.guildLocale,
-            channelName = callerVoiceChannel(guild, actor)?.name,
-        )
+        recordCommand(actor, guild)
         runtime.engineFor(guild).loadAndPlay(url = input, addToFront = true)
+    }
+
+    override suspend fun playSound(actor: PlayerActor, soundName: String) {
+        val guild = guildFor(actor) ?: return
+        recordCommand(actor, guild)
+        runtime.engineFor(guild).loadAndPlayMultipleWithCustomName(
+            tracks = listOf(JdaSoundFiles.pathFor(soundName)),
+            customName = soundName,
+        )
+    }
+
+    override suspend fun loadTts(actor: PlayerActor, text: String) {
+        val guild = guildFor(actor) ?: return
+        recordCommand(actor, guild)
+        runtime.engineFor(guild).loadAndPlayTts(kokoroTtsUri(text))
     }
 
     override suspend fun disconnect(actor: PlayerActor) {
@@ -93,6 +103,16 @@ internal class JdaPlayerActionsPort(
         guildFor(actor)?.let { guild -> PlayerQueueSnapshot(guild.name, runtime.engineFor(guild).snapshot()) }
 
     private fun guildFor(actor: PlayerActor): Guild? = jda.getGuildById(actor.guildId.toJdaId())
+
+    /** Kord parity: the load announces into the channel the command was used in. */
+    private fun recordCommand(actor: PlayerActor, guild: Guild) {
+        runtime.messagesFor(guild).recordCommand(
+            channelId = actor.channelId,
+            guildId = actor.guildId,
+            guildLocale = actor.guildLocale,
+            channelName = callerVoiceChannel(guild, actor)?.name,
+        )
+    }
 
     private suspend fun <T> withEngine(actor: PlayerActor, action: suspend (PlayerEngine) -> T): T? =
         guildFor(actor)?.let { guild -> action(runtime.engineFor(guild)) }

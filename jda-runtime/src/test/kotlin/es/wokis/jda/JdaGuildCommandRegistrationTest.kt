@@ -30,6 +30,7 @@ import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import net.dv8tion.jda.api.requests.RestAction
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.function.Consumer
@@ -42,7 +43,7 @@ import java.util.function.Consumer
 class JdaGuildCommandRegistrationTest {
 
     @Test
-    fun `Given two joined guilds When the runtime becomes ready Then each guild receives the nine guild commands`() {
+    fun `Given two joined guilds When the runtime becomes ready Then each guild receives the twelve guild commands`() {
         val fixture = RegistrationFixture(guildIds = listOf(FIRST_GUILD_ID, SECOND_GUILD_ID))
 
         val exitCode = fixture.run()
@@ -104,11 +105,23 @@ class JdaGuildCommandRegistrationTest {
                 )
             }
             assertEquals(
-                setOf("play", "player", "skip", "shuffle", "next", "queue", "disconnect", "reconnect"),
+                setOf(
+                    "play",
+                    "player",
+                    "skip",
+                    "shuffle",
+                    "next",
+                    "queue",
+                    "disconnect",
+                    "reconnect",
+                    "sound",
+                    "sounds",
+                    "tts",
+                ),
                 PUBLIC_PLAYER_COMMANDS,
                 "guild $guildId names drifted",
             )
-            assertEquals(8, PUBLIC_PLAYER_COMMANDS.size)
+            assertEquals(11, PUBLIC_PLAYER_COMMANDS.size)
         }
     }
 
@@ -123,7 +136,16 @@ class JdaGuildCommandRegistrationTest {
             val nextOption = (requireNotNull(byName["next"]) as SlashCommandData).options.single()
             assertEquals("track", nextOption.name)
             assertTrue(nextOption.isRequired, "/next must keep the required track option in guild $guildId")
-            val optionless = PUBLIC_PLAYER_COMMANDS - "next" - "play" - "player"
+            assertFalse(nextOption.isAutoComplete, "/next must not autocomplete the track option in guild $guildId")
+            val soundOption = (requireNotNull(byName["sound"]) as SlashCommandData).options.single()
+            assertEquals("name", soundOption.name)
+            assertTrue(soundOption.isRequired, "/sound must keep the required name option in guild $guildId")
+            assertTrue(soundOption.isAutoComplete, "/sound must autocomplete the name option in guild $guildId")
+            val ttsOption = (requireNotNull(byName["tts"]) as SlashCommandData).options.single()
+            assertEquals("message", ttsOption.name)
+            assertTrue(ttsOption.isRequired, "/tts must keep the required message option in guild $guildId")
+            assertFalse(ttsOption.isAutoComplete, "/tts must not autocomplete its message option in guild $guildId")
+            val optionless = PUBLIC_PLAYER_COMMANDS - "next" - "play" - "player" - "sound" - "tts"
             optionless.forEach { commandName ->
                 val command = requireNotNull(byName[commandName]) {
                     "guild $guildId is missing the optionless command /$commandName"
@@ -238,6 +260,9 @@ class JdaGuildCommandRegistrationTest {
             PlayerCommandDefinitions.QUEUE_COMMAND_NAME,
             PlayerCommandDefinitions.DISCONNECT_COMMAND_NAME,
             PlayerCommandDefinitions.RECONNECT_COMMAND_NAME,
+            PlayerCommandDefinitions.SOUND_COMMAND_NAME,
+            PlayerCommandDefinitions.SOUNDS_COMMAND_NAME,
+            PlayerCommandDefinitions.TTS_COMMAND_NAME,
         )
         private val EXPECTED_COMMANDS = ADMIN_ONLY_COMMANDS + PUBLIC_PLAYER_COMMANDS
 

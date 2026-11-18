@@ -1,6 +1,7 @@
 package es.wokis.jda
 
 import es.wokis.commands.disconnect.DisconnectCommandHandler
+import es.wokis.commands.locale.LocaleAutocompleteHandler
 import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.neutral.GuildCommandRegistrar
 import es.wokis.commands.next.NextCommandHandler
@@ -10,13 +11,19 @@ import es.wokis.commands.queue.QueuePaginationHandler
 import es.wokis.commands.reconnect.ReconnectCommandHandler
 import es.wokis.commands.shuffle.ShuffleCommandHandler
 import es.wokis.commands.skip.SkipCommandHandler
+import es.wokis.commands.sound.SoundAutocompleteHandler
+import es.wokis.commands.sound.SoundCommandHandler
+import es.wokis.commands.sounds.SoundPaginationHandler
+import es.wokis.commands.sounds.SoundsCommandHandler
+import es.wokis.commands.sounds.SoundsMessageViewFactory
+import es.wokis.commands.tts.TtsCommandHandler
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.domain.model.GuildId
+import es.wokis.jda.command.JdaAutocompleteRouter
 import es.wokis.jda.command.JdaCommandRouter
 import es.wokis.jda.command.JdaComponentRouter
 import es.wokis.jda.command.JdaGuildCommandRegistrar
-import es.wokis.jda.command.JdaLocaleAutocompleteListener
 import es.wokis.jda.player.JdaDisconnectCommand
 import es.wokis.jda.player.JdaNeutralPlayerCommand
 import es.wokis.jda.player.JdaNextCommand
@@ -30,8 +37,13 @@ import es.wokis.jda.player.JdaQueueCommand
 import es.wokis.jda.player.JdaReconnectCommand
 import es.wokis.jda.player.JdaShuffleCommand
 import es.wokis.jda.player.JdaSkipCommand
+import es.wokis.jda.player.JdaSoundCommand
+import es.wokis.jda.player.JdaSoundsCatalogPort
+import es.wokis.jda.player.JdaSoundsCommand
+import es.wokis.jda.player.JdaTtsCommand
 import es.wokis.jda.player.PLAYER_BUTTON_IDS
 import es.wokis.jda.player.QUEUE_PAGINATION_IDS
+import es.wokis.jda.player.SOUNDS_PAGINATION_IDS
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.LocaleMessageKeys
 import es.wokis.repositories.locale.LocalJsonLocaleRepository
@@ -85,6 +97,7 @@ internal fun runBootstrap(
 ): Int {
     var router: JdaCommandRouter? = null
     var componentRouter: JdaComponentRouter? = null
+    var autocompleteRouter: JdaAutocompleteRouter? = null
     var jda: JDA? = null
     var shutdownHook: Thread? = null
     var playerRuntime: JdaPlayerRuntime? = null
@@ -99,9 +112,10 @@ internal fun runBootstrap(
         val commands = buildCommands(client, playerRuntime)
         router = commands.router
         componentRouter = commands.componentRouter
+        autocompleteRouter = commands.autocompleteRouter
         client.addEventListener(commands.router)
         client.addEventListener(commands.componentRouter)
-        client.addEventListener(JdaLocaleAutocompleteListener())
+        client.addEventListener(commands.autocompleteRouter)
 
         shutdownHook = Thread({ client.shutdown() }, "jda-shutdown").also {
             Runtime.getRuntime().addShutdownHook(it)
@@ -134,6 +148,7 @@ internal fun runBootstrap(
         jda = jda,
         router = router,
         componentRouter = componentRouter,
+        autocompleteRouter = autocompleteRouter,
         shutdownHook = shutdownHook,
         playerRuntime = playerRuntime,
     )
@@ -171,6 +186,7 @@ private class BootstrapCommands(
     val familyCommands: List<JdaNeutralPlayerCommand>,
     val router: JdaCommandRouter,
     val componentRouter: JdaComponentRouter,
+    val autocompleteRouter: JdaAutocompleteRouter,
 )
 
 private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): BootstrapCommands {
@@ -190,13 +206,14 @@ private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): Bootstr
 
     val actions = JdaPlayerActionsPort(jda = client, runtime = playerRuntime)
     val queueViewFactory = QueueMessageViewFactory(localizationService)
-    val familyCommands = listOf(
-        JdaSkipCommand(SkipCommandHandler(actions, localizationService), localizationService),
-        JdaShuffleCommand(ShuffleCommandHandler(actions, localizationService), localizationService),
-        JdaNextCommand(NextCommandHandler(actions, localizationService), localizationService),
-        JdaQueueCommand(QueueCommandHandler(actions, localizationService, queueViewFactory), localizationService),
-        JdaDisconnectCommand(DisconnectCommandHandler(actions, localizationService), localizationService),
-        JdaReconnectCommand(ReconnectCommandHandler(actions, localizationService), localizationService),
+    val soundsCatalog = JdaSoundsCatalogPort()
+    val soundsViewFactory = SoundsMessageViewFactory(localizationService)
+    val familyCommands = buildFamilyCommands(
+        actions = actions,
+        queueViewFactory = queueViewFactory,
+        soundsCatalog = soundsCatalog,
+        soundsViewFactory = soundsViewFactory,
+        localizationService = localizationService,
     )
 
     return BootstrapCommands(
@@ -206,20 +223,61 @@ private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): Bootstr
         controlCommand = controlCommand,
         familyCommands = familyCommands,
         router = JdaCommandRouter(listOf(localeCommand, playCommand, controlCommand) + familyCommands),
-        componentRouter = JdaComponentRouter(
-            PLAYER_BUTTON_IDS.map { id ->
-                JdaPlayerButtonHandler(
-                    id = id,
-                    jda = client,
-                    runtime = playerRuntime,
-                    controller = playerController,
-                )
-            } + QUEUE_PAGINATION_IDS.map { id ->
-                QueuePaginationHandler(id = id, actions = actions, viewFactory = queueViewFactory)
-            },
+        componentRouter = buildComponentRouter(
+            client = client,
+            playerRuntime = playerRuntime,
+            playerController = playerController,
+            actions = actions,
+            queueViewFactory = queueViewFactory,
+            soundsCatalog = soundsCatalog,
+            soundsViewFactory = soundsViewFactory,
+        ),
+        autocompleteRouter = JdaAutocompleteRouter(
+            listOf(LocaleAutocompleteHandler(), SoundAutocompleteHandler(soundsCatalog)),
         ),
     )
 }
+
+private fun buildFamilyCommands(
+    actions: JdaPlayerActionsPort,
+    queueViewFactory: QueueMessageViewFactory,
+    soundsCatalog: JdaSoundsCatalogPort,
+    soundsViewFactory: SoundsMessageViewFactory,
+    localizationService: GuildLocalizationService,
+): List<JdaNeutralPlayerCommand> = listOf(
+    JdaSkipCommand(SkipCommandHandler(actions, localizationService), localizationService),
+    JdaShuffleCommand(ShuffleCommandHandler(actions, localizationService), localizationService),
+    JdaNextCommand(NextCommandHandler(actions, localizationService), localizationService),
+    JdaQueueCommand(QueueCommandHandler(actions, localizationService, queueViewFactory), localizationService),
+    JdaDisconnectCommand(DisconnectCommandHandler(actions, localizationService), localizationService),
+    JdaReconnectCommand(ReconnectCommandHandler(actions, localizationService), localizationService),
+    JdaSoundCommand(SoundCommandHandler(actions, soundsCatalog, localizationService), localizationService),
+    JdaSoundsCommand(SoundsCommandHandler(soundsCatalog, soundsViewFactory), localizationService),
+    JdaTtsCommand(TtsCommandHandler(actions, localizationService), localizationService),
+)
+
+private fun buildComponentRouter(
+    client: JDA,
+    playerRuntime: JdaPlayerRuntime,
+    playerController: JdaPlayerCommandController,
+    actions: JdaPlayerActionsPort,
+    queueViewFactory: QueueMessageViewFactory,
+    soundsCatalog: JdaSoundsCatalogPort,
+    soundsViewFactory: SoundsMessageViewFactory,
+): JdaComponentRouter = JdaComponentRouter(
+    PLAYER_BUTTON_IDS.map { id ->
+        JdaPlayerButtonHandler(
+            id = id,
+            jda = client,
+            runtime = playerRuntime,
+            controller = playerController,
+        )
+    } + QUEUE_PAGINATION_IDS.map { id ->
+        QueuePaginationHandler(id = id, actions = actions, viewFactory = queueViewFactory)
+    } + SOUNDS_PAGINATION_IDS.map { id ->
+        SoundPaginationHandler(id = id, soundsCatalog = soundsCatalog, viewFactory = soundsViewFactory)
+    },
+)
 
 private fun runBootstrapCleanupWithFallback(
     cleanupStepsFactory: (BootstrapCleanupTargets) -> List<BootstrapCleanupStep>,
