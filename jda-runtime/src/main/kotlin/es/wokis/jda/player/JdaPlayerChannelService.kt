@@ -15,6 +15,9 @@ import java.util.EnumSet
 
 private const val PLAYER_CHANNEL_NAME = "player"
 private const val BULK_DELETE_CHUNK_SIZE = 90
+
+/** JDA rejects bulk deletes outside `2..100`, so a lone remainder must skip the bulk path entirely. */
+private const val MIN_BULK_DELETE_SIZE = 2
 private const val HISTORY_PAGE_SIZE = 100
 
 /** Where the player message lives: the channel, its message id and whether the channel is new. */
@@ -31,7 +34,8 @@ internal data class JdaPlayerChannelResult(
  *
  * Owner-parity note: the overwrite is applied atomically on creation (Kord's behavior) and a failed
  * bulk delete falls back to per-message deletes, because a single foreign/old message aborts the
- * whole bulk request.
+ * whole bulk request. A batch too small for the bulk endpoint (a lone message) uses that same
+ * per-message path directly, since JDA rejects bulk deletes of fewer than two messages.
  */
 internal class JdaPlayerChannelService {
 
@@ -101,14 +105,23 @@ internal class JdaPlayerChannelService {
 
     private suspend fun deleteMessages(channel: TextChannel, messages: List<Message>) {
         messages.map(Message::getId).chunked(BULK_DELETE_CHUNK_SIZE).forEach { chunk ->
-            try {
-                channel.deleteMessagesByIds(chunk).awaitRestActionCompletion()
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (error: Exception) {
-                LOG.warn("Bulk delete failed in #player; deleting {} messages one by one", chunk.size, error)
+            // JDA throws on a lone-message bulk request, so it never reaches the bulk endpoint.
+            if (chunk.size < MIN_BULK_DELETE_SIZE) {
                 chunk.forEach { deleteMessage(channel, it) }
+            } else {
+                deleteBulkWithFallback(channel, chunk)
             }
+        }
+    }
+
+    private suspend fun deleteBulkWithFallback(channel: TextChannel, chunk: List<String>) {
+        try {
+            channel.deleteMessagesByIds(chunk).awaitRestActionCompletion()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (error: Exception) {
+            LOG.warn("Bulk delete failed in #player; deleting {} messages one by one", chunk.size, error)
+            chunk.forEach { deleteMessage(channel, it) }
         }
     }
 
