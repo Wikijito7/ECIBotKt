@@ -6,7 +6,7 @@ import es.wokis.player.engine.event.PlayerEvent
  * Event-derived presentation for one guild's voice adapter.
  *
  * [revision] lets a caller wait only for later transitions. [loadFailure] maps events to fixed
- * reasons and [toString] is redacted, because provider text can embed diagnostics.
+ * categories and [toString] is redacted, because provider text can embed diagnostics.
  */
 internal data class JdaPlayerPresentation(
     val revision: Long = 0,
@@ -20,19 +20,11 @@ internal data class JdaPlayerPresentation(
         "JdaPlayerPresentation(revision=$revision, activeTrack=$activeTrack, paused=$paused, " +
             "queueSize=$queueSize, loadFailure=$loadFailure)"
 
-    val loadFailure: String?
+    val loadFailure: JdaPlayerLoadFailure?
         get() = when (lastEvent) {
-            is PlayerEvent.NoMatches -> NO_MATCHES_REASON
-            is PlayerEvent.LoadFailed -> LOAD_REJECTED_REASON
-            is PlayerEvent.PlaybackFailed -> PLAYBACK_FAILED_REASON
+            is PlayerEvent.NoMatches -> JdaPlayerLoadFailure.NO_MATCHES
+            is PlayerEvent.LoadFailed -> JdaPlayerLoadFailure.LOAD_REJECTED
+            is PlayerEvent.PlaybackFailed -> JdaPlayerLoadFailure.PLAYBACK_FAILED
             else -> null
         }
-
-    private companion object {
-        const val NO_MATCHES_REASON = "No tracks matched the supplied input."
-        const val LOAD_REJECTED_REASON =
-            "The provider rejected the load; check the input and try again."
-        const val PLAYBACK_FAILED_REASON =
-            "The provider could not play that track; the queue moved on."
-    }
 }

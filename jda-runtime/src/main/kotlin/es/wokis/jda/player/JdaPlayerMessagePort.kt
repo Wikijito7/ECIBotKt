@@ -3,26 +3,34 @@ package es.wokis.jda.player
 import es.wokis.domain.model.ChannelId
 import es.wokis.jda.awaitRestAction
 import es.wokis.jda.awaitRestActionCompletion
+import es.wokis.message.MessageView
 import es.wokis.player.PlayerMessageId
 import es.wokis.player.PlayerMessagePort
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 
-/** Plain-text [PlayerMessagePort]; no embeds/components and no channel fallback. */
+/** [PlayerMessagePort] backed by JDA; plain text keeps the single-content REST path. */
 internal class JdaPlayerMessagePort(
     private val jda: JDA,
 ) : PlayerMessagePort {
 
-    override suspend fun send(channelId: ChannelId, content: String): PlayerMessageId {
+    override suspend fun send(channelId: ChannelId, view: MessageView): PlayerMessageId {
         val channel = requireTextChannel(channelId)
-        val message = channel.sendMessage(content).awaitRestAction()
+        val message = if (view.isTextOnly) {
+            channel.sendMessage(requireText(view)).awaitRestAction()
+        } else {
+            channel.sendMessage(JdaMessageViewMapper.toCreateData(view)).awaitRestAction()
+        }
         return PlayerMessageId(message.idLong.toULong())
     }
 
-    override suspend fun edit(channelId: ChannelId, messageId: PlayerMessageId, content: String) {
-        requireTextChannel(channelId)
-            .editMessageById(messageId.toJdaId(), content)
-            .awaitRestActionCompletion()
+    override suspend fun edit(channelId: ChannelId, messageId: PlayerMessageId, view: MessageView) {
+        val channel = requireTextChannel(channelId)
+        if (view.isTextOnly) {
+            channel.editMessageById(messageId.toJdaId(), requireText(view))
+        } else {
+            channel.editMessageById(messageId.toJdaId(), JdaMessageViewMapper.toEditData(view))
+        }.awaitRestActionCompletion()
     }
 
     override suspend fun delete(channelId: ChannelId, messageId: PlayerMessageId) {
@@ -34,6 +42,11 @@ internal class JdaPlayerMessagePort(
     private fun requireTextChannel(channelId: ChannelId): TextChannel =
         jda.getTextChannelById(channelId.toJdaId())
             ?: error("The requested player text channel is not available to the bot")
+
+    private fun requireText(view: MessageView): String =
+        requireNotNull(view.content?.takeIf(String::isNotBlank)) {
+            "A text-only player message requires non-blank content"
+        }
 }
 
 private fun ChannelId.toJdaId(): Long = value.toJdaLong("Channel id")

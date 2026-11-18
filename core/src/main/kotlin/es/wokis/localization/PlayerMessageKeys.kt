@@ -1,0 +1,87 @@
+package es.wokis.localization
+
+/**
+ * Message keys used by the neutral player command surface.
+ *
+ * They use the shared `lang.yml` catalog in `:core`, the source of truth the root Kord
+ * `LocalizationKeys` is generated from, so both adapters render the same text.
+ */
+object PlayerMessageKeys {
+    const val PLAY_COMMAND_DESCRIPTION = "play_command_description"
+    const val PLAY_COMMAND_INPUT_DESCRIPTION = "play_command_input_description"
+    const val PLAYER_COMMAND_DESCRIPTION = "player_command_description"
+    const val PLAYER_COMMAND_ACTION_DESCRIPTION = "player_command_action_description"
+
+    const val PLAYER_TITLE = "player_title"
+    const val PLAYER_CURRENT_TRACK = "player_current_track"
+    const val PLAYER_PLAYBACK_POSITION = "player_playback_position"
+    const val PLAYER_TRACK_DURATION = "player_track_duration"
+    const val PLAYER_TRACK_DURATION_UNKNOWN = "player_track_duration_unknown"
+    const val PLAYER_TRACK_DURATION_STREAM = "player_track_duration_stream"
+    const val PLAYER_SERVER_QUEUE = "player_server_queue"
+    const val PLAYER_SERVER_QUEUE_EMPTY = "player_server_queue_empty"
+    const val PLAYER_RESUME = "player_resume"
+    const val PLAYER_PAUSE = "player_pause"
+    const val PLAYER_SKIP = "player_skip"
+    const val PLAYER_SHUFFLE = "player_shuffle"
+    const val PLAYER_RECONNECT = "player_reconnect"
+    const val PLAYER_DISCONNECT = "player_disconnect"
+    const val PLAYER_QUEUE_TRACKS_REMAINING = "player_queue_tracks_remaining"
+    const val PLAYER_DURATION_REMAINING = "player_duration_remaining"
+
+    const val SEARCHING_SONG = "searching_song"
+    const val NO_MATCHES = "no_matches"
+    const val LOAD_FAILED = "load_failed"
+    const val NOW_PLAYING = "now_playing"
+    const val ADDED_TRACK_TO_QUEUE = "added_track_to_queue"
+    const val ADDED_TRACK_TO_QUEUE_WITH_LINK = "added_track_to_queue_with_link"
+    const val ADDED_SONGS_TO_QUEUE = "added_songs_to_queue"
+    const val ADDED_SONGS_TO_QUEUE_WITH_LINK = "added_songs_to_queue_with_link"
+    const val FOUND_TRACK_LIST = "found_track_list"
+
+    const val NEXT_ADDED_TO_QUEUE = "next_added_to_queue"
+    const val NEXT_ADDED_TO_QUEUE_WITH_LINK = "next_added_to_queue_with_link"
+    const val NEXT_ADDED_SONGS_TO_QUEUE = "next_added_songs_to_queue"
+    const val NEXT_ADDED_SONGS_TO_QUEUE_WITH_LINK = "next_added_songs_to_queue_with_link"
+
+    const val QUEUE_EMBED_TITLE = "queue_embed_title"
+    const val QUEUE_EMBED_DESCRIPTION = "queue_embed_description"
+    const val QUEUE_EMBED_FOOTER = "queue_embed_footer"
+    const val QUEUE_PREVIOUS_BUTTON_LABEL = "queue_previous_button_label"
+    const val QUEUE_NEXT_BUTTON_LABEL = "queue_next_button_label"
+    const val PAGINATED_EMBED_FOOTER = "paginated_embed_footer"
+    const val PAGINATED_EMBED_PREVIOUS_BUTTON_LABEL = "paginated_embed_previous_button_label"
+    const val PAGINATED_EMBED_NEXT_BUTTON_LABEL = "paginated_embed_next_button_label"
+
+    const val SKIP_COMMAND_RESPONSE = "skip_command_response"
+    const val SHUFFLE_COMMAND_RESPONSE = "shuffle_command_response"
+    const val DISCONNECT_COMMAND_RESPONSE = "disconnect_command_response"
+    const val RECONNECT_SUCCESS = "reconnect_success"
+    const val RECONNECT_NOT_CONNECTED = "reconnect_not_connected"
+
+    const val ERROR_NO_VOICE_CHANNEL = "error_no_voice_channel"
+    const val ERROR_NO_TEXT_CHANNEL = "error_no_text_channel"
+    const val ERROR_NO_GUILD = "error_no_guild"
+    const val ERROR_NO_CONTENT_PROVIDED = "error_no_content_provided"
+    const val ERROR_EMPTY_QUEUE = "error_empty_queue"
+    const val ERROR_NO_TRACK_PLAYING = "error_no_track_playing"
+    const val ERROR_UNEXPECTED = "error_unexpected"
+
+    const val PLAYER_PLAY_CONNECTED = "player_play_connected"
+    const val PLAYER_LOAD_TIMEOUT = "player_load_timeout"
+    const val PLAYER_LOAD_REJECTED = "player_load_rejected"
+    const val PLAYER_PLAYBACK_FAILED = "player_playback_failed"
+    const val PLAYER_VOICE_SESSION_REFUSED = "player_voice_session_refused"
+    const val PLAYER_VOICE_CONNECTION_FAILED = "player_voice_connection_failed"
+    const val PLAYER_PAUSED = "player_paused"
+    const val PLAYER_RESUMED = "player_resumed"
+    const val PLAYER_PLAYBACK_STATE_UNCHANGED = "player_playback_state_unchanged"
+    const val PLAYER_STOPPED = "player_stopped"
+    const val PLAYER_UNKNOWN_ACTION = "player_unknown_action"
+    const val PLAYER_RECONNECT_PRESERVED = "player_reconnect_preserved"
+    const val PLAYER_RECONNECT_IDLE = "player_reconnect_idle"
+    const val PLAYER_RECONNECT_FOREIGN_SESSION = "player_reconnect_foreign_session"
+    const val PLAYER_RECONNECT_IN_PROGRESS = "player_reconnect_in_progress"
+    const val PLAYER_RECONNECT_TIMEOUT = "player_reconnect_timeout"
+    const val PLAYER_RECONNECT_FAILED = "player_reconnect_failed"
+}

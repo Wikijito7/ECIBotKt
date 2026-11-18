@@ -157,9 +157,13 @@ private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): Bootstr
         setGuildLocaleUseCase = SetGuildLocaleUseCase(localeRepository),
         localizationService = localizationService,
     )
-    val playerController = JdaPlayerCommandController(jda = client, runtime = playerRuntime)
-    val playCommand = JdaPlayCommand(playerController)
-    val controlCommand = JdaPlayerControlCommand(playerController)
+    val playerController = JdaPlayerCommandController(
+        jda = client,
+        runtime = playerRuntime,
+        localizationService = localizationService,
+    )
+    val playCommand = JdaPlayCommand(playerController, localizationService)
+    val controlCommand = JdaPlayerControlCommand(playerController, localizationService)
 
     return BootstrapCommands(
         walkthrough = walkthrough,

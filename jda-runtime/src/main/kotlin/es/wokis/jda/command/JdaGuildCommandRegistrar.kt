@@ -42,9 +42,14 @@ internal class JdaGuildCommandRegistrar(
             commandData.addOptions(optionData)
         }
 
-        if (command.adminOnly) {
-            commandData.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
-        }
+        // Always explicit: JDA keeps the previous default permissions when the field is omitted.
+        commandData.setDefaultPermissions(
+            if (command.adminOnly) {
+                DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)
+            } else {
+                DefaultMemberPermissions.ENABLED
+            },
+        )
 
         guild.upsertCommand(commandData)
             .awaitRestActionCompletion()
