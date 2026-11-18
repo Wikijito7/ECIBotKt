@@ -11,6 +11,7 @@ import es.wokis.domain.model.UserId
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.LocalizationCatalog
 import es.wokis.localization.PlayerMessageKeys
+import es.wokis.message.ComponentId
 import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.model.PlayerSnapshot
 import es.wokis.player.engine.model.PlayerTrack
@@ -182,7 +183,7 @@ class JdaPlayerCommandControllerTest {
                 )
             }
             coVerify(exactly = 1) { fixture.coordinator.ensurePlayerView() }
-            verify(exactly = 1) { fixture.runtime.engineFor(fixture.guild) }
+            verify(exactly = 0) { fixture.runtime.engineFor(any()) }
             verify(exactly = 0) { fixture.coordinator.startPlayback(any(), any()) }
         }
 
@@ -204,7 +205,7 @@ class JdaPlayerCommandControllerTest {
                 )
             }
             coVerify(exactly = 1) { fixture.coordinator.ensurePlayerView() }
-            verify(exactly = 1) { fixture.runtime.engineFor(fixture.guild) }
+            verify(exactly = 0) { fixture.runtime.engineFor(any()) }
         }
 
     @Test
@@ -561,6 +562,99 @@ class JdaPlayerCommandControllerTest {
         coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
         coVerify(exactly = 0) { fixture.engine.stop() }
         coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+    }
+
+    @Test
+    fun `Given an active track When the pause button is applied Then pause once and touch nothing else`() = runTest {
+        val fixture = Fixture()
+        every { fixture.engine.snapshot() } returns activeSnapshot()
+        coEvery { fixture.engine.pause() } returns true
+
+        fixture.controller.applyButton(context(), ComponentId.PLAYER_PAUSE)
+
+        coVerify(exactly = 1) { fixture.engine.pause() }
+        coVerify(exactly = 0) { fixture.engine.resume() }
+        coVerify(exactly = 0) { fixture.engine.skip() }
+        coVerify(exactly = 0) { fixture.engine.shuffle() }
+        coVerify(exactly = 0) { fixture.engine.stop() }
+    }
+
+    @Test
+    fun `Given a paused track When the resume button is applied Then resume once and touch nothing else`() = runTest {
+        val fixture = Fixture()
+        every { fixture.engine.snapshot() } returns activeSnapshot().copy(paused = true)
+        coEvery { fixture.engine.resume() } returns true
+
+        fixture.controller.applyButton(context(), ComponentId.PLAYER_RESUME)
+
+        coVerify(exactly = 1) { fixture.engine.resume() }
+        coVerify(exactly = 0) { fixture.engine.pause() }
+        coVerify(exactly = 0) { fixture.engine.skip() }
+        coVerify(exactly = 0) { fixture.engine.shuffle() }
+        coVerify(exactly = 0) { fixture.engine.stop() }
+    }
+
+    @Test
+    fun `Given an active track When the skip button is applied Then skip once`() = runTest {
+        val fixture = Fixture()
+        coEvery { fixture.engine.skip() } returns true
+
+        fixture.controller.applyButton(context(), ComponentId.PLAYER_SKIP)
+
+        coVerify(exactly = 1) { fixture.engine.skip() }
+        coVerify(exactly = 0) { fixture.engine.pause() }
+        coVerify(exactly = 0) { fixture.engine.stop() }
+    }
+
+    @Test
+    fun `Given an active queue When the shuffle button is applied Then shuffle once`() = runTest {
+        val fixture = Fixture()
+        coEvery { fixture.engine.shuffle() } returns true
+
+        fixture.controller.applyButton(context(), ComponentId.PLAYER_SHUFFLE)
+
+        coVerify(exactly = 1) { fixture.engine.shuffle() }
+        coVerify(exactly = 0) { fixture.engine.skip() }
+        coVerify(exactly = 0) { fixture.engine.stop() }
+    }
+
+    @Test
+    fun `Given an active track When the disconnect button is applied Then stop and disconnect once`() = runTest {
+        val fixture = Fixture()
+        coEvery { fixture.engine.stop() } returns true
+        coJustRun { fixture.runtime.disconnect(fixture.guild) }
+
+        fixture.controller.applyButton(context(), ComponentId.PLAYER_DISCONNECT)
+
+        coVerify(exactly = 1) { fixture.engine.stop() }
+        coVerify(exactly = 1) { fixture.runtime.disconnect(fixture.guild) }
+        coVerify(exactly = 0) { fixture.engine.pause() }
+    }
+
+    @Test
+    fun `Given a voice member When the reconnect button is applied Then reconnect once`() = runTest {
+        val fixture = Fixture()
+        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
+            JdaPlayerReconnectResult.Reconnected
+        every { fixture.engine.snapshot() } returns activeSnapshot()
+
+        fixture.controller.applyButton(context(), ComponentId.PLAYER_RECONNECT)
+
+        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+        coVerify(exactly = 0) { fixture.engine.skip() }
+        coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
+    }
+
+    @Test
+    fun `Given a non player component When applied Then change no playback state`() = runTest {
+        val fixture = Fixture()
+
+        fixture.controller.applyButton(context(), ComponentId.QUEUE_NEXT)
+
+        verify(exactly = 0) { fixture.runtime.engineFor(any()) }
+        coVerify(exactly = 0) { fixture.engine.pause() }
+        coVerify(exactly = 0) { fixture.engine.skip() }
+        coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
     }
 
     private suspend fun english(key: String, vararg arguments: Any): String =

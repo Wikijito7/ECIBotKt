@@ -2,20 +2,19 @@ package es.wokis.jda
 
 import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.neutral.GuildCommandRegistrar
-import es.wokis.commands.voicewalkthrough.JdaVoiceWalkthroughCommand
-import es.wokis.commands.walkthrough.WalkthroughCommand
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.domain.model.GuildId
 import es.wokis.jda.command.JdaCommandRouter
+import es.wokis.jda.command.JdaComponentRouter
 import es.wokis.jda.command.JdaGuildCommandRegistrar
 import es.wokis.jda.command.JdaLocaleAutocompleteListener
 import es.wokis.jda.player.JdaPlayCommand
+import es.wokis.jda.player.JdaPlayerButtonHandler
 import es.wokis.jda.player.JdaPlayerCommandController
 import es.wokis.jda.player.JdaPlayerControlCommand
 import es.wokis.jda.player.JdaPlayerRuntime
-import es.wokis.jda.voice.JdaVoiceSessionPort
-import es.wokis.jda.voice.OpusPacketFrameSource
+import es.wokis.jda.player.PLAYER_BUTTON_IDS
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.LocaleMessageKeys
 import es.wokis.repositories.locale.LocalJsonLocaleRepository
@@ -68,6 +67,7 @@ internal fun runBootstrap(
         ::defaultBootstrapCleanupSteps,
 ): Int {
     var router: JdaCommandRouter? = null
+    var componentRouter: JdaComponentRouter? = null
     var jda: JDA? = null
     var shutdownHook: Thread? = null
     var playerRuntime: JdaPlayerRuntime? = null
@@ -81,7 +81,9 @@ internal fun runBootstrap(
 
         val commands = buildCommands(client, playerRuntime)
         router = commands.router
+        componentRouter = commands.componentRouter
         client.addEventListener(commands.router)
+        client.addEventListener(commands.componentRouter)
         client.addEventListener(JdaLocaleAutocompleteListener())
 
         shutdownHook = Thread({ client.shutdown() }, "jda-shutdown").also {
@@ -94,8 +96,6 @@ internal fun runBootstrap(
         runBlocking {
             val registrar = JdaGuildCommandRegistrar(client)
             joinedGuildIds.forEach { guildId ->
-                registerWalkthroughCommand(registrar, guildId, commands.walkthrough)
-                registerVoiceWalkthroughCommand(registrar, guildId, commands.voiceWalkthrough)
                 registerLocaleCommand(registrar, guildId, commands.localizationService)
                 registerPlayerCommands(registrar, guildId, commands.playCommand, commands.controlCommand)
             }
@@ -108,11 +108,9 @@ internal fun runBootstrap(
             )
         }
         LOG.info(
-            "JDA ready as {}; guild-scoped /{}, /{}, /{}, /{} and /{} registered in {} guild(s); " +
+            "JDA ready as {}; guild-scoped /{}, /{} and /{} registered in {} guild(s); " +
                 "intents=[GUILD_VOICE_STATES]",
             client.selfUser.name,
-            commands.walkthrough.name,
-            commands.voiceWalkthrough.name,
             commands.localeCommand.name,
             commands.playCommand.name,
             commands.controlCommand.name,
@@ -127,6 +125,7 @@ internal fun runBootstrap(
     val targets = BootstrapCleanupTargets(
         jda = jda,
         router = router,
+        componentRouter = componentRouter,
         shutdownHook = shutdownHook,
         playerRuntime = playerRuntime,
     )
@@ -136,21 +135,15 @@ internal fun runBootstrap(
 }
 
 private class BootstrapCommands(
-    val walkthrough: WalkthroughCommand,
-    val voiceWalkthrough: JdaVoiceWalkthroughCommand,
     val localeCommand: LocaleCommandHandler,
     val localizationService: GuildLocalizationService,
     val playCommand: JdaPlayCommand,
     val controlCommand: JdaPlayerControlCommand,
     val router: JdaCommandRouter,
+    val componentRouter: JdaComponentRouter,
 )
 
 private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): BootstrapCommands {
-    val walkthrough = WalkthroughCommand()
-    val voiceWalkthrough = JdaVoiceWalkthroughCommand(
-        voiceSession = JdaVoiceSessionPort(client),
-        frameSourceFactory = { OpusPacketFrameSource.fromResource() },
-    )
     val localeRepository = LocalJsonLocaleRepository(LocaleJson.json)
     val localizationService = GuildLocalizationService(GetGuildLocaleUseCase(localeRepository))
     val localeCommand = LocaleCommandHandler(
@@ -166,14 +159,20 @@ private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): Bootstr
     val controlCommand = JdaPlayerControlCommand(playerController, localizationService)
 
     return BootstrapCommands(
-        walkthrough = walkthrough,
-        voiceWalkthrough = voiceWalkthrough,
         localeCommand = localeCommand,
         localizationService = localizationService,
         playCommand = playCommand,
         controlCommand = controlCommand,
-        router = JdaCommandRouter(
-            listOf(walkthrough, voiceWalkthrough, localeCommand, playCommand, controlCommand),
+        router = JdaCommandRouter(listOf(localeCommand, playCommand, controlCommand)),
+        componentRouter = JdaComponentRouter(
+            PLAYER_BUTTON_IDS.map { id ->
+                JdaPlayerButtonHandler(
+                    id = id,
+                    jda = client,
+                    runtime = playerRuntime,
+                    controller = playerController,
+                )
+            },
         ),
     )
 }
@@ -256,22 +255,6 @@ private fun failBootstrap(
     }
     LOG.error(message, failure)
     throw failure
-}
-
-internal suspend fun registerWalkthroughCommand(
-    registrar: GuildCommandRegistrar,
-    guildId: GuildId,
-    walkthrough: WalkthroughCommand = WalkthroughCommand(),
-) {
-    walkthrough.registerIn(registrar, guildId)
-}
-
-internal suspend fun registerVoiceWalkthroughCommand(
-    registrar: GuildCommandRegistrar,
-    guildId: GuildId,
-    voiceWalkthrough: JdaVoiceWalkthroughCommand,
-) {
-    voiceWalkthrough.registerIn(registrar, guildId)
 }
 
 internal suspend fun registerLocaleCommand(

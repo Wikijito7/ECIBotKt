@@ -38,7 +38,7 @@ class JdaCommandContextMapper {
     }
 }
 
-private fun Long.toGuildId(): GuildId = GuildId(toULong())
+internal fun Long.toGuildId(): GuildId = GuildId(toULong())
 
 /**
  * Maps a JDA locale enum through its canonical `.locale` string and validates it against the

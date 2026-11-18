@@ -1,6 +1,5 @@
 package es.wokis.voice
 
-import es.wokis.commands.voicewalkthrough.JdaVoiceWalkthroughCommand
 import es.wokis.player.PlayerMessageId
 import es.wokis.player.PlayerMessagePort
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -37,7 +36,6 @@ class VoiceBoundaryReflectionTest {
         VoiceFailureReason::class.java,
         PlayerMessageId::class.java,
         PlayerMessagePort::class.java,
-        JdaVoiceWalkthroughCommand::class.java,
     )
 
     private val forbiddenPrefixes = listOf(

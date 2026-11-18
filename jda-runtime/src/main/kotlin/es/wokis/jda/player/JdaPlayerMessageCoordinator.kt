@@ -185,7 +185,8 @@ internal class JdaPlayerMessageCoordinator(
         // Kord parity: only `/player` creates the embed; a track start announces or edits an existing one.
         if (playerMessageId == null) {
             val currentName = snapshot.current?.displayName.orEmpty()
-            announce(text(PlayerMessageKeys.NOW_PLAYING, currentName, resolveVoiceChannelName()))
+            val channelName = resolveVoiceChannelName(guild, voiceChannelId, recordedVoiceChannelName)
+            announce(text(PlayerMessageKeys.NOW_PLAYING, currentName, channelName))
             return
         }
         updatePlayerView(snapshot)
@@ -237,6 +238,10 @@ internal class JdaPlayerMessageCoordinator(
         fallbackToCommandChannel(view = null)
         text(PlayerMessageKeys.PLAYER_CHANNEL_CREATION_FAILED)
     }
+
+    /** Builds the view for the current snapshot without posting or tracking a message. */
+    suspend fun playerView(guildLocale: LocaleCode?): MessageView =
+        viewFactory.createPlayerView(guild.name, engine.snapshot(), guildId, guildLocale)
 
     private suspend fun updatePlayerView(snapshot: PlayerSnapshot) {
         val channelId = playerChannelId ?: return
@@ -333,13 +338,6 @@ internal class JdaPlayerMessageCoordinator(
         }
     }
 
-    /** Kord reads the connected channel's name at track start; the recorded name is only a fallback. */
-    private fun resolveVoiceChannelName(): String =
-        voiceChannelId
-            ?.takeIf { it.value <= Long.MAX_VALUE.toULong() }
-            ?.let { guild.jda.getVoiceChannelById(it.value.toLong())?.name }
-            ?: recordedVoiceChannelName
-
     private suspend fun text(key: String, vararg arguments: Any): String =
         if (arguments.isEmpty()) {
             localizationService.getString(key = key, guildId = guildId, guildDefaultLocale = guildLocale)
@@ -356,6 +354,13 @@ internal class JdaPlayerMessageCoordinator(
         private val LOG = LoggerFactory.getLogger(JdaPlayerMessageCoordinator::class.java)
     }
 }
+
+/** Kord reads the connected channel's name at track start; the recorded name is only a fallback. */
+private fun resolveVoiceChannelName(guild: Guild, voiceChannelId: ChannelId?, fallback: String): String =
+    voiceChannelId
+        ?.takeIf { it.value <= Long.MAX_VALUE.toULong() }
+        ?.let { guild.jda.getVoiceChannelById(it.value.toLong())?.name }
+        ?: fallback
 
 private suspend fun queuedText(
     event: PlayerEvent.TrackQueued,
