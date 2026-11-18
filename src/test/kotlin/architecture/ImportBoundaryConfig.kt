@@ -35,6 +35,8 @@ object ImportBoundaryConfigs {
         SourceRootRule("src/test/kotlin", SourceModule.ROOT),
         SourceRootRule("core/src/main/kotlin", SourceModule.CORE),
         SourceRootRule("core/src/test/kotlin", SourceModule.CORE),
+        SourceRootRule("configuration/src/main/kotlin", SourceModule.CONFIGURATION),
+        SourceRootRule("configuration/src/test/kotlin", SourceModule.CONFIGURATION),
         SourceRootRule("locale-persistence/src/main/kotlin", SourceModule.LOCALE_PERSISTENCE),
         SourceRootRule("locale-persistence/src/test/kotlin", SourceModule.LOCALE_PERSISTENCE),
         SourceRootRule("player/src/main/kotlin", SourceModule.PLAYER),

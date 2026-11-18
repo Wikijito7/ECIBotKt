@@ -3,31 +3,21 @@ package es.wokis.domain.locale
 /**
  * Canonical Discord locale tags supported by the migration.
  *
- * The values are the exact tags Discord documents and the tags exposed by JDA 6.7.0
- * (`DiscordLocale.locale`), excluding the synthetic `unknown` marker. They are the only values
- * that may be persisted as a guild locale: enum names, localized names, aliases and custom tags
- * are never stored.
- *
- * The catalog is deliberately owned by the domain so neither Kord nor JDA has to leak into the
- * persistence, use-case or localization layers. Adapter enums must map through their canonical
- * tag and are validated against this list; a future JDA locale that is not listed here stays
- * unrecognised instead of silently becoming a stored custom tag.
+ * Values are the exact tags Discord documents and JDA 6.7.0 exposes (`DiscordLocale.locale`),
+ * excluding the synthetic `unknown`. Only these may be persisted: enum names, localized names,
+ * aliases and custom tags never are. The catalog is domain-owned so no gateway type leaks into the
+ * persistence, use-case or localization layers; adapter enums map through their canonical tag and
+ * an unknown future tag stays unrecognised instead of becoming a custom tag.
  */
 object DiscordLocaleCatalog {
 
-    /**
-     * Default locale used when no guild locale is persisted and the guild has no usable default.
-     */
+    /** Default when no guild locale is persisted and the guild default is unusable. */
     val defaultLocale: LocaleCode = LocaleCode("en-US")
 
-    /**
-     * Input that removes the guild locale override. It is matched case-insensitively by commands.
-     */
+    /** Input that removes the guild locale override, matched case-insensitively. */
     const val RESET_INPUT: String = "reset"
 
-    /**
-     * All canonical Discord tags, including the real JDA 6.7.0 `ar` and `he` tags.
-     */
+    /** All canonical tags, including the real JDA 6.7.0 `ar` and `he` tags. */
     val supportedLocales: List<LocaleCode> = listOf(
         LocaleCode("ar"),
         LocaleCode("bg"),
@@ -68,27 +58,22 @@ object DiscordLocaleCatalog {
     private val byTag: Map<String, LocaleCode> = supportedLocales.associateBy(LocaleCode::value)
 
     /**
-     * Returns the canonical [LocaleCode] for an exact-case Discord tag, or `null` when the tag is
-     * not part of the catalog.
+     * Returns the canonical [LocaleCode] for an exact-case Discord tag, or `null`.
      *
-     * Matching is intentionally case-sensitive: persisted values and command input must use the
-     * canonical Discord spelling.
+     * Matching is deliberately case-sensitive: persisted values and command input use the canonical
+     * Discord spelling.
      */
     fun find(tag: String): LocaleCode? = byTag[tag]
 
-    /**
-     * Returns `true` only when [locale] is one of the canonical catalog tags.
-     */
+    /** True only when [locale] is one of the canonical tags. */
     fun isSupported(locale: LocaleCode?): Boolean = locale != null && byTag.containsKey(locale.value)
 
-    /**
-     * Returns `true` when [input] is the reset marker, compared case-insensitively.
-     */
+    /** True when [input] is the reset marker, compared case-insensitively. */
     fun isReset(input: String?): Boolean = input?.equals(RESET_INPUT, ignoreCase = true) == true
 
     /**
-     * Autocomplete suggestions for [input]. Canonical tags are matched case-insensitively and the
-     * returned values are always the canonical spelling.
+     * Autocomplete suggestions for [input]; matching is case-insensitive and results always use
+     * the canonical spelling.
      */
     fun suggestions(input: String?, limit: Int = 25): List<LocaleCode> {
         val query = input.orEmpty().lowercase()
@@ -101,10 +86,5 @@ object DiscordLocaleCatalog {
     }
 }
 
-/**
- * Public source-compatible alias for the canonical reset marker owned by [DiscordLocaleCatalog].
- *
- * Existing callers can keep importing this top-level name; the catalog's [DiscordLocaleCatalog.RESET_INPUT]
- * stays the single value used by the reset matching logic.
- */
+/** Source-compatible alias for [DiscordLocaleCatalog.RESET_INPUT]. */
 const val RESET_LOCALE_VALUE: String = DiscordLocaleCatalog.RESET_INPUT

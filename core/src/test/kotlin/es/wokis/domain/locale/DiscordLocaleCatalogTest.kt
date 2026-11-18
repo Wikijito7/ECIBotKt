@@ -21,10 +21,8 @@ class DiscordLocaleCatalogTest {
 
     @Test
     fun `Given the catalog When inspected Then expose exactly the real JDA canonical tags`() {
-        // When
         val actualTags = DiscordLocaleCatalog.supportedLocales.map { it.value }
 
-        // Then
         assertEquals(34, actualTags.size)
         assertEquals(expectedTags, actualTags.toSet())
         assertEquals(actualTags.size, actualTags.toSet().size, "Canonical tags must be unique")
@@ -32,7 +30,6 @@ class DiscordLocaleCatalogTest {
 
     @Test
     fun `Given the real JDA tags When read Then Arabic and Hebrew are selectable`() {
-        // Then
         assertEquals(LocaleCode("ar"), DiscordLocaleCatalog.find("ar"))
         assertEquals(LocaleCode("he"), DiscordLocaleCatalog.find("he"))
         assertTrue(DiscordLocaleCatalog.isSupported(LocaleCode("ar")))
@@ -41,7 +38,6 @@ class DiscordLocaleCatalogTest {
 
     @Test
     fun `Given the catalog When inspected Then never expose unknown aliases or enum names`() {
-        // Then
         listOf(
             "unknown",
             "UNKNOWN",
@@ -65,7 +61,6 @@ class DiscordLocaleCatalogTest {
 
     @Test
     fun `Given a canonical tag When looked up Then matching requires the exact canonical case`() {
-        // Then
         assertEquals(LocaleCode("es-ES"), DiscordLocaleCatalog.find("es-ES"))
         assertEquals(LocaleCode("en-US"), DiscordLocaleCatalog.find("en-US"))
         assertNull(DiscordLocaleCatalog.find("es-es"))
@@ -76,7 +71,6 @@ class DiscordLocaleCatalogTest {
 
     @Test
     fun `Given a null or foreign locale When checked Then it is not supported`() {
-        // Then
         assertFalse(DiscordLocaleCatalog.isSupported(null))
         assertFalse(DiscordLocaleCatalog.isSupported(LocaleCode("xx-YY")))
         assertNull(DiscordLocaleCatalog.find(""))
@@ -84,7 +78,6 @@ class DiscordLocaleCatalogTest {
 
     @Test
     fun `Given the reset marker When matched Then it is case insensitive`() {
-        // Then
         assertTrue(DiscordLocaleCatalog.isReset("reset"))
         assertTrue(DiscordLocaleCatalog.isReset("RESET"))
         assertTrue(DiscordLocaleCatalog.isReset("ReSeT"))
@@ -98,20 +91,16 @@ class DiscordLocaleCatalogTest {
 
     @Test
     fun `Given no input When suggestions are requested Then return every canonical tag`() {
-        // When
         val suggestions = DiscordLocaleCatalog.suggestions(null)
 
-        // Then
         assertEquals(DiscordLocaleCatalog.supportedLocales.take(25), suggestions)
     }
 
     @Test
     fun `Given an input When suggestions are requested Then match case-insensitively but return canonical spelling`() {
-        // When
         val englishSuggestions = DiscordLocaleCatalog.suggestions("EN")
         val spanishSuggestions = DiscordLocaleCatalog.suggestions("es")
 
-        // Then
         assertEquals(listOf(LocaleCode("en-GB"), LocaleCode("en-US")), englishSuggestions)
         assertEquals(listOf(LocaleCode("es-ES"), LocaleCode("es-419")), spanishSuggestions)
         assertEquals(englishSuggestions, DiscordLocaleCatalog.suggestions("en"))
@@ -119,23 +108,19 @@ class DiscordLocaleCatalogTest {
 
     @Test
     fun `Given a query When suggestions are requested Then never exceed the requested limit`() {
-        // When
         val suggestions = DiscordLocaleCatalog.suggestions("", limit = 2)
 
-        // Then
         assertEquals(listOf(LocaleCode("ar"), LocaleCode("bg")), suggestions)
     }
 
     @Test
     fun `Given an unmatched query When suggestions are requested Then return no suggestion`() {
-        // Then
         assertTrue(DiscordLocaleCatalog.suggestions("not-a-locale").isEmpty())
         assertTrue(DiscordLocaleCatalog.suggestions("unknown").isEmpty())
     }
 
     @Test
     fun `Given the fallback locale When inspected Then it is US English`() {
-        // Then
         assertEquals(LocaleCode("en-US"), DiscordLocaleCatalog.defaultLocale)
         assertTrue(DiscordLocaleCatalog.isSupported(DiscordLocaleCatalog.defaultLocale))
     }

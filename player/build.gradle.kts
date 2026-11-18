@@ -15,6 +15,8 @@ repositories {
 
 dependencies {
     implementation(project(":core"))
+    // The mapping exposes `Config`, so consumers need `:configuration` on their compile classpath.
+    api(project(":configuration"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.lavaplayer)
     implementation(libs.lavaplayer.youtube)

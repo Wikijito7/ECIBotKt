@@ -1,6 +1,13 @@
 package es.wokis.jda
 
-import es.wokis.domain.model.GuildId
+import es.wokis.services.config.Config
+import es.wokis.services.config.DatabaseConfig
+import es.wokis.services.config.DeezerConfig
+import es.wokis.services.config.HuggingChatConfig
+import es.wokis.services.config.KokoroConfig
+import es.wokis.services.config.SpotifyConfig
+import es.wokis.services.config.TidalConfig
+import es.wokis.services.config.YouTubeConfig
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -20,14 +27,11 @@ import org.junit.jupiter.api.Test
 
 class JdaBootstrapSeamTest {
 
-    private val config = JdaRuntimeConfig(
-        token = "fake-token",
-        guildId = GuildId(987654321uL),
-    )
+    private val config = JdaRuntimeConfig.fromConfig(sharedConfig())
 
     @Test
     fun `Given a DAVE preflight failure When the client is built Then the factory is never invoked`() {
-        // Given: a preflight that fails exactly like a missing native would, without loading it.
+        // A preflight that fails exactly like a missing native would, without loading it.
         val preflightError = UnsatisfiedLinkError("libdave native is not available")
         val preflight = DavePreflight { throw preflightError }
         var factoryCalls = 0
@@ -36,19 +40,16 @@ class JdaBootstrapSeamTest {
             error("a client must never be built after a failed DAVE preflight")
         }
 
-        // When
         val thrown = assertThrows(UnsatisfiedLinkError::class.java) {
             buildGatewayClient(config, preflight, factory)
         }
 
-        // Then: no JDABuilder.build and therefore no gateway login can have happened.
         assertSame(preflightError, thrown)
         assertEquals(0, factoryCalls)
     }
 
     @Test
     fun `Given a DAVE preflight failure When bootstrapping Then the runtime exits as failed without a client`() {
-        // Given
         val preflight = DavePreflight { throw IllegalStateException("DAVE cannot be negotiated") }
         var factoryCalls = 0
         val factory = JdaClientFactory { _, _ ->
@@ -56,17 +57,14 @@ class JdaBootstrapSeamTest {
             error("a client must never be built after a failed DAVE preflight")
         }
 
-        // When
         val exitCode = runBootstrap(config, preflight, factory)
 
-        // Then: EXIT_FAILURE, and no factory invocation means no build/login was attempted.
         assertEquals(1, exitCode)
         assertEquals(0, factoryCalls)
     }
 
     @Test
     fun `Given a valid preflight When the client is built Then the preflight runs once and its config reaches the factory`() {
-        // Given
         val audioModuleConfig = AudioModuleConfig()
         val client = mockk<JDA>()
         val order = mutableListOf<String>()
@@ -85,10 +83,8 @@ class JdaBootstrapSeamTest {
             client
         }
 
-        // When
         val result = buildGatewayClient(config, preflight, factory)
 
-        // Then
         assertSame(client, result)
         assertEquals(1, preflightCalls)
         assertEquals(1, factoryCalls)
@@ -98,7 +94,6 @@ class JdaBootstrapSeamTest {
 
     @Test
     fun `Given the voice gateway intents When inspected Then only the non-privileged voice-state intent is enabled`() {
-        // Then
         assertEquals(setOf(GatewayIntent.GUILD_VOICE_STATES), VOICE_GATEWAY_INTENTS)
         assertEquals(1, VOICE_GATEWAY_INTENTS.size)
 
@@ -115,7 +110,7 @@ class JdaBootstrapSeamTest {
 
     @Test
     fun `Given the default factory When creating a client Then it configures only the voice cache and voice member policy`() {
-        // Given: static mocking keeps the test offline and never loads the native DAVE modules.
+        // Static mocking keeps the test offline and never loads the native DAVE modules.
         val builder = mockk<JDABuilder>()
         val client = mockk<JDA>()
         val audioModuleConfig = AudioModuleConfig()
@@ -128,10 +123,8 @@ class JdaBootstrapSeamTest {
             every { builder.setAudioModuleConfig(any()) } returns builder
             every { builder.build() } returns client
 
-            // When
             val result = DefaultJdaClientFactory.create(config, audioModuleConfig)
 
-            // Then
             assertSame(client, result)
             verify(exactly = 1) { JDABuilder.createLight(config.token, VOICE_GATEWAY_INTENTS) }
             verify(exactly = 1) { builder.enableCache(CacheFlag.VOICE_STATE) }
@@ -142,4 +135,16 @@ class JdaBootstrapSeamTest {
             unmockkStatic(JDABuilder::class)
         }
     }
+
+    private fun sharedConfig(): Config = Config(
+        discordBotToken = "fake-token",
+        debug = false,
+        database = DatabaseConfig(false, "db_user", "db_password", "db_name"),
+        youtube = YouTubeConfig(false, null, null, null, null, null),
+        huggingChat = HuggingChatConfig(false, "hugging_user", "hugging_password"),
+        deezer = DeezerConfig(false, "", ""),
+        spotify = SpotifyConfig(false, "", "", ""),
+        tidal = TidalConfig(false, "ES", ""),
+        kokoro = KokoroConfig("", "", 1.0f, ""),
+    )
 }

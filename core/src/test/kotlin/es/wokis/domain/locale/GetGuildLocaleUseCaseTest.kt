@@ -12,54 +12,43 @@ class GetGuildLocaleUseCaseTest {
 
     @Test
     fun `Given guild has custom locale When invoke is called Then return custom locale`() = runTest {
-        // Given
         val repository = FakeLocaleRepository(mapOf(guildId to LocaleCode("es-ES")))
         val useCase = GetGuildLocaleUseCase(repository)
 
-        // When
         val result = useCase(guildId)
 
-        // Then
         assertEquals(LocaleCode("es-ES"), result)
         assertEquals(listOf(guildId), repository.reads)
     }
 
     @Test
     fun `Given guild has no custom locale When invoke is called Then return null`() = runTest {
-        // Given
         val repository = FakeLocaleRepository()
         val useCase = GetGuildLocaleUseCase(repository)
 
-        // When
         val result = useCase(guildId)
 
-        // Then
         assertNull(result)
         assertEquals(listOf(guildId), repository.reads)
     }
 
     @Test
     fun `Given max ULong guild id When invoke is called Then forward the exact id`() = runTest {
-        // Given
         val maxGuildId = GuildId(ULong.MAX_VALUE)
         val repository = FakeLocaleRepository(mapOf(maxGuildId to LocaleCode("de")))
         val useCase = GetGuildLocaleUseCase(repository)
 
-        // When
         val result = useCase(maxGuildId)
 
-        // Then
         assertEquals(LocaleCode("de"), result)
         assertEquals(listOf(maxGuildId), repository.reads)
     }
 
     @Test
     fun `Given a raw malformed stored value When invoke is called Then return it unchanged`() = runTest {
-        // Given
         val repository = FakeLocaleRepository(mapOf(guildId to LocaleCode("not-a-locale")))
         val useCase = GetGuildLocaleUseCase(repository)
 
-        // When
         val result = useCase(guildId)
 
         // Then the use case is a read-through: validation belongs to the localization layer

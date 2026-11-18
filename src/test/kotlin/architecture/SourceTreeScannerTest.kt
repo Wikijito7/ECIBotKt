@@ -15,14 +15,11 @@ class SourceTreeScannerTest {
 
     @Test
     fun `Given the current Phase 2 repository When scanned Then there are no violations and every source root is classified`() {
-        // Given
         val config = ImportBoundaryConfigs.phase2()
         val scanner = SourceTreeScanner(repositoryRoot(), config)
 
-        // When
         val report = scanner.scan()
 
-        // Then
         assertTrue(report.scannedSourceFiles > 100, report.failureSummary())
         assertEquals(emptyList(), report.completenessProblems, report.failureSummary())
         assertEquals(emptyList(), report.violations, report.failureSummary())
@@ -30,10 +27,44 @@ class SourceTreeScannerTest {
     }
 
     @Test
+    fun `Given the configuration module sources When scanned Then they import no gateway or audio vendor`() {
+        val roots = listOf(
+            repositoryRoot().resolve("configuration/src/main/kotlin"),
+            repositoryRoot().resolve("configuration/src/test/kotlin"),
+        )
+        val forbiddenPrefixes = listOf(
+            listOf("dev", "kord"),
+            listOf("net", "dv8tion"),
+            listOf("dev", "minn", "jda", "ktx"),
+            listOf("moe", "kyokobot", "libdave"),
+            listOf("com", "sedmelluq", "discord", "lavaplayer"),
+            listOf("com", "github", "topi314", "lavasrc"),
+        )
+
+        val imports = roots.flatMap { root ->
+            Files.walk(root).use { paths ->
+                paths
+                    .filter { Files.isRegularFile(it) && it.fileName.toString().endsWith(".kt") }
+                    .flatMap { path -> KotlinFileHeaderParser.parse(Files.readString(path)).imports.stream() }
+                    .toList()
+            }
+        }
+
+        assertTrue(imports.isNotEmpty(), "the configuration sources must have been scanned")
+        imports.forEach { imported ->
+            forbiddenPrefixes.forEach { prefix ->
+                assertFalse(
+                    imported.startsWithSegments(prefix),
+                    "the framework-independent configuration module imported '${imported.statement}'",
+                )
+            }
+        }
+    }
+
+    @Test
     fun `Given a real header import and fake import text When scanned Then only the real import is a violation`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(
             tempDir,
             "app/src/main/kotlin/Foo.kt",
@@ -52,10 +83,8 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("app/src/main/kotlin", SourceModule.CORE)),
         )
 
-        // When
         val report = SourceTreeScanner(tempDir, config).scan()
 
-        // Then
         assertTrue(report.completenessProblems.isEmpty(), report.failureSummary())
         assertEquals(1, report.violations.size)
         assertEquals("app/src/main/kotlin/Foo.kt", report.violations.single().file)
@@ -67,7 +96,6 @@ class SourceTreeScannerTest {
     fun `Given mismatched filesystem path and package When scanned Then the header package decides adapter allowance`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(
             tempDir,
             "jda-runtime/src/main/kotlin/not/the/path/Foo.kt",
@@ -88,10 +116,8 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("jda-runtime/src/main/kotlin", SourceModule.JDA_RUNTIME)),
         )
 
-        // When
         val report = SourceTreeScanner(tempDir, config).scan()
 
-        // Then
         assertEquals(
             listOf(
                 "jda-runtime/src/main/kotlin/NoPackage.kt",
@@ -106,25 +132,21 @@ class SourceTreeScannerTest {
     fun `Given an unclassified Kotlin source root When scanned Then completeness fails until the root is configured`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(tempDir, "known/src/main/kotlin/Known.kt", "package known\n")
         writeKotlinFile(tempDir, "unknown/src/main/kotlin/Unknown.kt", "package unknown\n")
         val knownRoot = SourceRootRule("known/src/main/kotlin", SourceModule.ROOT)
 
-        // When
         val before = SourceTreeScanner(
             repositoryRoot = tempDir,
             config = ImportBoundaryConfig(ScanMode.PHASE_2, listOf(knownRoot)),
         ).scan()
 
-        // Then
         assertFalse(before.isClean)
         assertEquals(1, before.completenessProblems.size)
         assertEquals("unknown/src/main/kotlin/Unknown.kt", before.completenessProblems.single().file)
         assertEquals("unknown/src/main/kotlin", before.completenessProblems.single().derivedRoot)
         assertTrue(before.completenessProblems.single().message.contains("unknown/src/main/kotlin"))
 
-        // When
         val after = SourceTreeScanner(
             repositoryRoot = tempDir,
             config = ImportBoundaryConfig(
@@ -133,7 +155,6 @@ class SourceTreeScannerTest {
             ),
         ).scan()
 
-        // Then
         assertTrue(after.completenessProblems.isEmpty(), after.failureSummary())
         assertTrue(after.isClean, after.failureSummary())
     }
@@ -142,7 +163,6 @@ class SourceTreeScannerTest {
     fun `Given build outputs and Gradle scripts When scanned Then they are outside the source universe`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(tempDir, "app/src/main/kotlin/Valid.kt", "package app\n")
         writeKotlinFile(
             tempDir,
@@ -162,10 +182,8 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("app/src/main/kotlin", SourceModule.ROOT)),
         )
 
-        // When
         val report = SourceTreeScanner(tempDir, config).scan()
 
-        // Then
         assertTrue(report.completenessProblems.isEmpty(), report.failureSummary())
         assertTrue(report.violations.isEmpty(), report.failureSummary())
         assertTrue(report.isClean, report.failureSummary())
@@ -175,7 +193,6 @@ class SourceTreeScannerTest {
     fun `Given a build directory inside a source root When scanned Then it is scanned while real build outputs are ignored`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(
             tempDir,
             "src/main/kotlin/example/build/Hidden.kt",
@@ -191,10 +208,8 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("src/main/kotlin", SourceModule.ROOT)),
         )
 
-        // When
         val report = SourceTreeScanner(tempDir, config).scan()
 
-        // Then
         assertTrue(report.completenessProblems.isEmpty(), report.failureSummary())
         assertEquals(1, report.scannedSourceFiles)
         assertEquals(1, report.violations.size)
@@ -206,7 +221,6 @@ class SourceTreeScannerTest {
     fun `Given a build package under a custom src root When scanned Then it is never pruned and fails closed until configured`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(
             tempDir,
             "app/src/kotlin/example/build/Hidden.kt",
@@ -222,17 +236,14 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("app/src/main/kotlin", SourceModule.ROOT)),
         )
 
-        // When
         val before = SourceTreeScanner(tempDir, unconfigured).scan()
 
-        // Then
         assertFalse(before.isClean, before.failureSummary())
         assertEquals(0, before.scannedSourceFiles)
         assertEquals(1, before.completenessProblems.size)
         assertEquals("app/src/kotlin/example/build/Hidden.kt", before.completenessProblems.single().file)
         assertTrue(before.violations.isEmpty(), before.failureSummary())
 
-        // When
         val configured = ImportBoundaryConfig(
             mode = ScanMode.PHASE_2,
             roots = listOf(
@@ -242,7 +253,6 @@ class SourceTreeScannerTest {
         )
         val after = SourceTreeScanner(tempDir, configured).scan()
 
-        // Then
         assertTrue(after.completenessProblems.isEmpty(), after.failureSummary())
         assertEquals(1, after.scannedSourceFiles)
         assertTrue(after.isClean, after.failureSummary())
@@ -252,7 +262,6 @@ class SourceTreeScannerTest {
     fun `Given a configured custom Kotlin source root When scanned Then its build package is scanned and the vendor import is detected`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(
             tempDir,
             "app/kotlin/example/build/Hidden.kt",
@@ -268,10 +277,8 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("app/kotlin", SourceModule.ROOT)),
         )
 
-        // When
         val report = SourceTreeScanner(tempDir, config).scan()
 
-        // Then
         assertTrue(report.completenessProblems.isEmpty(), report.failureSummary())
         assertEquals(1, report.scannedSourceFiles)
         assertEquals(1, report.violations.size)
@@ -283,7 +290,6 @@ class SourceTreeScannerTest {
     fun `Given an unconfigured custom Kotlin source root with a build package When scanned Then completeness fails closed`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(
             tempDir,
             "app/kotlin/example/build/Hidden.kt",
@@ -294,10 +300,8 @@ class SourceTreeScannerTest {
             roots = emptyList(),
         )
 
-        // When
         val report = SourceTreeScanner(tempDir, config).scan()
 
-        // Then
         assertFalse(report.isClean, report.failureSummary())
         assertEquals(0, report.scannedSourceFiles)
         assertEquals(1, report.completenessProblems.size)
@@ -308,7 +312,6 @@ class SourceTreeScannerTest {
     fun `Given same line semicolon separated imports When scanned Then the second vendor import is a violation`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(
             tempDir,
             "src/main/kotlin/Semicolon.kt",
@@ -319,10 +322,8 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("src/main/kotlin", SourceModule.ROOT)),
         )
 
-        // When
         val report = SourceTreeScanner(tempDir, config).scan()
 
-        // Then
         assertTrue(report.completenessProblems.isEmpty(), report.failureSummary())
         assertEquals(1, report.scannedSourceFiles)
         assertEquals(1, report.violations.size)
@@ -335,7 +336,6 @@ class SourceTreeScannerTest {
 
     @Test
     fun `Given a root project build script When scanned Then root build output is pruned`(@TempDir tempDir: Path) {
-        // Given
         Files.writeString(tempDir.resolve("build.gradle.kts"), "plugins {}\n")
         writeKotlinFile(
             tempDir,
@@ -347,10 +347,8 @@ class SourceTreeScannerTest {
             roots = emptyList(),
         )
 
-        // When
         val report = SourceTreeScanner(tempDir, config).scan()
 
-        // Then
         assertTrue(report.completenessProblems.isEmpty(), report.failureSummary())
         assertTrue(report.violations.isEmpty(), report.failureSummary())
         assertEquals(0, report.scannedSourceFiles)
@@ -361,7 +359,6 @@ class SourceTreeScannerTest {
     fun `Given a temporary non-project root with a build directory When scanned Then its Kotlin is not silently pruned`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(
             tempDir,
             "build/classes/generated/Generated.kt",
@@ -372,10 +369,8 @@ class SourceTreeScannerTest {
             roots = emptyList(),
         )
 
-        // When
         val report = SourceTreeScanner(tempDir, config).scan()
 
-        // Then
         assertFalse(report.isClean, report.failureSummary())
         assertTrue(report.violations.isEmpty(), report.failureSummary())
         assertEquals(0, report.scannedSourceFiles)
@@ -387,7 +382,6 @@ class SourceTreeScannerTest {
     fun `Given a custom output directory When scanned Then it fails closed unless explicitly registered`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(tempDir, "app/src/main/kotlin/Valid.kt", "package app\n")
         writeKotlinFile(
             tempDir,
@@ -399,21 +393,17 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("app/src/main/kotlin", SourceModule.ROOT)),
         )
 
-        // When
         val before = SourceTreeScanner(tempDir, baseConfig).scan()
 
-        // Then
         assertFalse(before.isClean, before.failureSummary())
         assertTrue(before.violations.isEmpty(), before.failureSummary())
         assertEquals(1, before.scannedSourceFiles)
         assertEquals(1, before.completenessProblems.size)
         assertEquals("app/custom-output/Generated.kt", before.completenessProblems.single().file)
 
-        // When
         val registeredConfig = baseConfig.copy(excludedOutputRoots = listOf("app/custom-output"))
         val after = SourceTreeScanner(tempDir, registeredConfig).scan()
 
-        // Then
         assertTrue(after.completenessProblems.isEmpty(), after.failureSummary())
         assertTrue(after.violations.isEmpty(), after.failureSummary())
         assertEquals(1, after.scannedSourceFiles)
@@ -422,7 +412,6 @@ class SourceTreeScannerTest {
 
     @Test
     fun `Given nested project spike and cache outputs When scanned Then traversal prunes them`(@TempDir tempDir: Path) {
-        // Given
         writeKotlinFile(tempDir, "app/src/main/kotlin/Valid.kt", "package app\n")
         writeKotlinFile(
             tempDir,
@@ -444,10 +433,8 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("app/src/main/kotlin", SourceModule.ROOT)),
         )
 
-        // When
         val report = SourceTreeScanner(tempDir, config).scan()
 
-        // Then
         assertTrue(report.completenessProblems.isEmpty(), report.failureSummary())
         assertTrue(report.violations.isEmpty(), report.failureSummary())
         assertEquals(1, report.scannedSourceFiles)
@@ -458,7 +445,6 @@ class SourceTreeScannerTest {
     fun `Given an overlapping scanned and excluded root When scanned Then the configuration fails closed`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(tempDir, "src/main/kotlin/Overlap.kt", "package overlap\n")
         val overlappingExclusions = listOf(
             "src/main/kotlin",
@@ -473,10 +459,8 @@ class SourceTreeScannerTest {
                 excludedRoots = listOf(excludedRoot),
             )
 
-            // When
             val report = SourceTreeScanner(tempDir, config).scan()
 
-            // Then
             assertFalse(report.isClean, "Expected overlap with '$excludedRoot' to fail closed")
             assertTrue(
                 report.completenessProblems.any {
@@ -491,7 +475,6 @@ class SourceTreeScannerTest {
     fun `Given an excluded output root overlapping a scanned root When scanned Then both phases fail closed`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(tempDir, "app/kotlin/Overlap.kt", "package overlap\n")
         val overlappingOutputRoots = listOf(
             "app/kotlin",
@@ -507,10 +490,8 @@ class SourceTreeScannerTest {
                     excludedOutputRoots = listOf(outputRoot),
                 )
 
-                // When
                 val report = SourceTreeScanner(tempDir, config).scan()
 
-                // Then
                 assertFalse(report.isClean, "Expected $mode overlap with '$outputRoot' to fail closed")
                 assertTrue(
                     report.completenessProblems.any {
@@ -526,14 +507,11 @@ class SourceTreeScannerTest {
     fun `Given normal Phase 2 and Phase 6 configurations When scanned Then no overlap diagnostic is produced`(
         @TempDir tempDir: Path
     ) {
-        // Given
         val configurations = listOf(ImportBoundaryConfigs.phase2(), ImportBoundaryConfigs.phase6())
 
         configurations.forEach { config ->
-            // When
             val report = SourceTreeScanner(tempDir, config).scan()
 
-            // Then
             assertTrue(report.completenessProblems.none { it.message.contains("overlaps") }, report.failureSummary())
             assertTrue(report.isClean, report.failureSummary())
         }
@@ -543,7 +521,6 @@ class SourceTreeScannerTest {
     fun `Given the spike source root When scanning Phase 2 and Phase 6 Then exclusion and spike allowance differ`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(
             tempDir,
             "spikes/jda-dave/src/main/kotlin/spike/jdadave/Voice.kt",
@@ -555,16 +532,12 @@ class SourceTreeScannerTest {
             "package spike.other\nimport net.dv8tion.jda.api.JDA\n",
         )
 
-        // When
         val phase2 = SourceTreeScanner(tempDir, ImportBoundaryConfigs.phase2()).scan()
 
-        // Then
         assertTrue(phase2.isClean, phase2.failureSummary())
 
-        // When
         val phase6 = SourceTreeScanner(tempDir, ImportBoundaryConfigs.phase6()).scan()
 
-        // Then
         assertTrue(phase6.completenessProblems.isEmpty(), phase6.failureSummary())
         assertEquals(1, phase6.violations.size)
         assertEquals("spikes/jda-dave/src/main/kotlin/spike/other/Other.kt", phase6.violations.single().file)
@@ -575,7 +548,6 @@ class SourceTreeScannerTest {
         @TempDir repositoryDir: Path,
         @TempDir externalDir: Path,
     ) {
-        // Given
         val externalFile = externalDir.resolve("Evil.kt")
         Files.writeString(externalFile, "package es.wokis.core\nimport net.dv8tion.jda.api.JDA\n")
         val sourceRoot = repositoryDir.resolve("app/src/main/kotlin")
@@ -586,10 +558,8 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("app/src/main/kotlin", SourceModule.CORE)),
         )
 
-        // When
         val report = SourceTreeScanner(repositoryDir, config).scan()
 
-        // Then
         assertFalse(report.isClean, report.failureSummary())
         assertTrue(report.violations.isEmpty(), report.failureSummary())
         assertEquals(0, report.scannedSourceFiles)
@@ -603,7 +573,6 @@ class SourceTreeScannerTest {
         @TempDir repositoryDir: Path,
         @TempDir externalDir: Path,
     ) {
-        // Given
         val externalRoot = externalDir.resolve("kotlin")
         Files.createDirectories(externalRoot)
         Files.writeString(externalRoot.resolve("Evil.kt"), "package es.wokis.core\nimport net.dv8tion.jda.api.JDA\n")
@@ -615,10 +584,8 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("app/src/kotlin", SourceModule.CORE)),
         )
 
-        // When
         val report = SourceTreeScanner(repositoryDir, config).scan()
 
-        // Then
         assertFalse(report.isClean, report.failureSummary())
         assertTrue(report.violations.isEmpty(), report.failureSummary())
         assertEquals(0, report.scannedSourceFiles)
@@ -632,7 +599,6 @@ class SourceTreeScannerTest {
         @TempDir repositoryDir: Path,
         @TempDir externalDir: Path,
     ) {
-        // Given
         Files.writeString(externalDir.resolve("Evil.kt"), "package es.wokis.core\nimport net.dv8tion.jda.api.JDA\n")
         val sourceRoot = repositoryDir.resolve("app/src/main/kotlin")
         Files.createDirectories(sourceRoot)
@@ -642,10 +608,8 @@ class SourceTreeScannerTest {
             roots = listOf(SourceRootRule("app/src/main/kotlin", SourceModule.CORE)),
         )
 
-        // When
         val report = SourceTreeScanner(repositoryDir, config).scan()
 
-        // Then
         assertFalse(report.isClean, report.failureSummary())
         assertTrue(report.violations.isEmpty(), report.failureSummary())
         assertEquals(0, report.scannedSourceFiles)
@@ -658,7 +622,6 @@ class SourceTreeScannerTest {
     fun `Given violations in several files When scanned Then the report is deterministically ordered`(
         @TempDir tempDir: Path
     ) {
-        // Given
         writeKotlinFile(
             tempDir,
             "core/src/main/kotlin/Zeta.kt",
@@ -670,10 +633,8 @@ class SourceTreeScannerTest {
             "package es.wokis.core\nimport moe.kyokobot.libdave.DaveSession\n",
         )
 
-        // When
         val report = SourceTreeScanner(tempDir, ImportBoundaryConfigs.phase2()).scan()
 
-        // Then
         assertEquals(
             listOf(
                 "core/src/main/kotlin/Alpha.kt",

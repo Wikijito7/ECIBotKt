@@ -5,14 +5,11 @@ import es.wokis.player.engine.source.LavaAudioPlayerManagers
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Construction entry point for the shared real-player engine.
+ * Construction entry point for the shared player engine; both runtimes use it so source
+ * registration and player behaviour stay identical.
  *
- * Both the root Kord adapter and the isolated JDA runtime create their engines through this
- * object, so source registration and player behaviour stay identical.
- *
- * Prefer [factory] when a runtime owns many guilds: one Lavaplayer manager (and its thread pools)
- * then owns many `AudioPlayer`s instead of one manager per guild. [fromConfig] remains the
- * convenience path for a single self-owned engine.
+ * Prefer [factory] when a runtime owns many guilds: one manager (and its thread pools) then owns
+ * many `AudioPlayer`s instead of one per guild. [fromConfig] is for a single self-owned engine.
  */
 object PlayerEngines {
 
@@ -33,11 +30,10 @@ object PlayerEngines {
 }
 
 /**
- * Owns one Lavaplayer manager and creates gateway-neutral engines that share it.
+ * Owns one Lavaplayer manager and creates engines that share it.
  *
- * The factory is intentionally the only owner of the manager: per-guild engines are created with
- * `ownsManager = false`, so closing a guild engine can never shut down another guild's player.
- * [close] is idempotent and shuts the manager down at most once.
+ * Per-guild engines use `ownsManager = false`, so closing one cannot shut down another guild's
+ * player. [close] is idempotent and shuts the manager down at most once.
  */
 class PlayerEngineFactory internal constructor(
     private val manager: com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager,

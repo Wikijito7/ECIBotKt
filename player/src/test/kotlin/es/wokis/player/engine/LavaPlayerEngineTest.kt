@@ -53,10 +53,8 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         harness.track("one")
         try {
-            // When
             harness.engine.loadAndPlay("one")
 
-            // Then
             awaitUntil { harness.engine.snapshot().current?.identifier == "one" }
             assertEquals(1, harness.player.startedTracks.count { it.identifier == "one" })
             assertEquals("one", harness.player.currentTrack?.identifier)
@@ -71,10 +69,8 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         listOf("one", "two", "three").forEach { harness.track(it) }
         try {
-            // When
             harness.engine.loadAndPlayMultiple(listOf("one", "two", "three"))
 
-            // Then
             awaitUntil {
                 val snapshot = harness.engine.snapshot()
                 snapshot.current?.identifier == "one" && snapshot.queue.map { it.identifier } == listOf("two", "three")
@@ -90,14 +86,11 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         listOf("one", "two", "three").forEach { harness.track(it) }
         try {
-            // Given
             harness.engine.loadAndPlayMultiple(listOf("one", "two"))
             awaitUntil { harness.engine.snapshot().queue.size == 1 }
 
-            // When
             harness.engine.loadAndPlay("three", addToFront = true)
 
-            // Then
             awaitUntil { harness.engine.snapshot().queue.map { it.identifier } == listOf("three", "two") }
         } finally {
             harness.close()
@@ -109,14 +102,11 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         listOf("one", "two", "three").forEach { harness.track(it) }
         try {
-            // Given
             harness.engine.loadAndPlayMultiple(listOf("one", "two", "three"))
             awaitUntil { harness.engine.snapshot().queue.size == 2 }
 
-            // When
             val moved = harness.engine.moveTrackToNext("three")
 
-            // Then
             assertEquals("three", moved?.identifier)
             assertEquals(listOf("three", "two"), harness.engine.snapshot().queue.map { it.identifier })
         } finally {
@@ -129,15 +119,12 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         listOf("one", "two", "three", "four").forEach { harness.track(it) }
         try {
-            // Given
             harness.engine.loadAndPlayMultiple(listOf("one", "two", "three", "four"))
             awaitUntil { harness.engine.snapshot().queue.size == 3 }
             val before = harness.engine.snapshot()
 
-            // When
             assertTrue(harness.engine.shuffle())
 
-            // Then
             val after = harness.engine.snapshot()
             assertEquals(before.current?.identifier, after.current?.identifier)
             assertEquals(before.queue.map { it.identifier }.toSet(), after.queue.map { it.identifier }.toSet())
@@ -152,14 +139,11 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         harness.track("one")
         try {
-            // Given
             harness.engine.loadAndPlay("one")
             awaitUntil { harness.engine.snapshot().current != null }
 
-            // When
             assertTrue(harness.engine.stop())
 
-            // Then
             assertNull(harness.engine.snapshot().current)
             assertTrue(harness.engine.snapshot().queue.isEmpty())
             assertNull(harness.player.currentTrack)
@@ -173,22 +157,17 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         harness.track("one")
         try {
-            // Given
             harness.engine.loadAndPlay("one")
             awaitUntil { harness.engine.snapshot().current != null }
 
-            // When
             assertTrue(harness.engine.pause())
 
-            // Then
             assertTrue(harness.engine.isPaused())
             assertTrue(harness.player.pausedState)
             assertEquals("one", harness.engine.snapshot().current?.identifier)
 
-            // When
             assertTrue(harness.engine.resume())
 
-            // Then
             assertFalse(harness.engine.isPaused())
             assertFalse(harness.player.pausedState)
             assertEquals("one", harness.engine.snapshot().current?.identifier)
@@ -202,24 +181,19 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         listOf("one", "two").forEach { harness.track(it) }
         try {
-            // Given
             harness.engine.loadAndPlayMultiple(listOf("one", "two"))
             awaitUntil { harness.engine.snapshot().queue.size == 1 }
             assertTrue(harness.engine.pause())
 
-            // When
             assertTrue(harness.engine.skip())
 
-            // Then
             awaitUntil { harness.engine.snapshot().current?.identifier == "two" }
             assertTrue(harness.engine.isPaused())
             assertTrue(harness.player.pausedState)
             assertEquals("two", harness.engine.snapshot().current?.identifier)
 
-            // When
             assertTrue(harness.engine.resume())
 
-            // Then
             assertFalse(harness.engine.isPaused())
             assertEquals("two", harness.engine.snapshot().current?.identifier)
         } finally {
@@ -233,12 +207,10 @@ class LavaPlayerEngineTest {
         val inputs = (0 until 20).map { "track-$it" }
         inputs.forEach { harness.track(it) }
         try {
-            // When
             coroutineScope {
                 inputs.map { input -> async { harness.engine.loadAndPlay(input) } }.awaitAll()
             }
 
-            // Then
             awaitUntil {
                 val snapshot = harness.engine.snapshot()
                 (listOfNotNull(snapshot.current) + snapshot.queue).size == inputs.size
@@ -257,12 +229,10 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         val track = harness.track("one")
         try {
-            // Given
             harness.engine.loadAndPlay("one")
             awaitUntil { harness.engine.snapshot().current?.identifier == "one" }
             val listener = harness.player.listeners.single()
 
-            // When
             val callbackReturned = CountDownLatch(1)
             val callbackThread = Thread({
                 listener.onEvent(TrackEndEvent(harness.player, track, AudioTrackEndReason.FINISHED))
@@ -288,15 +258,12 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         val track = harness.track("one")
         try {
-            // Given
             harness.engine.loadAndPlay("one")
             awaitUntil { harness.engine.snapshot().current?.identifier == "one" }
             val listener = harness.player.listeners.single()
 
-            // When
             listener.onEvent(TrackEndEvent(harness.player, track, AudioTrackEndReason.LOAD_FAILED))
 
-            // Then
             awaitUntil(3_000) { harness.player.startedTracks.size >= 2 }
             assertEquals("one", harness.player.currentTrack?.identifier)
         } finally {
@@ -331,12 +298,10 @@ class LavaPlayerEngineTest {
         try {
             assertTrue(started.await(2, TimeUnit.SECONDS), "the blocking loader never started")
 
-            // When
             val paused = withTimeout(1_000) { harness.engine.pause() }
             val skipped = withTimeout(1_000) { harness.engine.skip() }
             val stopped = withTimeout(1_000) { harness.engine.stop() }
 
-            // Then
             assertTrue(paused)
             assertFalse(skipped)
             assertTrue(stopped)
@@ -365,12 +330,10 @@ class LavaPlayerEngineTest {
         try {
             assertTrue(started.await(2, TimeUnit.SECONDS), "the blocking loader never started")
 
-            // When
             harness.engine.close()
             release.countDown()
             withTimeout(2_000) { load.await() }
 
-            // Then
             assertTrue(harness.player.startedTracks.none { it.identifier == "tts" })
             assertNull(harness.engine.snapshot().current)
         } finally {
@@ -396,14 +359,12 @@ class LavaPlayerEngineTest {
         try {
             assertTrue(started.await(2, TimeUnit.SECONDS), "the blocking loader never started")
 
-            // When
             load.cancelAndJoin()
             release.countDown()
             assertTrue(finished.await(2, TimeUnit.SECONDS))
             // A discarded load has no completion callback; allow the IO worker one scheduler turn.
             delay(100)
 
-            // Then
             assertTrue(harness.player.startedTracks.none { it.identifier == "tts" })
             assertNull(harness.engine.snapshot().current)
         } finally {
@@ -429,7 +390,6 @@ class LavaPlayerEngineTest {
             CompletableFuture.completedFuture(null)
         }
         try {
-            // When
             harness.engine.loadAndPlayMultiple(inputs)
             assertTrue(capturedAll.await(2, TimeUnit.SECONDS), "the batch loads were not submitted")
 
@@ -455,10 +415,8 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         listOf("one", "two").forEach { harness.track(it) }
         try {
-            // When
             harness.engine.loadAndPlayMultipleWithCustomName(listOf("one", "two"), "Custom")
 
-            // Then
             awaitUntil {
                 val snapshot = harness.engine.snapshot()
                 snapshot.current?.customName == "Custom" &&
@@ -476,10 +434,8 @@ class LavaPlayerEngineTest {
         val harness = EngineHarness()
         harness.track("radio")
         try {
-            // When
             harness.engine.playRadio("Radio Name", "radio", "https://example.test/icon.png")
 
-            // Then
             awaitUntil { harness.engine.snapshot().current?.identifier == "radio" }
             val current = harness.engine.snapshot().current
             assertEquals("Radio Name", current?.customName)
@@ -503,10 +459,8 @@ class LavaPlayerEngineTest {
             CompletableFuture.completedFuture(null)
         }
         try {
-            // When
             harness.engine.loadAndPlay("playlist")
 
-            // Then
             awaitUntil {
                 val snapshot = harness.engine.snapshot()
                 snapshot.current?.identifier == "first" &&
@@ -538,13 +492,11 @@ class LavaPlayerEngineTest {
         try {
             subscribed.await()
 
-            // When
             harness.engine.loadAndPlay("missing")
             awaitUntil { events.any { it is PlayerEvent.NoMatches } }
             harness.engine.loadAndPlay("failed")
             awaitUntil { events.any { it is PlayerEvent.LoadFailed } }
 
-            // Then
             assertEquals("missing", (events.filterIsInstance<PlayerEvent.NoMatches>().single()).input)
             assertEquals("load boom", events.filterIsInstance<PlayerEvent.LoadFailed>().single().message)
             assertNull(harness.engine.snapshot().current)
@@ -567,13 +519,11 @@ class LavaPlayerEngineTest {
             harness.engine.loadAndPlay("late")
             val handler = withTimeout(2_000) { captured.await() }
 
-            // When
             assertTrue(harness.engine.stop())
             handler.trackLoaded(track)
             // The discarded callback is processed by the mailbox; wait one bounded scheduler turn.
             delay(100)
 
-            // Then
             assertNull(harness.engine.snapshot().current)
             assertTrue(harness.engine.snapshot().queue.isEmpty())
             assertTrue(harness.player.startedTracks.none { it.identifier == "late" })
@@ -592,19 +542,15 @@ class LavaPlayerEngineTest {
             awaitUntil { harness.engine.snapshot().current?.identifier == "one" }
             position.set(1_234L)
 
-            // When
             assertTrue(harness.engine.pause())
 
-            // Then
             assertEquals(1_234L, harness.engine.snapshot().current?.positionMillis)
             assertEquals(1_234L, harness.engine.snapshot().current?.positionMillis)
             assertTrue(harness.engine.isPaused())
             val startedBeforeResume = harness.player.startedTracks.size
 
-            // When
             assertTrue(harness.engine.resume())
 
-            // Then
             assertEquals("one", harness.engine.snapshot().current?.identifier)
             assertEquals(1_234L, harness.engine.snapshot().current?.positionMillis)
             assertEquals(startedBeforeResume, harness.player.startedTracks.size)
@@ -630,12 +576,10 @@ class LavaPlayerEngineTest {
             awaitUntil { harness.engine.snapshot().queue.size == 1 }
             harness.player.frameProvider = { throw IllegalStateException("provider boom") }
 
-            // When
             val stream = harness.engine.audioStream()
             val first = stream.next()
             val second = stream.next()
 
-            // Then
             assertEquals(PlayerAudioState.Ended, first)
             assertEquals(PlayerAudioState.Ended, second)
             awaitUntil { events.any { it is PlayerEvent.PlaybackFailed } }
@@ -658,12 +602,10 @@ class LavaPlayerEngineTest {
         try {
             subscribed.await()
 
-            // When
             val failure = assertFailsWith<IllegalStateException> {
                 withTimeout(1_000) { harness.engine.events.first() }
             }
 
-            // Then
             assertTrue(failure.message.orEmpty().contains("exactly one subscriber"))
         } finally {
             firstCollector.cancelAndJoin()

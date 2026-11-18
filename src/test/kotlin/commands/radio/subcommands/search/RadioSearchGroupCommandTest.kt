@@ -124,7 +124,6 @@ class RadioSearchGroupCommandTest {
 
     @Test
     fun `Given search name next button When onInteract Then delegate to name command`() = runTest {
-        // Given
         val customId = ComponentsEnum.RADIO_SEARCH_NAME_NEXT.customId.plus("::WokisRadio")
         val interaction = mockk<dev.kord.core.entity.interaction.ButtonInteraction> {
             every { component } returns mockk {
@@ -132,10 +131,8 @@ class RadioSearchGroupCommandTest {
             }
         }
 
-        // When
         radioSearchGroupCommand.onInteract(interaction)
 
-        // Then
         coVerify(exactly = 1) {
             radioSearchNameCommand.onInteract(interaction)
         }

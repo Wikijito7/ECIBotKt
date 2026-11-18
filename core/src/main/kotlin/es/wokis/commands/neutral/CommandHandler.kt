@@ -8,9 +8,6 @@ package es.wokis.commands.neutral
  */
 interface CommandHandler {
 
-    /**
-     * Command name as registered with Discord, for example `jda-walkthrough`.
-     */
     val name: String
 
     suspend fun handle(context: CommandContext, responder: CommandResponder)

@@ -9,15 +9,10 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 /**
  * JDA implementation of the neutral responder contract.
  *
- * Every REST action is serialized and driven through an explicit state machine:
- * a state is committed only when the delegate operation succeeds, and the previous state is
- * restored when it fails. That way a rejected or failed `queue` never leaves a false terminal
- * state behind, so the router can safely attempt its fallback: a failed defer may still reply
- * immediately, and a failed edit may still retry the edit of the deferred original.
- *
- * As required by Discord, the deferred message is the original message; after a successful
- * defer the response edits it and the response ephemeral flag is deliberately ignored because
- * visibility was fixed by the defer call.
+ * A mutex serializes REST actions through an explicit state machine: a state is committed only when
+ * the delegate succeeds and the previous state is restored on failure, so a failed call never leaves
+ * a false terminal state. After a successful defer the response edits the original message, and its
+ * ephemeral flag is ignored because the defer fixed visibility.
  */
 class JdaCommandResponder internal constructor(
     private val delegate: InteractionResponseDelegate,

@@ -3,6 +3,11 @@ package es.wokis.services.config
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/**
+ * Shared `./data/config.json` schema; the [SerialName]s are part of the deployed contract.
+ *
+ * [toString] is redacted so the Discord token and provider secrets never reach logs.
+ */
 @Serializable
 data class Config(
     @SerialName("discord_bot_token")
@@ -22,8 +27,13 @@ data class Config(
     @SerialName("tidal")
     val tidal: TidalConfig,
     @SerialName("kokoro")
-    val kokoro: KokoroConfig
-)
+    val kokoro: KokoroConfig,
+) {
+    override fun toString(): String =
+        "Config(debug=$debug, databaseEnabled=${database.enabled}, youtubeEnabled=${youtube.enabled}, " +
+            "huggingChatEnabled=${huggingChat.enabled}, deezerEnabled=${deezer.enabled}, " +
+            "spotifyEnabled=${spotify.enabled}, tidalEnabled=${tidal.enabled}, kokoroBaseUrlSet=${kokoro.baseUrl.isNotEmpty()})"
+}
 
 @Serializable
 data class DatabaseConfig(
@@ -35,7 +45,11 @@ data class DatabaseConfig(
     val password: String,
     @SerialName("database")
     val database: String
-)
+) {
+    override fun toString(): String =
+        "DatabaseConfig(enabled=$enabled, usernameSet=${username.isNotEmpty()}, " +
+            "passwordSet=${password.isNotEmpty()}, databaseSet=${database.isNotEmpty()})"
+}
 
 @Serializable
 data class YouTubeConfig(
@@ -51,7 +65,12 @@ data class YouTubeConfig(
     val remoteCipherUrl: String?,
     @SerialName("remote_cipher_password")
     val remoteCipherPassword: String?
-)
+) {
+    override fun toString(): String =
+        "YouTubeConfig(enabled=$enabled, oauth2TokenSet=${oauth2Token != null}, poTokenSet=${poToken != null}, " +
+            "visitorDataSet=${visitorData != null}, remoteCipherConfigured=${remoteCipherUrl != null}, " +
+            "remoteCipherPasswordSet=${remoteCipherPassword != null})"
+}
 
 @Serializable
 data class HuggingChatConfig(
@@ -61,7 +80,11 @@ data class HuggingChatConfig(
     val user: String,
     @SerialName("password")
     val password: String
-)
+) {
+    override fun toString(): String =
+        "HuggingChatConfig(enabled=$enabled, userSet=${user.isNotEmpty()}, " +
+            "passwordSet=${password.isNotEmpty()})"
+}
 
 @Serializable
 data class DeezerConfig(
@@ -71,7 +94,11 @@ data class DeezerConfig(
     val masterDecryptionKey: String,
     @SerialName("arl_token")
     val arlToken: String,
-)
+) {
+    override fun toString(): String =
+        "DeezerConfig(enabled=$enabled, credentialsSet=${masterDecryptionKey.isNotEmpty()}, " +
+            "arlTokenSet=${arlToken.isNotEmpty()})"
+}
 
 @Serializable
 data class SpotifyConfig(
@@ -83,7 +110,12 @@ data class SpotifyConfig(
     val clientSecret: String,
     @SerialName("custom_endpoint")
     val customEndpoint: String
-)
+) {
+    override fun toString(): String =
+        "SpotifyConfig(enabled=$enabled, clientIdSet=${clientId.isNotEmpty()}, " +
+            "clientSecretSet=${clientSecret.isNotEmpty()}, " +
+            "customEndpointSet=${customEndpoint.isNotEmpty()})"
+}
 
 @Serializable
 data class TidalConfig(
@@ -93,7 +125,10 @@ data class TidalConfig(
     val countryCode: String,
     @SerialName("token")
     val token: String
-)
+) {
+    override fun toString(): String =
+        "TidalConfig(enabled=$enabled, countryCodeSet=${countryCode.isNotEmpty()}, tokenSet=${token.isNotEmpty()})"
+}
 
 @Serializable
 data class KokoroConfig(
@@ -105,4 +140,14 @@ data class KokoroConfig(
     val defaultSpeed: Float,
     @SerialName("default_lang_code")
     val defaultLangCode: String
-)
+) {
+    override fun toString(): String =
+        "KokoroConfig(baseUrlSet=${baseUrl.isNotEmpty()}, defaultVoiceSet=${defaultVoice.isNotEmpty()}, " +
+            "defaultSpeedSet=${defaultSpeed != UNSET_SPEED}, " +
+            "defaultLangCodeSet=${defaultLangCode.isNotEmpty()})"
+
+    private companion object {
+        /** `default_speed` is required, so `0` is the only value that can mean "not configured". */
+        private const val UNSET_SPEED = 0f
+    }
+}

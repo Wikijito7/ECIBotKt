@@ -50,14 +50,11 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given a user in a regular voice channel When playing Then complete with every frame`() = runBlocking {
-        // Given
         val fixture = Fixture()
         val source = FakeFrameSource(actualFrames = 3)
 
-        // When
         val result = fixture.port().play(fixture.context, source)
 
-        // Then
         assertEquals(VoicePlaybackResult.Completed(framesProvided = 3, expectedFrames = 3), result)
         // The send loop probes the source once more to observe exhaustion, hence four calls.
         assertEquals(4, source.nextFrameCalls.get())
@@ -68,14 +65,11 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given the source ends early When playing Then report an incomplete playback`() = runBlocking {
-        // Given
         val fixture = Fixture()
         val source = FakeFrameSource(actualFrames = 2, expectedFrames = 5)
 
-        // When
         val result = fixture.port().play(fixture.context, source)
 
-        // Then
         assertEquals(
             VoicePlaybackResult.Failed(VoiceFailureReason.INCOMPLETE_PLAYBACK),
             result,
@@ -84,29 +78,23 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given the send loop consumes nothing When playing Then report a tone timeout`() = runBlocking {
-        // Given
         val fixture = Fixture(drainFrames = false)
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Failed(VoiceFailureReason.TONE_TIMEOUT), result)
         assertTrue(fixture.events.contains("close"))
     }
 
     @Test
     fun `Given the connection never becomes connected When playing Then report a connect timeout`() = runBlocking {
-        // Given
         val fixture = Fixture()
         every { fixture.audioManager.openAudioConnection(any()) } answers {
             fixture.events += "open"
         }
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Failed(VoiceFailureReason.CONNECT_TIMEOUT), result)
         assertFalse(fixture.events.contains("handler:set"))
         assertTrue(fixture.events.contains("close"), "a queued connection must be cancelled on timeout")
@@ -123,7 +111,6 @@ class JdaVoiceSessionPortTest {
             throw permissionError
         }
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
         // Then: the primary failure is preserved and the cleanup failure is attached to it.
@@ -135,7 +122,6 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given the connection is lost after connecting When playing Then map to connection lost`() = runBlocking {
-        // Given
         val fixture = Fixture()
         every { fixture.audioManager.openAudioConnection(any()) } answers {
             fixture.events += "open"
@@ -144,23 +130,18 @@ class JdaVoiceSessionPortTest {
             fixture.listener?.onStatusChange(ConnectionStatus.AUDIO_REGION_CHANGE)
         }
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Failed(VoiceFailureReason.CONNECTION_LOST), result)
         assertFalse(fixture.events.contains("handler:set"), "the send handler must not be installed after a loss")
     }
 
     @Test
     fun `Given a successful playback When cleanup runs Then invalidate detach close and restore in that order`() = runBlocking {
-        // Given
         val fixture = Fixture()
 
-        // When
         fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         val cleanup = fixture.events.dropWhile { it != "handler:set" }.drop(1)
         assertEquals(
             listOf(
@@ -186,10 +167,8 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given the sender cannot be cleared When a completed playback ends Then report a cleanup failure`() = runBlocking {
-        // Given
         val fixture = Fixture(failClearHandler = true)
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
         // Then: the disconnect is confirmed, so only the remaining cleanup step failed.
@@ -204,10 +183,8 @@ class JdaVoiceSessionPortTest {
     @Test
     fun `Given the sender cannot be cleared When the playback is incomplete Then preserve the playback failure`() =
         runBlocking {
-            // Given
             val fixture = Fixture(failClearHandler = true)
 
-            // When
             val result = fixture.port().play(
                 fixture.context,
                 FakeFrameSource(actualFrames = 2, expectedFrames = 5),
@@ -221,100 +198,120 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given a direct message context When playing Then reject without resolving a guild`() = runBlocking {
-        // Given
         val fixture = Fixture()
         val source = FakeFrameSource(actualFrames = 1)
 
-        // When
         val result = fixture.port().play(fixture.context.copy(guildId = null), source)
 
-        // Then
         assertEquals(VoicePlaybackResult.Rejected(VoiceRequestRejection.DIRECT_MESSAGE), result)
         verify(exactly = 0) { fixture.jda.getGuildById(any<Long>()) }
         assertEquals(0, source.closeCalls.get())
     }
 
     @Test
+    fun `Given a guild id above the signed JDA range When playing Then fail with a generic message`() = runBlocking {
+        // Given: a guild id that cannot fit JDA's signed 64-bit range.
+        val fixture = Fixture()
+        val oversizedGuildId = GuildId(ULong.MAX_VALUE)
+
+        val error = runCatching {
+            fixture.port().play(
+                fixture.context.copy(guildId = oversizedGuildId),
+                FakeFrameSource(actualFrames = 1),
+            )
+        }.exceptionOrNull()
+
+        // Then: the guard stays, and the message is generic instead of echoing the snowflake.
+        assertTrue(error is IllegalArgumentException)
+        assertEquals("Guild id does not fit in JDA's signed 64-bit id range", error?.message)
+        assertFalse(error?.message.orEmpty().contains(oversizedGuildId.value.toString()))
+        verify(exactly = 0) { fixture.jda.getGuildById(any<Long>()) }
+    }
+
+    @Test
+    fun `Given a user id above the signed JDA range When playing Then fail with a generic message`() = runBlocking {
+        // Given: a user id that cannot fit JDA's signed 64-bit range.
+        val fixture = Fixture()
+        val oversizedUserId = UserId(ULong.MAX_VALUE)
+
+        val error = runCatching {
+            fixture.port().play(
+                fixture.context.copy(userId = oversizedUserId),
+                FakeFrameSource(actualFrames = 1),
+            )
+        }.exceptionOrNull()
+
+        // Then: the guard stays, and the message is generic instead of echoing the snowflake.
+        assertTrue(error is IllegalArgumentException)
+        assertEquals("User id does not fit in JDA's signed 64-bit id range", error?.message)
+        assertFalse(error?.message.orEmpty().contains(oversizedUserId.value.toString()))
+        verify(exactly = 1) { fixture.jda.getGuildById(100L) }
+        verify(exactly = 0) { fixture.guild.getMemberById(any<Long>()) }
+    }
+
+    @Test
     fun `Given an unavailable guild When playing Then reject as another guild`() = runBlocking {
-        // Given
         val fixture = Fixture()
         every { fixture.jda.getGuildById(100L) } returns null
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Rejected(VoiceRequestRejection.OTHER_GUILD), result)
         assertFalse(fixture.events.contains("open"))
     }
 
     @Test
     fun `Given the invoking member is not cached When playing Then reject as not in voice`() = runBlocking {
-        // Given
         val fixture = Fixture()
         every { fixture.guild.getMemberById(300L) } returns null
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Rejected(VoiceRequestRejection.USER_NOT_IN_VOICE), result)
         assertFalse(fixture.events.contains("open"))
     }
 
     @Test
     fun `Given the member has no voice state When playing Then reject as not in voice`() = runBlocking {
-        // Given
         val fixture = Fixture()
         every { fixture.member.voiceState } returns null
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Rejected(VoiceRequestRejection.USER_NOT_IN_VOICE), result)
     }
 
     @Test
     fun `Given the member is connected to no channel When playing Then reject as not in voice`() = runBlocking {
-        // Given
         val fixture = Fixture()
         every { fixture.voiceState.channel } returns null
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Rejected(VoiceRequestRejection.USER_NOT_IN_VOICE), result)
     }
 
     @Test
     fun `Given the member is in a stage channel When playing Then reject as a stage channel`() = runBlocking {
-        // Given
         val fixture = Fixture()
         val stageChannel = mockk<StageChannel>(null, false, AudioChannelUnion::class)
         every { fixture.voiceState.channel } returns (stageChannel as AudioChannelUnion)
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Rejected(VoiceRequestRejection.STAGE_CHANNEL), result)
         assertFalse(fixture.events.contains("open"))
     }
 
     @Test
     fun `Given the voice channel belongs to another guild When playing Then reject as another guild`() = runBlocking {
-        // Given
         val fixture = Fixture()
         val otherGuild = mockk<Guild>()
         every { fixture.voiceChannel.guild } returns otherGuild
         every { otherGuild.idLong } returns 999L
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Rejected(VoiceRequestRejection.OTHER_GUILD), result)
         assertFalse(fixture.events.contains("open"))
     }
@@ -346,10 +343,8 @@ class JdaVoiceSessionPortTest {
             every { fixture.audioManager.sendingHandler } returns existingHandler
             val source = FakeFrameSource(actualFrames = 1)
 
-            // When
             val result = fixture.port().play(fixture.context, source)
 
-            // Then
             assertEquals(
                 VoicePlaybackResult.Rejected(VoiceRequestRejection.VOICE_SESSION_ALREADY_ACTIVE),
                 result,
@@ -403,10 +398,8 @@ class JdaVoiceSessionPortTest {
             every { fixture.audioManager.sendingHandler } returns existingHandler
             val source = FakeFrameSource(actualFrames = 1)
 
-            // When
             val result = fixture.port().play(fixture.context, source)
 
-            // Then
             assertEquals(
                 VoicePlaybackResult.Rejected(VoiceRequestRejection.VOICE_SESSION_ALREADY_ACTIVE),
                 result,
@@ -437,7 +430,6 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given an active session rejection When the session ends Then a later playback proceeds`() = runBlocking {
-        // Given
         val fixture = Fixture()
         fixture.connected = true
         assertEquals(
@@ -457,7 +449,6 @@ class JdaVoiceSessionPortTest {
     @Test
     fun `Given a playback is running When a second playback starts Then reject it without touching the manager`() =
         runBlocking {
-            // Given
             val fixture = Fixture()
             val entered = CountDownLatch(1)
             val release = CountDownLatch(1)
@@ -474,10 +465,8 @@ class JdaVoiceSessionPortTest {
             }
             assertTrue(entered.await(5, TimeUnit.SECONDS), "the first playback did not reach the connection")
 
-            // When
             val second = port.play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-            // Then
             assertEquals(
                 VoicePlaybackResult.Rejected(VoiceRequestRejection.PLAYBACK_IN_PROGRESS),
                 second,
@@ -492,17 +481,14 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given an unexpected gateway failure When playing Then map to internal error and still clean up`() = runBlocking {
-        // Given
         val fixture = Fixture()
         every { fixture.audioManager.openAudioConnection(any()) } answers {
             fixture.events += "open"
             error("unexpected gateway failure")
         }
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Failed(VoiceFailureReason.INTERNAL_ERROR), result)
         assertTrue(fixture.events.contains("close"))
         assertTrue(fixture.events.contains("listener:clear"))
@@ -510,7 +496,6 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given a queued connection that appears then clears When cancelled Then cleanup is confirmed`() = runBlocking {
-        // Given
         val fixture = Fixture()
         every { fixture.audioManager.openAudioConnection(any()) } answers {
             fixture.events += "open"
@@ -520,10 +505,8 @@ class JdaVoiceSessionPortTest {
             if (stateReads.getAndIncrement() == 0) fixture.voiceState else null
         }
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Failed(VoiceFailureReason.CONNECT_TIMEOUT), result)
         assertTrue(stateReads.get() >= 2, "cleanup must poll the bot voice state until it clears")
         assertTrue(fixture.events.contains("close"))
@@ -531,7 +514,6 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given the frame source fails When playing Then report an internal error`() = runBlocking {
-        // Given
         val fixture = Fixture()
         val failing = object : AudioFrameSource {
             override val format: AudioFrameFormat = AudioFrameFormat.OPUS_20MS
@@ -540,10 +522,8 @@ class JdaVoiceSessionPortTest {
             override fun close() = Unit
         }
 
-        // When
         val result = fixture.port().play(fixture.context, failing)
 
-        // Then
         assertEquals(VoicePlaybackResult.Failed(VoiceFailureReason.INTERNAL_ERROR), result)
         assertTrue(fixture.events.contains("close"))
     }
@@ -551,17 +531,14 @@ class JdaVoiceSessionPortTest {
     @Test
     fun `Given the requested disconnect is not confirmed When cleanup runs Then report an unconfirmed disconnect`() =
         runBlocking {
-            // Given
             val fixture = Fixture()
             every { fixture.audioManager.closeAudioConnection() } answers {
                 fixture.events += "close"
                 fixture.connected = false
             }
 
-            // When
             val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-            // Then
             assertEquals(VoicePlaybackResult.Failed(VoiceFailureReason.DISCONNECT_UNCONFIRMED), result)
             assertTrue(fixture.events.contains("close"))
         }
@@ -572,10 +549,8 @@ class JdaVoiceSessionPortTest {
         val fixture = Fixture()
         every { fixture.voiceState.channel } returns mockk<AudioChannelUnion>()
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Rejected(VoiceRequestRejection.UNSUPPORTED_CHANNEL), result)
         assertFalse(fixture.events.contains("open"))
         assertFalse(fixture.events.contains("handler:set"))
@@ -595,10 +570,8 @@ class JdaVoiceSessionPortTest {
             }
             withTimeout(2_000) { fixture.opened.await() }
 
-            // When
             withTimeout(1_000) { playback.cancelAndJoin() }
 
-            // Then
             assertTrue(playback.isCancelled)
             assertEquals(
                 listOf(
@@ -625,10 +598,8 @@ class JdaVoiceSessionPortTest {
             }
             withTimeout(2_000) { fixture.handlerInstalled.await() }
 
-            // When
             withTimeout(1_000) { playback.cancelAndJoin() }
 
-            // Then
             assertTrue(playback.isCancelled)
             assertEquals(
                 listOf(
@@ -667,10 +638,8 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given an incomplete playback When cleanup also fails Then preserve the playback failure`() = runBlocking {
-        // Given
         val fixture = Fixture(failClose = true)
 
-        // When
         val result = fixture.port().play(
             fixture.context,
             FakeFrameSource(actualFrames = 2, expectedFrames = 5),
@@ -689,7 +658,6 @@ class JdaVoiceSessionPortTest {
             fixture.events += "open"
         }
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
         // Then: the primary connect failure is preserved over the secondary cleanup failure.
@@ -701,10 +669,8 @@ class JdaVoiceSessionPortTest {
     @Test
     fun `Given a completed playback When closing the connection fails Then report an unconfirmed disconnect`() =
         runBlocking {
-            // Given
             val fixture = Fixture(failClose = true)
 
-            // When
             val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
             // Then: playback completed, but cleanup failed, so this is never a clean success.
@@ -718,10 +684,8 @@ class JdaVoiceSessionPortTest {
         // Given: the disconnect is confirmed, but the audio-manager restore fails.
         val fixture = Fixture(failRestoreListener = true)
 
-        // When
         val result = fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1))
 
-        // Then
         assertEquals(VoicePlaybackResult.Failed(VoiceFailureReason.CLEANUP_FAILED), result)
         assertTrue(fixture.events.contains("close"))
         assertFalse(fixture.events.contains("listener:clear"))
@@ -733,7 +697,6 @@ class JdaVoiceSessionPortTest {
             // Given: the disconnect is confirmed, but the listener restore fails.
             val fixture = Fixture(failRestoreListener = true)
 
-            // When
             val result = fixture.port().play(
                 fixture.context,
                 FakeFrameSource(actualFrames = 2, expectedFrames = 5),
@@ -747,11 +710,9 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given a completed playback When a cleanup step throws an Error Then rethrow it and still run the remaining steps`() {
-        // Given
         val fatal = AssertionError("cannot clear the voice send handler")
         val fixture = Fixture(clearHandlerFailure = fatal)
 
-        // When
         val thrown = assertThrows(AssertionError::class.java) {
             runBlocking { fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1)) }
         }
@@ -766,16 +727,13 @@ class JdaVoiceSessionPortTest {
 
     @Test
     fun `Given a completed playback When a cleanup step throws a cancellation Then rethrow it as a cancellation`() {
-        // Given
         val fatal = CancellationException("voice cleanup cancelled")
         val fixture = Fixture(clearHandlerFailure = fatal)
 
-        // When
         val thrown = assertThrows(CancellationException::class.java) {
             runBlocking { fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1)) }
         }
 
-        // Then
         assertEquals(fatal.message, thrown.message)
         assertTrue(fixture.events.contains("close"), "the connection must still be closed")
         assertTrue(fixture.events.contains("listener:clear"), "the listener must still be restored")
@@ -796,7 +754,6 @@ class JdaVoiceSessionPortTest {
                 fixture.listener?.onStatusChange(ConnectionStatus.AUDIO_REGION_CHANGE)
             }
 
-            // When
             val thrown = assertThrows(AssertionError::class.java) {
                 runBlocking { fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1)) }
             }
@@ -823,7 +780,6 @@ class JdaVoiceSessionPortTest {
                 throw primaryCancellation
             }
 
-            // When
             val thrown = assertThrows(CancellationException::class.java) {
                 runBlocking { fixture.port().play(fixture.context, FakeFrameSource(actualFrames = 1)) }
             }

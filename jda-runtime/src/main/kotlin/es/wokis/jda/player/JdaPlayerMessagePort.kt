@@ -8,13 +8,7 @@ import es.wokis.player.PlayerMessagePort
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 
-/**
- * JDA implementation of the text-only [PlayerMessagePort].
- *
- * Only plain text is sent, edited or deleted: no embeds, components or attachments are
- * involved. The channel is always resolved from the supplied neutral [ChannelId]; there is
- * no fallback to another channel.
- */
+/** Plain-text [PlayerMessagePort]; no embeds/components and no channel fallback. */
 internal class JdaPlayerMessagePort(
     private val jda: JDA,
 ) : PlayerMessagePort {
@@ -48,7 +42,7 @@ private fun PlayerMessageId.toJdaId(): Long = value.toJdaLong("Message id")
 
 private fun ULong.toJdaLong(label: String): Long {
     require(this <= Long.MAX_VALUE.toULong()) {
-        "$label $this does not fit in JDA's signed 64-bit id range"
+        "$label does not fit in JDA's signed 64-bit id range"
     }
     return toLong()
 }

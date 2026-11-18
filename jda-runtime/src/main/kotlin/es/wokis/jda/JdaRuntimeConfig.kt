@@ -1,66 +1,70 @@
 package es.wokis.jda
 
-import es.wokis.domain.model.GuildId
+import es.wokis.exceptions.EmptyDeezerMasterDecryptionKeyException
+import es.wokis.exceptions.EmptyDiscordTokenException
+import es.wokis.player.engine.config.PlayerSourcesConfig
+import es.wokis.player.engine.config.toPlayerSourcesConfig
+import es.wokis.services.config.Config
+import es.wokis.services.config.ConfigLoader
+import es.wokis.services.config.DEFAULT_CONFIG_PATH
+import java.nio.file.Path
 
 /**
- * Validated environment configuration for the isolated JDA runtime.
- *
- * Values are immutable and validated before any JDA client is created. The token is deliberately
- * kept out of [toString] and out of every validation error, so it cannot leak through logs.
+ * Validated configuration for the isolated JDA runtime, loaded from the shared
+ * `./data/config.json` with no env override. Neither [token] nor [sources] is ever rendered.
  */
 internal data class JdaRuntimeConfig(
     val token: String,
-    val guildId: GuildId,
+    val sources: PlayerSourcesConfig = PlayerSourcesConfig(),
 ) {
-    override fun toString(): String = "JdaRuntimeConfig(guildId=$guildId)"
+    override fun toString(): String = "JdaRuntimeConfig(tokenSet=${token.isNotBlank()})"
 
     companion object {
-        const val ENV_TOKEN = "DISCORD_BOT_TOKEN"
-        const val ENV_GUILD_ID = "DISCORD_DEV_GUILD_ID"
-
-        /**
-         * Reads and validates the runtime configuration from [env].
-         *
-         * @throws JdaRuntimeConfigException when the token is missing or blank, or when the guild
-         * id is missing, non-numeric or not positive. Messages name the environment variable but
-         * never include the configured token.
-         */
-        fun fromEnv(env: Map<String, String> = System.getenv()): JdaRuntimeConfig = JdaRuntimeConfig(
-            token = readToken(env),
-            guildId = GuildId.fromDecimal(readGuildId(env).toString()),
-        )
-
-        private fun readToken(env: Map<String, String>): String {
-            val token = env[ENV_TOKEN]?.trim().orEmpty()
-            if (token.isEmpty()) {
+        /** @throws JdaRuntimeConfigException when the token is blank. */
+        fun fromConfig(config: Config): JdaRuntimeConfig {
+            if (config.discordBotToken.isBlank()) {
                 throw JdaRuntimeConfigException(
-                    "Missing $ENV_TOKEN. Provide it through the environment; it is never read from source.",
+                    "The shared configuration has an empty or blank discord_bot_token",
                 )
             }
-            return token
-        }
-
-        private fun readGuildId(env: Map<String, String>): Long {
-            val rawGuildId = env[ENV_GUILD_ID]?.trim().orEmpty()
-            if (rawGuildId.isEmpty()) {
-                throw JdaRuntimeConfigException(
-                    "Missing $ENV_GUILD_ID. Provide the positive numeric id of the development guild.",
-                )
-            }
-            val guildId = rawGuildId.toLongOrNull()
-            if (guildId == null || guildId <= 0L) {
-                throw JdaRuntimeConfigException(
-                    "$ENV_GUILD_ID must be a positive numeric guild id; global command registration is not allowed.",
-                )
-            }
-            return guildId
+            return JdaRuntimeConfig(
+                token = config.discordBotToken,
+                sources = config.toPlayerSourcesConfig(),
+            )
         }
     }
 }
 
 /**
- * Thrown when [JdaRuntimeConfig.fromEnv] cannot build a valid configuration.
+ * Loads the shared config from the root data directory shared with the Kord runtime.
  *
- * Messages never contain the configured bot token.
+ * Both runtimes resolve `./data` from the root CWD, so they must not run concurrently against that
+ * same mutable directory.
  */
-internal class JdaRuntimeConfigException(message: String) : IllegalArgumentException(message)
+internal fun loadSharedConfig(
+    path: Path = DEFAULT_CONFIG_PATH,
+    loader: ConfigLoader = ConfigLoader(),
+): Config = try {
+    loader.load(path)
+} catch (error: EmptyDiscordTokenException) {
+    throw JdaRuntimeConfigException(
+        "The shared configuration at '$path' has an empty or blank discord_bot_token",
+        error,
+    )
+} catch (error: EmptyDeezerMasterDecryptionKeyException) {
+    throw JdaRuntimeConfigException(
+        "The shared configuration at '$path' enables Deezer without a master decryption key",
+        error,
+    )
+} catch (error: IllegalArgumentException) {
+    // Do not chain: a decoder message can embed the raw JSON, and the cause would expose it again.
+    throw JdaRuntimeConfigException(
+        "The shared configuration at '$path' is invalid (${error.javaClass.simpleName})",
+    )
+}
+
+/** Configuration failure whose message never contains the token or a provider secret. */
+internal class JdaRuntimeConfigException(
+    message: String,
+    cause: Throwable? = null,
+) : IllegalArgumentException(message, cause)

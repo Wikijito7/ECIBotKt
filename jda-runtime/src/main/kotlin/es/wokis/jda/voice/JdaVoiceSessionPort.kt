@@ -33,26 +33,25 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * JDA implementation of the neutral [VoiceSessionPort].
  *
- * The port resolves the invoking user's cached voice state, connects the bot to their
- * regular [VoiceChannel], sends the supplied pre-encoded Opus frames through a
- * [JdaAudioSendHandler] and attempts a bounded cleanup whose goal is to restore the
- * [AudioManager] state. Restoration is best-effort: failures are surfaced as
- * [VoiceFailureReason.CLEANUP_FAILED] or [VoiceFailureReason.DISCONNECT_UNCONFIRMED] instead of
- * being reported as a clean success, while a fatal cleanup failure (`Error` or cancellation) is
- * rethrown rather than converted into an ordinary result. No gateway identifier is logged or
- * returned in a user-facing message.
+ * Resolves the invoking user's cached voice state, connects the bot to their regular
+ * [VoiceChannel] and sends pre-encoded Opus frames through a [JdaAudioSendHandler]. At most one
+ * playback runs at a time, and the connect/playback waits are coroutine-cancellable, so
+ * cancellation starts cleanup immediately instead of waiting for a timeout.
  *
- * At most one playback runs at a time. The connect and playback waits are coroutine-cancellable,
- * so cancellation resumes them immediately and starts cleanup instead of waiting for the
- * connect or tone timeout. Cleanup is attempted under `NonCancellable` with bounded waits, so
- * cancellation cannot skip the attempt; each cleanup step is best-effort and its failure is
- * recorded and surfaced. Cleanup first closes the active [JdaAudioSendHandler],
- * which invalidates it and drops any prefetched frame, and only then detaches it from the
+ * Cleanup is attempted under `NonCancellable` with bounded waits, so cancellation cannot skip it;
+ * each step is best-effort and its failure is surfaced rather than reported as a clean success. It
+ * closes the active handler (dropping any prefetched frame) before detaching it from the
  * [AudioManager]; the handler never closes the caller-owned source.
  *
- * An [AudioManager] that already owns a connected or connecting session in the target guild is
- * never moved, replaced or closed: the request is rejected with
- * [VoiceRequestRejection.VOICE_SESSION_ALREADY_ACTIVE] before any manager state is mutated.
+ * A session already connected or connecting in the target guild is never moved, replaced or
+ * closed: the request is rejected with [VoiceRequestRejection.VOICE_SESSION_ALREADY_ACTIVE]
+ * before any manager state is mutated. No gateway identifier is logged or returned to the user.
+ *
+ * Failure precedence: cleanup never downgrades a fatal primary failure (`Error` or cancellation) —
+ * it keeps precedence and cleanup failures are attached as suppressed. When playback completed but
+ * cleanup failed, the result is [VoiceFailureReason.DISCONNECT_UNCONFIRMED] if the connection was
+ * not confirmed closed, otherwise [VoiceFailureReason.CLEANUP_FAILED]; a fatal cleanup failure is
+ * rethrown.
  */
 internal class JdaVoiceSessionPort(
     private val jda: JDA,
@@ -220,7 +219,7 @@ internal class JdaVoiceSessionPort(
             }
         }
 
-        // Both race arms can be ready at once; prefer an already recorded loss before flushing.
+        // Both race arms can be ready at once; prefer a recorded loss before flushing.
         waiter.checkTerminal()
         delay(flushMillis)
         waiter.checkTerminal()
@@ -235,14 +234,9 @@ internal class JdaVoiceSessionPort(
     }
 
     /**
-     * Races frame completion against the waiter's terminal failure signal.
-     *
-     * The "frames" arm completes when the expected frames have been handed to JDA's send loop
-     * or the source ended; it is a hand-off signal, not network delivery.
-     *
-     * A connection loss therefore ends playback promptly and maps to
-     * [VoiceFailureReason.CONNECTION_LOST] instead of waiting for the tone timeout. The losing
-     * wait is cancelled; both waits are coroutine-cancellable.
+     * Races frame completion against the waiter's terminal signal, so a connection loss ends
+     * playback promptly instead of waiting for the tone timeout. The frames arm is a hand-off
+     * signal, not network delivery; the losing wait is cancelled.
      */
     private suspend fun awaitPlaybackSignal(
         sendHandler: JdaAudioSendHandler,
@@ -264,19 +258,8 @@ internal class JdaVoiceSessionPort(
     }
 
     /**
-     * Attempts to restore the audio manager and classifies every cleanup failure.
-     *
-     * Runs under [NonCancellable] so coroutine cancellation cannot skip the cleanup attempt.
-     * Each step is best-effort: a step that fails is recorded instead of aborting the rest, so
-     * the remaining restores are still attempted.
-     * The active send handler is closed before it is detached from the [AudioManager], so it
-     * cannot hand a prefetched frame to JDA after the session starts closing. The handler does
-     * not own the [AudioFrameSource], so closing it never closes the caller's source.
-     * Failures are split into disconnect failures (the voice connection was not confirmed
-     * closed) and other cleanup failures, so the caller can keep
-     * [VoiceFailureReason.DISCONNECT_UNCONFIRMED] only for a real unconfirmed disconnect.
-     * [CleanupOutcome.failure] combines every failure with suppressed exceptions so none is
-     * lost, and [CleanupOutcome.fatalFailure] keeps an `Error` or cancellation visible for rethrow.
+     * Restores the audio manager under [NonCancellable], recording each failure individually so the
+     * remaining steps still run. Disconnect failures stay separate from other cleanup failures.
      */
     private suspend fun cleanup(
         audioManager: AudioManager,
@@ -297,8 +280,7 @@ internal class JdaVoiceSessionPort(
         }
 
         try {
-            // Invalidate the handler first: a frame prefetched for the send loop is dropped and
-            // the handler can no longer provide audio, even if JDA still holds a reference.
+            // Invalidate the handler first so it cannot provide a prefetched frame while closing.
             activeSendHandler?.close()
         } catch (error: Throwable) {
             record(otherFailures, "Could not stop the voice send handler", error)
@@ -367,19 +349,9 @@ internal class JdaVoiceSessionPort(
     }
 
     /**
-     * Preserves the primary outcome and never reports a clean success when cleanup failed.
-     *
-     * A fatal cleanup failure (`Error` or [CancellationException]) is never converted into an
-     * ordinary result: it is rethrown, with the primary playback/connect failure attached, unless
-     * the primary is itself fatal and already propagating, in which case the cleanup failures are
-     * attached to it and it keeps precedence.
-     *
-     * When playback completed but cleanup failed normally, the result is
-     * [VoiceFailureReason.DISCONNECT_UNCONFIRMED] if the voice connection itself was not
-     * confirmed closed, and [VoiceFailureReason.CLEANUP_FAILED] when the disconnect was
-     * confirmed but another cleanup step failed. Otherwise the primary failure reason is kept
-     * and the cleanup failure is attached as a suppressed exception to the primary throwable
-     * (or to a synthetic anchor) before it is logged.
+     * Preserves the primary outcome and never reports a clean success when cleanup failed; see the
+     * class contract for the failure mapping. A terminal status observed after the last check still
+     * means the connection was lost.
      */
     private fun reconcileOutcome(
         outcome: VoicePlaybackResult,
@@ -387,8 +359,7 @@ internal class JdaVoiceSessionPort(
         cleanupOutcome: CleanupOutcome,
         terminalReason: String?,
     ): VoicePlaybackResult {
-        // A terminal status observed after the last explicit check still means the connection
-        // was lost; a completed tone must not be reported as a clean success.
+        // A terminal status after the last check still means the connection was lost.
         val reconciled = if (outcome is VoicePlaybackResult.Completed && terminalReason != null) {
             LOG.warn("The diagnostic voice connection was lost before cleanup finished")
             VoicePlaybackResult.Failed(VoiceFailureReason.CONNECTION_LOST)
@@ -417,16 +388,8 @@ internal class JdaVoiceSessionPort(
     }
 
     /**
-     * Rethrows a fatal cleanup failure without turning it into an ordinary result.
-     *
-     * When the primary playback/connect failure is itself fatal and already propagating (a
-     * cancellation or `Error` rethrown from the playback block), it keeps precedence: the cleanup
-     * failures are attached to it and it is rethrown again, so it is not replaced by a cleanup
-     * failure. Otherwise the fatal cleanup failure wins and the primary playback/connect failure is
-     * attached as suppressed before the fatal cleanup failure is thrown.
-     *
-     * This method always throws, so no `DISCONNECT_UNCONFIRMED` or `CLEANUP_FAILED` result can
-     * represent a fatal cleanup failure.
+     * Rethrows a fatal cleanup failure, keeping a fatal primary failure's precedence and attaching
+     * the other failures as suppressed. Always throws, so no ordinary result represents it.
      */
     private fun preserveFatalCleanupFailure(
         primaryFailure: Throwable?,
@@ -451,18 +414,12 @@ internal class JdaVoiceSessionPort(
     }
 
     /**
-     * True when this [AudioManager] already owns an audio connection, either connected or still
-     * connecting, so no new session may be opened on it.
+     * True when this [AudioManager] already owns a connection, connected or still connecting.
      *
-     * JDA 6.7.0 creates its internal `AudioConnection` as soon as the voice-server update
-     * arrives, so [AudioManager.isConnected] is already true while the connection walks through
-     * the `CONNECTING_*` statuses, and it stays true through `CONNECTED`, `AUDIO_REGION_CHANGE`
-     * and the reconnecting `ERROR_*` statuses until the manager closes the connection.
-     * [AudioManager.getConnectionStatus] can only report [ConnectionStatus.NOT_CONNECTED] while
-     * no such connection exists, so any other status belongs to a session this port must not
-     * adopt. A voice-state request that has not yet produced an `AudioConnection` has no public
-     * "attempting" flag in JDA 6.7.0; the port's own single-session guard covers its pending
-     * request.
+     * JDA 6.7.0 creates its `AudioConnection` as soon as the voice-server update arrives, so
+     * [AudioManager.isConnected] already covers the `CONNECTING_*` and reconnecting `ERROR_*`
+     * statuses; [ConnectionStatus.NOT_CONNECTED] only appears when no connection exists. A pending
+     * voice-state request has no public "attempting" flag, so the port's own guard covers it.
      */
     private fun AudioManager.hasActiveSession(): Boolean =
         isConnected || connectionStatus != ConnectionStatus.NOT_CONNECTED
@@ -496,11 +453,8 @@ internal class JdaVoiceSessionPort(
     }
 
     /**
-     * Collected cleanup failures, split by whether they concern the voice disconnect itself.
-     * Multiple failures are combined into one throwable with the rest attached as suppressed,
-     * so the caller can preserve the primary playback failure without losing the lifecycle
-     * error. A fatal failure (`Error` or [CancellationException]) is tracked separately so the
-     * caller can rethrow it instead of reporting an ordinary result.
+     * Cleanup failures split by whether they concern the disconnect itself. Fatal failures are
+     * tracked separately so the caller can rethrow them instead of reporting an ordinary result.
      */
     private class CleanupOutcome(
         private val disconnectFailures: List<Throwable>,
@@ -515,7 +469,6 @@ internal class JdaVoiceSessionPort(
         /** First `Error` or [CancellationException] from any step, or null when none is fatal. */
         fun fatalFailure(): Throwable? = failures.firstOrNull { it.isFatal() }
 
-        /** Adds every collected failure except [target] as a suppressed exception of [target]. */
         fun attachTo(target: Throwable) {
             failures.forEach { failure ->
                 if (failure !== target && !target.suppressed.contains(failure)) {
@@ -559,17 +512,12 @@ private fun GuildId.toJdaId(): Long = value.toJdaLong("Guild id")
 
 private fun UserId.toJdaId(): Long = value.toJdaLong("User id")
 
-/**
- * True for cleanup failures that must never be converted into an ordinary voice result.
- *
- * `Error`s and [CancellationException]s are control flow, not best-effort cleanup noise: the
- * playback path rethrows them with the primary playback/connect failure preserved.
- */
+/** True for failures that must never become an ordinary voice result (`Error` or cancellation). */
 private fun Throwable.isFatal(): Boolean = this is Error || this is CancellationException
 
 private fun ULong.toJdaLong(label: String): Long {
     require(this <= Long.MAX_VALUE.toULong()) {
-        "$label $this does not fit in JDA's signed 64-bit id range"
+        "$label does not fit in JDA's signed 64-bit id range"
     }
     return toLong()
 }

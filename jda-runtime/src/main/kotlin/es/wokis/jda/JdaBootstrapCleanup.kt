@@ -18,10 +18,8 @@ private const val JDA_SHUTDOWN_STEP = "jda-shutdown"
 private const val SHUTDOWN_TIMEOUT_SECONDS = 10L
 
 /**
- * One named cleanup action owned by the isolated bootstrap.
- *
- * Steps are intentionally independent: the bootstrap runs every step even when an earlier one
- * throws, so a failing voice disconnect cannot skip the router, shutdown-hook or JDA cleanup.
+ * One named cleanup action. Steps are independent: the bootstrap runs every step even when an
+ * earlier one throws, so a failing disconnect cannot skip the later cleanup.
  */
 internal class BootstrapCleanupStep(
     val name: String,
@@ -32,12 +30,7 @@ internal class BootstrapCleanupStep(
     fun run() = action()
 }
 
-/**
- * Resources that exist when the bootstrap reaches its cleanup phase.
- *
- * Every handle is nullable because a failure can occur before it is created. A missing handle
- * simply removes its step instead of producing a no-op cleanup.
- */
+/** Resources present at cleanup; a handle missing because of an early failure just removes its step. */
 internal data class BootstrapCleanupTargets(
     val jda: JDA?,
     val router: AutoCloseable?,
@@ -47,12 +40,9 @@ internal data class BootstrapCleanupTargets(
 )
 
 /**
- * Collected cleanup failures.
- *
- * [failure] is the first collected failure and is used for reporting. [fatalFailure] is the first
- * `Error` or [CancellationException]; fatal failures are rethrown by the bootstrap instead of being
- * reported only as an exit code. [attachTo] adds the remaining failures as suppressed exceptions, so
- * a primary bootstrap failure keeps its type and message.
+ * Collected cleanup failures. [fatalFailure] (`Error` or cancellation) is rethrown by the bootstrap
+ * instead of becoming only an exit code; [attachTo] adds the rest as suppressed exceptions so a
+ * primary failure keeps its type and message.
  */
 internal class BootstrapCleanupReport internal constructor(
     private val failures: List<Throwable>,
@@ -77,24 +67,16 @@ internal class BootstrapCleanupReport internal constructor(
     }
 
     /**
-     * Returns a report that records [failure] before this report's failures.
-     *
-     * Used when a step factory fails but the production steps still run: the factory failure stays
-     * visible in the report, so a successful startup cannot be reported as clean, and a successful
-     * factory keeps its place as the reported failure.
+     * Records [failure] before this report's failures, so a step-factory failure stays visible even
+     * when the production steps still run and succeed.
      */
     fun withLeadingFailure(failure: Throwable): BootstrapCleanupReport =
         BootstrapCleanupReport(listOf(failure) + failures)
 }
 
 /**
- * Runs every [steps] entry independently and collects the failures.
- *
- * A failing step is logged and does not stop the remaining steps. Fatal `Error`s and
- * [CancellationException]s are collected like any other failure but are not hidden: the caller
- * rethrows them (see [fatalFailure]) after deciding how to preserve the primary exception.
- *
- * This function never throws because of a cleanup step; a thrown step is recorded instead.
+ * Runs every [steps] entry independently, logging and recording failures instead of throwing. Fatal
+ * failures are collected too, so the caller can rethrow them via [BootstrapCleanupReport.fatalFailure].
  */
 internal fun runBootstrapCleanup(
     steps: List<BootstrapCleanupStep>,
@@ -118,13 +100,8 @@ internal fun runBootstrapCleanup(
 }
 
 /**
- * Production cleanup steps in execution order.
- *
- * The voice disconnect runs before JDA shutdown so an active diagnostic connection is closed while
- * the gateway client is still alive. The command router is closed next, then the shutdown hook is
- * removed, and the JDA client is shut down last with a bounded await. Removing the hook while the
- * JVM is already shutting down is treated as benign by [removeShutdownHook], so that normal Ctrl+C
- * does not turn into a cleanup failure.
+ * Production cleanup steps in execution order. The voice disconnect runs before JDA shutdown so an
+ * active connection closes while the client is alive; the client shuts down last with a bounded wait.
  */
 internal fun defaultBootstrapCleanupSteps(
     targets: BootstrapCleanupTargets,
@@ -158,14 +135,9 @@ internal fun defaultBootstrapCleanupSteps(
 }
 
 /**
- * Removes [hook] from the runtime shutdown-hook set as a best-effort cleanup step.
- *
- * `Runtime.removeShutdownHook` documents an [IllegalStateException] for exactly one condition: the
- * JVM's shutdown sequence has already begun, so the JDK forbids both adding and removing hooks. That
- * is benign here: the process is already stopping, so the hook cannot and does not need to be
- * removed. The exception type is enough to identify it, so the message is deliberately not
- * inspected. A [SecurityException] or any other failure is a real cleanup failure and is rethrown so
- * the cleanup report does not hide it.
+ * Removes [hook] as a best-effort cleanup step. [IllegalStateException] means the JVM is already
+ * shutting down, which is benign (the process is stopping and the hook needs no removal); any other
+ * failure is a real cleanup failure and is rethrown.
  */
 internal fun removeShutdownHook(hook: Thread) {
     try {
@@ -176,11 +148,8 @@ internal fun removeShutdownHook(hook: Thread) {
 }
 
 /**
- * Shuts JDA down with a bounded wait.
- *
- * The wait is capped by [timeoutSeconds]; a client that does not finish is forced with
- * `shutdownNow()` instead of blocking the process exit indefinitely. The timeout is injectable so
- * the timeout path can be verified without waiting the production interval.
+ * Shuts JDA down with a wait capped by [timeoutSeconds], forcing `shutdownNow()` rather than blocking
+ * process exit indefinitely. The timeout is injectable so the timeout path is testable.
  */
 internal fun shutdownJda(
     client: JDA,

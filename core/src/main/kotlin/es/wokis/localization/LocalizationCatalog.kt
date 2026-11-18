@@ -14,10 +14,9 @@ private const val LANG_PATH = "/lang"
 /**
  * Neutral, gateway-free catalog of localized messages.
  *
- * The catalog keeps the legacy resource format unchanged: one `lang.yml` for the default
- * (`en-US`) strings and one `lang_<tag>.yml` file per translated locale. Values are resolved
- * per key, so a selectable locale without a translation file (for example `ar` or `he`) falls
- * back to the English string for that key instead of hiding the message.
+ * Keeps the legacy resource format: `lang.yml` for the default (`en-US`) strings and one
+ * `lang_<tag>.yml` per translated locale. Values resolve per key, so a selectable locale without a
+ * file (`ar`, `he`) falls back to the English string instead of hiding the message.
  */
 class LocalizationCatalog private constructor(
     private val entries: Map<String, Map<LocaleCode, String>>,

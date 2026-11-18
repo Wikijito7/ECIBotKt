@@ -50,17 +50,14 @@ class NeutralCommandPortsTest {
 
     @Test
     fun `Given neutral command ports When inspected Then expose no gateway types`() {
-        // When
         val offenders = neutralTypes.flatMap { type -> gatewayReferences(type) }
 
-        // Then
         assertTrue(offenders.isEmpty(), "Gateway types leaked into the neutral boundary: $offenders")
     }
 
     @Test
     fun `Given a plain fake responder When walkthrough command runs Then the port needs no gateway implementation`() =
         runTest {
-            // Given
             val responder = PlainResponder()
             val context = CommandContext(
                 commandName = WalkthroughCommand.COMMAND_NAME,
@@ -70,10 +67,8 @@ class NeutralCommandPortsTest {
                 locale = LocaleCode("en-US"),
             )
 
-            // When
             WalkthroughCommand().handle(context, responder)
 
-            // Then
             assertEquals(
                 "JDA walkthrough OK | guild=1 | channel=2 | user=3 | locale=en-US",
                 responder.responses.single().content,

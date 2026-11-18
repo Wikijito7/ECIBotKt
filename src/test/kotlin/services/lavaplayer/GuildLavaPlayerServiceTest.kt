@@ -58,7 +58,6 @@ class GuildLavaPlayerServiceTest {
 
     @Test
     fun `Given a paused engine When pause and resume run Then the engine is delegated`() = runTest {
-        // Given
         coJustRun { playerEngine.pause() }
         coJustRun { playerEngine.resume() }
 
@@ -73,17 +72,14 @@ class GuildLavaPlayerServiceTest {
 
     @Test
     fun `Given a queue When skip shuffle and stop run Then the engine is delegated`() = runTest {
-        // Given
         coJustRun { playerEngine.skip() }
         coJustRun { playerEngine.shuffle() }
         coJustRun { playerEngine.stop() }
 
-        // When
         playerService.skip()
         playerService.shuffle()
         playerService.stop()
 
-        // Then
         coVerify(exactly = 1) { playerEngine.skip() }
         coVerify(exactly = 1) { playerEngine.shuffle() }
         coVerify(exactly = 1) { playerEngine.stop() }
@@ -91,36 +87,28 @@ class GuildLavaPlayerServiceTest {
 
     @Test
     fun `Given a load request When loadAndPlay runs Then the engine receives the same url`() {
-        // Given
         coJustRun { playerEngine.loadAndPlay(any(), any()) }
 
-        // When
         playerService.loadAndPlay("https://example.test/track", addToFront = true)
 
-        // Then
         coVerify(exactly = 1) { playerEngine.loadAndPlay("https://example.test/track", true) }
     }
 
     @Test
     fun `Given a queue search When moveTrackToNext runs Then the engine result is returned`() = runTest {
-        // Given
         val moved = track("moved")
         coEvery { playerEngine.moveTrackToNext("moved") } returns moved
 
-        // When
         val actual = playerService.moveTrackToNext("moved")
 
-        // Then
         assertSame(moved, actual)
     }
 
     @Test
     fun `Given an empty engine When queue emptiness is requested Then the engine answer is used`() {
-        // Given
         every { playerEngine.isQueueEmpty() } returns true
         every { playerEngine.snapshot() } returns PlayerSnapshot()
 
-        // Then
         assertTrue(playerService.isQueueEmpty())
         assertFalse(playerService.isConnected())
         assertNull(playerService.getCurrentPlayingTrack())

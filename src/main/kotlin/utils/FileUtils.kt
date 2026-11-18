@@ -7,6 +7,14 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
+/*
+ * Root-runtime file helpers.
+ *
+ * `:configuration`'s `ConfigLoader` owns seeding `./data/config.json`; `:locale-persistence` keeps
+ * its own private create-if-missing helper. [getFolderContent] is still used by the root sound
+ * commands, while [getOrCreateFile] and [updateFile] remain for their existing API and tests only.
+ */
+
 /**
  * Tries to find given file path and name to return it. If this file is not found, it will create it and return
  * it with the given template, if given any, or empty otherwise.

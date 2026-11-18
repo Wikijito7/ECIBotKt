@@ -43,12 +43,9 @@ private const val MAX_RETRIES = 5
 /**
  * Lavaplayer implementation of the shared per-guild player engine.
  *
- * One instance owns one [AudioPlayer] and one pending queue. Public commands are serialized by a
- * single-consumer mailbox; Lavaplayer's [AudioEventAdapter] only enqueues commands into that same
- * mailbox, so every queue/current/pause transition is applied by one actor in arrival order.
- *
- * The engine exposes only neutral [PlayerTrack]/[PlayerSnapshot] values. Lavaplayer `AudioTrack`
- * instances remain private to this class.
+ * Owns one [AudioPlayer] and one pending queue; a single-consumer mailbox serializes public
+ * commands, and the [AudioEventAdapter] only enqueues into it, so one actor applies every
+ * queue/current/pause transition in arrival order. Lavaplayer `AudioTrack` stays private.
  */
 internal class LavaPlayerEngine internal constructor(
     private val manager: AudioPlayerManager,

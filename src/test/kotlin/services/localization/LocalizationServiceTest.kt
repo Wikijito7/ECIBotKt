@@ -54,60 +54,48 @@ class LocalizationServiceTest {
         val expected = "ke dise iyo"
         coEvery { getGuildLocaleUseCase(GuildId(123uL)) } returns LocaleCode("es-ES")
 
-        // When
         val actual = localizationService.getString(key, guildId = guildId)
 
-        // Then
         assertEquals(expected, actual)
     }
 
     @Test
     fun `Given guildId When getString is called Then use case receives neutral guild id`() = runTest {
-        // Given
         val key = "test_command_description"
         val guildId = Snowflake(123)
         coEvery { getGuildLocaleUseCase(GuildId(123uL)) } returns LocaleCode("es-ES")
 
-        // When
         localizationService.getString(key, guildId = guildId)
 
-        // Then
         coVerify(exactly = 1) { getGuildLocaleUseCase(GuildId(123uL)) }
     }
 
     @Test
     fun `Given guildId with no custom locale When getString is called with discordLocale Then return interaction locale`() = runTest {
-        // Given
         val key = "test_command_description"
         val guildId = Snowflake(123)
         val expected = "ke dise iyo"
         coEvery { getGuildLocaleUseCase(GuildId(123uL)) } returns null
 
-        // When
         val actual = localizationService.getString(key, guildId = guildId, discordLocale = Locale.SPANISH_SPAIN)
 
-        // Then
         assertEquals(expected, actual)
     }
 
     @Test
     fun `Given invalid persisted locale When getString is called with discordLocale Then fall back to interaction locale`() = runTest {
-        // Given
         val key = "test_command_description"
         val guildId = Snowflake(123)
         val expected = "ke dise iyo"
         coEvery { getGuildLocaleUseCase(GuildId(123uL)) } returns LocaleCode("not-a-locale")
 
-        // When
         val actual = localizationService.getString(key, guildId = guildId, discordLocale = Locale.SPANISH_SPAIN)
 
-        // Then
         assertEquals(expected, actual)
     }
 
     @Test
     fun `Given invalid persisted locale When getString is called without discordLocale Then fall back to US English`() = runTest {
-        // Given
         val key = "test_command_description"
         val guildId = Snowflake(123)
         val expected = "test in junit tests"
@@ -135,7 +123,6 @@ class LocalizationServiceTest {
 
     @Test
     fun `Given Arabic or Hebrew When getString is called Then fall back to US English`() = runTest {
-        // Given
         val key = "test_command_description"
         val expected = "test in junit tests"
 
@@ -147,13 +134,11 @@ class LocalizationServiceTest {
 
     @Test
     fun `Given a persisted Arabic locale When getString is called Then keep the valid locale and fall back per key`() = runTest {
-        // Given
         val key = "test_command_description"
         val guildId = Snowflake(123)
         val expected = "test in junit tests"
         coEvery { getGuildLocaleUseCase(GuildId(123uL)) } returns LocaleCode("ar")
 
-        // When
         val actual = localizationService.getString(
             key,
             guildId = guildId,
@@ -256,13 +241,11 @@ class LocalizationServiceTest {
 
     @Test
     fun `Given invalid persisted locale When getStringFormat is used with discordLocale Then fall back to interaction locale`() = runTest {
-        // Given
         val key = "test_args_string"
         val guildId = Snowflake(123)
         val result = "esta string tiene argumentos, yay!"
         coEvery { getGuildLocaleUseCase(GuildId(123uL)) } returns LocaleCode("not-a-locale")
 
-        // When
         val actual = localizationService.getStringFormat(
             key,
             guildId = guildId,
@@ -270,7 +253,6 @@ class LocalizationServiceTest {
             arguments = arrayOf("yay!")
         )
 
-        // Then
         assertEquals(result, actual)
     }
 

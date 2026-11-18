@@ -1,6 +1,8 @@
 package es.wokis.exceptions
 
+/** Shared semantic validation failure; free of gateway dependencies. */
 class EmptyDiscordTokenException : IllegalArgumentException("Discord token shouldn't be empty")
+
 class EmptyDeezerMasterDecryptionKeyException : IllegalArgumentException(
     "Deezer is enabled but no master decryption key was provided"
 )

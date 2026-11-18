@@ -7,26 +7,19 @@ import es.wokis.player.engine.model.PlayerTrack
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Gateway-neutral, per-guild real-player engine.
+ * Gateway-neutral, per-guild player engine.
  *
- * All state transitions are serialized through an internal mailbox/actor: public suspend
- * commands enqueue one command, and the actor applies it in order. Lavaplayer callbacks only
- * enqueue, so no Lavaplayer thread ever mutates the queue or blocks on presentation code.
- *
- * The same contract is used by the root Kord adapter and by the isolated JDA runtime; no Kord,
- * JDA, libdave or Lavaplayer type appears in it. Implementations must not expose Lavaplayer
- * `AudioTrack` values through public signatures.
+ * All transitions are serialized through an internal mailbox/actor: public suspend commands enqueue
+ * one command and the actor applies it in order; Lavaplayer callbacks only enqueue, so no audio
+ * thread mutates the queue or blocks on presentation. No gateway or Lavaplayer type appears in the
+ * contract, and implementations must not expose Lavaplayer `AudioTrack` publicly.
  */
 interface PlayerEngine : AutoCloseable {
 
     /**
-     * Ordered stream of state-transition events.
-     *
-     * This is intentionally a **single-subscriber** stream: the gateway adapter exclusively owns
-     * collection for its engine. Collecting it more than once throws instead of silently
-     * load-balancing events between consumers. Phase 4/UI observers must consume the adapter's
-     * presentation state, not this stream; if fan-out is required, add it explicitly at the
-     * adapter layer.
+     * Ordered, intentionally **single-subscriber** event stream: the gateway adapter exclusively
+     * owns collection. A second collector throws instead of load-balancing events away; UI
+     * observers consume adapter presentation state, and fan-out belongs at the adapter layer.
      */
     val events: Flow<PlayerEvent>
 
@@ -57,13 +50,11 @@ interface PlayerEngine : AutoCloseable {
     /** Clears the queue, stops the current track and marks the stream terminal. */
     suspend fun stop(): Boolean
 
-    /** Shuffles the pending queue. */
     suspend fun shuffle(): Boolean
 
     /** Moves a matching pending track to the front, or returns `null` when no track matches. */
     suspend fun moveTrackToNext(searchTerm: String): PlayerTrack?
 
-    /** Current immutable snapshot of current track, queue and pause state. */
     fun snapshot(): PlayerSnapshot
 
     fun isPaused(): Boolean

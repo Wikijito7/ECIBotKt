@@ -18,22 +18,18 @@ class CancellableFutureTest {
 
     @Test
     fun `Given a completed future When awaited Then the value is propagated`() = runBlocking {
-        // Given
         val future = CompletableFuture<String>()
         future.complete("tone ready")
 
-        // Then
         assertEquals("tone ready", future.awaitCancellable())
     }
 
     @Test
     fun `Given an exceptionally completed future When awaited Then the original exception is propagated`() = runBlocking {
-        // Given
         val future = CompletableFuture<String>()
         val failure = IllegalStateException("the voice source failed")
         future.completeExceptionally(failure)
 
-        // When
         val thrown = assertFailsWith<IllegalStateException> { future.awaitCancellable<String>() }
 
         // Then: the caller receives the application exception, not an ExecutionException wrapper.
@@ -44,29 +40,23 @@ class CancellableFutureTest {
 
     @Test
     fun `Given a future completed with a CompletionException When awaited Then its cause is propagated`() = runBlocking {
-        // Given
         val future = CompletableFuture<String>()
         val cause = VoiceConnectionException("the connection was lost")
         future.completeExceptionally(CompletionException(cause))
 
-        // When
         val thrown = assertFailsWith<VoiceConnectionException> { future.awaitCancellable<String>() }
 
-        // Then
         assertEquals(cause.message, thrown.message)
     }
 
     @Test
     fun `Given a future completed with an ExecutionException When awaited Then its cause is propagated`() = runBlocking {
-        // Given
         val future = CompletableFuture<String>()
         val cause = IllegalStateException("wrapped failure")
         future.completeExceptionally(ExecutionException(cause))
 
-        // When
         val thrown = assertFailsWith<IllegalStateException> { future.awaitCancellable<String>() }
 
-        // Then
         assertEquals(cause.message, thrown.message)
     }
 
@@ -80,10 +70,8 @@ class CancellableFutureTest {
             }
             assertFalse(future.isDone)
 
-            // When
             withTimeout(1_000) { job.cancelAndJoin() }
 
-            // Then
             assertTrue(job.isCancelled)
             assertTrue(future.isCancelled, "cancelling the wait must cancel the underlying future")
         }
@@ -96,10 +84,8 @@ class CancellableFutureTest {
             future.awaitCancellable(cancelFutureOnCancellation = false)
         }
 
-        // When
         withTimeout(1_000) { job.cancelAndJoin() }
 
-        // Then
         assertTrue(job.isCancelled)
         assertFalse(future.isCancelled)
         assertFalse(future.isDone)

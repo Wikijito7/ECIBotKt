@@ -29,10 +29,8 @@ import es.wokis.utils.toLocaleCode
 private const val ARGUMENT_LOCALE = "locale"
 
 /**
- * Deterministically selects the canonical default (`en-US`) description from the catalog map.
- *
- * Map iteration order must not decide the base command text. A catalog that lacks the default
- * entry is reported instead of silently publishing another locale's string.
+ * Picks the canonical `en-US` description explicitly: map iteration order must not decide the base
+ * text, and a catalog missing the default is reported instead of publishing another locale.
  */
 private fun Map<Locale, String>.defaultDescription(key: String): String =
     this[Locale.ENGLISH_UNITED_STATES] ?: throw NoLocalizationFoundException(key)

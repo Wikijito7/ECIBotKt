@@ -75,12 +75,8 @@ class JdaCommandRouter(
     }
 
     /**
-     * Answers a slash command that has no registered handler.
-     *
-     * The interaction is acknowledged exactly once with an ephemeral generic response. A failed
-     * gateway call is logged and never escapes: this runs in a launched coroutine, where it would
-     * otherwise surface only as an uncaught coroutine exception. Cancellation is rethrown and
-     * fatal [Error]s are not caught.
+     * Acknowledges an unknown command once with an ephemeral response. A gateway failure is logged
+     * and does not escape the launched coroutine; cancellation and fatal errors propagate.
      */
     private suspend fun respondUnsupportedCommand(event: SlashCommandInteractionEvent) {
         try {

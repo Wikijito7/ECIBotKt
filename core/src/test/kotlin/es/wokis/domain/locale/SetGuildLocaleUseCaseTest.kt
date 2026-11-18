@@ -11,51 +11,40 @@ class SetGuildLocaleUseCaseTest {
 
     @Test
     fun `Given guild and locale When invoke is called Then save the exact locale`() = runTest {
-        // Given
         val repository = FakeLocaleRepository()
         val useCase = SetGuildLocaleUseCase(repository)
 
-        // When
         useCase(guildId, LocaleCode("es-ES"))
 
-        // Then
         assertEquals(listOf(Operation.Set(guildId, LocaleCode("es-ES"))), repository.operations)
     }
 
     @Test
     fun `Given guild When removeLocale is called Then remove the guild locale`() = runTest {
-        // Given
         val repository = FakeLocaleRepository()
         val useCase = SetGuildLocaleUseCase(repository)
 
-        // When
         useCase.removeLocale(guildId)
 
-        // Then
         assertEquals(listOf(Operation.Remove(guildId)), repository.operations)
     }
 
     @Test
     fun `Given max ULong guild id When invoke is called Then forward exact values`() = runTest {
-        // Given
         val maxGuildId = GuildId(ULong.MAX_VALUE)
         val repository = FakeLocaleRepository()
         val useCase = SetGuildLocaleUseCase(repository)
 
-        // When
         useCase(maxGuildId, LocaleCode("de"))
 
-        // Then
         assertEquals(listOf(Operation.Set(maxGuildId, LocaleCode("de"))), repository.operations)
     }
 
     @Test
     fun `Given a valid catalog locale When invoke is called Then pass the canonical tag unchanged`() = runTest {
-        // Given
         val repository = FakeLocaleRepository()
         val useCase = SetGuildLocaleUseCase(repository)
 
-        // When
         useCase(guildId, LocaleCode("ar"))
 
         // Then the use case must not normalize, alias or translate the tag

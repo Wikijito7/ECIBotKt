@@ -2,11 +2,7 @@ package es.wokis.player
 
 import es.wokis.domain.model.ChannelId
 
-/**
- * Platform-neutral identifier of a player message sent by the bot.
- *
- * Keeps the raw unsigned 64-bit snowflake without exposing a gateway-library type.
- */
+/** Platform-neutral player-message id carrying the raw unsigned 64-bit snowflake. */
 @JvmInline
 value class PlayerMessageId(val value: ULong) {
 
@@ -16,9 +12,8 @@ value class PlayerMessageId(val value: ULong) {
 /**
  * Gateway-neutral, text-only port for the player message.
  *
- * Phase 2C deliberately exposes plain text only: rich player embeds and message components
- * stay in a later phase. Implementations must send, edit and delete exactly the message
- * identified by the supplied values and must not fall back to another channel.
+ * Implementations act on exactly the supplied message and channel, never a fallback channel.
+ * Rich embeds and components stay in a later phase.
  */
 interface PlayerMessagePort {
 

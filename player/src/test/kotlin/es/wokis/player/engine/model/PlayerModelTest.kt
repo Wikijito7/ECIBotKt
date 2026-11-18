@@ -9,12 +9,10 @@ class PlayerModelTest {
 
     @Test
     fun `Given custom name title and generated display Then display name precedence is stable`() {
-        // Given
         val custom = track(customName = "Custom")
         val titled = track(title = "Artist - Song")
         val generated = track()
 
-        // Then
         assertEquals("Custom", custom.displayName)
         assertEquals("Artist - Song", titled.displayName)
         assertEquals("author - title", generated.displayName)
@@ -22,7 +20,6 @@ class PlayerModelTest {
 
     @Test
     fun `Given a player track When constructed Then all neutral fields are exposed`() {
-        // Given
         val track = track(
             identifier = "track-id",
             title = "Track",
@@ -31,7 +28,6 @@ class PlayerModelTest {
             positionMillis = 123L,
         )
 
-        // Then
         assertEquals("track-id", track.identifier)
         assertEquals("Track", track.title)
         assertEquals("author", track.author)
@@ -43,14 +39,11 @@ class PlayerModelTest {
 
     @Test
     fun `Given player snapshots When constructed Then current queue and pause state are exposed`() {
-        // Given
         val current = track()
         val queued = track(identifier = "queued")
 
-        // When
         val snapshot = PlayerSnapshot(current = current, queue = listOf(queued), paused = true, hasActiveTrack = true)
 
-        // Then
         assertEquals(current, snapshot.current)
         assertEquals(listOf(queued), snapshot.queue)
         assertTrue(snapshot.paused)

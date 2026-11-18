@@ -8,6 +8,7 @@ enum class ScanMode {
 enum class SourceModule(val label: String) {
     ROOT("root"),
     CORE("core"),
+    CONFIGURATION("configuration"),
     LOCALE_PERSISTENCE("locale-persistence"),
     PLAYER("player"),
     JDA_RUNTIME("jda-runtime"),
@@ -68,6 +69,7 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
             SourceModule.ROOT -> vendor == VendorFamily.KORD
 
             SourceModule.CORE,
+            SourceModule.CONFIGURATION,
             SourceModule.LOCALE_PERSISTENCE,
             SourceModule.PLAYER,
             -> false
@@ -80,6 +82,7 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
         ScanMode.PHASE_6 -> when (module) {
             SourceModule.ROOT,
             SourceModule.CORE,
+            SourceModule.CONFIGURATION,
             SourceModule.LOCALE_PERSISTENCE,
             SourceModule.PLAYER,
             -> false
@@ -99,6 +102,7 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
             SourceModule.SPIKE -> "Vendor import allowed by the non-production spike package '$packageName'"
 
             SourceModule.CORE,
+            SourceModule.CONFIGURATION,
             SourceModule.LOCALE_PERSISTENCE,
             SourceModule.PLAYER,
             -> "Vendor import allowed"
@@ -107,6 +111,9 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
     private fun denialReason(module: SourceModule, vendor: VendorFamily, packageName: String?): String =
         when (module) {
             SourceModule.ROOT -> "The root project may not import ${vendor.displayPrefix} in mode $mode"
+
+            SourceModule.CONFIGURATION ->
+                "The framework-independent :configuration module may not import ${vendor.displayPrefix} in mode $mode"
 
             SourceModule.CORE,
             SourceModule.LOCALE_PERSISTENCE,

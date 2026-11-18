@@ -3,12 +3,8 @@ package es.wokis.player.engine.model
 /**
  * Gateway-neutral immutable snapshot of one playable track.
  *
- * The shared engine never exposes Lavaplayer types publicly: adapters receive this value and can
- * render titles, durations, artwork and playback position without depending on the audio library.
- * [positionMillis] is captured when the snapshot is created; it is not live.
- *
- * [customName] and [customFavicon] carry the radio/TTS presentation overrides that the Kord
- * adapter used to keep in its `TrackBO`.
+ * The engine never exposes Lavaplayer types publicly. [positionMillis] is captured at snapshot
+ * creation, not live; [customName] and [customFavicon] carry radio/TTS presentation overrides.
  */
 data class PlayerTrack(
     val identifier: String,

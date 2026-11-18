@@ -3,9 +3,8 @@ package es.wokis.voice
 /**
  * Gateway-neutral audio frame formats accepted by the voice ports.
  *
- * [OPUS_20MS] is a pre-encoded Opus packet that carries exactly 20 milliseconds of audio:
- * [frameSamples] decoded samples at the 48 kHz rate Opus always decodes to. The adapter must
- * not re-encode it; see [AudioFrame].
+ * [OPUS_20MS] is a pre-encoded Opus packet carrying exactly 20 ms: [frameSamples] decoded samples
+ * at Opus's fixed 48 kHz rate. The adapter must not re-encode it; see [AudioFrame].
  */
 enum class AudioFrameFormat(
     val frameDurationMillis: Int,

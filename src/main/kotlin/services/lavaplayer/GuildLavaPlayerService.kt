@@ -47,10 +47,9 @@ private const val RECONNECT_DELAY = 500L
  * Kord-side adapter over the shared per-guild player engine.
  *
  * Voice connection, player-channel messages/embeds, the leave timer, reconnect and locale
- * presentation stay in this class, because they are Kord gateway concerns. Queue, track,
- * pause/resume and retry state now live in [PlayerEngine] and are shared with the isolated JDA
- * runtime; this adapter only maps engine events to the existing Kord messages and maps the
- * continuous engine audio stream to Kord [AudioFrame]s.
+ * presentation are Kord gateway concerns and stay here; queue, track, pause/resume and retry state
+ * live in [PlayerEngine]. The adapter maps engine events to the existing Kord messages and maps
+ * the continuous engine audio stream to Kord [AudioFrame]s.
  */
 class GuildLavaPlayerService(
     appDispatchers: AppDispatchers,
@@ -326,8 +325,7 @@ class GuildLavaPlayerService(
     }
 
     private fun setUpTimer() {
-        // Cancel any pending leave before arming the new one; repeated TrackEnded events must not
-        // leave duplicate timers racing to disconnect the voice connection.
+        // Cancel any pending leave first so repeated TrackEnded events cannot leave racing timers.
         resetLeaveTimer()
         leaveTimer = Timer(true).apply {
             schedule(LEAVE_DELAY) {

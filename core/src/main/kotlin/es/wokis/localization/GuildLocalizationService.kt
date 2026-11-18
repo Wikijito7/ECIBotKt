@@ -8,14 +8,9 @@ import es.wokis.domain.model.GuildId
 /**
  * Gateway-neutral localization service shared by the Kord and JDA runtimes.
  *
- * Resolution order is the one the legacy service established:
- * 1. a persisted guild locale that belongs to the canonical catalog;
- * 2. the Discord guild default supplied by the adapter (never a user/client locale);
- * 3. the default `en-US` locale.
- *
- * A malformed or unknown stored value is ignored and falls through to the guild default. A valid
- * locale without a translation file is still selected, and [LocalizationCatalog] falls back per
- * key to the English string.
+ * Resolution order: a persisted catalog guild locale, then the adapter-supplied guild default
+ * (never a user/client locale), then `en-US`. An unknown stored value falls through; a valid locale
+ * without a translation file is still selected and [LocalizationCatalog] falls back per key.
  */
 class GuildLocalizationService(
     private val getGuildLocaleUseCase: GetGuildLocaleUseCase,

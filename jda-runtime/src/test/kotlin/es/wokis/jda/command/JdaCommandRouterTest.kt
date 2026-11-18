@@ -36,7 +36,6 @@ class JdaCommandRouterTest {
 
     @Test
     fun `Given a registered handler When the event arrives Then route the mapped context and its responder`() {
-        // Given
         val responder = RecordingResponder()
         var receivedContext: CommandContext? = null
         var receivedResponder: CommandResponder? = null
@@ -50,11 +49,9 @@ class JdaCommandRouterTest {
         )
         every { mapper.map(event) } returns context
 
-        // When
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertSame(context, receivedContext)
         assertSame(responder, receivedResponder)
         assertEquals(listOf(CommandResponse("ok", ephemeral = true)), responder.responses)
@@ -62,7 +59,6 @@ class JdaCommandRouterTest {
 
     @Test
     fun `Given a throwing handler When the event arrives Then send one generic ephemeral failure response`() {
-        // Given
         val responder = RecordingResponder()
         val router = router(
             handler { _, _ -> throw IllegalStateException("boom") },
@@ -70,11 +66,9 @@ class JdaCommandRouterTest {
         )
         every { mapper.map(event) } returns context
 
-        // When
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertEquals(
             listOf(CommandResponse("The command failed. Please try again later.", ephemeral = true)),
             responder.responses,
@@ -84,7 +78,6 @@ class JdaCommandRouterTest {
 
     @Test
     fun `Given no matching handler When the event arrives Then reply once with the generic unsupported response`() {
-        // Given
         val responder = RecordingResponder()
         var responderCreated = 0
         var factoryEvent: SlashCommandInteractionEvent? = null
@@ -99,11 +92,9 @@ class JdaCommandRouterTest {
             scope = CoroutineScope(Dispatchers.Unconfined),
         )
 
-        // When
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertEquals(1, responderCreated)
         assertSame(event, factoryEvent)
         assertEquals(
@@ -116,7 +107,6 @@ class JdaCommandRouterTest {
 
     @Test
     fun `Given duplicate handler names When constructing the router Then reject the configuration`() {
-        // Then
         assertThrows(IllegalArgumentException::class.java) {
             JdaCommandRouter(
                 handlers = listOf(
@@ -132,7 +122,6 @@ class JdaCommandRouterTest {
 
     @Test
     fun `Given a handler that already answered When it fails Then keep the router alive`() {
-        // Given
         val responder = StrictResponder()
         val router = router(
             handler { _, commandResponder ->
@@ -143,17 +132,14 @@ class JdaCommandRouterTest {
         )
         every { mapper.map(event) } returns context
 
-        // When
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertEquals(listOf(CommandResponse("partial")), responder.responses)
     }
 
     @Test
     fun `Given a handler whose defer fails When it falls back Then restore IDLE and reply immediately`() {
-        // Given
         val delegate = FakeInteractionResponseDelegate().apply {
             failNextDefer(IllegalStateException("defer rejected"))
         }
@@ -163,11 +149,9 @@ class JdaCommandRouterTest {
         }
         every { mapper.map(event) } returns context
 
-        // When
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertEquals(listOf(FakeInteractionResponseDelegate.Operation.Defer(true)), delegate.defers)
         assertEquals(listOf(FakeInteractionResponseDelegate.Operation.Reply("fallback", true)), delegate.replies)
         assertTrue(delegate.edits.isEmpty())
@@ -176,7 +160,6 @@ class JdaCommandRouterTest {
 
     @Test
     fun `Given an uncaught defer failure When the event arrives Then the router sends the generic reply`() {
-        // Given
         val delegate = FakeInteractionResponseDelegate().apply {
             failNextDefer(IllegalStateException("defer rejected"))
         }
@@ -185,11 +168,9 @@ class JdaCommandRouterTest {
         }
         every { mapper.map(event) } returns context
 
-        // When
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertEquals(listOf(FakeInteractionResponseDelegate.Operation.Defer(false)), delegate.defers)
         assertEquals(
             listOf(FakeInteractionResponseDelegate.Operation.Reply(GENERIC_FAILURE_MESSAGE, true)),
@@ -201,7 +182,6 @@ class JdaCommandRouterTest {
 
     @Test
     fun `Given an uncaught immediate reply failure When the event arrives Then the router sends the generic reply`() {
-        // Given
         val delegate = FakeInteractionResponseDelegate().apply {
             failNextReply(IllegalStateException("reply rejected"))
         }
@@ -210,11 +190,9 @@ class JdaCommandRouterTest {
         }
         every { mapper.map(event) } returns context
 
-        // When
         router.onSlashCommandInteraction(event)
         router.close()
 
-        // Then
         assertTrue(delegate.defers.isEmpty())
         assertEquals(
             listOf(

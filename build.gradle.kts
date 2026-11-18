@@ -38,6 +38,8 @@ repositories {
 dependencies {
     // Neutral domain/command boundary shared with the isolated JDA runtime.
     implementation(project(":core"))
+    // Framework-independent shared JSON configuration used by the Kord and JDA runtimes.
+    implementation(project(":configuration"))
     // Shared JSON locale persistence used by both the Kord and JDA runtimes.
     implementation(project(":locale-persistence"))
     // Shared real-player engine used by the Kord adapter and the isolated JDA runtime.
@@ -287,6 +289,7 @@ tasks.named("sonar") {
     // Ensure each module produces its XML coverage report before analysis
     dependsOn(
         ":core:jacocoTestReport",
+        ":configuration:jacocoTestReport",
         ":locale-persistence:jacocoTestReport",
         ":player:jacocoTestReport",
         ":jda-runtime:jacocoTestReport",

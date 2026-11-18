@@ -3,16 +3,12 @@ package es.wokis.commands.neutral
 import es.wokis.domain.locale.LocaleCode
 
 /**
- * Gateway-neutral definition of a command to publish.
+ * Gateway-neutral command to publish.
  *
- * [name] and [description] are passed through unchanged to a gateway adapter, so they must
- * already satisfy the platform limits for a slash command. Keeping the definition neutral lets
- * the registration flow be exercised without a live gateway client.
- *
- * [adminOnly] and [stringOption] exist only for the narrow command shapes the migration needs;
- * they are not a generic command builder. [descriptionLocalizations] and
- * [StringOptionDefinition.descriptionLocalizations] carry only the translations the catalog
- * actually provides, keyed by canonical neutral tags.
+ * [name] and [description] go to the gateway unchanged, so they must already satisfy its
+ * slash-command limits. [adminOnly] and [stringOption] cover only the narrow migration shapes, not
+ * a generic command builder. Localization maps carry only translations the catalog provides, keyed
+ * by canonical tags.
  */
 data class CommandDefinition(
     val name: String,

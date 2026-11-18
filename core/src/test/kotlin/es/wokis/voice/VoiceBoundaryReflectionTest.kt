@@ -18,14 +18,9 @@ import java.util.IdentityHashMap
 
 /**
  * Guards the Phase 2C neutral boundary: no gateway, DAVE or Discord type may appear in the
- * public surface of the new voice/audio/player-message contracts, values or command.
- *
- * The inspection is recursive. Generic arguments, parameterized owner types, generic array
- * components, wildcard upper/lower bounds and type-variable bounds are all walked, so a
- * signature such as `List<net.dv8tion.jda.api.JDA>` or `Array<dev.kord.core.Kord>` cannot
- * hide behind a neutral raw type. Arrays, supertypes, interfaces, constructors, fields and
- * methods are inspected, including generic exception types and method/constructor type
- * parameters.
+ * public surface of the new voice/audio/player-message contracts, values or command. The walk is
+ * recursive so a signature such as `List<net.dv8tion.jda.api.JDA>` cannot hide behind a neutral
+ * raw type.
  */
 class VoiceBoundaryReflectionTest {
 
@@ -53,10 +48,8 @@ class VoiceBoundaryReflectionTest {
 
     @Test
     fun `Given the new voice and player contracts When inspected Then expose no gateway or DAVE types`() {
-        // When
         val offenders = neutralTypes.flatMap { type -> gatewayReferences(type) }
 
-        // Then
         assertTrue(offenders.isEmpty(), "Gateway or DAVE types leaked into :core: $offenders")
     }
 
@@ -68,10 +61,8 @@ class VoiceBoundaryReflectionTest {
             arguments = listOf(NamedType("net.dv8tion.jda.api.JDA")),
         )
 
-        // When
         val leaks = forbiddenLeaks(signature, "snapshot")
 
-        // Then
         assertRejected(leaks, "net.dv8tion.jda.api.JDA")
     }
 
@@ -80,10 +71,8 @@ class VoiceBoundaryReflectionTest {
         // Given: the neutral generic array wrapper hides Array<dev.kord.core.Kord>.
         val signature = SyntheticGenericArrayType(NamedType("dev.kord.core.Kord"))
 
-        // When
         val leaks = forbiddenLeaks(signature, "frames")
 
-        // Then
         assertRejected(leaks, "dev.kord.core.Kord")
         assertTrue(leaks.any { it.contains("[]") }, "the array location must be reported: $leaks")
     }
@@ -96,10 +85,8 @@ class VoiceBoundaryReflectionTest {
             lowerBounds = emptyList(),
         )
 
-        // When
         val leaks = forbiddenLeaks(signature, "list")
 
-        // Then
         assertRejected(leaks, "net.dv8tion.jda.api.JDA")
     }
 
@@ -111,10 +98,8 @@ class VoiceBoundaryReflectionTest {
             lowerBounds = listOf(NamedType("dev.kord.core.Kord")),
         )
 
-        // When
         val leaks = forbiddenLeaks(signature, "list")
 
-        // Then
         assertRejected(leaks, "dev.kord.core.Kord")
     }
 
@@ -127,10 +112,8 @@ class VoiceBoundaryReflectionTest {
             bounds = listOf(NamedType("net.dv8tion.jda.api.JDA")),
         )
 
-        // When
         val leaks = forbiddenLeaks(signature, "parameter")
 
-        // Then
         assertRejected(leaks, "net.dv8tion.jda.api.JDA")
     }
 
@@ -143,10 +126,8 @@ class VoiceBoundaryReflectionTest {
             owner = NamedType("net.dv8tion.jda.api.JDA"),
         )
 
-        // When
         val leaks = forbiddenLeaks(signature, "entry")
 
-        // Then
         assertRejected(leaks, "net.dv8tion.jda.api.JDA")
     }
 
@@ -158,10 +139,8 @@ class VoiceBoundaryReflectionTest {
             arguments = emptyList(),
         )
 
-        // When
         val leaks = forbiddenLeaks(signature, "raw")
 
-        // Then
         assertRejected(leaks, "dev.kord.core.Kord")
     }
 
@@ -180,10 +159,8 @@ class VoiceBoundaryReflectionTest {
             ),
         )
 
-        // When
         val leaks = forbiddenLeaks(signature, "nested")
 
-        // Then
         assertRejected(leaks, "net.dv8tion.jda.api.JDA")
     }
 
@@ -206,12 +183,10 @@ class VoiceBoundaryReflectionTest {
             ),
         )
 
-        // When
         val nestedLeaks = forbiddenLeaks(signature, "neutral")
         val arrayLeaks = forbiddenLeaks(Array<PlayerMessageId>::class.java, "frames")
         val classLeaks = forbiddenLeaks(PlayerMessageId::class.java, "id")
 
-        // Then
         assertTrue(nestedLeaks.isEmpty(), "a neutral nested signature was rejected: $nestedLeaks")
         assertTrue(arrayLeaks.isEmpty(), "a neutral array signature was rejected: $arrayLeaks")
         assertTrue(classLeaks.isEmpty(), "a neutral class signature was rejected: $classLeaks")
@@ -221,10 +196,8 @@ class VoiceBoundaryReflectionTest {
     @Timeout(5)
     fun `Given a self-referential type variable When inspected Then the walk terminates cleanly`() {
         // Given: <T extends T> makes a bound graph that would recurse forever without a guard.
-        // When
         val leaks = forbiddenLeaks(CyclicTypeVariable, "cyclic")
 
-        // Then
         assertTrue(leaks.isEmpty(), "a cyclic neutral bound must not produce leaks: $leaks")
     }
 

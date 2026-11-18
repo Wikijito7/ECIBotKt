@@ -9,12 +9,9 @@ import es.wokis.domain.model.UserId
  * Gateway-neutral description of one command invocation.
  *
  * [guildId] is nullable because direct messages have no guild. [guildLocale] is the Discord guild
- * default, [userLocale] is the invoking client's locale, and [locale] is the legacy resolved value
- * (guild locale when available, user locale otherwise). Keeping the guild default separate from
- * the client locale means a user preference can never be persisted as the guild default.
- *
- * [stringOptions] carries the string option values of the invocation so narrow commands such as
- * `/locale` do not need a gateway type at the boundary.
+ * default, [userLocale] the client's locale, and [locale] the legacy resolved value (guild locale
+ * when available, user locale otherwise), so a user preference is never persisted as the guild
+ * default. [stringOptions] keeps narrow commands like `/locale` free of gateway types.
  */
 data class CommandContext(
     val commandName: String,

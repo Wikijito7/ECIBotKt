@@ -17,6 +17,7 @@ repositories {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":configuration"))
     implementation(project(":locale-persistence"))
     implementation(project(":player"))
     implementation(libs.kotlinx.serialization)
@@ -57,4 +58,10 @@ kotlin {
 
 application {
     mainClass.set("es.wokis.jda.JdaBootstrapKt")
+}
+
+// Run from the repository root so Kord and JDA share `./data`. A packaged artifact needs the same
+// CWD, and the two runtimes must not run concurrently against the same mutable data/token.
+tasks.named<JavaExec>("run") {
+    workingDir = rootProject.projectDir
 }
