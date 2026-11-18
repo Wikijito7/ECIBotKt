@@ -12,16 +12,15 @@ import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.LocalizationCatalog
 import es.wokis.localization.PlayerMessageKeys
 import es.wokis.player.engine.PlayerEngine
-import es.wokis.player.engine.event.PlayerEvent
 import es.wokis.player.engine.model.PlayerSnapshot
 import es.wokis.player.engine.model.PlayerTrack
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
@@ -45,148 +44,41 @@ class JdaPlayerCommandControllerTest {
     )
 
     @Test
-    fun `Given a voice member When play runs Then load the input before connecting and report success`() = runTest {
+    fun `Given a voice member When play runs Then acknowledge the search and hand the load to the coordinator`() = runTest {
         val fixture = Fixture()
         val order = mutableListOf<String>()
-        coEvery { fixture.engine.loadAndPlay("track") } coAnswers {
-            order += "load"
-            fixture.presentation.value = JdaPlayerPresentation(revision = 1, activeTrack = true)
-        }
-        coEvery { fixture.runtime.connect(fixture.guild, fixture.channel) } coAnswers {
-            order += "connect"
-            true
-        }
+        every { fixture.coordinator.recordCommand(any(), any(), any(), any()) } answers { order += "record" }
+        every { fixture.coordinator.startPlayback(any(), any()) } answers { order += "start" }
 
         val message = fixture.controller.play(context(), "  track  ")
 
-        assertEquals(listOf("load", "connect"), order)
-        assertEquals("Loaded and playing; the bot joined your voice channel.", message)
-        assertEquals(english(PlayerMessageKeys.PLAYER_PLAY_CONNECTED), message)
-        coVerify(exactly = 1) { fixture.engine.loadAndPlay("track") }
-    }
-
-    @Test
-    fun `Given a load that never becomes active When play runs Then time out without connecting`() = runTest {
-        val fixture = Fixture()
-        coJustRun { fixture.engine.loadAndPlay("track") }
-
-        val message = fixture.controller.play(context(), "track")
-
-        assertEquals(
-            "The load did not produce an active track in time, so the bot did not connect.",
-            message,
-        )
-        assertEquals(english(PlayerMessageKeys.PLAYER_LOAD_TIMEOUT), message)
-        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
-    }
-
-    @Test
-    fun `Given a rejected provider load When play runs Then reply with the rejected category and no connect`() = runTest {
-        val fixture = Fixture()
-        coEvery { fixture.engine.loadAndPlay("missing") } coAnswers {
-            fixture.presentation.value = JdaPlayerPresentation(
-                revision = 1,
-                lastEvent = PlayerEvent.LoadFailed("not found"),
-            )
+        // Then: `/play` acknowledges immediately; the coordinator owns loading, connecting and replies.
+        assertEquals(english(PlayerMessageKeys.SEARCHING_SONG), message)
+        assertEquals(listOf("record", "start"), order)
+        verify(exactly = 1) {
+            fixture.coordinator.recordCommand(ChannelId(43uL), GuildId(GUILD_ID.toULong()), null, "General")
         }
-
-        val message = fixture.controller.play(context(), "missing")
-
-        assertEquals(english(PlayerMessageKeys.PLAYER_LOAD_REJECTED), message)
+        verify(exactly = 1) { fixture.coordinator.startPlayback(fixture.channel, "track") }
+        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
         coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
     }
 
     @Test
-    fun `Given a no-match provider load When play runs Then echo only the caller input`() = runTest {
-        val fixture = Fixture()
-        coEvery { fixture.engine.loadAndPlay("unknown song") } coAnswers {
-            fixture.presentation.value = JdaPlayerPresentation(
-                revision = 1,
-                lastEvent = PlayerEvent.NoMatches("provider internal query"),
-            )
-        }
-
-        val message = fixture.controller.play(context(), "unknown song")
-
-        assertEquals(english(PlayerMessageKeys.NO_MATCHES, "unknown song"), message)
-        assertFalse(message.contains("provider internal query"))
-        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
-    }
-
-    @Test
-    fun `Given a playback failure When play runs Then reply with the playback category and no connect`() = runTest {
-        val fixture = Fixture()
-        coEvery { fixture.engine.loadAndPlay("track") } coAnswers {
-            fixture.presentation.value = JdaPlayerPresentation(
-                revision = 1,
-                lastEvent = PlayerEvent.PlaybackFailed("stream decoder exploded"),
-            )
-        }
-
-        val message = fixture.controller.play(context(), "track")
-
-        assertEquals(english(PlayerMessageKeys.PLAYER_PLAYBACK_FAILED), message)
-        assertFalse(message.contains("stream decoder exploded"))
-        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
-    }
-
-    @Test
-    fun `Given provider failures carrying a synthetic secret When play runs Then never echo provider text or URLs`() =
+    fun `Given a play whose outcome the coordinator reports later When play runs Then reply with the search acknowledgment`() =
         runTest {
-            // Given: provider failures shaped like a credentialed stream URL that a chat reply must never leak.
-            val secret = "provider-secret-sentinel"
-            val credentialUrl = "https://user:$secret@stream.example.invalid/audio?token=$secret"
-            val cases = listOf(
-                PlayerEvent.LoadFailed(credentialUrl) to english(PlayerMessageKeys.PLAYER_LOAD_REJECTED),
-                PlayerEvent.NoMatches(credentialUrl) to english(PlayerMessageKeys.NO_MATCHES, "track"),
-                PlayerEvent.PlaybackFailed(credentialUrl) to english(PlayerMessageKeys.PLAYER_PLAYBACK_FAILED),
-            )
+            // Timeouts, rejected loads, no matches and voice failures are coordinator messages:
+            // see JdaPlayerMessageCoordinatorTest.
+            val inputs = listOf("track", "missing", "unknown song")
 
-            cases.forEach { (event, expectedMessage) ->
+            inputs.forEach { input ->
                 val fixture = Fixture()
-                coEvery { fixture.engine.loadAndPlay("track") } coAnswers {
-                    fixture.presentation.value = JdaPlayerPresentation(revision = 1, lastEvent = event)
-                }
 
-                val message = fixture.controller.play(context(), "track")
+                val message = fixture.controller.play(context(), input)
 
-                // Then: the reply is the catalog category and never carries any part of the URL.
-                assertEquals(expectedMessage, message)
-                assertFalse(message.contains(secret), "the reply leaked the provider secret: $message")
-                assertFalse(
-                    message.contains("stream.example.invalid"),
-                    "the reply leaked the provider endpoint: $message",
-                )
-                assertFalse(message.contains("https://"), "the reply leaked the provider URL: $message")
-                coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+                assertEquals(english(PlayerMessageKeys.SEARCHING_SONG), message)
+                fixture.assertDelegated(input)
             }
         }
-
-    @Test
-    fun `Given a voice session owned by another path When play runs Then report the refusal after loading`() = runTest {
-        val fixture = Fixture()
-        coEvery { fixture.engine.loadAndPlay("track") } coAnswers {
-            fixture.presentation.value = JdaPlayerPresentation(revision = 1, activeTrack = true)
-        }
-        coEvery { fixture.runtime.connect(fixture.guild, fixture.channel) } returns false
-
-        val message = fixture.controller.play(context(), "track")
-
-        assertEquals(english(PlayerMessageKeys.PLAYER_VOICE_SESSION_REFUSED), message)
-    }
-
-    @Test
-    fun `Given a connection exception When play runs Then report a safe permission message`() = runTest {
-        val fixture = Fixture()
-        coEvery { fixture.engine.loadAndPlay("track") } coAnswers {
-            fixture.presentation.value = JdaPlayerPresentation(revision = 1, activeTrack = true)
-        }
-        coEvery { fixture.runtime.connect(fixture.guild, fixture.channel) } throws IllegalStateException("gateway boom")
-
-        val message = fixture.controller.play(context(), "track")
-
-        assertEquals(english(PlayerMessageKeys.PLAYER_VOICE_CONNECTION_FAILED), message)
-    }
 
     @Test
     fun `Given an empty input When play runs Then reject it before resolving the guild`() = runTest {
@@ -200,6 +92,7 @@ class JdaPlayerCommandControllerTest {
         )
         verify(exactly = 0) { fixture.runtime.engineFor(any()) }
         verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
+        verify(exactly = 0) { fixture.runtime.messagesFor(any()) }
     }
 
     @Test
@@ -213,6 +106,7 @@ class JdaPlayerCommandControllerTest {
         assertEquals(english(PlayerMessageKeys.ERROR_NO_GUILD), directMessage)
         assertEquals(english(PlayerMessageKeys.ERROR_NO_GUILD), unknownGuild)
         coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+        verify(exactly = 0) { fixture.runtime.messagesFor(any()) }
     }
 
     @Test
@@ -228,6 +122,7 @@ class JdaPlayerCommandControllerTest {
         assertEquals(english(PlayerMessageKeys.ERROR_NO_VOICE_CHANNEL), nonMember)
         assertEquals(english(PlayerMessageKeys.ERROR_NO_VOICE_CHANNEL), outsideVoice)
         coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+        verify(exactly = 0) { fixture.runtime.messagesFor(any()) }
     }
 
     @Test
@@ -486,7 +381,7 @@ class JdaPlayerCommandControllerTest {
     @Test
     fun `Given an active track When reconnect runs Then use the dedicated reconnect path without stopping or clearing it`() =
         runTest {
-            val fixture = Fixture(started = true)
+            val fixture = Fixture()
             coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
                 JdaPlayerReconnectResult.Reconnected
             every { fixture.engine.snapshot() } returns PlayerSnapshot(
@@ -507,7 +402,7 @@ class JdaPlayerCommandControllerTest {
 
     @Test
     fun `Given an idle player When reconnect runs Then report the reconnect without a track`() = runTest {
-        val fixture = Fixture(started = true)
+        val fixture = Fixture()
         coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
             JdaPlayerReconnectResult.Reconnected
         every { fixture.engine.snapshot() } returns PlayerSnapshot()
@@ -641,6 +536,7 @@ class JdaPlayerCommandControllerTest {
     ) { proxy, method, arguments ->
         when (method.name) {
             "getIdLong" -> 42L
+            "getName" -> "General"
             "toString" -> "test-voice-channel"
             "hashCode" -> System.identityHashCode(proxy)
             "equals" -> proxy === arguments?.firstOrNull()
@@ -648,32 +544,35 @@ class JdaPlayerCommandControllerTest {
         }
     } as AudioChannelUnion
 
-    private inner class Fixture(started: Boolean = false) {
+    private fun Fixture.assertDelegated(input: String) {
+        verify(exactly = 1) { coordinator.recordCommand(any(), any(), any(), any()) }
+        verify(exactly = 1) { coordinator.startPlayback(channel, input) }
+        coVerify(exactly = 0) { engine.loadAndPlay(any()) }
+        coVerify(exactly = 0) { runtime.connect(any(), any()) }
+    }
+
+    private inner class Fixture {
         val jda: JDA = mockk()
         val guild: Guild = mockk()
         val member: Member = mockk()
         val voiceState: GuildVoiceState = mockk()
         val runtime: JdaPlayerRuntime = mockk()
         val engine: PlayerEngine = mockk()
-        val adapter: JdaGuildPlayerVoiceAdapter = mockk()
-        val presentation = MutableStateFlow(
-            JdaPlayerPresentation(
-                revision = if (started) 1 else 0,
-                activeTrack = started,
-            ),
-        )
+        val coordinator: JdaPlayerMessageCoordinator = mockk()
         val channelUnion: AudioChannelUnion = voiceChannel()
         val channel: VoiceChannel = channelUnion as VoiceChannel
         val controller = JdaPlayerCommandController(jda, runtime, expected)
 
         init {
             every { jda.getGuildById(GUILD_ID) } returns guild
+            every { guild.idLong } returns GUILD_ID
             every { guild.getMemberById(USER_ID) } returns member
             every { member.voiceState } returns voiceState
             every { voiceState.channel } returns channelUnion
             every { runtime.engineFor(guild) } returns engine
-            every { runtime.voiceAdapterFor(guild) } returns adapter
-            every { adapter.presentation } returns presentation
+            every { runtime.messagesFor(guild) } returns coordinator
+            justRun { coordinator.recordCommand(any(), any(), any(), any()) }
+            justRun { coordinator.startPlayback(any(), any()) }
         }
     }
 

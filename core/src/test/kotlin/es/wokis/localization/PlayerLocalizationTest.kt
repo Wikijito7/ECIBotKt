@@ -99,6 +99,23 @@ class PlayerLocalizationTest {
     }
 
     @Test
+    fun `Given the player channel keys When read Then both catalogs ship every announcement`() {
+        val channelKeys = listOf(
+            PlayerMessageKeys.PLAYER_CHANNEL_CREATED to "Created <#%s> channel for music controls",
+            PlayerMessageKeys.PLAYER_CHANNEL_CREATION_FAILED to
+                "Could not create player channel. Showing player here instead.",
+            PlayerMessageKeys.PLAYER_SHOWN_ON_EXISTING_CHANNEL to "Created player on <#%s>",
+        )
+
+        channelKeys.forEach { (key, english) ->
+            val localizations = catalog.getLocalizations(key)
+            assertEquals(english, localizations.getValue(LocaleCode("en-US")), "Missing English value for $key")
+            assertEquals(setOf(LocaleCode("en-US"), LocaleCode("es-ES")), localizations.keys)
+            assertTrue(localizations.getValue(LocaleCode("es-ES")).isNotBlank(), "Empty Spanish value for $key")
+        }
+    }
+
+    @Test
     fun `Given the player command keys When read Then descriptions are non-blank and translated`() {
         listOf(
             PlayerMessageKeys.PLAY_COMMAND_DESCRIPTION,
