@@ -33,6 +33,18 @@ class JdaPlayerCommandsTest {
         catalog = LocalizationCatalog.load(),
     )
 
+    /** Registration order published for one guild: /play, /player, then the six family commands. */
+    private val expectedCommandNames = listOf(
+        JdaPlayCommand.COMMAND_NAME,
+        JdaPlayerControlCommand.COMMAND_NAME,
+        "skip",
+        "shuffle",
+        "next",
+        "queue",
+        "disconnect",
+        "reconnect",
+    )
+
     @Test
     fun `Given an explicit guild When the public player commands register Then publish both only there`() = runTest {
         val controller = newController()
@@ -41,9 +53,9 @@ class JdaPlayerCommandsTest {
         val play = JdaPlayCommand(controller, localization)
         val control = JdaPlayerControlCommand(controller, localization)
 
-        registerPlayerCommands(registrar, guildId, play, control)
+        registerPlayerCommands(registrar, guildId, play, control, familyCommands())
 
-        assertEquals(2, registrar.registrations.size)
+        assertEquals(expectedCommandNames.size, registrar.registrations.size)
         assertTrue(registrar.registrations.all { it.guildId == guildId })
         assertEquals(
             mapOf(
@@ -51,10 +63,12 @@ class JdaPlayerCommandsTest {
                 JdaPlayerControlCommand.COMMAND_NAME to
                     localization.getDefaultString(PlayerMessageKeys.PLAYER_COMMAND_DESCRIPTION),
             ),
-            registrar.registrations.associate { it.command.name to it.command.description },
+            registrar.registrations
+                .filter { it.command.name in setOf(JdaPlayCommand.COMMAND_NAME, JdaPlayerControlCommand.COMMAND_NAME) }
+                .associate { it.command.name to it.command.description },
         )
-        assertEquals(setOf("play", "player"), registrar.registrations.map { it.command.name }.toSet())
-        assertTrue(registrar.registrations.none { it.command.adminOnly }, "both commands must be public")
+        assertEquals(expectedCommandNames, registrar.registrations.map { it.command.name })
+        assertTrue(registrar.registrations.none { it.command.adminOnly }, "every player command must be public")
     }
 
     @Test
@@ -67,20 +81,15 @@ class JdaPlayerCommandsTest {
         val control = JdaPlayerControlCommand(controller, localization)
 
         listOf(firstGuild, secondGuild).forEach { target ->
-            registerPlayerCommands(registrar, target, play, control)
+            registerPlayerCommands(registrar, target, play, control, familyCommands())
         }
 
         assertEquals(
-            listOf(firstGuild, firstGuild, secondGuild, secondGuild),
+            listOf(firstGuild, secondGuild).flatMap { guild -> List(expectedCommandNames.size) { guild } },
             registrar.registrations.map { it.guildId },
         )
         assertEquals(
-            listOf(
-                JdaPlayCommand.COMMAND_NAME,
-                JdaPlayerControlCommand.COMMAND_NAME,
-                JdaPlayCommand.COMMAND_NAME,
-                JdaPlayerControlCommand.COMMAND_NAME,
-            ),
+            expectedCommandNames + expectedCommandNames,
             registrar.registrations.map { it.command.name },
         )
         assertTrue(registrar.registrations.none { it.command.adminOnly })
@@ -245,6 +254,19 @@ class JdaPlayerCommandsTest {
 
     /** Fresh strict controller per test so no stub or recorded call leaks across cases. */
     private fun newController(): JdaPlayerCommandController = mockk()
+
+    /**
+     * Every family adapter the bootstrap publishes alongside /play and /player. Handlers are strict
+     * mocks because these tests exercise registration only; the delegates are never invoked.
+     */
+    private fun familyCommands(): List<JdaNeutralPlayerCommand> = listOf(
+        JdaSkipCommand(mockk(), localization),
+        JdaShuffleCommand(mockk(), localization),
+        JdaNextCommand(mockk(), localization),
+        JdaQueueCommand(mockk(), localization),
+        JdaDisconnectCommand(mockk(), localization),
+        JdaReconnectCommand(mockk(), localization),
+    )
 
     private fun context(commandName: String, options: Map<String, String>): CommandContext = CommandContext(
         commandName = commandName,

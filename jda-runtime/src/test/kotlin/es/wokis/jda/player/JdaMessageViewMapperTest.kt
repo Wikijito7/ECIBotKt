@@ -118,6 +118,31 @@ class JdaMessageViewMapperTest {
     }
 
     @Test
+    fun `Given a button with a payload When mapped Then the custom id carries the state suffix`() {
+        val view = ButtonView(
+            componentId = ComponentId.QUEUE_NEXT,
+            label = "Next",
+            payload = "2",
+        )
+
+        val button = JdaMessageViewMapper.toButton(view)
+
+        assertEquals("queue_next::2", button.customId)
+        assertEquals(ComponentId.QUEUE_NEXT, ComponentId.fromCustomId(requireNotNull(button.customId)))
+        assertEquals("2", ComponentId.payloadFrom(requireNotNull(button.customId)))
+    }
+
+    @Test
+    fun `Given a button without a payload When mapped Then the custom id stays bare`() {
+        val button = JdaMessageViewMapper.toButton(
+            ButtonView(componentId = ComponentId.QUEUE_PREVIOUS, label = "Previous"),
+        )
+
+        assertEquals("queue_previous", button.customId)
+        assertNull(ComponentId.payloadFrom(requireNotNull(button.customId)))
+    }
+
+    @Test
     fun `Given a full message view When mapped to create data Then text embed and rows are all present`() {
         val view = MessageView(
             content = "Header",

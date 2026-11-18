@@ -39,7 +39,7 @@ object JdaMessageViewMapper {
     fun toActionRow(row: ActionRowView): ActionRow = ActionRow.of(row.buttons.map(::toButton))
 
     fun toButton(button: ButtonView): Button {
-        val plain = Button.of(button.style.toJdaStyle(), button.componentId.value, button.label)
+        val plain = Button.of(button.style.toJdaStyle(), button.componentId.customId(button.payload), button.label)
         val base = button.emoji?.let { plain.withEmoji(Emoji.fromUnicode(it)) } ?: plain
         return base.withDisabled(button.disabled)
     }

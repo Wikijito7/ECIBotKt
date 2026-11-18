@@ -32,4 +32,24 @@ class ComponentIdTest {
             assertEquals(id, ComponentId.fromCustomId("${id.value}::state"), id.name)
         }
     }
+
+    @Test
+    fun `Given a component id When a payload is attached Then join both with the wire separator`() {
+        assertEquals("queue_next::2", ComponentId.QUEUE_NEXT.customId("2"))
+        assertEquals("player_pause", ComponentId.PLAYER_PAUSE.customId())
+    }
+
+    @Test
+    fun `Given a blank payload When building a custom id Then emit the bare value`() {
+        assertEquals("queue_previous", ComponentId.QUEUE_PREVIOUS.customId(""))
+        assertEquals("queue_previous", ComponentId.QUEUE_PREVIOUS.customId(null))
+    }
+
+    @Test
+    fun `Given a custom id When the payload is read Then return only the state suffix`() {
+        assertEquals("2", ComponentId.payloadFrom("queue_next::2"))
+        assertEquals("page=3", ComponentId.payloadFrom("radio_list_next::page=3"))
+        assertNull(ComponentId.payloadFrom("queue_next"))
+        assertNull(ComponentId.payloadFrom("queue_next::"))
+    }
 }

@@ -21,6 +21,13 @@ enum class ComponentId(val value: String) {
     RADIO_COUNTRYCODES_NEXT("radio_countrycodes_next"),
     RADIO_COUNTRYCODES_PREVIOUS("radio_countrycodes_previous");
 
+    /**
+     * Wire custom id: the bare [value], plus `::<payload>` when this component carries state
+     * (Kord's `radio_list_next::2` shape).
+     */
+    fun customId(payload: String? = null): String =
+        if (payload.isNullOrEmpty()) value else "$value$SEPARATOR$payload"
+
     companion object {
 
         private const val SEPARATOR = "::"
@@ -30,5 +37,9 @@ enum class ComponentId(val value: String) {
             val id = customId.substringBefore(SEPARATOR)
             return entries.firstOrNull { it.value == id }
         }
+
+        /** Returns the `::` state payload of [customId], or null when it carries none. */
+        fun payloadFrom(customId: String): String? =
+            customId.substringAfter(SEPARATOR, "").takeIf(String::isNotEmpty)
     }
 }

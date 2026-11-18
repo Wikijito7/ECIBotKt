@@ -3,7 +3,6 @@ package es.wokis.jda.player
 import es.wokis.commands.neutral.CommandContext
 import es.wokis.commands.player.PlayerCommandDefinitions
 import es.wokis.domain.model.GuildId
-import es.wokis.domain.model.UserId
 import es.wokis.jda.command.toJdaId
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.PlayerMessageKeys
@@ -234,13 +233,4 @@ internal class JdaPlayerCommandController(
 
         private const val MAX_LISTED_TRACKS = 10
     }
-}
-
-private const val INVALID_USER_ID_RANGE_MESSAGE = "User id does not fit in JDA's signed 64-bit id range"
-
-private fun UserId.toJdaId(): Long {
-    require(value <= Long.MAX_VALUE.toULong()) {
-        INVALID_USER_ID_RANGE_MESSAGE
-    }
-    return value.toLong()
 }

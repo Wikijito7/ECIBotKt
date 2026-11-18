@@ -292,6 +292,7 @@ tasks.named("sonar") {
         ":configuration:jacocoTestReport",
         ":locale-persistence:jacocoTestReport",
         ":player:jacocoTestReport",
+        ":commands:jacocoTestReport",
         ":jda-runtime:jacocoTestReport",
     )
 }

@@ -11,6 +11,7 @@ enum class SourceModule(val label: String) {
     CONFIGURATION("configuration"),
     LOCALE_PERSISTENCE("locale-persistence"),
     PLAYER("player"),
+    COMMANDS("commands"),
     JDA_RUNTIME("jda-runtime"),
     SPIKE("spike/jda-dave"),
 }
@@ -72,6 +73,7 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
             SourceModule.CONFIGURATION,
             SourceModule.LOCALE_PERSISTENCE,
             SourceModule.PLAYER,
+            SourceModule.COMMANDS,
             -> false
 
             SourceModule.JDA_RUNTIME -> vendor != VendorFamily.KORD && isJdaAdapterPackage(packageName)
@@ -85,6 +87,7 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
             SourceModule.CONFIGURATION,
             SourceModule.LOCALE_PERSISTENCE,
             SourceModule.PLAYER,
+            SourceModule.COMMANDS,
             -> false
 
             SourceModule.JDA_RUNTIME -> vendor != VendorFamily.KORD && isJdaAdapterPackage(packageName)
@@ -101,11 +104,14 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
 
             SourceModule.SPIKE -> "Vendor import allowed by the non-production spike package '$packageName'"
 
+            // Gateway-free modules deny every vendor in both modes, so this arm is unreachable.
+            // It stays only to keep the enum exhaustive, and fails loudly if the matrix regresses.
             SourceModule.CORE,
             SourceModule.CONFIGURATION,
             SourceModule.LOCALE_PERSISTENCE,
             SourceModule.PLAYER,
-            -> "Vendor import allowed"
+            SourceModule.COMMANDS,
+            -> error("Gateway-free module '${module.label}' can never be allowed in $mode")
         }
 
     private fun denialReason(module: SourceModule, vendor: VendorFamily, packageName: String?): String =
@@ -118,6 +124,7 @@ class ImportBoundaryPolicy(private val mode: ScanMode) {
             SourceModule.CORE,
             SourceModule.LOCALE_PERSISTENCE,
             SourceModule.PLAYER,
+            SourceModule.COMMANDS,
             -> "Gateway-free module ${module.label} may not import ${vendor.displayPrefix} in mode $mode"
 
             SourceModule.JDA_RUNTIME -> if (vendor == VendorFamily.KORD) {

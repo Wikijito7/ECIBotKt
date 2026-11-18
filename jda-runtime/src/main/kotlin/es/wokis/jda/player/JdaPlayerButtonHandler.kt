@@ -51,6 +51,12 @@ internal val PLAYER_BUTTON_IDS: List<ComponentId> = listOf(
     ComponentId.PLAYER_DISCONNECT,
 )
 
+/** Kord `/queue` pagination button ids. */
+internal val QUEUE_PAGINATION_IDS: List<ComponentId> = listOf(
+    ComponentId.QUEUE_PREVIOUS,
+    ComponentId.QUEUE_NEXT,
+)
+
 private fun ComponentContext.toCommandContext(): CommandContext = CommandContext(
     commandName = PlayerCommandDefinitions.PLAYER_COMMAND_NAME,
     guildId = guildId,

@@ -9,6 +9,9 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 /**
  * Maps a JDA button event to the neutral component context, splitting guild and client locales the
  * same way the slash mapper does.
+ *
+ * The `::` state payload of the clicked custom id is forwarded untouched, so stateful components can
+ * recompute their state without reading the rendered message.
  */
 class JdaComponentContextMapper {
 
@@ -24,6 +27,7 @@ class JdaComponentContextMapper {
             locale = guildLocale ?: userLocale,
             guildLocale = guildLocale,
             userLocale = userLocale,
+            payload = ComponentId.payloadFrom(event.componentId),
         )
     }
 }
