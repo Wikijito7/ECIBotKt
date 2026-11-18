@@ -12,6 +12,10 @@ import es.wokis.domain.model.UserId
  * default, [userLocale] the client's locale, and [locale] the legacy resolved value (guild locale
  * when available, user locale otherwise), so a user preference is never persisted as the guild
  * default. [stringOptions] keeps narrow commands like `/locale` free of gateway types.
+ *
+ * [subcommandGroup] and [subcommand] describe a group-command invocation (`/radio search name`
+ * maps to group `search` and subcommand `name`). Both are null for a plain command, so existing
+ * commands and adapters are unaffected.
  */
 data class CommandContext(
     val commandName: String,
@@ -22,4 +26,6 @@ data class CommandContext(
     val guildLocale: LocaleCode? = null,
     val userLocale: LocaleCode? = null,
     val stringOptions: Map<String, String> = emptyMap(),
+    val subcommandGroup: String? = null,
+    val subcommand: String? = null,
 )

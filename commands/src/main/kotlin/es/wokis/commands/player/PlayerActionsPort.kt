@@ -91,7 +91,7 @@ interface PlayerVoiceGate {
     suspend fun isVoiceAvailable(actor: PlayerActor): Boolean
 }
 
-/** Gateway-neutral seam for non-search audio: local sounds and synthesized speech. */
+/** Gateway-neutral seam for non-search audio: local sounds, synthesized speech and radio streams. */
 interface AudioContentActionsPort : PlayerVoiceGate {
 
     /** Plays the local sound named [soundName]; the adapter owns the folder and file format. */
@@ -99,6 +99,9 @@ interface AudioContentActionsPort : PlayerVoiceGate {
 
     /** Queues [text] as synthesized speech; the adapter owns the provider URI shape. */
     suspend fun loadTts(actor: PlayerActor, text: String)
+
+    /** Plays the radio stream [streamUrl] with [radioName]/[faviconUrl] as presentation overrides. */
+    suspend fun playRadio(actor: PlayerActor, radioName: String, streamUrl: String, faviconUrl: String)
 }
 
 /** Transport state toggles of the player seam. */

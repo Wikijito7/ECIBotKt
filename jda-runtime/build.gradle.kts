@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.plugin.serialization)
     alias(libs.plugins.detekt)
     application
     jacoco
