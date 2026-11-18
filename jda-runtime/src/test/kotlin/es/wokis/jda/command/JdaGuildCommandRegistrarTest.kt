@@ -223,7 +223,7 @@ class JdaGuildCommandRegistrarTest {
         }
 
     @Test
-    fun `Given a public player definition When registering Then publish an enabled guild command with the required action option`() =
+    fun `Given a public player definition When registering Then publish an enabled guild command with the optional action option`() =
         runTest {
             val guildId = GuildId(1234567890123456789uL)
             val jdaGuildId = 1234567890123456789L
@@ -256,7 +256,10 @@ class JdaGuildCommandRegistrarTest {
                 localization.getDefaultString(PlayerMessageKeys.PLAYER_COMMAND_ACTION_DESCRIPTION),
                 option.description,
             )
-            assertTrue(option.isRequired)
+            assertFalse(
+                option.isRequired,
+                "Kord parity: an omitted /player action shows the player view, so the option must stay optional",
+            )
             assertFalse(option.isAutoComplete)
         }
 

@@ -44,11 +44,15 @@ internal class JdaPlayerCommandController(
 
     suspend fun control(context: CommandContext, rawAction: String): String {
         val action = JdaPlayerAction.parse(rawAction)
-            ?: return message(context, PlayerMessageKeys.PLAYER_UNKNOWN_ACTION, JdaPlayerAction.names.joinToString(", "))
+        if (action == null && rawAction.isNotBlank()) {
+            return message(context, PlayerMessageKeys.PLAYER_UNKNOWN_ACTION, JdaPlayerAction.names.joinToString(", "))
+        }
         val guild = context.guildId?.let { guildId -> jda.getGuildById(guildId.toJdaId()) }
             ?: return message(context, PlayerMessageKeys.ERROR_NO_GUILD)
         val engine = runtime.engineFor(guild)
         return when (action) {
+            // Kord parity: no action only sets the player view up; playback state is untouched.
+            null -> showPlayer(context, guild)
             JdaPlayerAction.QUEUE -> describeQueue(context, engine.snapshot())
             JdaPlayerAction.PAUSE -> pause(context, engine)
             JdaPlayerAction.RESUME -> resume(context, engine)
@@ -57,6 +61,19 @@ internal class JdaPlayerCommandController(
             JdaPlayerAction.DISCONNECT -> disconnect(context, guild, engine)
             JdaPlayerAction.RECONNECT -> reconnect(context, guild)
         }
+    }
+
+    /** Kord parity: `/player` without an action only sets the player view up. */
+    private suspend fun showPlayer(context: CommandContext, guild: Guild): String {
+        val guildId = context.guildId ?: return message(context, PlayerMessageKeys.ERROR_NO_GUILD)
+        val coordinator = runtime.messagesFor(guild)
+        coordinator.recordCommand(
+            channelId = context.channelId,
+            guildId = guildId,
+            guildLocale = context.guildLocale,
+            channelName = callerVoiceChannel(guild, context)?.name,
+        )
+        return coordinator.ensurePlayerView()
     }
 
     private suspend fun startPlayback(

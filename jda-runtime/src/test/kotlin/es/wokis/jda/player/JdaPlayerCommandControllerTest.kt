@@ -161,6 +161,68 @@ class JdaPlayerCommandControllerTest {
     }
 
     @Test
+    fun `Given a blank action When control runs Then show the player view and never report an unknown action`() =
+        runTest {
+            val fixture = Fixture()
+
+            val message = fixture.controller.control(context(), "   ")
+
+            // Kord parity: `/player` without an action only sets the player view up.
+            assertEquals(fixture.ensureReply, message)
+            assertNotEquals(
+                english(PlayerMessageKeys.PLAYER_UNKNOWN_ACTION, JdaPlayerAction.names.joinToString(", ")),
+                message,
+            )
+            verify(exactly = 1) {
+                fixture.coordinator.recordCommand(
+                    ChannelId(43uL),
+                    GuildId(GUILD_ID.toULong()),
+                    null,
+                    "General",
+                )
+            }
+            coVerify(exactly = 1) { fixture.coordinator.ensurePlayerView() }
+            verify(exactly = 1) { fixture.runtime.engineFor(fixture.guild) }
+            verify(exactly = 0) { fixture.coordinator.startPlayback(any(), any()) }
+        }
+
+    @Test
+    fun `Given a missing action outside voice When control runs Then show the player view without a voice channel name`() =
+        runTest {
+            val fixture = Fixture()
+            every { fixture.voiceState.channel } returns null
+
+            val message = fixture.controller.control(context(), "")
+
+            assertEquals(fixture.ensureReply, message)
+            verify(exactly = 1) {
+                fixture.coordinator.recordCommand(
+                    ChannelId(43uL),
+                    GuildId(GUILD_ID.toULong()),
+                    null,
+                    null,
+                )
+            }
+            coVerify(exactly = 1) { fixture.coordinator.ensurePlayerView() }
+            verify(exactly = 1) { fixture.runtime.engineFor(fixture.guild) }
+        }
+
+    @Test
+    fun `Given a direct message or an unknown guild When no action runs Then reject it before the player view`() =
+        runTest {
+            val fixture = Fixture()
+
+            val directMessage = fixture.controller.control(context(guildId = null), "")
+            every { fixture.jda.getGuildById(GUILD_ID) } returns null
+            val unknownGuild = fixture.controller.control(context(), "")
+
+            assertEquals(english(PlayerMessageKeys.ERROR_NO_GUILD), directMessage)
+            assertEquals(english(PlayerMessageKeys.ERROR_NO_GUILD), unknownGuild)
+            verify(exactly = 0) { fixture.runtime.messagesFor(any()) }
+            coVerify(exactly = 0) { fixture.coordinator.ensurePlayerView() }
+        }
+
+    @Test
     fun `Given a direct message or an unknown guild When control runs Then reject it safely`() = runTest {
         val fixture = Fixture()
 
@@ -561,6 +623,7 @@ class JdaPlayerCommandControllerTest {
         val coordinator: JdaPlayerMessageCoordinator = mockk()
         val channelUnion: AudioChannelUnion = voiceChannel()
         val channel: VoiceChannel = channelUnion as VoiceChannel
+        val ensureReply = "player view shown"
         val controller = JdaPlayerCommandController(jda, runtime, expected)
 
         init {
@@ -573,6 +636,7 @@ class JdaPlayerCommandControllerTest {
             every { runtime.messagesFor(guild) } returns coordinator
             justRun { coordinator.recordCommand(any(), any(), any(), any()) }
             justRun { coordinator.startPlayback(any(), any()) }
+            coEvery { coordinator.ensurePlayerView() } returns ensureReply
         }
     }
 

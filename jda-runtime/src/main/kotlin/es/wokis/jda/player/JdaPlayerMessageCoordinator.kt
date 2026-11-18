@@ -75,7 +75,11 @@ internal class JdaPlayerMessageCoordinator(
     @Volatile
     private var voiceChannelId: ChannelId? = null
 
+    // Both are written by the command coroutine (`/player`) and read by the event coroutine.
+    @Volatile
     private var playerChannelId: ChannelId? = null
+
+    @Volatile
     private var playerMessageId: PlayerMessageId? = null
 
     init {
@@ -96,11 +100,16 @@ internal class JdaPlayerMessageCoordinator(
     }
 
     /** Remembers where the next event-driven message must be posted. */
-    fun recordCommand(channelId: ChannelId, guildId: GuildId, guildLocale: LocaleCode?, channelName: String) {
+    fun recordCommand(
+        channelId: ChannelId,
+        guildId: GuildId,
+        guildLocale: LocaleCode?,
+        channelName: String? = null,
+    ) {
         commandChannelId = channelId
         this.guildId = guildId
         this.guildLocale = guildLocale
-        recordedVoiceChannelName = channelName
+        if (channelName != null) recordedVoiceChannelName = channelName
     }
 
     /** Loads [input] and joins voice once it is active; failures surface as chat messages. */
@@ -173,17 +182,13 @@ internal class JdaPlayerMessageCoordinator(
     private suspend fun onTrackStarted() {
         cancelLeaveTimer()
         val snapshot = engine.snapshot()
-        // Kord parity: the now-playing announcement exists only until the player message is created.
+        // Kord parity: only `/player` creates the embed; a track start announces or edits an existing one.
         if (playerMessageId == null) {
-            announce(
-                text(
-                    PlayerMessageKeys.NOW_PLAYING,
-                    snapshot.current?.displayName.orEmpty(),
-                    resolveVoiceChannelName(),
-                ),
-            )
+            val currentName = snapshot.current?.displayName.orEmpty()
+            announce(text(PlayerMessageKeys.NOW_PLAYING, currentName, resolveVoiceChannelName()))
+            return
         }
-        ensurePlayerView(snapshot)
+        updatePlayerView(snapshot)
     }
 
     private suspend fun onTrackEnded(event: PlayerEvent.TrackEnded) {
@@ -202,38 +207,35 @@ internal class JdaPlayerMessageCoordinator(
         }
     }
 
-    /** First embed for this guild: reuses or creates `#player`, clears it and posts the message. */
-    private suspend fun ensurePlayerView(snapshot: PlayerSnapshot) {
-        if (playerChannelId != null && playerMessageId != null) {
-            updatePlayerView(snapshot)
-            return
-        }
-        // View construction shares the guarded region: any failure falls back to the invoking channel.
-        try {
-            val view = viewFactory.createPlayerView(guild.name, snapshot, guildId, guildLocale)
-            val result = channelService.setUp(guild, view)
-            if (result == null) {
-                fallbackToCommandChannel(view)
-                return
-            }
+    /**
+     * Kord parity: only `/player` sets `#player` up (reuse or create it, clear its backlog and post
+     * the embed for the current snapshot); returns the status line for the command reply.
+     */
+    suspend fun ensurePlayerView(): String = try {
+        val snapshot = engine.snapshot()
+        val view = viewFactory.createPlayerView(guild.name, snapshot, guildId, guildLocale)
+        val result = channelService.setUp(guild, view)
+        if (result == null) {
+            fallbackToCommandChannel(view)
+            text(PlayerMessageKeys.PLAYER_CHANNEL_CREATION_FAILED)
+        } else {
             playerChannelId = result.channelId
             playerMessageId = result.messageId
-            announce(
-                text(
-                    if (result.isNewChannel) {
-                        PlayerMessageKeys.PLAYER_CHANNEL_CREATED
-                    } else {
-                        PlayerMessageKeys.PLAYER_SHOWN_ON_EXISTING_CHANNEL
-                    },
-                    result.channelId.value,
-                ),
+            text(
+                if (result.isNewChannel) {
+                    PlayerMessageKeys.PLAYER_CHANNEL_CREATED
+                } else {
+                    PlayerMessageKeys.PLAYER_SHOWN_ON_EXISTING_CHANNEL
+                },
+                result.channelId.value,
             )
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (error: Exception) {
-            LOG.warn("Could not set up the player message; falling back to the invoking channel", error)
-            fallbackToCommandChannel(view = null)
         }
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (error: Exception) {
+        LOG.warn("Could not set up the player message; falling back to the invoking channel", error)
+        fallbackToCommandChannel(view = null)
+        text(PlayerMessageKeys.PLAYER_CHANNEL_CREATION_FAILED)
     }
 
     private suspend fun updatePlayerView(snapshot: PlayerSnapshot) {
@@ -244,7 +246,7 @@ internal class JdaPlayerMessageCoordinator(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
-            LOG.warn("Could not update the player message; #player will be rebuilt on the next track", error)
+            LOG.warn("Could not update the player message; the next /player rebuilds it", error)
             playerChannelId = null
             playerMessageId = null
         }

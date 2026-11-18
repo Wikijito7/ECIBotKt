@@ -153,7 +153,7 @@ class JdaPlayerMessageCoordinatorTest {
     }
 
     @Test
-    fun `Given a fresh guild When the first track starts Then announce now playing and create the embed`() =
+    fun `Given a fresh guild When the first track starts Then announce now playing and never touch the player channel`() =
         coordinatorTest { fixture ->
             fixture.snapshot = PlayerSnapshot(current = track(), hasActiveTrack = true)
             fixture.recordCommand(channelName = "General")
@@ -162,16 +162,14 @@ class JdaPlayerMessageCoordinatorTest {
             advanceUntilIdle()
 
             assertEquals(
-                listOf(
-                    "🎶 Playing Artist - Song in General",
-                    "Created <#$PLAYER_CHANNEL_ID> channel for music controls",
-                ),
+                listOf("🎶 Playing Artist - Song in General"),
                 fixture.commandChannel.sentTexts,
             )
-            coVerify(exactly = 1) { fixture.channelService.setUp(fixture.guild, fixture.view) }
+            coVerify(exactly = 0) { fixture.channelService.setUp(any(), any()) }
+            coVerify(exactly = 0) { fixture.viewFactory.createPlayerView(any(), any(), any(), any()) }
             assertTrue(
                 fixture.playerChannel.sentData.isEmpty(),
-                "the channel service owns the initial embed creation",
+                "only /player may create the embed; a track start must not touch #player",
             )
         }
 
@@ -180,7 +178,7 @@ class JdaPlayerMessageCoordinatorTest {
         coordinatorTest { fixture ->
             fixture.snapshot = PlayerSnapshot(current = track(), hasActiveTrack = true)
             fixture.recordCommand()
-            fixture.emit(PlayerEvent.TrackStarted(track()))
+            fixture.ensurePlayerView()
             advanceUntilIdle()
             val announcements = fixture.commandChannel.sentTexts.toList()
 
@@ -219,7 +217,7 @@ class JdaPlayerMessageCoordinatorTest {
         coordinatorTest { fixture ->
             fixture.snapshot = PlayerSnapshot(current = track(), hasActiveTrack = true)
             fixture.recordCommand()
-            fixture.emit(PlayerEvent.TrackStarted(track()))
+            fixture.ensurePlayerView()
             advanceUntilIdle()
 
             fixture.snapshot = PlayerSnapshot(current = track(title = "Next"), hasActiveTrack = true)
@@ -238,7 +236,7 @@ class JdaPlayerMessageCoordinatorTest {
     fun `Given a stopped player When handled Then edit the embed with the empty state`() = coordinatorTest { fixture ->
         fixture.snapshot = PlayerSnapshot(current = track(), hasActiveTrack = true)
         fixture.recordCommand()
-        fixture.emit(PlayerEvent.TrackStarted(track()))
+        fixture.ensurePlayerView()
         advanceUntilIdle()
 
         fixture.snapshot = PlayerSnapshot()
@@ -250,35 +248,105 @@ class JdaPlayerMessageCoordinatorTest {
     }
 
     @Test
-    fun `Given a reused player channel When the embed is created Then announce the existing channel`() =
+    fun `Given an idle empty queue When no action runs Then create the player channel with the idle embed`() =
+        coordinatorTest { fixture ->
+            fixture.recordCommand()
+
+            val reply = fixture.ensurePlayerView()
+            advanceUntilIdle()
+
+            assertEquals(english(PlayerMessageKeys.PLAYER_CHANNEL_CREATED, PLAYER_CHANNEL_ID), reply)
+            assertEquals(listOf(PlayerSnapshot()), fixture.viewSnapshots)
+            coVerify(exactly = 1) { fixture.channelService.setUp(fixture.guild, fixture.view) }
+            assertTrue(
+                fixture.commandChannel.sentTexts.isEmpty(),
+                "the status line is the command reply, not a second chat message",
+            )
+        }
+
+    @Test
+    fun `Given an active track When no action runs Then create the player channel with the current snapshot`() =
+        coordinatorTest { fixture ->
+            val snapshot = PlayerSnapshot(current = track(), hasActiveTrack = true)
+            fixture.snapshot = snapshot
+            fixture.recordCommand()
+
+            val reply = fixture.ensurePlayerView()
+            advanceUntilIdle()
+
+            assertEquals(english(PlayerMessageKeys.PLAYER_CHANNEL_CREATED, PLAYER_CHANNEL_ID), reply)
+            assertEquals(listOf(snapshot), fixture.viewSnapshots)
+            coVerify(exactly = 1) { fixture.channelService.setUp(fixture.guild, fixture.view) }
+        }
+
+    @Test
+    fun `Given a reused player channel When no action runs Then reply the existing channel status`() =
         coordinatorTest { fixture ->
             fixture.channelServiceResult = fixture.channelResult(isNewChannel = false)
             fixture.snapshot = PlayerSnapshot(current = track(), hasActiveTrack = true)
             fixture.recordCommand()
 
-            fixture.emit(PlayerEvent.TrackStarted(track()))
+            val reply = fixture.ensurePlayerView()
             advanceUntilIdle()
 
-            assertEquals(
-                listOf("Created player on <#$PLAYER_CHANNEL_ID>"),
-                fixture.commandChannel.sentTexts.filter { it.contains("player") },
+            assertEquals(english(PlayerMessageKeys.PLAYER_SHOWN_ON_EXISTING_CHANNEL, PLAYER_CHANNEL_ID), reply)
+            assertTrue(
+                fixture.commandChannel.sentTexts.isEmpty(),
+                "the status line is the command reply, not a second chat message",
             )
+            coVerify(exactly = 1) { fixture.channelService.setUp(fixture.guild, fixture.view) }
         }
 
     @Test
-    fun `Given a player channel that cannot be created When handled Then show the player in the command channel`() =
+    fun `Given a player channel that cannot be created When no action runs Then fall back to the invoking channel`() =
         coordinatorTest { fixture ->
             fixture.channelServiceResult = null
             fixture.snapshot = PlayerSnapshot(current = track(), hasActiveTrack = true)
             fixture.recordCommand()
 
-            fixture.emit(PlayerEvent.TrackStarted(track()))
+            val reply = fixture.ensurePlayerView()
             advanceUntilIdle()
 
             val fallback = fixture.commandChannel.sentData.single()
+            assertEquals(english(PlayerMessageKeys.PLAYER_CHANNEL_CREATION_FAILED), reply)
             assertEquals(english(PlayerMessageKeys.PLAYER_CHANNEL_CREATION_FAILED), fallback.content)
             assertEquals(1, fallback.embeds.size)
             assertTrue(fixture.playerChannel.sentData.isEmpty())
+        }
+
+    @Test
+    fun `Given a channel service that throws When no action runs Then fall back without leaking the failure`() =
+        coordinatorTest { fixture ->
+            coEvery { fixture.channelService.setUp(any(), any()) } throws IllegalStateException("rest boom")
+            fixture.recordCommand()
+
+            val reply = fixture.ensurePlayerView()
+            advanceUntilIdle()
+
+            assertEquals(english(PlayerMessageKeys.PLAYER_CHANNEL_CREATION_FAILED), reply)
+            assertEquals(
+                english(PlayerMessageKeys.PLAYER_CHANNEL_CREATION_FAILED),
+                fixture.commandChannel.sentTexts.single(),
+                "a failed view construction falls back to a plain warning in the invoking channel",
+            )
+            assertTrue(fixture.commandChannel.sentData.isEmpty(), "no stale embed may be reused after the failure")
+        }
+
+    @Test
+    fun `Given a recorded voice channel When a command records no name Then keep the previous name`() =
+        coordinatorTest { fixture ->
+            fixture.snapshot = PlayerSnapshot(current = track(), hasActiveTrack = true)
+            fixture.recordCommand(channelName = "General")
+            fixture.coordinator.recordCommand(
+                channelId = ChannelId(COMMAND_CHANNEL_ID.toULong()),
+                guildId = GuildId(GUILD_ID.toULong()),
+                guildLocale = null,
+            )
+
+            fixture.emit(PlayerEvent.TrackStarted(track()))
+            advanceUntilIdle()
+
+            assertEquals("🎶 Playing Artist - Song in General", fixture.commandChannel.sentTexts.single())
         }
 
     @Test
@@ -286,7 +354,7 @@ class JdaPlayerMessageCoordinatorTest {
         coordinatorTest { fixture ->
             fixture.snapshot = PlayerSnapshot(current = track(), hasActiveTrack = true)
             fixture.recordCommand()
-            fixture.emit(PlayerEvent.TrackStarted(track()))
+            fixture.ensurePlayerView()
             advanceUntilIdle()
             val announcements = fixture.commandChannel.sentTexts.toList()
 
@@ -606,6 +674,8 @@ class JdaPlayerMessageCoordinatorTest {
         fun startPlayback(input: String) {
             coordinator.startPlayback(voiceChannel, input)
         }
+
+        suspend fun ensurePlayerView(): String = coordinator.ensurePlayerView()
 
         fun playerChannelId(): ChannelId? = privateField("playerChannelId") as? ChannelId
 
