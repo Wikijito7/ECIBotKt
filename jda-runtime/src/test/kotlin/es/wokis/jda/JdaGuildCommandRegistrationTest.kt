@@ -86,6 +86,29 @@ class JdaGuildCommandRegistrationTest {
     }
 
     @Test
+    fun `Given two joined guilds When commands are registered Then the public player commands are enabled`() {
+        val fixture = RegistrationFixture(guildIds = listOf(FIRST_GUILD_ID, SECOND_GUILD_ID))
+
+        fixture.run()
+
+        fixture.published.forEach { (guildId, commands) ->
+            val byName = commands.associateBy { it.name }
+            PUBLIC_PLAYER_COMMANDS.forEach { commandName ->
+                val command = requireNotNull(byName[commandName]) {
+                    "guild $guildId is missing the public command /$commandName"
+                }
+                assertEquals(
+                    DefaultMemberPermissions.ENABLED,
+                    command.defaultPermissions,
+                    "/$commandName must be public in guild $guildId",
+                )
+            }
+            assertEquals(setOf("play", "player"), PUBLIC_PLAYER_COMMANDS, "guild $guildId names drifted")
+            assertEquals(2, PUBLIC_PLAYER_COMMANDS.size)
+        }
+    }
+
+    @Test
     fun `Given two joined guilds When commands are registered Then the diagnostics stay unrestricted`() {
         val fixture = RegistrationFixture(guildIds = listOf(FIRST_GUILD_ID, SECOND_GUILD_ID))
 
@@ -194,8 +217,8 @@ class JdaGuildCommandRegistrationTest {
         private const val FIRST_GUILD_ID = 111111111111111111L
         private const val SECOND_GUILD_ID = 222222222222222222L
 
-        private val ADMIN_ONLY_COMMANDS = setOf(
-            LocaleCommandHandler.COMMAND_NAME,
+        private val ADMIN_ONLY_COMMANDS = setOf(LocaleCommandHandler.COMMAND_NAME)
+        private val PUBLIC_PLAYER_COMMANDS = setOf(
             JdaPlayCommand.COMMAND_NAME,
             JdaPlayerControlCommand.COMMAND_NAME,
         )
@@ -203,7 +226,8 @@ class JdaGuildCommandRegistrationTest {
             WalkthroughCommand.COMMAND_NAME,
             JdaVoiceWalkthroughCommand.COMMAND_NAME,
         )
-        private val EXPECTED_COMMANDS = ADMIN_ONLY_COMMANDS + DIAGNOSTIC_COMMANDS
+        private val EXPECTED_COMMANDS =
+            ADMIN_ONLY_COMMANDS + PUBLIC_PLAYER_COMMANDS + DIAGNOSTIC_COMMANDS
 
         private fun sharedConfig(): Config = Config(
             discordBotToken = "synthetic-registration-token",

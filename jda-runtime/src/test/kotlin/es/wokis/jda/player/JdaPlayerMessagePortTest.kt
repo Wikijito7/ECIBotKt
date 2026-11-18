@@ -1,6 +1,7 @@
 package es.wokis.jda.player
 
 import es.wokis.domain.model.ChannelId
+import es.wokis.message.MessageView
 import es.wokis.player.PlayerMessageId
 import io.mockk.every
 import io.mockk.mockk
@@ -60,6 +61,50 @@ class JdaPlayerMessagePortTest {
         verify(exactly = 1) { channel.editMessageById(900L, "Finished") }
         verify(exactly = 1) { action.queue(any(), any()) }
     }
+
+    @Test
+    fun `Given a text-only view When content is null or blank Then fail without REST and non-blank text still round-trips`() =
+        runTest {
+            val jda = mockk<JDA>()
+            val channel = mockk<TextChannel>()
+            val createAction = mockk<MessageCreateAction>()
+            val editAction = mockk<MessageEditAction>()
+            val message = mockk<Message>()
+            every { jda.getTextChannelById(42L) } returns channel
+            every { channel.sendMessage("Live") } returns createAction
+            every { channel.editMessageById(900L, "Live") } returns editAction
+            every { createAction.queue(any(), any()) } answers {
+                firstArg<Consumer<Message>>().accept(message)
+            }
+            every { editAction.queue(any(), any()) } answers {
+                firstArg<Consumer<Message?>>().accept(null)
+            }
+            every { message.idLong } returns 900L
+            val port = JdaPlayerMessagePort(jda)
+            val emptyViews = listOf(MessageView(), MessageView(content = ""), MessageView(content = "   "))
+
+            val sendErrors = emptyViews.map { view ->
+                runCatching { port.send(channelId, view) }.exceptionOrNull()
+            }
+            val editErrors = emptyViews.map { view ->
+                runCatching { port.edit(channelId, messageId, view) }.exceptionOrNull()
+            }
+
+            // Then: every empty text-only view is rejected before JDA is asked to send or edit anything.
+            (sendErrors + editErrors).forEach { error ->
+                assertTrue(error is IllegalArgumentException)
+                assertEquals("A text-only player message requires non-blank content", error?.message)
+            }
+            verify(exactly = 0) { channel.sendMessage(any<String>()) }
+            verify(exactly = 0) { channel.editMessageById(any<Long>(), any<String>()) }
+
+            val sent = port.send(channelId, MessageView(content = "Live"))
+            port.edit(channelId, messageId, MessageView(content = "Live"))
+
+            assertEquals(PlayerMessageId(900uL), sent)
+            verify(exactly = 1) { channel.sendMessage("Live") }
+            verify(exactly = 1) { channel.editMessageById(900L, "Live") }
+        }
 
     @Test
     fun `Given an existing message When deleting Then use the exact channel and message`() = runTest {

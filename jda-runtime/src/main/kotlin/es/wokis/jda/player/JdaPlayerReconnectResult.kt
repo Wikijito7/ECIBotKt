@@ -1,6 +1,6 @@
 package es.wokis.jda.player
 
-/** Outcome of a `/jda-player reconnect` attempt; only [Reconnected] claims a live session. */
+/** Outcome of a `/player reconnect` attempt; only [Reconnected] claims a live session. */
 internal sealed interface JdaPlayerReconnectResult {
     data object Reconnected : JdaPlayerReconnectResult
 

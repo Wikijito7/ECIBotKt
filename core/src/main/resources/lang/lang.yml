@@ -108,3 +108,24 @@ locale_command_input_description: Locale to set (use autocomplete to see availab
 locale_command_success: Guild locale has been set to %s
 locale_command_reset_success: Guild locale has been reset to Discord's default
 locale_command_invalid_locale: Invalid locale provided. Please use the autocomplete options.
+player_command_action_description: queue, pause, resume, skip, stop, disconnect or reconnect
+player_play_connected: Loaded and playing; the bot joined your voice channel.
+player_load_timeout: The load did not produce an active track in time, so the bot did not connect.
+player_load_rejected: The provider rejected the load; check the input and try again.
+player_playback_failed: The provider could not play that track; the queue moved on.
+player_voice_session_refused: Playback started, but the voice session is owned by another voice path. Disconnect it and use reconnect.
+player_voice_connection_failed: The voice connection could not be opened; check the bot's voice permissions.
+player_paused: Playback paused.
+player_resumed: Playback resumed.
+player_playback_state_unchanged: Playback state did not change; start a track first or check the current state.
+player_stopped: Queue cleared and playback stopped.
+player_unknown_action: Unknown action. Use one of: %s.
+player_reconnect_preserved: Reconnected to your voice channel; the current track and queue were preserved.
+player_reconnect_idle: Reconnected to your voice channel; nothing is playing right now.
+player_reconnect_foreign_session: Reconnect cannot touch this session: another voice path owns the bot's voice connection.
+player_reconnect_in_progress: A voice reconnect is already closing the old connection; try again in a moment.
+player_reconnect_timeout: The old voice connection did not close in time, so the bot did not reconnect.
+player_reconnect_failed: The voice reconnect could not be completed; check the bot's voice permissions.
+queue_embed_footer: Page %d out of %d
+queue_previous_button_label: Previous
+queue_next_button_label: Next

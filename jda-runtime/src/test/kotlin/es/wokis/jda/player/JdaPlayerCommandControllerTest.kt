@@ -1,10 +1,16 @@
 package es.wokis.jda.player
 
 import es.wokis.commands.neutral.CommandContext
+import es.wokis.commands.player.PlayerCommandDefinitions
+import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.LocaleCode
+import es.wokis.domain.locale.LocaleRepository
 import es.wokis.domain.model.ChannelId
 import es.wokis.domain.model.GuildId
 import es.wokis.domain.model.UserId
+import es.wokis.localization.GuildLocalizationService
+import es.wokis.localization.LocalizationCatalog
+import es.wokis.localization.PlayerMessageKeys
 import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.event.PlayerEvent
 import es.wokis.player.engine.model.PlayerSnapshot
@@ -33,6 +39,11 @@ import kotlin.test.assertFailsWith
 
 class JdaPlayerCommandControllerTest {
 
+    private val expected = GuildLocalizationService(
+        getGuildLocaleUseCase = GetGuildLocaleUseCase(EmptyLocaleRepository()),
+        catalog = LocalizationCatalog.load(),
+    )
+
     @Test
     fun `Given a voice member When play runs Then load the input before connecting and report success`() = runTest {
         val fixture = Fixture()
@@ -50,6 +61,7 @@ class JdaPlayerCommandControllerTest {
 
         assertEquals(listOf("load", "connect"), order)
         assertEquals("Loaded and playing; the bot joined your voice channel.", message)
+        assertEquals(english(PlayerMessageKeys.PLAYER_PLAY_CONNECTED), message)
         coVerify(exactly = 1) { fixture.engine.loadAndPlay("track") }
     }
 
@@ -64,11 +76,12 @@ class JdaPlayerCommandControllerTest {
             "The load did not produce an active track in time, so the bot did not connect.",
             message,
         )
+        assertEquals(english(PlayerMessageKeys.PLAYER_LOAD_TIMEOUT), message)
         coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
     }
 
     @Test
-    fun `Given a provider load failure When play runs Then return a failure reply without connecting`() = runTest {
+    fun `Given a rejected provider load When play runs Then reply with the rejected category and no connect`() = runTest {
         val fixture = Fixture()
         coEvery { fixture.engine.loadAndPlay("missing") } coAnswers {
             fixture.presentation.value = JdaPlayerPresentation(
@@ -79,40 +92,75 @@ class JdaPlayerCommandControllerTest {
 
         val message = fixture.controller.play(context(), "missing")
 
-        assertTrue(message.isNotBlank(), "a provider load failure must still produce a user-facing reply")
+        assertEquals(english(PlayerMessageKeys.PLAYER_LOAD_REJECTED), message)
         coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
     }
 
     @Test
-    fun `Given a provider failure carrying a synthetic secret URL When play runs Then the reply does not echo it`() = runTest {
-        // Given: a provider reason shaped like a credentialed stream URL that a log or chat reply must never leak.
+    fun `Given a no-match provider load When play runs Then echo only the caller input`() = runTest {
         val fixture = Fixture()
-        val providerReason =
-            "https://user:provider-secret-sentinel@stream.example.invalid/audio?token=provider-secret-sentinel"
+        coEvery { fixture.engine.loadAndPlay("unknown song") } coAnswers {
+            fixture.presentation.value = JdaPlayerPresentation(
+                revision = 1,
+                lastEvent = PlayerEvent.NoMatches("provider internal query"),
+            )
+        }
+
+        val message = fixture.controller.play(context(), "unknown song")
+
+        assertEquals(english(PlayerMessageKeys.NO_MATCHES, "unknown song"), message)
+        assertFalse(message.contains("provider internal query"))
+        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+    }
+
+    @Test
+    fun `Given a playback failure When play runs Then reply with the playback category and no connect`() = runTest {
+        val fixture = Fixture()
         coEvery { fixture.engine.loadAndPlay("track") } coAnswers {
             fixture.presentation.value = JdaPlayerPresentation(
                 revision = 1,
-                lastEvent = PlayerEvent.LoadFailed(providerReason),
+                lastEvent = PlayerEvent.PlaybackFailed("stream decoder exploded"),
             )
         }
 
         val message = fixture.controller.play(context(), "track")
 
-        // Then: the user-facing reply must not carry the provider reason or any part of the URL.
-        assertFalse(
-            message.contains("provider-secret-sentinel"),
-            "the user-facing reply leaked the provider secret: $message",
-        )
-        assertFalse(
-            message.contains("stream.example.invalid"),
-            "the user-facing reply leaked the provider endpoint: $message",
-        )
-        assertFalse(
-            message.contains("https://"),
-            "the user-facing reply leaked the provider URL: $message",
-        )
+        assertEquals(english(PlayerMessageKeys.PLAYER_PLAYBACK_FAILED), message)
+        assertFalse(message.contains("stream decoder exploded"))
         coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
     }
+
+    @Test
+    fun `Given provider failures carrying a synthetic secret When play runs Then never echo provider text or URLs`() =
+        runTest {
+            // Given: provider failures shaped like a credentialed stream URL that a chat reply must never leak.
+            val secret = "provider-secret-sentinel"
+            val credentialUrl = "https://user:$secret@stream.example.invalid/audio?token=$secret"
+            val cases = listOf(
+                PlayerEvent.LoadFailed(credentialUrl) to english(PlayerMessageKeys.PLAYER_LOAD_REJECTED),
+                PlayerEvent.NoMatches(credentialUrl) to english(PlayerMessageKeys.NO_MATCHES, "track"),
+                PlayerEvent.PlaybackFailed(credentialUrl) to english(PlayerMessageKeys.PLAYER_PLAYBACK_FAILED),
+            )
+
+            cases.forEach { (event, expectedMessage) ->
+                val fixture = Fixture()
+                coEvery { fixture.engine.loadAndPlay("track") } coAnswers {
+                    fixture.presentation.value = JdaPlayerPresentation(revision = 1, lastEvent = event)
+                }
+
+                val message = fixture.controller.play(context(), "track")
+
+                // Then: the reply is the catalog category and never carries any part of the URL.
+                assertEquals(expectedMessage, message)
+                assertFalse(message.contains(secret), "the reply leaked the provider secret: $message")
+                assertFalse(
+                    message.contains("stream.example.invalid"),
+                    "the reply leaked the provider endpoint: $message",
+                )
+                assertFalse(message.contains("https://"), "the reply leaked the provider URL: $message")
+                coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+            }
+        }
 
     @Test
     fun `Given a voice session owned by another path When play runs Then report the refusal after loading`() = runTest {
@@ -124,11 +172,7 @@ class JdaPlayerCommandControllerTest {
 
         val message = fixture.controller.play(context(), "track")
 
-        assertEquals(
-            "Playback started, but the voice session is owned by another voice path. " +
-                "Disconnect it and use reconnect.",
-            message,
-        )
+        assertEquals(english(PlayerMessageKeys.PLAYER_VOICE_SESSION_REFUSED), message)
     }
 
     @Test
@@ -141,7 +185,7 @@ class JdaPlayerCommandControllerTest {
 
         val message = fixture.controller.play(context(), "track")
 
-        assertEquals("The voice connection could not be opened; check the bot's voice permissions.", message)
+        assertEquals(english(PlayerMessageKeys.PLAYER_VOICE_CONNECTION_FAILED), message)
     }
 
     @Test
@@ -150,7 +194,10 @@ class JdaPlayerCommandControllerTest {
 
         val message = fixture.controller.play(context(), "   ")
 
-        assertEquals("Provide a track name, URL or playlist for the player.", message)
+        assertEquals(
+            english(PlayerMessageKeys.ERROR_NO_CONTENT_PROVIDED, PlayerCommandDefinitions.PLAY_OPTION_INPUT),
+            message,
+        )
         verify(exactly = 0) { fixture.runtime.engineFor(any()) }
         verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
     }
@@ -163,8 +210,8 @@ class JdaPlayerCommandControllerTest {
         every { fixture.jda.getGuildById(GUILD_ID) } returns null
         val unknownGuild = fixture.controller.play(context(), "track")
 
-        assertEquals(GUILD_ONLY_MESSAGE, directMessage)
-        assertEquals(GUILD_ONLY_MESSAGE, unknownGuild)
+        assertEquals(english(PlayerMessageKeys.ERROR_NO_GUILD), directMessage)
+        assertEquals(english(PlayerMessageKeys.ERROR_NO_GUILD), unknownGuild)
         coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
     }
 
@@ -178,8 +225,8 @@ class JdaPlayerCommandControllerTest {
         every { fixture.voiceState.channel } returns mockk<AudioChannelUnion>()
         val outsideVoice = fixture.controller.play(context(), "track")
 
-        assertEquals(NOT_IN_VOICE_MESSAGE, nonMember)
-        assertEquals(NOT_IN_VOICE_MESSAGE, outsideVoice)
+        assertEquals(english(PlayerMessageKeys.ERROR_NO_VOICE_CHANNEL), nonMember)
+        assertEquals(english(PlayerMessageKeys.ERROR_NO_VOICE_CHANNEL), outsideVoice)
         coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
     }
 
@@ -211,7 +258,7 @@ class JdaPlayerCommandControllerTest {
         val message = fixture.controller.control(context(), "DANCE")
 
         assertEquals(
-            "Unknown action. Use one of: queue, pause, resume, skip, stop, disconnect, reconnect.",
+            english(PlayerMessageKeys.PLAYER_UNKNOWN_ACTION, JdaPlayerAction.names.joinToString(", ")),
             message,
         )
         verify(exactly = 0) { fixture.runtime.engineFor(any()) }
@@ -226,8 +273,8 @@ class JdaPlayerCommandControllerTest {
         every { fixture.jda.getGuildById(GUILD_ID) } returns null
         val unknownGuild = fixture.controller.control(context(), "pause")
 
-        assertEquals(GUILD_ONLY_MESSAGE, directMessage)
-        assertEquals(GUILD_ONLY_MESSAGE, unknownGuild)
+        assertEquals(english(PlayerMessageKeys.ERROR_NO_GUILD), directMessage)
+        assertEquals(english(PlayerMessageKeys.ERROR_NO_GUILD), unknownGuild)
         verify(exactly = 0) { fixture.runtime.engineFor(any()) }
     }
 
@@ -243,10 +290,44 @@ class JdaPlayerCommandControllerTest {
 
         val message = fixture.controller.control(context(), "queue")
 
+        val currentLabel = english(PlayerMessageKeys.PLAYER_CURRENT_TRACK)
+        val queueLabel = english(PlayerMessageKeys.PLAYER_SERVER_QUEUE)
         assertEquals(
-            "Current (playing): Artist - Song | queued: 2\n1. Artist - One\n2. Artist - Two",
+            "$currentLabel: Artist - Song | $queueLabel: 2\n1. Artist - One\n2. Artist - Two",
             message,
         )
+    }
+
+    @Test
+    fun `Given a queue longer than the page When control asks for it Then list ten tracks and the remainder`() =
+        runTest {
+            val fixture = Fixture()
+            every { fixture.engine.snapshot() } returns PlayerSnapshot(
+                current = track("current", "Song"),
+                queue = (1..12).map { index -> track("id$index", "Track $index") },
+                hasActiveTrack = true,
+            )
+
+            val message = fixture.controller.control(context(), "queue")
+
+            val currentLabel = english(PlayerMessageKeys.PLAYER_CURRENT_TRACK)
+            val queueLabel = english(PlayerMessageKeys.PLAYER_SERVER_QUEUE)
+            val remainingLabel = english(PlayerMessageKeys.PLAYER_QUEUE_TRACKS_REMAINING, 2)
+            val listed = (1..10).joinToString(separator = "\n") { index -> "$index. Artist - Track $index" }
+            assertEquals(
+                "$currentLabel: Artist - Song | $queueLabel: 12\n$listed\n$remainingLabel",
+                message,
+            )
+        }
+
+    @Test
+    fun `Given an empty queue When control asks for it Then report the empty queue`() = runTest {
+        val fixture = Fixture()
+        every { fixture.engine.snapshot() } returns PlayerSnapshot()
+
+        val message = fixture.controller.control(context(), "queue")
+
+        assertEquals(english(PlayerMessageKeys.PLAYER_SERVER_QUEUE_EMPTY), message)
     }
 
     @Test
@@ -264,10 +345,10 @@ class JdaPlayerCommandControllerTest {
         val skipped = fixture.controller.control(context(), "skip")
         val stopped = fixture.controller.control(context(), "stop")
 
-        assertEquals("Playback paused.", paused)
-        assertEquals("Playback resumed.", resumed)
-        assertEquals("Skipped to the next track.", skipped)
-        assertEquals("Queue cleared and playback stopped.", stopped)
+        assertEquals(english(PlayerMessageKeys.PLAYER_PAUSED), paused)
+        assertEquals(english(PlayerMessageKeys.PLAYER_RESUMED), resumed)
+        assertEquals(english(PlayerMessageKeys.SKIP_COMMAND_RESPONSE), skipped)
+        assertEquals(english(PlayerMessageKeys.PLAYER_STOPPED), stopped)
         coVerify(exactly = 1) { fixture.engine.pause() }
         coVerify(exactly = 1) { fixture.engine.resume() }
         coVerify(exactly = 1) { fixture.engine.skip() }
@@ -275,104 +356,108 @@ class JdaPlayerCommandControllerTest {
     }
 
     @Test
-    fun `Given an active track whose pause the engine refuses When control runs Then never report playback as paused`() = runTest {
-        // Given: a track is active, so the guard passes, but the engine rejects the transition.
-        val fixture = Fixture()
-        coEvery { fixture.engine.pause() } returns false
-        every { fixture.engine.snapshot() } returns activeSnapshot()
+    fun `Given an active track whose pause the engine refuses When control runs Then never report playback as paused`() =
+        runTest {
+            // Given: a track is active, so the guard passes, but the engine rejects the transition.
+            val fixture = Fixture()
+            coEvery { fixture.engine.pause() } returns false
+            every { fixture.engine.snapshot() } returns activeSnapshot()
 
-        val message = fixture.controller.control(context(), "pause")
+            val message = fixture.controller.control(context(), "pause")
 
-        // Then: the reply may not claim the pause succeeded, and no voice side effect may imply it.
-        assertNotEquals(
-            PAUSED_SUCCESS_MESSAGE,
-            message,
-            "a refused pause must not be reported as a successful pause",
-        )
-        assertTrue(message.isNotBlank(), "a refused pause must still produce a user-facing reply")
-        coVerify(exactly = 1) { fixture.engine.pause() }
-        coVerify(exactly = 0) { fixture.engine.resume() }
-        coVerify(exactly = 0) { fixture.engine.stop() }
-        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
-        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
-        coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
-        verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
-    }
-
-    @Test
-    fun `Given an active track whose resume the engine refuses When control runs Then never report playback as resumed`() = runTest {
-        // Given: a track is active, so the guard passes, but the engine rejects the transition.
-        val fixture = Fixture()
-        coEvery { fixture.engine.resume() } returns false
-        every { fixture.engine.snapshot() } returns activeSnapshot()
-
-        val message = fixture.controller.control(context(), "resume")
-
-        // Then: the reply may not claim the resume succeeded, and no voice side effect may imply it.
-        assertNotEquals(
-            RESUMED_SUCCESS_MESSAGE,
-            message,
-            "a refused resume must not be reported as a successful resume",
-        )
-        assertTrue(message.isNotBlank(), "a refused resume must still produce a user-facing reply")
-        coVerify(exactly = 1) { fixture.engine.resume() }
-        coVerify(exactly = 0) { fixture.engine.pause() }
-        coVerify(exactly = 0) { fixture.engine.stop() }
-        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
-        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
-        coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
-        verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
-    }
+            // Then: the reply may not claim the pause succeeded, and no voice side effect may imply it.
+            assertNotEquals(
+                english(PlayerMessageKeys.PLAYER_PAUSED),
+                message,
+                "a refused pause must not be reported as a successful pause",
+            )
+            assertTrue(message.isNotBlank(), "a refused pause must still produce a user-facing reply")
+            coVerify(exactly = 1) { fixture.engine.pause() }
+            coVerify(exactly = 0) { fixture.engine.resume() }
+            coVerify(exactly = 0) { fixture.engine.stop() }
+            coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+            coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+            coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
+            verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
+        }
 
     @Test
-    fun `Given an idle player When control pauses Then answer with no active playback and never transition the engine`() = runTest {
-        // Given: no current track, even though the engine would accept a pause.
-        val fixture = Fixture()
-        every { fixture.engine.snapshot() } returns PlayerSnapshot()
-        coEvery { fixture.engine.pause() } returns true
+    fun `Given an active track whose resume the engine refuses When control runs Then never report playback as resumed`() =
+        runTest {
+            // Given: a track is active, so the guard passes, but the engine rejects the transition.
+            val fixture = Fixture()
+            coEvery { fixture.engine.resume() } returns false
+            every { fixture.engine.snapshot() } returns activeSnapshot()
 
-        val message = fixture.controller.control(context(), "pause")
+            val message = fixture.controller.control(context(), "resume")
 
-        // Then: the guard rejects the transition before the engine and never claims success.
-        assertEquals(NO_ACTIVE_PLAYBACK_MESSAGE, message)
-        assertNotEquals(PAUSED_SUCCESS_MESSAGE, message)
-        assertNotEquals(PLAYBACK_STATE_UNCHANGED_MESSAGE, message)
-        assertTrue(message.isNotBlank(), "an idle pause must still produce a user-facing reply")
-        verify(exactly = 1) { fixture.engine.snapshot() }
-        coVerify(exactly = 0) { fixture.engine.pause() }
-        coVerify(exactly = 0) { fixture.engine.resume() }
-        coVerify(exactly = 0) { fixture.engine.skip() }
-        coVerify(exactly = 0) { fixture.engine.stop() }
-        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
-        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
-        coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
-        verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
-    }
+            // Then: the reply may not claim the resume succeeded, and no voice side effect may imply it.
+            assertNotEquals(
+                english(PlayerMessageKeys.PLAYER_RESUMED),
+                message,
+                "a refused resume must not be reported as a successful resume",
+            )
+            assertTrue(message.isNotBlank(), "a refused resume must still produce a user-facing reply")
+            coVerify(exactly = 1) { fixture.engine.resume() }
+            coVerify(exactly = 0) { fixture.engine.pause() }
+            coVerify(exactly = 0) { fixture.engine.stop() }
+            coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+            coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+            coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
+            verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
+        }
 
     @Test
-    fun `Given an idle player When control resumes Then answer with no active playback and never transition the engine`() = runTest {
-        // Given: no current track, even though the engine would accept a resume.
-        val fixture = Fixture()
-        every { fixture.engine.snapshot() } returns PlayerSnapshot()
-        coEvery { fixture.engine.resume() } returns true
+    fun `Given an idle player When control pauses Then answer with no active playback and never transition the engine`() =
+        runTest {
+            // Given: no current track, even though the engine would accept a pause.
+            val fixture = Fixture()
+            every { fixture.engine.snapshot() } returns PlayerSnapshot()
+            coEvery { fixture.engine.pause() } returns true
 
-        val message = fixture.controller.control(context(), "resume")
+            val message = fixture.controller.control(context(), "pause")
 
-        // Then: the guard rejects the transition before the engine and never claims success.
-        assertEquals(NO_ACTIVE_PLAYBACK_MESSAGE, message)
-        assertNotEquals(RESUMED_SUCCESS_MESSAGE, message)
-        assertNotEquals(PLAYBACK_STATE_UNCHANGED_MESSAGE, message)
-        assertTrue(message.isNotBlank(), "an idle resume must still produce a user-facing reply")
-        verify(exactly = 1) { fixture.engine.snapshot() }
-        coVerify(exactly = 0) { fixture.engine.resume() }
-        coVerify(exactly = 0) { fixture.engine.pause() }
-        coVerify(exactly = 0) { fixture.engine.skip() }
-        coVerify(exactly = 0) { fixture.engine.stop() }
-        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
-        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
-        coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
-        verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
-    }
+            // Then: the guard rejects the transition before the engine and never claims success.
+            assertEquals(english(PlayerMessageKeys.ERROR_NO_TRACK_PLAYING), message)
+            assertNotEquals(english(PlayerMessageKeys.PLAYER_PAUSED), message)
+            assertNotEquals(english(PlayerMessageKeys.PLAYER_PLAYBACK_STATE_UNCHANGED), message)
+            assertTrue(message.isNotBlank(), "an idle pause must still produce a user-facing reply")
+            verify(exactly = 1) { fixture.engine.snapshot() }
+            coVerify(exactly = 0) { fixture.engine.pause() }
+            coVerify(exactly = 0) { fixture.engine.resume() }
+            coVerify(exactly = 0) { fixture.engine.skip() }
+            coVerify(exactly = 0) { fixture.engine.stop() }
+            coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+            coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+            coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
+            verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
+        }
+
+    @Test
+    fun `Given an idle player When control resumes Then answer with no active playback and never transition the engine`() =
+        runTest {
+            // Given: no current track, even though the engine would accept a resume.
+            val fixture = Fixture()
+            every { fixture.engine.snapshot() } returns PlayerSnapshot()
+            coEvery { fixture.engine.resume() } returns true
+
+            val message = fixture.controller.control(context(), "resume")
+
+            // Then: the guard rejects the transition before the engine and never claims success.
+            assertEquals(english(PlayerMessageKeys.ERROR_NO_TRACK_PLAYING), message)
+            assertNotEquals(english(PlayerMessageKeys.PLAYER_RESUMED), message)
+            assertNotEquals(english(PlayerMessageKeys.PLAYER_PLAYBACK_STATE_UNCHANGED), message)
+            assertTrue(message.isNotBlank(), "an idle resume must still produce a user-facing reply")
+            verify(exactly = 1) { fixture.engine.snapshot() }
+            coVerify(exactly = 0) { fixture.engine.resume() }
+            coVerify(exactly = 0) { fixture.engine.pause() }
+            coVerify(exactly = 0) { fixture.engine.skip() }
+            coVerify(exactly = 0) { fixture.engine.stop() }
+            coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+            coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+            coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
+            verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
+        }
 
     @Test
     fun `Given a skip with nothing playing When control runs Then report it`() = runTest {
@@ -381,7 +466,7 @@ class JdaPlayerCommandControllerTest {
 
         val message = fixture.controller.control(context(), "skip")
 
-        assertEquals("Nothing is playing right now.", message)
+        assertEquals(english(PlayerMessageKeys.ERROR_NO_TRACK_PLAYING), message)
     }
 
     @Test
@@ -392,35 +477,33 @@ class JdaPlayerCommandControllerTest {
 
         val message = fixture.controller.control(context(), "disconnect")
 
-        assertEquals("Queue cleared and voice disconnected.", message)
+        assertEquals(english(PlayerMessageKeys.DISCONNECT_COMMAND_RESPONSE), message)
         coVerify(exactly = 1) { fixture.engine.stop() }
         coVerify(exactly = 1) { fixture.runtime.disconnect(fixture.guild) }
         coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
     }
 
     @Test
-    fun `Given an active track When reconnect runs Then use the dedicated reconnect path without stopping or clearing it`() = runTest {
-        val fixture = Fixture(started = true)
-        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
-            JdaPlayerReconnectResult.Reconnected
-        every { fixture.engine.snapshot() } returns PlayerSnapshot(
-            current = track("current", "Song"),
-            queue = listOf(track("queued", "Queued")),
-            hasActiveTrack = true,
-        )
+    fun `Given an active track When reconnect runs Then use the dedicated reconnect path without stopping or clearing it`() =
+        runTest {
+            val fixture = Fixture(started = true)
+            coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
+                JdaPlayerReconnectResult.Reconnected
+            every { fixture.engine.snapshot() } returns PlayerSnapshot(
+                current = track("current", "Song"),
+                queue = listOf(track("queued", "Queued")),
+                hasActiveTrack = true,
+            )
 
-        val message = fixture.controller.control(context(), "reconnect")
+            val message = fixture.controller.control(context(), "reconnect")
 
-        assertEquals(
-            "Reconnected to your voice channel; the current track and queue were preserved.",
-            message,
-        )
-        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
-        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
-        coVerify(exactly = 0) { fixture.engine.stop() }
-        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
-        coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
-    }
+            assertEquals(english(PlayerMessageKeys.PLAYER_RECONNECT_PRESERVED), message)
+            coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+            coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+            coVerify(exactly = 0) { fixture.engine.stop() }
+            coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+            coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
+        }
 
     @Test
     fun `Given an idle player When reconnect runs Then report the reconnect without a track`() = runTest {
@@ -431,25 +514,26 @@ class JdaPlayerCommandControllerTest {
 
         val message = fixture.controller.control(context(), "reconnect")
 
-        assertEquals("Reconnected to your voice channel; nothing is playing right now.", message)
+        assertEquals(english(PlayerMessageKeys.PLAYER_RECONNECT_IDLE), message)
         coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
         coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
     }
 
     @Test
-    fun `Given an already disconnected player When reconnect runs Then report the reconnect-specific refusal`() = runTest {
-        val fixture = Fixture()
-        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
-            JdaPlayerReconnectResult.NotConnected
+    fun `Given an already disconnected player When reconnect runs Then report the reconnect-specific refusal`() =
+        runTest {
+            val fixture = Fixture()
+            coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
+                JdaPlayerReconnectResult.NotConnected
 
-        val message = fixture.controller.control(context(), "reconnect")
+            val message = fixture.controller.control(context(), "reconnect")
 
-        assertEquals("The bot is not connected to voice, so there is nothing to reconnect.", message)
-        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
-        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
-        coVerify(exactly = 0) { fixture.engine.stop() }
-        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
-    }
+            assertEquals(english(PlayerMessageKeys.RECONNECT_NOT_CONNECTED), message)
+            coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+            coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+            coVerify(exactly = 0) { fixture.engine.stop() }
+            coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+        }
 
     @Test
     fun `Given a foreign voice session When reconnect runs Then report the reconnect-specific refusal`() = runTest {
@@ -459,10 +543,7 @@ class JdaPlayerCommandControllerTest {
 
         val message = fixture.controller.control(context(), "reconnect")
 
-        assertEquals(
-            "Reconnect cannot touch this session: another voice path owns the bot's voice connection.",
-            message,
-        )
+        assertEquals(english(PlayerMessageKeys.PLAYER_RECONNECT_FOREIGN_SESSION), message)
         coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
         coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
         coVerify(exactly = 0) { fixture.engine.stop() }
@@ -470,55 +551,45 @@ class JdaPlayerCommandControllerTest {
     }
 
     @Test
-    fun `Given a disconnect that is not confirmed When reconnect runs Then report the timeout without false success`() = runTest {
-        val fixture = Fixture()
-        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
-            JdaPlayerReconnectResult.TimedOut
+    fun `Given a disconnect that is not confirmed When reconnect runs Then report the timeout without false success`() =
+        runTest {
+            val fixture = Fixture()
+            coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
+                JdaPlayerReconnectResult.TimedOut
 
-        val message = fixture.controller.control(context(), "reconnect")
+            val message = fixture.controller.control(context(), "reconnect")
 
-        assertEquals(
-            "The old voice connection did not close in time, so the bot did not reconnect.",
-            message,
-        )
-        assertNotEquals(
-            "Reconnected to your voice channel; the current track and queue were preserved.",
-            message,
-        )
-        assertNotEquals("Reconnected to your voice channel; nothing is playing right now.", message)
-        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
-        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
-        coVerify(exactly = 0) { fixture.engine.stop() }
-        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
-    }
+            assertEquals(english(PlayerMessageKeys.PLAYER_RECONNECT_TIMEOUT), message)
+            assertNotEquals(english(PlayerMessageKeys.PLAYER_RECONNECT_PRESERVED), message)
+            assertNotEquals(english(PlayerMessageKeys.PLAYER_RECONNECT_IDLE), message)
+            coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+            coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+            coVerify(exactly = 0) { fixture.engine.stop() }
+            coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+        }
 
     @Test
-    fun `Given a reconnect already pending When reconnect runs Then report the in-progress refusal without mutation`() = runTest {
-        val fixture = Fixture()
-        coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
-            JdaPlayerReconnectResult.InProgress
+    fun `Given a reconnect already pending When reconnect runs Then report the in-progress refusal without mutation`() =
+        runTest {
+            val fixture = Fixture()
+            coEvery { fixture.runtime.reconnect(fixture.guild, fixture.channel) } returns
+                JdaPlayerReconnectResult.InProgress
 
-        val message = fixture.controller.control(context(), "reconnect")
+            val message = fixture.controller.control(context(), "reconnect")
 
-        assertEquals(
-            "A voice reconnect is already closing the old connection; try again in a moment.",
-            message,
-        )
-        assertNotEquals(
-            "Reconnected to your voice channel; the current track and queue were preserved.",
-            message,
-        )
-        assertNotEquals("Reconnected to your voice channel; nothing is playing right now.", message)
-        coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
-        coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
-        coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
-        coVerify(exactly = 0) { fixture.engine.stop() }
-        coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
-        coVerify(exactly = 0) { fixture.engine.pause() }
-        coVerify(exactly = 0) { fixture.engine.resume() }
-        coVerify(exactly = 0) { fixture.engine.skip() }
-        verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
-    }
+            assertEquals(english(PlayerMessageKeys.PLAYER_RECONNECT_IN_PROGRESS), message)
+            assertNotEquals(english(PlayerMessageKeys.PLAYER_RECONNECT_PRESERVED), message)
+            assertNotEquals(english(PlayerMessageKeys.PLAYER_RECONNECT_IDLE), message)
+            coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
+            coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
+            coVerify(exactly = 0) { fixture.runtime.disconnect(any()) }
+            coVerify(exactly = 0) { fixture.engine.stop() }
+            coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
+            coVerify(exactly = 0) { fixture.engine.pause() }
+            coVerify(exactly = 0) { fixture.engine.resume() }
+            coVerify(exactly = 0) { fixture.engine.skip() }
+            verify(exactly = 0) { fixture.runtime.voiceAdapterFor(any()) }
+        }
 
     @Test
     fun `Given a reconnect exception When reconnect runs Then report the reconnect-specific failure`() = runTest {
@@ -528,15 +599,19 @@ class JdaPlayerCommandControllerTest {
 
         val message = fixture.controller.control(context(), "reconnect")
 
-        assertEquals(
-            "The voice reconnect could not be completed; check the bot's voice permissions.",
-            message,
-        )
+        assertEquals(english(PlayerMessageKeys.PLAYER_RECONNECT_FAILED), message)
         coVerify(exactly = 1) { fixture.runtime.reconnect(fixture.guild, fixture.channel) }
         coVerify(exactly = 0) { fixture.runtime.connect(any(), any()) }
         coVerify(exactly = 0) { fixture.engine.stop() }
         coVerify(exactly = 0) { fixture.engine.loadAndPlay(any()) }
     }
+
+    private suspend fun english(key: String, vararg arguments: Any): String =
+        if (arguments.isEmpty()) {
+            expected.getString(key = key)
+        } else {
+            expected.getStringFormat(key = key, arguments = arguments)
+        }
 
     private fun context(
         guildId: GuildId? = GuildId(GUILD_ID.toULong()),
@@ -589,7 +664,7 @@ class JdaPlayerCommandControllerTest {
         )
         val channelUnion: AudioChannelUnion = voiceChannel()
         val channel: VoiceChannel = channelUnion as VoiceChannel
-        val controller = JdaPlayerCommandController(jda, runtime)
+        val controller = JdaPlayerCommandController(jda, runtime, expected)
 
         init {
             every { jda.getGuildById(GUILD_ID) } returns guild
@@ -602,18 +677,20 @@ class JdaPlayerCommandControllerTest {
         }
     }
 
+    private class EmptyLocaleRepository : LocaleRepository {
+        override suspend fun getGuildLocale(guildId: GuildId): LocaleCode? = null
+
+        override suspend fun setGuildLocale(guildId: GuildId, locale: LocaleCode) =
+            error("the controller must not persist a guild locale")
+
+        override suspend fun removeGuildLocale(guildId: GuildId) =
+            error("the controller must not persist a guild locale")
+
+        override suspend fun getAllGuildLocales(): Map<GuildId, LocaleCode> = emptyMap()
+    }
+
     private companion object {
         private const val GUILD_ID = 42L
         private const val USER_ID = 44L
-        private const val GUILD_ONLY_MESSAGE =
-            "Run this in a guild, from the voice channel the bot should join."
-        private const val NOT_IN_VOICE_MESSAGE =
-            "Join a regular voice channel first; stage channels are not supported by the player."
-        private const val PAUSED_SUCCESS_MESSAGE = "Playback paused."
-        private const val RESUMED_SUCCESS_MESSAGE = "Playback resumed."
-        private const val NO_ACTIVE_PLAYBACK_MESSAGE =
-            "Nothing is playing right now, so there is no playback to pause or resume."
-        private const val PLAYBACK_STATE_UNCHANGED_MESSAGE =
-            "Playback state did not change; start a track first or check the current state."
     }
 }

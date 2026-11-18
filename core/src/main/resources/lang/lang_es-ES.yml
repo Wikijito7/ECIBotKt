@@ -31,7 +31,7 @@ shuffle_command_response: Reordenada la cola de manera aleatoria
 tts_command_description: Genera un mensaje TTS
 tts_command_input_description: Texto para generar el mensaje TTS
 tts_command_response: Generando el mensage TTS
-player_command_description: Shows the player for this guild
+player_command_description: Muestra el reproductor de este servidor
 player_title: Reproductor de %s
 player_current_track: Pista de audio actual
 player_playback_position: Posición de reproducción
@@ -108,3 +108,24 @@ locale_command_input_description: Idioma a establecer (usa el autocompletado par
 locale_command_success: El idioma del servidor se ha establecido a %s
 locale_command_reset_success: El idioma del servidor se ha restablecido al valor predeterminado de Discord
 locale_command_invalid_locale: Idioma proporcionado no válido. Por favor, usa las opciones de autocompletado.
+player_command_action_description: queue, pause, resume, skip, stop, disconnect o reconnect
+player_play_connected: Cargado y reproduciendo; el bot se ha unido a tu canal de voz.
+player_load_timeout: La carga no produjo una pista activa a tiempo, así que el bot no se conectó.
+player_load_rejected: El proveedor rechazó la carga; revisa la entrada e inténtalo de nuevo.
+player_playback_failed: El proveedor no pudo reproducir esa pista; la cola continuó.
+player_voice_session_refused: La reproducción comenzó, pero la sesión de voz pertenece a otra ruta de voz. Desconéctala y usa reconectar.
+player_voice_connection_failed: No se pudo abrir la conexión de voz; revisa los permisos de voz del bot.
+player_paused: Reproducción pausada.
+player_resumed: Reproducción reanudada.
+player_playback_state_unchanged: El estado de reproducción no cambió; inicia una pista o revisa el estado actual.
+player_stopped: Cola limpiada y reproducción detenida.
+player_unknown_action: Acción desconocida. Usa una de: %s.
+player_reconnect_preserved: Reconectado a tu canal de voz; la pista actual y la cola se conservaron.
+player_reconnect_idle: Reconectado a tu canal de voz; no se está reproduciendo nada ahora mismo.
+player_reconnect_foreign_session: La reconexión no puede tocar esta sesión: otra ruta de voz controla la conexión del bot.
+player_reconnect_in_progress: Ya hay una reconexión cerrando la conexión anterior; inténtalo de nuevo en un momento.
+player_reconnect_timeout: La conexión de voz anterior no se cerró a tiempo, así que el bot no se reconectó.
+player_reconnect_failed: No se pudo completar la reconexión de voz; revisa los permisos de voz del bot.
+paginated_embed_footer: Página %d de %d
+paginated_embed_previous_button_label: Anterior
+paginated_embed_next_button_label: Siguiente

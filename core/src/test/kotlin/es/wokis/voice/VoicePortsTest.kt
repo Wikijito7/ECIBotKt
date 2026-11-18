@@ -1,6 +1,7 @@
 package es.wokis.voice
 
 import es.wokis.domain.model.ChannelId
+import es.wokis.message.MessageView
 import es.wokis.player.PlayerMessageId
 import es.wokis.player.PlayerMessagePort
 import kotlinx.coroutines.test.runTest
@@ -182,6 +183,21 @@ class VoicePortsTest {
     }
 
     @Test
+    fun `Given a view-only port When text send and edit run Then they delegate as text-only views`() = runTest {
+        // Given: an implementation that overrides only the MessageView overloads.
+        val port = RecordingPlayerMessagePort()
+        val channelId = ChannelId(987654321uL)
+
+        val messageId = port.send(channelId, "Now playing")
+        port.edit(channelId, messageId, "Finished")
+
+        // Then: the default text methods wrap the content in a text-only view.
+        assertEquals(listOf("Now playing", "Finished"), port.views.map { it.content })
+        assertTrue(port.views.all { it.isTextOnly }, "plain text must never synthesize an embed or rows")
+        assertTrue(port.views.all { it.embed == null && it.rows.isEmpty() })
+    }
+
+    @Test
     fun `Given the full unsigned message id When rendered Then the decimal value is preserved`() {
         assertEquals(
             "18446744073709551615",
@@ -229,14 +245,17 @@ class VoicePortsTest {
 
     private class RecordingPlayerMessagePort : PlayerMessagePort {
         val operations = mutableListOf<String>()
+        val views = mutableListOf<MessageView>()
 
-        override suspend fun send(channelId: ChannelId, content: String): PlayerMessageId {
-            operations += "send:${channelId.value}:$content"
+        override suspend fun send(channelId: ChannelId, view: MessageView): PlayerMessageId {
+            views += view
+            operations += "send:${channelId.value}:${view.content.orEmpty()}"
             return PlayerMessageId(555uL)
         }
 
-        override suspend fun edit(channelId: ChannelId, messageId: PlayerMessageId, content: String) {
-            operations += "edit:${channelId.value}:${messageId.value}:$content"
+        override suspend fun edit(channelId: ChannelId, messageId: PlayerMessageId, view: MessageView) {
+            views += view
+            operations += "edit:${channelId.value}:${messageId.value}:${view.content.orEmpty()}"
         }
 
         override suspend fun delete(channelId: ChannelId, messageId: PlayerMessageId) {

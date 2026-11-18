@@ -2,9 +2,14 @@ package es.wokis.jda.command
 
 import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.neutral.CommandDefinition
+import es.wokis.commands.player.PlayerCommandDefinitions
+import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.LocaleCode
+import es.wokis.domain.locale.LocaleRepository
 import es.wokis.domain.model.GuildId
-import es.wokis.jda.player.JdaPlayerControlCommand
+import es.wokis.localization.GuildLocalizationService
+import es.wokis.localization.LocalizationCatalog
+import es.wokis.localization.PlayerMessageKeys
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -34,6 +39,10 @@ class JdaGuildCommandRegistrarTest {
 
     private val jda: JDA = mockk()
     private val guild: Guild = mockk()
+    private val localization = GuildLocalizationService(
+        getGuildLocaleUseCase = GetGuildLocaleUseCase(EmptyLocaleRepository()),
+        catalog = LocalizationCatalog.load(),
+    )
 
     @Test
     fun `Given a member guild When registering Then publish the command only in that guild`() = runTest {
@@ -214,11 +223,11 @@ class JdaGuildCommandRegistrarTest {
         }
 
     @Test
-    fun `Given a jda-player definition When registering Then publish an admin guild command with the required action option`() =
+    fun `Given a public player definition When registering Then publish an enabled guild command with the required action option`() =
         runTest {
             val guildId = GuildId(1234567890123456789uL)
             val jdaGuildId = 1234567890123456789L
-            val command = JdaPlayerControlCommand(mockk()).definition
+            val command = PlayerCommandDefinitions.player(localization)
             val published = slot<SlashCommandData>()
             val upsertAction = successfulUpsertAction()
             every { jda.getGuildById(jdaGuildId) } returns guild
@@ -232,18 +241,57 @@ class JdaGuildCommandRegistrarTest {
             verify(exactly = 0) { jda.upsertCommand(any<String>(), any<String>()) }
 
             val data = published.captured
-            assertEquals(JdaPlayerControlCommand.COMMAND_NAME, data.name)
-            assertEquals(JdaPlayerControlCommand.COMMAND_DESCRIPTION, data.description)
+            assertEquals("player", data.name)
+            assertEquals(PlayerCommandDefinitions.PLAYER_COMMAND_NAME, data.name)
             assertEquals(
-                DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR),
-                data.defaultPermissions,
+                localization.getDefaultString(PlayerMessageKeys.PLAYER_COMMAND_DESCRIPTION),
+                data.description,
             )
+            assertEquals(DefaultMemberPermissions.ENABLED, data.defaultPermissions)
 
             val option = data.options.single()
             assertEquals(OptionType.STRING, option.type)
-            assertEquals(JdaPlayerControlCommand.OPTION_ACTION, option.name)
+            assertEquals(PlayerCommandDefinitions.PLAYER_OPTION_ACTION, option.name)
+            assertEquals(
+                localization.getDefaultString(PlayerMessageKeys.PLAYER_COMMAND_ACTION_DESCRIPTION),
+                option.description,
+            )
             assertTrue(option.isRequired)
             assertFalse(option.isAutoComplete)
+        }
+
+    @Test
+    fun `Given a public play definition When registering Then publish an enabled guild command with the required input option`() =
+        runTest {
+            val guildId = GuildId(1234567890123456789uL)
+            val jdaGuildId = 1234567890123456789L
+            val command = PlayerCommandDefinitions.play(localization)
+            val published = slot<SlashCommandData>()
+            val upsertAction = successfulUpsertAction()
+            every { jda.getGuildById(jdaGuildId) } returns guild
+            every { guild.upsertCommand(capture(published)) } returns upsertAction
+
+            JdaGuildCommandRegistrar(jda).register(guildId, command)
+
+            val data = published.captured
+            assertEquals("play", data.name)
+            assertEquals(PlayerCommandDefinitions.PLAY_COMMAND_NAME, data.name)
+            assertEquals(
+                localization.getDefaultString(PlayerMessageKeys.PLAY_COMMAND_DESCRIPTION),
+                data.description,
+            )
+            assertEquals(DefaultMemberPermissions.ENABLED, data.defaultPermissions)
+
+            val option = data.options.single()
+            assertEquals(OptionType.STRING, option.type)
+            assertEquals(PlayerCommandDefinitions.PLAY_OPTION_INPUT, option.name)
+            assertEquals(
+                localization.getDefaultString(PlayerMessageKeys.PLAY_COMMAND_INPUT_DESCRIPTION),
+                option.description,
+            )
+            assertTrue(option.isRequired)
+            assertFalse(option.isAutoComplete)
+            verify(exactly = 0) { jda.upsertCommand(any<CommandData>()) }
         }
 
     private fun successfulUpsertAction(): RestAction<Command> {
@@ -252,5 +300,17 @@ class JdaGuildCommandRegistrarTest {
             firstArg<Consumer<Command?>>().accept(null)
         }
         return action
+    }
+
+    private class EmptyLocaleRepository : LocaleRepository {
+        override suspend fun getGuildLocale(guildId: GuildId): LocaleCode? = null
+
+        override suspend fun setGuildLocale(guildId: GuildId, locale: LocaleCode) =
+            error("definition access must not persist")
+
+        override suspend fun removeGuildLocale(guildId: GuildId) =
+            error("definition access must not persist")
+
+        override suspend fun getAllGuildLocales(): Map<GuildId, LocaleCode> = emptyMap()
     }
 }
