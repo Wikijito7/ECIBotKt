@@ -14,6 +14,7 @@ private const val PLAYER_RUNTIME_STEP = "player-runtime"
 private const val VOICE_DISCONNECT_STEP = "voice-disconnect"
 private const val ROUTER_STEP = "command-router"
 private const val COMPONENT_ROUTER_STEP = "component-router"
+private const val AUTOCOMPLETE_ROUTER_STEP = "autocomplete-router"
 private const val SHUTDOWN_HOOK_STEP = "shutdown-hook"
 private const val JDA_SHUTDOWN_STEP = "jda-shutdown"
 private const val SHUTDOWN_TIMEOUT_SECONDS = 10L
@@ -40,6 +41,8 @@ internal data class BootstrapCleanupTargets(
     val playerRuntime: AutoCloseable? = null,
     /** Button router, when created. */
     val componentRouter: AutoCloseable? = null,
+    /** Autocomplete router, when created. */
+    val autocompleteRouter: AutoCloseable? = null,
 )
 
 /**
@@ -131,6 +134,9 @@ internal fun defaultBootstrapCleanupSteps(
     }
     targets.componentRouter?.let { router ->
         add(BootstrapCleanupStep(COMPONENT_ROUTER_STEP) { router.close() })
+    }
+    targets.autocompleteRouter?.let { router ->
+        add(BootstrapCleanupStep(AUTOCOMPLETE_ROUTER_STEP) { router.close() })
     }
     targets.shutdownHook?.let { hook ->
         add(BootstrapCleanupStep(SHUTDOWN_HOOK_STEP) { removeShutdownHook(hook) })

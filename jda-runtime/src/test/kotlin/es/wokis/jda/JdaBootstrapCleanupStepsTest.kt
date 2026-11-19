@@ -37,6 +37,7 @@ class JdaBootstrapCleanupStepsTest {
         val hook = Thread({ }, "test-shutdown-hook")
         val router = AutoCloseable { events += "command-router" }
         val componentRouter = AutoCloseable { events += "component-router" }
+        val autocompleteRouter = AutoCloseable { events += "autocomplete-router" }
 
         every { audioManager.isConnected } returns true
         every { audioManager.closeAudioConnection() } answers { events += "voice-disconnect" }
@@ -60,6 +61,7 @@ class JdaBootstrapCleanupStepsTest {
                     router = router,
                     shutdownHook = hook,
                     componentRouter = componentRouter,
+                    autocompleteRouter = autocompleteRouter,
                 ),
             )
             steps.forEach { it.run() }
@@ -68,7 +70,14 @@ class JdaBootstrapCleanupStepsTest {
         }
 
         assertEquals(
-            listOf("voice-disconnect", "command-router", "component-router", "shutdown-hook", "jda-shutdown"),
+            listOf(
+                "voice-disconnect",
+                "command-router",
+                "component-router",
+                "autocomplete-router",
+                "shutdown-hook",
+                "jda-shutdown",
+            ),
             events,
         )
     }
@@ -82,6 +91,63 @@ class JdaBootstrapCleanupStepsTest {
         )
 
         assertEquals(listOf("component-router"), steps.map { it.name })
+    }
+
+    @Test
+    fun `Given only an autocomplete router When production cleanup steps are built Then it closes alone`() {
+        val autocompleteRouter = AutoCloseable { }
+
+        val steps = defaultBootstrapCleanupSteps(
+            BootstrapCleanupTargets(
+                jda = null,
+                router = null,
+                shutdownHook = null,
+                autocompleteRouter = autocompleteRouter,
+            ),
+        )
+
+        assertEquals(listOf("autocomplete-router"), steps.map { it.name })
+    }
+
+    @Test
+    fun `Given a component router failure When cleanup runs Then the autocomplete router still closes before the hook`() {
+        val events = mutableListOf<String>()
+        val client = mockk<JDA>()
+        val runtime = mockk<Runtime>()
+        val hook = Thread({ }, "test-shutdown-hook")
+        val componentRouter = AutoCloseable { throw IllegalStateException("component router failed") }
+        val autocompleteRouter = AutoCloseable { events += "autocomplete-router" }
+
+        every { client.status } returns JDA.Status.CONNECTED
+        every { client.guilds } returns emptyList()
+        every { client.shutdown() } answers { events += "jda-shutdown" }
+        every { client.awaitShutdown(10L, TimeUnit.SECONDS) } returns true
+        every { runtime.removeShutdownHook(hook) } answers {
+            events += "shutdown-hook"
+            true
+        }
+
+        mockkStatic(Runtime::class)
+        try {
+            every { Runtime.getRuntime() } returns runtime
+
+            val report = runBootstrapCleanup(
+                defaultBootstrapCleanupSteps(
+                    BootstrapCleanupTargets(
+                        jda = client,
+                        router = null,
+                        shutdownHook = hook,
+                        componentRouter = componentRouter,
+                        autocompleteRouter = autocompleteRouter,
+                    ),
+                ),
+            )
+
+            assertTrue(report.failed)
+            assertEquals(listOf("autocomplete-router", "shutdown-hook", "jda-shutdown"), events)
+        } finally {
+            unmockkStatic(Runtime::class)
+        }
     }
 
     @Test

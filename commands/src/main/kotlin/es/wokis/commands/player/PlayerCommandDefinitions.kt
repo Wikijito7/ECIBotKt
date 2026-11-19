@@ -24,6 +24,11 @@ object PlayerCommandDefinitions {
     const val QUEUE_COMMAND_NAME = "queue"
     const val DISCONNECT_COMMAND_NAME = "disconnect"
     const val RECONNECT_COMMAND_NAME = "reconnect"
+    const val SOUND_COMMAND_NAME = "sound"
+    const val SOUND_OPTION_NAME = "name"
+    const val SOUNDS_COMMAND_NAME = "sounds"
+    const val TTS_COMMAND_NAME = "tts"
+    const val TTS_OPTION_MESSAGE = "message"
 
     fun play(localization: GuildLocalizationService): CommandDefinition = CommandDefinition(
         name = PLAY_COMMAND_NAME,
@@ -112,15 +117,15 @@ object PlayerCommandDefinitions {
         ),
         descriptionLocalizations = localization.getLocalizations(PlayerMessageKeys.NEXT_COMMAND_DESCRIPTION),
     )
-
-    private fun optionless(
-        name: String,
-        descriptionKey: String,
-        localization: GuildLocalizationService,
-    ): CommandDefinition = CommandDefinition(
-        name = name,
-        description = localization.getDefaultString(descriptionKey),
-        adminOnly = false,
-        descriptionLocalizations = localization.getLocalizations(descriptionKey),
-    )
 }
+
+private fun optionless(
+    name: String,
+    descriptionKey: String,
+    localization: GuildLocalizationService,
+): CommandDefinition = CommandDefinition(
+    name = name,
+    description = localization.getDefaultString(descriptionKey),
+    adminOnly = false,
+    descriptionLocalizations = localization.getLocalizations(descriptionKey),
+)

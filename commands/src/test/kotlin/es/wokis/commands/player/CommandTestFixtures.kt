@@ -44,6 +44,8 @@ internal class PlayerLocalizationFixture {
 
     fun englishFormat(key: String, vararg arguments: Any): String = english(key).format(*arguments)
 
+    fun spanishFormat(key: String, vararg arguments: Any): String = spanish(key).format(*arguments)
+
     fun spanish(key: String): String = "$SPANISH_SENTINEL${english(key)}"
 
     private companion object {
@@ -63,6 +65,11 @@ internal class PlayerLocalizationFixture {
             PlayerMessageKeys.QUEUE_COMMAND_DESCRIPTION,
             PlayerMessageKeys.DISCONNECT_COMMAND_DESCRIPTION,
             PlayerMessageKeys.RECONNECT_COMMAND_DESCRIPTION,
+            PlayerMessageKeys.SOUND_COMMAND_DESCRIPTION,
+            PlayerMessageKeys.SOUND_COMMAND_INPUT_DESCRIPTION,
+            PlayerMessageKeys.SOUNDS_DESCRIPTION,
+            PlayerMessageKeys.TTS_COMMAND_DESCRIPTION,
+            PlayerMessageKeys.TTS_COMMAND_INPUT_DESCRIPTION,
         )
 
         val RESPONSE_TEMPLATES = mapOf(
@@ -73,6 +80,7 @@ internal class PlayerLocalizationFixture {
             PlayerMessageKeys.RECONNECT_NOT_CONNECTED to "not connected",
             PlayerMessageKeys.PLAYER_RECONNECT_FAILED to "reconnect failed",
             PlayerMessageKeys.SEARCHING_SONG to "searching",
+            PlayerMessageKeys.NO_MATCHES to "no matches for %s",
             PlayerMessageKeys.NEXT_EMPTY_QUEUE to "queue empty",
             PlayerMessageKeys.NEXT_TRACK_MOVED to "moved %s next",
             PlayerMessageKeys.NEXT_TRACK_NOT_IN_QUEUE_TRYING_SEARCH to "missing %s, searching",
@@ -81,6 +89,9 @@ internal class PlayerLocalizationFixture {
             PlayerMessageKeys.ERROR_NO_CONTENT_PROVIDED to "%s is required",
             PlayerMessageKeys.QUEUE_EMBED_TITLE to "queue title",
             PlayerMessageKeys.QUEUE_EMBED_DESCRIPTION to "%d tracks in %s's queue",
+            PlayerMessageKeys.SOUNDS_EMBED_TITLE to "sounds title",
+            PlayerMessageKeys.SOUNDS_EMBED_DESCRIPTION to "%d sounds available",
+            PlayerMessageKeys.TTS_COMMAND_RESPONSE to "tts queued",
             PlayerMessageKeys.PAGINATED_EMBED_FOOTER to "Page %d out of %d",
             PlayerMessageKeys.PAGINATED_EMBED_PREVIOUS_BUTTON_LABEL to "previous label",
             PlayerMessageKeys.PAGINATED_EMBED_NEXT_BUTTON_LABEL to "next label",
