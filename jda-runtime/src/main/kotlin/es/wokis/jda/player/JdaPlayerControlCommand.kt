@@ -5,13 +5,14 @@ import es.wokis.commands.neutral.CommandHandler
 import es.wokis.commands.neutral.CommandResponder
 import es.wokis.commands.neutral.CommandResponse
 import es.wokis.commands.neutral.GuildCommandRegistrar
+import es.wokis.commands.player.PlayerCommandController
 import es.wokis.commands.player.PlayerCommandDefinitions
 import es.wokis.domain.model.GuildId
 import es.wokis.localization.GuildLocalizationService
 
 /** Public, guild-scoped `/player`; an omitted action shows the player view (Kord parity). */
 internal class JdaPlayerControlCommand(
-    private val controller: JdaPlayerCommandController,
+    private val controller: PlayerCommandController,
     private val localizationService: GuildLocalizationService,
 ) : CommandHandler {
 

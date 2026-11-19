@@ -1,6 +1,8 @@
 package es.wokis.jda.player
 
+import es.wokis.commands.player.PlayerMessageCoordinator
 import es.wokis.domain.locale.GetGuildLocaleUseCase
+import es.wokis.domain.model.GuildId
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.PlayerEngineFactory
@@ -21,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Manual composition root for the isolated JDA player: one lazily created [PlayerEngine], one
- * long-lived [JdaGuildPlayerVoiceAdapter] and one [JdaPlayerMessageCoordinator] per guild.
+ * long-lived [JdaGuildPlayerVoiceAdapter] and one [PlayerMessageCoordinator] per guild.
  */
 internal class JdaPlayerRuntime(
     private val sources: PlayerSourcesConfig = PlayerSourcesConfig(),
@@ -40,7 +42,7 @@ internal class JdaPlayerRuntime(
     private val factory: Lazy<PlayerEngineFactory> = lazy { PlayerEngines.factory(sources) }
     private val engines = ConcurrentHashMap<Long, PlayerEngine>()
     private val adapters = ConcurrentHashMap<Long, JdaGuildPlayerVoiceAdapter>()
-    private val coordinators = ConcurrentHashMap<Long, JdaPlayerMessageCoordinator>()
+    private val coordinators = ConcurrentHashMap<Long, PlayerMessageCoordinator>()
     private val viewFactory: PlayerMessageViewFactory by lazy { PlayerMessageViewFactory(localizationService) }
 
     fun engineFor(guild: Guild): PlayerEngine = synchronized(lock) {
@@ -63,16 +65,19 @@ internal class JdaPlayerRuntime(
     /**
      * One message coordinator per guild; it collects the adapter's event fan-out and owns `#player`.
      */
-    fun messagesFor(guild: Guild): JdaPlayerMessageCoordinator = synchronized(lock) {
+    fun messagesFor(guild: Guild): PlayerMessageCoordinator = synchronized(lock) {
         check(!closed.get()) { "The JDA player runtime is closed" }
         coordinators.computeIfAbsent(guild.idLong) {
             val guildEngine = engineFor(guild)
-            JdaPlayerMessageCoordinator(
-                guild = guild,
+            PlayerMessageCoordinator(
+                initialGuildId = GuildId(guild.idLong.toULong()),
+                guildName = { guild.name },
                 engine = guildEngine,
-                adapter = voiceAdapterFor(guild),
+                eventsPort = JdaPlayerEventsPort(guild = guild, adapter = voiceAdapterFor(guild)),
                 localizationService = localizationService,
-                channelService = JdaPlayerChannelService(),
+                channelPort = JdaPlayerChannelPort(guild),
+                messagePort = JdaPlayerMessagePort(guild.jda),
+                voiceTargets = JdaPlayerVoiceTargetPort(guild.jda),
                 viewFactory = viewFactory,
                 scope = scope,
                 onLeave = {
@@ -97,7 +102,7 @@ internal class JdaPlayerRuntime(
     suspend fun shutdown() {
         val adaptersToClose: List<JdaGuildPlayerVoiceAdapter>
         val enginesToClose: List<PlayerEngine>
-        val coordinatorsToClose: List<JdaPlayerMessageCoordinator>
+        val coordinatorsToClose: List<PlayerMessageCoordinator>
         synchronized(lock) {
             if (!shutdownComplete.compareAndSet(false, true)) return
             closed.set(true)
@@ -130,7 +135,7 @@ internal class JdaPlayerRuntime(
     override fun close() {
         val adaptersToClose: List<JdaGuildPlayerVoiceAdapter>
         val enginesToClose: List<PlayerEngine>
-        val coordinatorsToClose: List<JdaPlayerMessageCoordinator>
+        val coordinatorsToClose: List<PlayerMessageCoordinator>
         synchronized(lock) {
             closed.set(true)
             // Adapter references stay so a later shutdown() can still await the JDA disconnect.

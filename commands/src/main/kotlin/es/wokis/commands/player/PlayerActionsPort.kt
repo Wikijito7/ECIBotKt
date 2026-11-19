@@ -39,7 +39,16 @@ enum class PlayerReconnectResult {
     RECONNECTED,
     NOT_CONNECTED,
 
-    /** The gateway reported a transient or foreign session, or the attempt failed. */
+    /** The gateway reported a foreign voice session, so the adapter refused to race it. */
+    FOREIGN_SESSION,
+
+    /** Another reconnect is still waiting for the gateway to confirm the previous close. */
+    IN_PROGRESS,
+
+    /** The gateway never confirmed the close/reopen within the adapter's timeout. */
+    TIMED_OUT,
+
+    /** The attempt failed for any other reason. */
     FAILED,
 }
 
@@ -58,6 +67,9 @@ data class PlayerQueueSnapshot(
  * they report it through the return value instead.
  */
 interface PlayerActionsPort : PlayerPlaybackToggles, PlayerVoiceGate {
+
+    /** True when the actor's guild is reachable by the adapter, regardless of voice state. */
+    suspend fun isGuildAvailable(actor: PlayerActor): Boolean
 
     /** Skips the current track; false when nothing plays. */
     suspend fun skip(actor: PlayerActor): Boolean

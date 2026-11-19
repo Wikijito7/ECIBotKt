@@ -1,5 +1,6 @@
 package es.wokis.jda.player
 
+import es.wokis.commands.player.PlayerMessageCoordinator
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.locale.LocaleRepository
@@ -464,7 +465,7 @@ class JdaPlayerRuntimeTest {
         ),
     )
 
-    private fun JdaPlayerMessageCoordinator.recordTestCommand() {
+    private fun PlayerMessageCoordinator.recordTestCommand() {
         recordCommand(
             channelId = ChannelId(COMMAND_CHANNEL_ID.toULong()),
             guildId = GuildId(GUILD_ID.toULong()),

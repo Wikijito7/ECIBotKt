@@ -1,6 +1,7 @@
-package es.wokis.jda.player
+package es.wokis.commands.player
 
-internal enum class JdaPlayerAction {
+/** Actions accepted by `/player`; parsing is case-insensitive and blank means "no action". */
+enum class PlayerAction {
     QUEUE,
 
     PAUSE,
@@ -21,7 +22,7 @@ internal enum class JdaPlayerAction {
     companion object {
         val names: List<String> = entries.map { it.name.lowercase() }
 
-        fun parse(raw: String): JdaPlayerAction? {
+        fun parse(raw: String): PlayerAction? {
             val normalized = raw.trim().lowercase()
             return entries.firstOrNull { it.name.lowercase() == normalized }
         }

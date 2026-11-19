@@ -20,6 +20,7 @@ dependencies {
     // Public API exposes the engine's snapshot/track model for `/queue` rendering.
     api(project(":player"))
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.slf4j.api)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlin.coroutines.test)

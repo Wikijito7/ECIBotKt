@@ -4,6 +4,7 @@ import es.wokis.commands.neutral.CommandContext
 import es.wokis.commands.neutral.ComponentContext
 import es.wokis.commands.neutral.ComponentHandler
 import es.wokis.commands.neutral.ComponentResponder
+import es.wokis.commands.player.PlayerCommandController
 import es.wokis.commands.player.PlayerCommandDefinitions
 import es.wokis.jda.command.toJdaId
 import es.wokis.message.ComponentId
@@ -16,7 +17,7 @@ internal class JdaPlayerButtonHandler(
     override val id: ComponentId,
     private val jda: JDA,
     private val runtime: JdaPlayerRuntime,
-    private val controller: JdaPlayerCommandController,
+    private val controller: PlayerCommandController,
 ) : ComponentHandler {
 
     override suspend fun handle(context: ComponentContext, responder: ComponentResponder) {

@@ -3,7 +3,9 @@ package es.wokis.jda.player
 import es.wokis.commands.neutral.CommandContext
 import es.wokis.commands.neutral.ComponentContext
 import es.wokis.commands.neutral.ComponentResponder
+import es.wokis.commands.player.PlayerCommandController
 import es.wokis.commands.player.PlayerCommandDefinitions
+import es.wokis.commands.player.PlayerMessageCoordinator
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.ChannelId
 import es.wokis.domain.model.GuildId
@@ -111,8 +113,8 @@ class JdaPlayerButtonHandlerTest {
         val jda: JDA = mockk()
         val guild: Guild = mockk()
         val runtime: JdaPlayerRuntime = mockk()
-        val controller: JdaPlayerCommandController = mockk()
-        val coordinator: JdaPlayerMessageCoordinator = mockk()
+        val controller: PlayerCommandController = mockk()
+        val coordinator: PlayerMessageCoordinator = mockk()
         val responder: ComponentResponder = mockk()
         val view = MessageView(embed = EmbedView(title = "Player"))
         val events = mutableListOf<String>()

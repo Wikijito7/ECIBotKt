@@ -2,6 +2,7 @@ package es.wokis.jda.player
 
 import es.wokis.commands.player.NextTrackResult
 import es.wokis.commands.player.PlayerActor
+import es.wokis.commands.player.PlayerMessageCoordinator
 import es.wokis.commands.player.PlayerQueueSnapshot
 import es.wokis.commands.player.PlayerReconnectResult
 import es.wokis.domain.locale.LocaleCode
@@ -45,7 +46,7 @@ class JdaPlayerActionsPortTest {
     private val voiceChannel: VoiceChannel = channelUnion as VoiceChannel
     private val runtime: JdaPlayerRuntime = mockk()
     private val engine: PlayerEngine = mockk()
-    private val coordinator: JdaPlayerMessageCoordinator = mockk()
+    private val coordinator: PlayerMessageCoordinator = mockk()
     private val port = JdaPlayerActionsPort(jda, runtime)
 
     private fun givenGuildAndVoice() {
@@ -68,6 +69,24 @@ class JdaPlayerActionsPortTest {
         givenGuildAndVoice()
 
         assertTrue(port.isVoiceAvailable(actor()))
+    }
+
+    @Test
+    fun `Given a reachable guild regardless of voice state When guild availability is asked Then report true`() = runTest {
+        givenGuildAndVoice()
+        assertTrue(port.isGuildAvailable(actor()))
+
+        // Then: the caller's voice state is irrelevant, so /player may still render for a caller outside voice.
+        every { voiceState.channel } returns null
+        assertTrue(port.isGuildAvailable(actor()))
+    }
+
+    @Test
+    fun `Given an unknown guild When guild availability is asked Then report false without touching the member cache`() = runTest {
+        givenUnknownGuild()
+
+        assertFalse(port.isGuildAvailable(actor()))
+        verify(exactly = 0) { guild.getMemberById(any<Long>()) }
     }
 
     @Test
@@ -292,9 +311,9 @@ class JdaPlayerActionsPortTest {
         val expectations = mapOf(
             JdaPlayerReconnectResult.Reconnected to PlayerReconnectResult.RECONNECTED,
             JdaPlayerReconnectResult.NotConnected to PlayerReconnectResult.NOT_CONNECTED,
-            JdaPlayerReconnectResult.ForeignSession to PlayerReconnectResult.FAILED,
-            JdaPlayerReconnectResult.InProgress to PlayerReconnectResult.FAILED,
-            JdaPlayerReconnectResult.TimedOut to PlayerReconnectResult.FAILED,
+            JdaPlayerReconnectResult.ForeignSession to PlayerReconnectResult.FOREIGN_SESSION,
+            JdaPlayerReconnectResult.InProgress to PlayerReconnectResult.IN_PROGRESS,
+            JdaPlayerReconnectResult.TimedOut to PlayerReconnectResult.TIMED_OUT,
         )
 
         expectations.forEach { (jdaResult, neutral) ->

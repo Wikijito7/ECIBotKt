@@ -30,7 +30,11 @@ class ReconnectCommandHandler(
             PlayerReconnectResult.RECONNECTED -> PlayerMessageKeys.RECONNECT_SUCCESS
             PlayerReconnectResult.NOT_CONNECTED -> PlayerMessageKeys.RECONNECT_NOT_CONNECTED
             // Kord has no message for a failed attempt; reuse the existing localized failure text.
-            PlayerReconnectResult.FAILED -> PlayerMessageKeys.PLAYER_RECONNECT_FAILED
+            PlayerReconnectResult.FOREIGN_SESSION,
+            PlayerReconnectResult.IN_PROGRESS,
+            PlayerReconnectResult.TIMED_OUT,
+            PlayerReconnectResult.FAILED,
+            -> PlayerMessageKeys.PLAYER_RECONNECT_FAILED
         }
         responder.respondLocalized(localizationService, key, context)
     }

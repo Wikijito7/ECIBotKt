@@ -29,6 +29,8 @@ internal class JdaPlayerActionsPort(
     override suspend fun isVoiceAvailable(actor: PlayerActor): Boolean =
         guildFor(actor)?.let { guild -> callerVoiceChannel(guild, actor) != null } == true
 
+    override suspend fun isGuildAvailable(actor: PlayerActor): Boolean = guildFor(actor) != null
+
     override suspend fun pause(actor: PlayerActor): Boolean = withEngine(actor) { engine ->
         engine.snapshot().hasActiveTrack && engine.pause()
     } ?: false
@@ -96,10 +98,9 @@ internal class JdaPlayerActionsPort(
             when (runtime.reconnect(guild, channel)) {
                 JdaPlayerReconnectResult.Reconnected -> PlayerReconnectResult.RECONNECTED
                 JdaPlayerReconnectResult.NotConnected -> PlayerReconnectResult.NOT_CONNECTED
-                JdaPlayerReconnectResult.ForeignSession,
-                JdaPlayerReconnectResult.InProgress,
-                JdaPlayerReconnectResult.TimedOut,
-                -> PlayerReconnectResult.FAILED
+                JdaPlayerReconnectResult.ForeignSession -> PlayerReconnectResult.FOREIGN_SESSION
+                JdaPlayerReconnectResult.InProgress -> PlayerReconnectResult.IN_PROGRESS
+                JdaPlayerReconnectResult.TimedOut -> PlayerReconnectResult.TIMED_OUT
             }
         } catch (cancellation: CancellationException) {
             throw cancellation
