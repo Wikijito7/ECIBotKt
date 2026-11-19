@@ -19,5 +19,16 @@ enum class ComponentId(val value: String) {
     RADIO_SEARCH_COUNTRY_CODE_NEXT("radio_search_country_code_next"),
     RADIO_SEARCH_COUNTRY_CODE_PREVIOUS("radio_search_country_code_previous"),
     RADIO_COUNTRYCODES_NEXT("radio_countrycodes_next"),
-    RADIO_COUNTRYCODES_PREVIOUS("radio_countrycodes_previous"),
+    RADIO_COUNTRYCODES_PREVIOUS("radio_countrycodes_previous");
+
+    companion object {
+
+        private const val SEPARATOR = "::"
+
+        /** Resolves an id, ignoring the `::` payload suffix Kord appends to stateful components. */
+        fun fromCustomId(customId: String): ComponentId? {
+            val id = customId.substringBefore(SEPARATOR)
+            return entries.firstOrNull { it.value == id }
+        }
+    }
 }

@@ -1,8 +1,6 @@
 package es.wokis.jda
 
 import es.wokis.commands.locale.LocaleCommandHandler
-import es.wokis.commands.voicewalkthrough.JdaVoiceWalkthroughCommand
-import es.wokis.commands.walkthrough.WalkthroughCommand
 import es.wokis.jda.player.JdaPlayCommand
 import es.wokis.jda.player.JdaPlayerControlCommand
 import es.wokis.services.config.Config
@@ -42,7 +40,7 @@ import java.util.function.Consumer
 class JdaGuildCommandRegistrationTest {
 
     @Test
-    fun `Given two joined guilds When the runtime becomes ready Then each guild receives the five guild commands`() {
+    fun `Given two joined guilds When the runtime becomes ready Then each guild receives the three guild commands`() {
         val fixture = RegistrationFixture(guildIds = listOf(FIRST_GUILD_ID, SECOND_GUILD_ID))
 
         val exitCode = fixture.run()
@@ -105,23 +103,6 @@ class JdaGuildCommandRegistrationTest {
             }
             assertEquals(setOf("play", "player"), PUBLIC_PLAYER_COMMANDS, "guild $guildId names drifted")
             assertEquals(2, PUBLIC_PLAYER_COMMANDS.size)
-        }
-    }
-
-    @Test
-    fun `Given two joined guilds When commands are registered Then the diagnostics stay unrestricted`() {
-        val fixture = RegistrationFixture(guildIds = listOf(FIRST_GUILD_ID, SECOND_GUILD_ID))
-
-        fixture.run()
-
-        fixture.published.forEach { (guildId, commands) ->
-            commands.filter { it.name in DIAGNOSTIC_COMMANDS }.forEach { command ->
-                assertEquals(
-                    DefaultMemberPermissions.ENABLED,
-                    command.defaultPermissions,
-                    "/${command.name} must not gain admin permissions in guild $guildId",
-                )
-            }
         }
     }
 
@@ -222,12 +203,7 @@ class JdaGuildCommandRegistrationTest {
             JdaPlayCommand.COMMAND_NAME,
             JdaPlayerControlCommand.COMMAND_NAME,
         )
-        private val DIAGNOSTIC_COMMANDS = setOf(
-            WalkthroughCommand.COMMAND_NAME,
-            JdaVoiceWalkthroughCommand.COMMAND_NAME,
-        )
-        private val EXPECTED_COMMANDS =
-            ADMIN_ONLY_COMMANDS + PUBLIC_PLAYER_COMMANDS + DIAGNOSTIC_COMMANDS
+        private val EXPECTED_COMMANDS = ADMIN_ONLY_COMMANDS + PUBLIC_PLAYER_COMMANDS
 
         private fun sharedConfig(): Config = Config(
             discordBotToken = "synthetic-registration-token",

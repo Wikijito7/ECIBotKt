@@ -4,6 +4,10 @@ import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.GuildId
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.PlayerMessageKeys
+import es.wokis.message.ActionRowView
+import es.wokis.message.ButtonStyle
+import es.wokis.message.ButtonView
+import es.wokis.message.ComponentId
 import es.wokis.message.EmbedFieldView
 import es.wokis.message.EmbedView
 import es.wokis.message.MessageView
@@ -21,9 +25,8 @@ private const val DISPLAY_DURATION_FORMAT = "%02d:%02d:%02d"
 /**
  * Builds the neutral [MessageView] for the Kord-parity player embed.
  *
- * Layout, field order, labels and the empty-queue description mirror Kord's `createPlayerEmbed`.
- * Playback position is intentionally absent: the Kord player disables position updates.
- * Action rows stay empty until the button stage.
+ * Layout, field order, labels, action row and the empty-queue description mirror Kord's
+ * `createPlayerEmbed`. Playback position is intentionally absent: the Kord player disables it.
  */
 class PlayerMessageViewFactory(
     private val localizationService: GuildLocalizationService,
@@ -62,6 +65,49 @@ class PlayerMessageViewFactory(
                 // Kord always assigns the thumbnail; a blank url is dropped so JDA never renders an empty image.
                 thumbnailUrl = (current?.customFavicon ?: current?.artworkUrl)?.takeIf(String::isNotBlank),
                 fields = fields,
+            ),
+            // Kord only attaches the player buttons while a track is playing or queued.
+            rows = if (current != null || snapshot.queue.isNotEmpty()) {
+                listOf(actionRow(snapshot.paused, guildId, guildDefaultLocale))
+            } else {
+                emptyList()
+            },
+        )
+    }
+
+    private suspend fun actionRow(
+        paused: Boolean,
+        guildId: GuildId?,
+        guildDefaultLocale: LocaleCode?,
+    ): ActionRowView {
+        val pauseKey = if (paused) PlayerMessageKeys.PLAYER_RESUME else PlayerMessageKeys.PLAYER_PAUSE
+        return ActionRowView(
+            buttons = listOf(
+                ButtonView(
+                    componentId = if (paused) ComponentId.PLAYER_RESUME else ComponentId.PLAYER_PAUSE,
+                    label = getString(pauseKey, guildId, guildDefaultLocale),
+                    emoji = if (paused) "▶️" else "⏸",
+                ),
+                ButtonView(
+                    componentId = ComponentId.PLAYER_SKIP,
+                    label = getString(PlayerMessageKeys.PLAYER_SKIP, guildId, guildDefaultLocale),
+                    emoji = "⏭",
+                ),
+                ButtonView(
+                    componentId = ComponentId.PLAYER_SHUFFLE,
+                    label = getString(PlayerMessageKeys.PLAYER_SHUFFLE, guildId, guildDefaultLocale),
+                    emoji = "\uD83D\uDD00",
+                ),
+                ButtonView(
+                    componentId = ComponentId.PLAYER_RECONNECT,
+                    label = getString(PlayerMessageKeys.PLAYER_RECONNECT, guildId, guildDefaultLocale),
+                    emoji = "🔄",
+                ),
+                ButtonView(
+                    componentId = ComponentId.PLAYER_DISCONNECT,
+                    label = getString(PlayerMessageKeys.PLAYER_DISCONNECT, guildId, guildDefaultLocale),
+                    style = ButtonStyle.DANGER,
+                ),
             ),
         )
     }

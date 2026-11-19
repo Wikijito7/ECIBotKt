@@ -118,6 +118,43 @@ class JdaPlayerChannelServiceTest {
     }
 
     @Test
+    fun `Given a backlog ending in a single leftover When cleared Then bulk delete ninety and delete the last alone`() =
+        runTest {
+            val channel = ChannelFixture()
+            channel.historyPages((1..91).map { message("$it") })
+            val bulkChunks = mutableListOf<Collection<String>>()
+            every { channel.channel.deleteMessagesByIds(capture(bulkChunks)) } returns successfulDeleteAction()
+            val deletedIds = mutableListOf<String>()
+            every { channel.channel.deleteMessageById(capture(deletedIds)) } returns successfulDeleteAction()
+
+            JdaPlayerChannelService().setUp(guildWith(channel), playerView())
+
+            assertEquals(
+                listOf(90),
+                bulkChunks.map(Collection<String>::size),
+                "the leftover must skip the bulk endpoint",
+            )
+            assertEquals((1..90).map(Int::toString), bulkChunks.single().toList())
+            assertEquals(listOf("91"), deletedIds)
+            verify(exactly = 1) { channel.channel.deleteMessagesByIds(any()) }
+        }
+
+    @Test
+    fun `Given a one message backlog When cleared Then delete it per message without a bulk attempt`() = runTest {
+        val channel = ChannelFixture()
+        channel.historyPages(listOf(message("7")))
+        val deletedIds = mutableListOf<String>()
+        every { channel.channel.deleteMessageById(capture(deletedIds)) } returns successfulDeleteAction()
+
+        val result = JdaPlayerChannelService().setUp(guildWith(channel), playerView())
+
+        assertEquals(listOf("7"), deletedIds, "a single message must be deleted individually")
+        verify(exactly = 1) { channel.channel.deleteMessageById(any<String>()) }
+        verify(exactly = 0) { channel.channel.deleteMessagesByIds(any()) }
+        assertTrue(requireNotNull(result).messageId.value > 0uL)
+    }
+
+    @Test
     fun `Given a channel creation failure When setup runs Then return null without crashing`() = runTest {
         val guild = mockk<Guild> {
             every { textChannels } returns emptyList()

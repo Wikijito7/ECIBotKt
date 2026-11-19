@@ -43,7 +43,11 @@ the root `./data/config.json` from the repository-root working directory (sharin
 at startup** (a guild joined later needs a restart) — the administrator-only `/jda-play`,
 `/jda-player` and `/locale` controls, while the `/jda-walkthrough` and `/jda-voice-walkthrough`
 diagnostics stay unrestricted — and reads **no** environment variable and **no** guild-id config
-field. Because the data directory and token are shared, the Kord and JDA runtimes must not run
+field. **Current state (updated 2026-11-18, Phase 4):** the two diagnostic commands
+`/jda-walkthrough` and `/jda-voice-walkthrough` were **removed in this stage** by the Phase 4 owner
+decision, so that sentence describes the historical registration only; **exactly three
+guild-scoped commands remain** — `/locale`, `/play` and `/player` — and the `/jda-walkthrough`
+unrestricted-diagnostic carve-out no longer applies. Because the data directory and token are shared, the Kord and JDA runtimes must not run
 concurrently against that same mutable data directory/token. At the **2026-11-17 pre-push snapshot**
 the reconnect WIP had **no CI run at all**; it was then published as `f44e1d8` and those four checks
 passed on 2026-11-17, and any later head is read **live from PR #123**, never asserted here. The PR
@@ -315,7 +319,11 @@ after these bullets.
   the root `./data/config.json` only, through `ConfigLoader` at the shared `DEFAULT_CONFIG_PATH`, and
   registers the administrator-only commands `/jda-play`, `/jda-player` and `/locale` as
   **guild-scoped commands in every guild present at startup**, alongside the unrestricted
-  `/jda-walkthrough` and `/jda-voice-walkthrough` diagnostics. There is zero JDA environment-variable
+  `/jda-walkthrough` and `/jda-voice-walkthrough` diagnostics. That registration is the **historical
+  `23b75b4` state**; **as of 2026-11-18 (Phase 4)** the two diagnostics were **removed in this
+  stage** by the Phase 4 owner decision, so **exactly three guild-scoped commands remain** —
+  `/locale`, `/play` and `/player` — and the unrestricted `/jda-walkthrough` carve-out is no longer
+  part of the runtime surface. There is zero JDA environment-variable
   reading, no `discord_dev_guild_id` property in the shared JSON/template and no alternate JDA data
   directory; `:jda-runtime:run` uses the repository root as `workingDir`, so `./data/config.json` and
   `./data/guild_locales.json` are the same files Kord uses. Two consequences: **a guild joined after
@@ -3085,6 +3093,9 @@ The owner approved porting the **Kord-like user-facing behaviour**, not a reduce
 - **Kord command names preserved** — the port keeps the names users already type rather than renaming the
   user surface into `/jda-*` diagnostics. The existing `/jda-play`, `/jda-player`, `/jda-walkthrough`,
   `/jda-voice-walkthrough` and `/locale` controls stay as their own administrator/diagnostic surface.
+  **Updated 2026-11-18 (Phase 4):** the `/jda-walkthrough` and `/jda-voice-walkthrough` diagnostics were
+  **removed in this stage** by the Phase 4 owner decision, leaving **exactly three guild-scoped
+  commands** — `/locale`, `/play` and `/player`.
 - **Public localized messages** — user-facing replies go through the shared locale contracts and the
   existing `lang.yml`/`lang_es-ES.yml` catalogues, applied per guild, matching Kord's public message
   behaviour rather than fixed English strings.
@@ -3199,7 +3210,9 @@ locally, no PR existed and no CI verdict existed; that is history, not the 2026-
   configured. `adminOnly` definitions (`/jda-play`, `/jda-player`, `/locale`) remain
   administrator-only; `/jda-walkthrough` and `/jda-voice-walkthrough` stay unrestricted. A guild
   joined after startup receives its commands on the next restart; no `GuildJoinEvent` registration is
-  installed.
+  installed. **This is the historical `23b75b4` state:** as of the dated **2026-11-18 Phase 4** update
+  above, the two diagnostics were removed and **exactly three guild-scoped commands** (`/locale`,
+  `/play`, `/player`) remain.
 - **Minimal command surface.** Two guild-only, administrator-only commands with one string option
   each: `/jda-play input:<string>` and `/jda-player action:<queue|pause|resume|skip|stop|disconnect|reconnect>`.
   The handlers defer the interaction before the load wait, never block a thread, and never collect

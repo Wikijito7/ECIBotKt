@@ -3,7 +3,6 @@ package es.wokis.jda
 import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.neutral.CommandDefinition
 import es.wokis.commands.neutral.GuildCommandRegistrar
-import es.wokis.commands.walkthrough.WalkthroughCommand
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.locale.LocaleRepository
@@ -18,51 +17,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class JdaBootstrapTest {
-
-    @Test
-    fun `Given an explicit guild When walkthrough is registered Then use exactly that guild`() = runTest {
-        val registrar = RecordingGuildCommandRegistrar()
-        val guildId = GuildId(987654321uL)
-        val walkthrough = WalkthroughCommand()
-
-        registerWalkthroughCommand(registrar, guildId, walkthrough)
-
-        assertEquals(1, registrar.registrations.size)
-        assertEquals(guildId, registrar.registrations.single().guildId)
-        assertEquals(walkthrough.definition, registrar.registrations.single().command)
-    }
-
-    @Test
-    fun `Given the default walkthrough When registered Then pass the documented command definition`() = runTest {
-        val registrar = RecordingGuildCommandRegistrar()
-        val guildId = GuildId(42uL)
-
-        registerWalkthroughCommand(registrar, guildId)
-
-        assertEquals(1, registrar.registrations.size)
-        val registration = registrar.registrations.single()
-        assertEquals(guildId, registration.guildId)
-        assertEquals(WalkthroughCommand.COMMAND_NAME, registration.command.name)
-        assertEquals(WalkthroughCommand.COMMAND_DESCRIPTION, registration.command.description)
-        assertTrue(registration.command.description.isNotBlank())
-    }
-
-    @Test
-    fun `Given every joined guild When walkthrough registers Then each guild is a destination`() = runTest {
-        val registrar = RecordingGuildCommandRegistrar()
-        val firstGuild = GuildId(111uL)
-        val secondGuild = GuildId(222uL)
-        val walkthrough = WalkthroughCommand()
-
-        registerWalkthroughCommand(registrar, firstGuild, walkthrough)
-        registerWalkthroughCommand(registrar, secondGuild, walkthrough)
-
-        assertEquals(listOf(firstGuild, secondGuild), registrar.registrations.map { it.guildId })
-        assertEquals(
-            listOf(WalkthroughCommand().definition, WalkthroughCommand().definition),
-            registrar.registrations.map { it.command },
-        )
-    }
 
     @Test
     fun `Given an explicit guild When locale is registered Then publish the admin guild command there`() = runTest {

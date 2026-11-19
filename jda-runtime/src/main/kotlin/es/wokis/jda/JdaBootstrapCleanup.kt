@@ -13,6 +13,7 @@ private val LOG = LoggerFactory.getLogger("es.wokis.jda.JdaBootstrapCleanup")
 private const val PLAYER_RUNTIME_STEP = "player-runtime"
 private const val VOICE_DISCONNECT_STEP = "voice-disconnect"
 private const val ROUTER_STEP = "command-router"
+private const val COMPONENT_ROUTER_STEP = "component-router"
 private const val SHUTDOWN_HOOK_STEP = "shutdown-hook"
 private const val JDA_SHUTDOWN_STEP = "jda-shutdown"
 private const val SHUTDOWN_TIMEOUT_SECONDS = 10L
@@ -37,6 +38,8 @@ internal data class BootstrapCleanupTargets(
     val shutdownHook: Thread?,
     /** Shared player engines and long-lived guild voice adapters, when created. */
     val playerRuntime: AutoCloseable? = null,
+    /** Button router, when created. */
+    val componentRouter: AutoCloseable? = null,
 )
 
 /**
@@ -125,6 +128,9 @@ internal fun defaultBootstrapCleanupSteps(
     }
     targets.router?.let { router ->
         add(BootstrapCleanupStep(ROUTER_STEP) { router.close() })
+    }
+    targets.componentRouter?.let { router ->
+        add(BootstrapCleanupStep(COMPONENT_ROUTER_STEP) { router.close() })
     }
     targets.shutdownHook?.let { hook ->
         add(BootstrapCleanupStep(SHUTDOWN_HOOK_STEP) { removeShutdownHook(hook) })

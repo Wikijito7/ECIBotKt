@@ -2,10 +2,12 @@ package es.wokis.jda.player
 
 import es.wokis.commands.neutral.CommandContext
 import es.wokis.commands.player.PlayerCommandDefinitions
+import es.wokis.domain.model.GuildId
 import es.wokis.domain.model.UserId
 import es.wokis.jda.command.toJdaId
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.PlayerMessageKeys
+import es.wokis.message.ComponentId
 import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.model.PlayerSnapshot
 import kotlinx.coroutines.CancellationException
@@ -49,27 +51,42 @@ internal class JdaPlayerCommandController(
         }
         val guild = context.guildId?.let { guildId -> jda.getGuildById(guildId.toJdaId()) }
             ?: return message(context, PlayerMessageKeys.ERROR_NO_GUILD)
-        val engine = runtime.engineFor(guild)
         return when (action) {
             // Kord parity: no action only sets the player view up; playback state is untouched.
             null -> showPlayer(context, guild)
-            JdaPlayerAction.QUEUE -> describeQueue(context, engine.snapshot())
-            JdaPlayerAction.PAUSE -> pause(context, engine)
-            JdaPlayerAction.RESUME -> resume(context, engine)
-            JdaPlayerAction.SKIP -> skip(context, engine)
-            JdaPlayerAction.STOP -> stop(context, engine)
-            JdaPlayerAction.DISCONNECT -> disconnect(context, guild, engine)
+            JdaPlayerAction.QUEUE -> describeQueue(context, runtime.engineFor(guild).snapshot())
+            JdaPlayerAction.PAUSE -> pause(context, runtime.engineFor(guild))
+            JdaPlayerAction.RESUME -> resume(context, runtime.engineFor(guild))
+            JdaPlayerAction.SKIP -> skip(context, runtime.engineFor(guild))
+            JdaPlayerAction.STOP -> stop(context, runtime.engineFor(guild))
+            JdaPlayerAction.DISCONNECT -> disconnect(context, guild, runtime.engineFor(guild))
             JdaPlayerAction.RECONNECT -> reconnect(context, guild)
+        }
+    }
+
+    /**
+     * Applies one player button with the same transport semantics as `/player`; non-player ids are
+     * ignored so a stale row never mutates playback.
+     */
+    suspend fun applyButton(context: CommandContext, componentId: ComponentId) {
+        val guild = context.guildId?.let { guildId -> jda.getGuildById(guildId.toJdaId()) } ?: return
+        when (componentId) {
+            ComponentId.PLAYER_PAUSE -> pause(context, runtime.engineFor(guild))
+            ComponentId.PLAYER_RESUME -> resume(context, runtime.engineFor(guild))
+            ComponentId.PLAYER_SKIP -> skip(context, runtime.engineFor(guild))
+            ComponentId.PLAYER_SHUFFLE -> runtime.engineFor(guild).shuffle()
+            ComponentId.PLAYER_DISCONNECT -> disconnect(context, guild, runtime.engineFor(guild))
+            ComponentId.PLAYER_RECONNECT -> reconnect(context, guild)
+            else -> Unit
         }
     }
 
     /** Kord parity: `/player` without an action only sets the player view up. */
     private suspend fun showPlayer(context: CommandContext, guild: Guild): String {
-        val guildId = context.guildId ?: return message(context, PlayerMessageKeys.ERROR_NO_GUILD)
         val coordinator = runtime.messagesFor(guild)
         coordinator.recordCommand(
             channelId = context.channelId,
-            guildId = guildId,
+            guildId = GuildId(guild.idLong.toULong()),
             guildLocale = context.guildLocale,
             channelName = callerVoiceChannel(guild, context)?.name,
         )

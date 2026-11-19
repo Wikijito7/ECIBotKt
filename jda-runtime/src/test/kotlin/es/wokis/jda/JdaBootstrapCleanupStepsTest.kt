@@ -36,6 +36,7 @@ class JdaBootstrapCleanupStepsTest {
         val runtime = mockk<Runtime>()
         val hook = Thread({ }, "test-shutdown-hook")
         val router = AutoCloseable { events += "command-router" }
+        val componentRouter = AutoCloseable { events += "component-router" }
 
         every { audioManager.isConnected } returns true
         every { audioManager.closeAudioConnection() } answers { events += "voice-disconnect" }
@@ -54,7 +55,12 @@ class JdaBootstrapCleanupStepsTest {
             every { Runtime.getRuntime() } returns runtime
 
             val steps = defaultBootstrapCleanupSteps(
-                BootstrapCleanupTargets(jda = client, router = router, shutdownHook = hook),
+                BootstrapCleanupTargets(
+                    jda = client,
+                    router = router,
+                    shutdownHook = hook,
+                    componentRouter = componentRouter,
+                ),
             )
             steps.forEach { it.run() }
         } finally {
@@ -62,9 +68,60 @@ class JdaBootstrapCleanupStepsTest {
         }
 
         assertEquals(
-            listOf("voice-disconnect", "command-router", "shutdown-hook", "jda-shutdown"),
+            listOf("voice-disconnect", "command-router", "component-router", "shutdown-hook", "jda-shutdown"),
             events,
         )
+    }
+
+    @Test
+    fun `Given only a component router When production cleanup steps are built Then it closes alone`() {
+        val componentRouter = AutoCloseable { }
+
+        val steps = defaultBootstrapCleanupSteps(
+            BootstrapCleanupTargets(jda = null, router = null, shutdownHook = null, componentRouter = componentRouter),
+        )
+
+        assertEquals(listOf("component-router"), steps.map { it.name })
+    }
+
+    @Test
+    fun `Given a command router failure When production cleanup runs Then the component router still closes before the hook`() {
+        val events = mutableListOf<String>()
+        val client = mockk<JDA>()
+        val runtime = mockk<Runtime>()
+        val hook = Thread({ }, "test-shutdown-hook")
+        val router = AutoCloseable { throw IllegalStateException("command router failed") }
+        val componentRouter = AutoCloseable { events += "component-router" }
+
+        every { client.status } returns JDA.Status.CONNECTED
+        every { client.guilds } returns emptyList()
+        every { client.shutdown() } answers { events += "jda-shutdown" }
+        every { client.awaitShutdown(10L, TimeUnit.SECONDS) } returns true
+        every { runtime.removeShutdownHook(hook) } answers {
+            events += "shutdown-hook"
+            true
+        }
+
+        mockkStatic(Runtime::class)
+        try {
+            every { Runtime.getRuntime() } returns runtime
+
+            val report = runBootstrapCleanup(
+                defaultBootstrapCleanupSteps(
+                    BootstrapCleanupTargets(
+                        jda = client,
+                        router = router,
+                        shutdownHook = hook,
+                        componentRouter = componentRouter,
+                    ),
+                ),
+            )
+
+            assertTrue(report.failed)
+            assertEquals(listOf("component-router", "shutdown-hook", "jda-shutdown"), events)
+        } finally {
+            unmockkStatic(Runtime::class)
+        }
     }
 
     @Test

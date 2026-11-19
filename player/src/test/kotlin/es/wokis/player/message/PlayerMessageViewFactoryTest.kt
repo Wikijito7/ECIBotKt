@@ -6,6 +6,8 @@ import es.wokis.domain.locale.LocaleRepository
 import es.wokis.domain.model.GuildId
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.LocalizationCatalog
+import es.wokis.message.ButtonStyle
+import es.wokis.message.ComponentId
 import es.wokis.message.EmbedFieldView
 import es.wokis.player.engine.model.PlayerSnapshot
 import es.wokis.player.engine.model.PlayerTrack
@@ -43,7 +45,21 @@ class PlayerMessageViewFactoryTest {
         assertEquals(0x01B05B, PLAYER_BRAND_COLOR)
         assertNull(embed.description)
         assertNull(embed.footer)
-        assertTrue(view.rows.isEmpty(), "the player embed must not expose action rows yet")
+        assertEquals(
+            listOf(
+                ComponentId.PLAYER_PAUSE,
+                ComponentId.PLAYER_SKIP,
+                ComponentId.PLAYER_SHUFFLE,
+                ComponentId.PLAYER_RECONNECT,
+                ComponentId.PLAYER_DISCONNECT,
+            ),
+            view.rows.single().buttons.map { it.componentId },
+        )
+        assertEquals(ButtonStyle.DANGER, view.rows.single().buttons.last().style)
+        assertEquals(
+            listOf("Pause", "Skip", "Shuffle", "Reconnect", "Disconnect"),
+            view.rows.single().buttons.map { it.label },
+        )
         assertEquals(
             listOf("Current track", "Track duration", "Server's queue"),
             embed.fields.map(EmbedFieldView::name),
@@ -135,8 +151,10 @@ class PlayerMessageViewFactoryTest {
             queue = (1..3).map { index -> track(title = "Track $index", durationMillis = 30_000L) },
         )
 
-        val queueValue = requireNotNull(factory.createPlayerView("Jungle", snapshot).embed).fields.single().value
+        val view = factory.createPlayerView("Jungle", snapshot)
+        val queueValue = requireNotNull(view.embed).fields.single().value
 
+        assertEquals(1, view.rows.size, "a queued track must expose the player buttons")
         assertEquals(
             "Artist - Track 1 (00:00:30)\n" +
                 "Artist - Track 2 (00:00:30)\n" +
@@ -144,6 +162,29 @@ class PlayerMessageViewFactoryTest {
                 "00:01:30 remaining",
             queueValue,
         )
+    }
+
+    @Test
+    fun `Given a paused or playing track When creating the view Then show exactly resume or pause`() = runTest {
+        val factory = PlayerMessageViewFactory(service())
+
+        val pausedButtons = factory.createPlayerView(
+            "Jungle",
+            PlayerSnapshot(current = track(), paused = true, hasActiveTrack = true),
+        ).rows.single().buttons
+        val playingButtons = factory.createPlayerView(
+            "Jungle",
+            PlayerSnapshot(current = track(), paused = false, hasActiveTrack = true),
+        ).rows.single().buttons
+
+        assertEquals(ComponentId.PLAYER_RESUME, pausedButtons.first().componentId)
+        assertEquals("Resume", pausedButtons.first().label)
+        assertEquals("▶️", pausedButtons.first().emoji)
+        assertTrue(pausedButtons.none { it.componentId == ComponentId.PLAYER_PAUSE })
+        assertEquals(ComponentId.PLAYER_PAUSE, playingButtons.first().componentId)
+        assertEquals("Pause", playingButtons.first().label)
+        assertEquals("⏸", playingButtons.first().emoji)
+        assertTrue(playingButtons.none { it.componentId == ComponentId.PLAYER_RESUME })
     }
 
     @Test
@@ -155,6 +196,7 @@ class PlayerMessageViewFactoryTest {
 
         assertEquals("Currently, there are no tracks queued", embed.description)
         assertTrue(embed.fields.isEmpty())
+        assertTrue(view.rows.isEmpty(), "an empty player must not expose buttons")
         assertNull(embed.thumbnailUrl)
     }
 
