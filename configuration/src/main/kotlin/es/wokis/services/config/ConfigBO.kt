@@ -28,11 +28,15 @@ data class Config(
     val tidal: TidalConfig,
     @SerialName("kokoro")
     val kokoro: KokoroConfig,
+    /** Staging log target for the JDA runtime; blank disables the file tee. */
+    @SerialName("log_file")
+    val logFile: String = "./data/logs/jda-runtime.log",
 ) {
     override fun toString(): String =
         "Config(debug=$debug, databaseEnabled=${database.enabled}, youtubeEnabled=${youtube.enabled}, " +
             "huggingChatEnabled=${huggingChat.enabled}, deezerEnabled=${deezer.enabled}, " +
-            "spotifyEnabled=${spotify.enabled}, tidalEnabled=${tidal.enabled}, kokoroBaseUrlSet=${kokoro.baseUrl.isNotEmpty()})"
+            "spotifyEnabled=${spotify.enabled}, tidalEnabled=${tidal.enabled}, " +
+            "kokoroBaseUrlSet=${kokoro.baseUrl.isNotEmpty()}, logFileSet=${logFile.isNotBlank()})"
 }
 
 @Serializable
