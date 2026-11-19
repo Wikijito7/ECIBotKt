@@ -34,7 +34,8 @@ object PlayerCommandDefinitions {
         stringOption = StringOptionDefinition(
             name = PLAYER_OPTION_ACTION,
             description = localization.getDefaultString(PlayerMessageKeys.PLAYER_COMMAND_ACTION_DESCRIPTION),
-            required = true,
+            // Kord parity: `/player` takes no options; the action is the interim control until the buttons land.
+            required = false,
             descriptionLocalizations = localization.getLocalizations(
                 PlayerMessageKeys.PLAYER_COMMAND_ACTION_DESCRIPTION,
             ),

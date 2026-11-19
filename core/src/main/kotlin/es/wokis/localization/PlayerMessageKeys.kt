@@ -28,6 +28,9 @@ object PlayerMessageKeys {
     const val PLAYER_DISCONNECT = "player_disconnect"
     const val PLAYER_QUEUE_TRACKS_REMAINING = "player_queue_tracks_remaining"
     const val PLAYER_DURATION_REMAINING = "player_duration_remaining"
+    const val PLAYER_CHANNEL_CREATED = "player_channel_created"
+    const val PLAYER_CHANNEL_CREATION_FAILED = "player_channel_creation_failed"
+    const val PLAYER_SHOWN_ON_EXISTING_CHANNEL = "player_shown_on_existing_channel"
 
     const val SEARCHING_SONG = "searching_song"
     const val NO_MATCHES = "no_matches"

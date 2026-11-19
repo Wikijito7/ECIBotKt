@@ -9,16 +9,17 @@ import es.wokis.localization.PlayerMessageKeys
 import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.model.PlayerSnapshot
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeoutOrNull
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel
 import org.slf4j.LoggerFactory
 
 /**
- * Orchestrates `/play` and `/player`. Load happens before connect, so voice is joined only once the
- * adapter reports an active track, and every reply resolves through the guild locale.
+ * Orchestrates `/play` and `/player`.
+ *
+ * `/play` hands the load to the guild's message coordinator, which joins voice once the adapter
+ * reports an active track and publishes event-driven chat messages; every reply resolves through the
+ * guild locale.
  */
 internal class JdaPlayerCommandController(
     private val jda: JDA,
@@ -43,11 +44,15 @@ internal class JdaPlayerCommandController(
 
     suspend fun control(context: CommandContext, rawAction: String): String {
         val action = JdaPlayerAction.parse(rawAction)
-            ?: return message(context, PlayerMessageKeys.PLAYER_UNKNOWN_ACTION, JdaPlayerAction.names.joinToString(", "))
+        if (action == null && rawAction.isNotBlank()) {
+            return message(context, PlayerMessageKeys.PLAYER_UNKNOWN_ACTION, JdaPlayerAction.names.joinToString(", "))
+        }
         val guild = context.guildId?.let { guildId -> jda.getGuildById(guildId.toJdaId()) }
             ?: return message(context, PlayerMessageKeys.ERROR_NO_GUILD)
         val engine = runtime.engineFor(guild)
         return when (action) {
+            // Kord parity: no action only sets the player view up; playback state is untouched.
+            null -> showPlayer(context, guild)
             JdaPlayerAction.QUEUE -> describeQueue(context, engine.snapshot())
             JdaPlayerAction.PAUSE -> pause(context, engine)
             JdaPlayerAction.RESUME -> resume(context, engine)
@@ -58,66 +63,37 @@ internal class JdaPlayerCommandController(
         }
     }
 
+    /** Kord parity: `/player` without an action only sets the player view up. */
+    private suspend fun showPlayer(context: CommandContext, guild: Guild): String {
+        val guildId = context.guildId ?: return message(context, PlayerMessageKeys.ERROR_NO_GUILD)
+        val coordinator = runtime.messagesFor(guild)
+        coordinator.recordCommand(
+            channelId = context.channelId,
+            guildId = guildId,
+            guildLocale = context.guildLocale,
+            channelName = callerVoiceChannel(guild, context)?.name,
+        )
+        return coordinator.ensurePlayerView()
+    }
+
     private suspend fun startPlayback(
         context: CommandContext,
         target: JdaPlayerVoiceTarget.Ready,
         input: String,
     ): String {
-        val engine = runtime.engineFor(target.guild)
-        val adapter = runtime.voiceAdapterFor(target.guild)
-        val baseRevision = adapter.presentation.value.revision
-
-        engine.loadAndPlay(input)
-
-        return when (val start = awaitPlaybackStart(adapter, baseRevision)) {
-            JdaPlayerPlaybackStart.TimedOut -> message(context, PlayerMessageKeys.PLAYER_LOAD_TIMEOUT)
-            is JdaPlayerPlaybackStart.Failed -> loadFailureMessage(context, start.failure, input)
-            JdaPlayerPlaybackStart.Started -> connectMessage(context, target) {
-                message(context, PlayerMessageKeys.PLAYER_PLAY_CONNECTED)
-            }
+        // Kord parity: the guild comes from the invocation instead of a second JDA guild lookup.
+        val guildId = context.guildId ?: return message(context, PlayerMessageKeys.ERROR_NO_GUILD)
+        runtime.messagesFor(target.guild).let { coordinator ->
+            coordinator.recordCommand(
+                channelId = context.channelId,
+                guildId = guildId,
+                guildLocale = context.guildLocale,
+                channelName = target.channel.name,
+            )
+            coordinator.startPlayback(target.channel, input)
         }
-    }
-
-    private suspend fun loadFailureMessage(
-        context: CommandContext,
-        failure: JdaPlayerLoadFailure,
-        input: String,
-    ): String = when (failure) {
-        JdaPlayerLoadFailure.NO_MATCHES -> message(context, PlayerMessageKeys.NO_MATCHES, input)
-        JdaPlayerLoadFailure.LOAD_REJECTED -> message(context, PlayerMessageKeys.PLAYER_LOAD_REJECTED)
-        JdaPlayerLoadFailure.PLAYBACK_FAILED -> message(context, PlayerMessageKeys.PLAYER_PLAYBACK_FAILED)
-    }
-
-    private suspend fun awaitPlaybackStart(
-        adapter: JdaGuildPlayerVoiceAdapter,
-        baseRevision: Long,
-    ): JdaPlayerPlaybackStart {
-        val state = withTimeoutOrNull(LOAD_START_TIMEOUT_MILLIS) {
-            adapter.presentation.first { presentation ->
-                presentation.revision > baseRevision &&
-                    (presentation.activeTrack || presentation.loadFailure != null)
-            }
-        }
-        if (state == null) return JdaPlayerPlaybackStart.TimedOut
-        val failure = state.loadFailure
-        return if (failure == null) JdaPlayerPlaybackStart.Started else JdaPlayerPlaybackStart.Failed(failure)
-    }
-
-    private suspend fun connectMessage(
-        context: CommandContext,
-        target: JdaPlayerVoiceTarget.Ready,
-        onConnected: suspend () -> String,
-    ): String = try {
-        if (runtime.connect(target.guild, target.channel)) {
-            onConnected()
-        } else {
-            message(context, PlayerMessageKeys.PLAYER_VOICE_SESSION_REFUSED)
-        }
-    } catch (cancellation: CancellationException) {
-        throw cancellation
-    } catch (error: Exception) {
-        LOG.warn("The player voice connection failed ({})", error.javaClass.simpleName)
-        message(context, PlayerMessageKeys.PLAYER_VOICE_CONNECTION_FAILED)
+        // Kord parity: acknowledge the search immediately; events and failures arrive as chat messages.
+        return message(context, PlayerMessageKeys.SEARCHING_SONG)
     }
 
     private suspend fun disconnect(context: CommandContext, guild: Guild, engine: PlayerEngine): String {
@@ -239,14 +215,15 @@ internal class JdaPlayerCommandController(
     private companion object {
         private val LOG = LoggerFactory.getLogger(JdaPlayerCommandController::class.java)
 
-        private const val LOAD_START_TIMEOUT_MILLIS = 30_000L
         private const val MAX_LISTED_TRACKS = 10
     }
 }
 
+private const val INVALID_USER_ID_RANGE_MESSAGE = "User id does not fit in JDA's signed 64-bit id range"
+
 private fun UserId.toJdaId(): Long {
     require(value <= Long.MAX_VALUE.toULong()) {
-        "User id does not fit in JDA's signed 64-bit id range"
+        INVALID_USER_ID_RANGE_MESSAGE
     }
     return value.toLong()
 }

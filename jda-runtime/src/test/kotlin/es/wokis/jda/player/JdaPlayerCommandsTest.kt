@@ -87,7 +87,7 @@ class JdaPlayerCommandsTest {
     }
 
     @Test
-    fun `Given the player definitions When inspected Then they are public guild commands with required string options`() {
+    fun `Given the player definitions When inspected Then they are public guild commands with a required input and an optional action`() {
         val play = PlayerCommandDefinitions.play(localization)
         val control = PlayerCommandDefinitions.player(localization)
 
@@ -121,7 +121,10 @@ class JdaPlayerCommandsTest {
         val controlOption = requireNotNull(control.stringOption)
         assertEquals(JdaPlayerControlCommand.OPTION_ACTION, controlOption.name)
         assertEquals("action", controlOption.name)
-        assertTrue(controlOption.required)
+        assertFalse(
+            controlOption.required,
+            "Kord parity: an omitted /player action shows the player view, so the option must stay optional",
+        )
         assertFalse(controlOption.autocomplete)
         assertEquals(
             setOf(LocaleCode("en-US"), LocaleCode("es-ES")),
@@ -187,6 +190,32 @@ class JdaPlayerCommandsTest {
             )
         }
     }
+
+    @Test
+    fun `Given a missing action When the player command is handled Then defer publicly and pass an empty string`() =
+        runTest {
+            val controller = newController()
+            val order = mutableListOf<String>()
+            val context = context(JdaPlayerControlCommand.COMMAND_NAME, emptyMap())
+            val responder = mockk<CommandResponder>()
+            coEvery { responder.defer(ephemeral = false) } coAnswers { order += "defer" }
+            coEvery { controller.control(any(), "") } coAnswers {
+                order += "control"
+                "player shown"
+            }
+            coEvery { responder.respond(CommandResponse(content = "player shown", ephemeral = false)) } coAnswers {
+                order += "respond"
+            }
+
+            JdaPlayerControlCommand(controller, localization).handle(context, responder)
+
+            assertEquals(listOf("defer", "control", "respond"), order)
+            coVerify(exactly = 1) { responder.defer(ephemeral = false) }
+            coVerify(exactly = 1) { controller.control(any(), "") }
+            coVerify(exactly = 1) {
+                responder.respond(CommandResponse(content = "player shown", ephemeral = false))
+            }
+        }
 
     @Test
     fun `Given a missing option When the play command is handled Then defer before playing and pass an empty string`() =

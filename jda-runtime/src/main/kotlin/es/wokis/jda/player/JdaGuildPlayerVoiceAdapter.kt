@@ -4,15 +4,21 @@ import es.wokis.jda.voice.JdaAudioSendHandler
 import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.audio.ContinuousPlayerAudioStream
 import es.wokis.player.engine.event.PlayerEvent
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -27,6 +33,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 private const val CLOSE_TIMEOUT_MILLIS = 5_000L
 private const val DISCONNECT_POLL_MILLIS = 50L
+
+/**
+ * Well above any realistic per-guild burst, so emitting a rapid TrackQueued/QueueChanged run never
+ * suspends the engine's serial event loop; overflow suspends instead of dropping.
+ */
+private const val EVENT_FAN_OUT_CAPACITY = 256
 
 private fun AudioManager.isConnectedOrConnecting(): Boolean =
     isConnected || connectionStatus != ConnectionStatus.NOT_CONNECTED
@@ -78,8 +90,21 @@ internal class JdaGuildPlayerVoiceAdapter(
     private val closeRequested = AtomicBoolean(false)
     private val shutdownComplete = AtomicBoolean(false)
     private val presentationState = MutableStateFlow(JdaPlayerPresentation())
+    private val eventFanOut = MutableSharedFlow<PlayerEvent>(extraBufferCapacity = EVENT_FAN_OUT_CAPACITY)
+    private val fanOutClosed = CompletableDeferred<Unit>()
 
     val presentation: StateFlow<JdaPlayerPresentation> = presentationState.asStateFlow()
+
+    /** Adapter-level multicast of [PlayerEngine.events]; completes when the adapter closes. */
+    val events: Flow<PlayerEvent> = channelFlow {
+        val pump = launch { eventFanOut.collect { send(it) } }
+        try {
+            fanOutClosed.await()
+        } finally {
+            // A cancelled collector must never leave the pump running against a closed channel.
+            withContext(NonCancellable) { pump.cancelAndJoin() }
+        }
+    }
 
     private var eventJob: Job? = null
     private var stream: ContinuousPlayerAudioStream? = null
@@ -98,11 +123,18 @@ internal class JdaGuildPlayerVoiceAdapter(
 
     init {
         eventJob = scope.launch {
-            engine.events.collect { event ->
-                record(event)
-                if (event is PlayerEvent.Stopped) {
-                    disconnect()
+            try {
+                engine.events.collect { event ->
+                    record(event)
+                    eventFanOut.emit(event)
+                    if (event is PlayerEvent.Stopped) {
+                        disconnect()
+                    }
                 }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (error: Exception) {
+                LOG.warn("The player event collection failed", error)
             }
         }
     }
@@ -141,6 +173,7 @@ internal class JdaGuildPlayerVoiceAdapter(
         closeRequested.set(true)
         eventJob?.cancel()
         eventJob = null
+        fanOutClosed.complete(Unit)
         withTimeoutOrNull(CLOSE_TIMEOUT_MILLIS) {
             withContext(serial) {
                 pendingReconnect = null
@@ -401,6 +434,7 @@ internal class JdaGuildPlayerVoiceAdapter(
         closeRequested.set(true)
         eventJob?.cancel()
         eventJob = null
+        fanOutClosed.complete(Unit)
     }
 
     private companion object {
