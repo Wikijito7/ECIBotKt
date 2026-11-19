@@ -8,6 +8,20 @@ import es.wokis.commands.next.NextCommandHandler
 import es.wokis.commands.player.QueueMessageViewFactory
 import es.wokis.commands.queue.QueueCommandHandler
 import es.wokis.commands.queue.QueuePaginationHandler
+import es.wokis.commands.radio.RadioCatalogPort
+import es.wokis.commands.radio.RadioCommandHandler
+import es.wokis.commands.radio.RadioCountryCodeAutocompleteHandler
+import es.wokis.commands.radio.RadioCountryCodesCommandHandler
+import es.wokis.commands.radio.RadioCountryCodesPaginationHandler
+import es.wokis.commands.radio.RadioListCommandHandler
+import es.wokis.commands.radio.RadioListPaginationHandler
+import es.wokis.commands.radio.RadioMessageViewFactory
+import es.wokis.commands.radio.RadioPlayAutocompleteHandler
+import es.wokis.commands.radio.RadioPlayCommandHandler
+import es.wokis.commands.radio.RadioRandomCommandHandler
+import es.wokis.commands.radio.RadioSearchCommandHandler
+import es.wokis.commands.radio.RadioSearchKind
+import es.wokis.commands.radio.RadioSearchPaginationHandler
 import es.wokis.commands.reconnect.ReconnectCommandHandler
 import es.wokis.commands.shuffle.ShuffleCommandHandler
 import es.wokis.commands.skip.SkipCommandHandler
@@ -34,6 +48,7 @@ import es.wokis.jda.player.JdaPlayerCommandController
 import es.wokis.jda.player.JdaPlayerControlCommand
 import es.wokis.jda.player.JdaPlayerRuntime
 import es.wokis.jda.player.JdaQueueCommand
+import es.wokis.jda.player.JdaRadioCommand
 import es.wokis.jda.player.JdaReconnectCommand
 import es.wokis.jda.player.JdaShuffleCommand
 import es.wokis.jda.player.JdaSkipCommand
@@ -43,7 +58,14 @@ import es.wokis.jda.player.JdaSoundsCommand
 import es.wokis.jda.player.JdaTtsCommand
 import es.wokis.jda.player.PLAYER_BUTTON_IDS
 import es.wokis.jda.player.QUEUE_PAGINATION_IDS
+import es.wokis.jda.player.RADIO_COUNTRY_CODES_PAGINATION_IDS
+import es.wokis.jda.player.RADIO_LIST_PAGINATION_IDS
+import es.wokis.jda.player.RADIO_SEARCH_COUNTRY_CODE_PAGINATION_IDS
+import es.wokis.jda.player.RADIO_SEARCH_NAME_PAGINATION_IDS
 import es.wokis.jda.player.SOUNDS_PAGINATION_IDS
+import es.wokis.jda.radio.JdaRadioCatalogPort
+import es.wokis.jda.radio.JdkRadioCatalogHttp
+import es.wokis.jda.radio.radioEndpoint
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.LocaleMessageKeys
 import es.wokis.repositories.locale.LocalJsonLocaleRepository
@@ -109,7 +131,8 @@ internal fun runBootstrap(
 
         playerRuntime = JdaPlayerRuntime(sources = config.sources)
 
-        val commands = buildCommands(client, playerRuntime)
+        val radioCatalog = JdaRadioCatalogPort(JdkRadioCatalogHttp(radioEndpoint(config.debug)))
+        val commands = buildCommands(client, playerRuntime, radioCatalog)
         router = commands.router
         componentRouter = commands.componentRouter
         autocompleteRouter = commands.autocompleteRouter
@@ -174,6 +197,7 @@ private fun registerCommands(
                 commands.controlCommand,
                 commands.familyCommands,
             )
+            commands.radioCommand.registerIn(registrar, guildId)
         }
     }
 }
@@ -184,12 +208,17 @@ private class BootstrapCommands(
     val playCommand: JdaPlayCommand,
     val controlCommand: JdaPlayerControlCommand,
     val familyCommands: List<JdaNeutralPlayerCommand>,
+    val radioCommand: JdaRadioCommand,
     val router: JdaCommandRouter,
     val componentRouter: JdaComponentRouter,
     val autocompleteRouter: JdaAutocompleteRouter,
 )
 
-private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): BootstrapCommands {
+private fun buildCommands(
+    client: JDA,
+    playerRuntime: JdaPlayerRuntime,
+    radioCatalog: RadioCatalogPort,
+): BootstrapCommands {
     val localeRepository = LocalJsonLocaleRepository(LocaleJson.json)
     val localizationService = GuildLocalizationService(GetGuildLocaleUseCase(localeRepository))
     val localeCommand = LocaleCommandHandler(
@@ -208,6 +237,8 @@ private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): Bootstr
     val queueViewFactory = QueueMessageViewFactory(localizationService)
     val soundsCatalog = JdaSoundsCatalogPort()
     val soundsViewFactory = SoundsMessageViewFactory(localizationService)
+    val radioViewFactory = RadioMessageViewFactory(localizationService)
+    val radioCommand = buildRadioCommand(radioCatalog, actions, radioViewFactory, localizationService)
     val familyCommands = buildFamilyCommands(
         actions = actions,
         queueViewFactory = queueViewFactory,
@@ -222,7 +253,8 @@ private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): Bootstr
         playCommand = playCommand,
         controlCommand = controlCommand,
         familyCommands = familyCommands,
-        router = JdaCommandRouter(listOf(localeCommand, playCommand, controlCommand) + familyCommands),
+        radioCommand = radioCommand,
+        router = JdaCommandRouter(listOf(localeCommand, playCommand, controlCommand) + familyCommands + radioCommand),
         componentRouter = buildComponentRouter(
             client = client,
             playerRuntime = playerRuntime,
@@ -231,12 +263,49 @@ private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): Bootstr
             queueViewFactory = queueViewFactory,
             soundsCatalog = soundsCatalog,
             soundsViewFactory = soundsViewFactory,
+            radioCatalog = radioCatalog,
+            radioViewFactory = radioViewFactory,
         ),
         autocompleteRouter = JdaAutocompleteRouter(
-            listOf(LocaleAutocompleteHandler(), SoundAutocompleteHandler(soundsCatalog)),
+            listOf(
+                LocaleAutocompleteHandler(),
+                SoundAutocompleteHandler(soundsCatalog),
+                RadioPlayAutocompleteHandler(radioCatalog),
+                RadioCountryCodeAutocompleteHandler(radioCatalog),
+            ),
         ),
     )
 }
+
+private fun buildRadioCommand(
+    radioCatalog: RadioCatalogPort,
+    actions: JdaPlayerActionsPort,
+    radioViewFactory: RadioMessageViewFactory,
+    localizationService: GuildLocalizationService,
+): JdaRadioCommand = JdaRadioCommand(
+    handler = RadioCommandHandler(
+        play = RadioPlayCommandHandler(radioCatalog, actions, localizationService),
+        list = RadioListCommandHandler(radioCatalog, radioViewFactory),
+        searchByName = RadioSearchCommandHandler(
+            RadioSearchKind.NAME,
+            radioCatalog,
+            radioViewFactory,
+        ),
+        searchByCountryCode = RadioSearchCommandHandler(
+            RadioSearchKind.COUNTRY_CODE,
+            radioCatalog,
+            radioViewFactory,
+        ),
+        random = RadioRandomCommandHandler(radioCatalog, actions, localizationService),
+        countryCodes = RadioCountryCodesCommandHandler(
+            radioCatalog,
+            radioViewFactory,
+            localizationService,
+        ),
+        localizationService = localizationService,
+    ),
+    localizationService = localizationService,
+)
 
 private fun buildFamilyCommands(
     actions: JdaPlayerActionsPort,
@@ -264,6 +333,8 @@ private fun buildComponentRouter(
     queueViewFactory: QueueMessageViewFactory,
     soundsCatalog: JdaSoundsCatalogPort,
     soundsViewFactory: SoundsMessageViewFactory,
+    radioCatalog: RadioCatalogPort,
+    radioViewFactory: RadioMessageViewFactory,
 ): JdaComponentRouter = JdaComponentRouter(
     PLAYER_BUTTON_IDS.map { id ->
         JdaPlayerButtonHandler(
@@ -276,6 +347,24 @@ private fun buildComponentRouter(
         QueuePaginationHandler(id = id, actions = actions, viewFactory = queueViewFactory)
     } + SOUNDS_PAGINATION_IDS.map { id ->
         SoundPaginationHandler(id = id, soundsCatalog = soundsCatalog, viewFactory = soundsViewFactory)
+    } + RADIO_LIST_PAGINATION_IDS.map { id ->
+        RadioListPaginationHandler(id = id, catalog = radioCatalog, viewFactory = radioViewFactory)
+    } + RADIO_SEARCH_NAME_PAGINATION_IDS.map { id ->
+        RadioSearchPaginationHandler(
+            id = id,
+            kind = RadioSearchKind.NAME,
+            catalog = radioCatalog,
+            viewFactory = radioViewFactory,
+        )
+    } + RADIO_SEARCH_COUNTRY_CODE_PAGINATION_IDS.map { id ->
+        RadioSearchPaginationHandler(
+            id = id,
+            kind = RadioSearchKind.COUNTRY_CODE,
+            catalog = radioCatalog,
+            viewFactory = radioViewFactory,
+        )
+    } + RADIO_COUNTRY_CODES_PAGINATION_IDS.map { id ->
+        RadioCountryCodesPaginationHandler(id = id, catalog = radioCatalog, viewFactory = radioViewFactory)
     },
 )
 

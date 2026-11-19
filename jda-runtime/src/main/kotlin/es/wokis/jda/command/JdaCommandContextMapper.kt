@@ -16,6 +16,8 @@ import net.dv8tion.jda.api.interactions.commands.OptionType
  * This is the only place where JDA identifiers and locales are translated, keeping the
  * command boundary free of gateway types. The guild default locale and the invoking client's
  * locale are mapped separately so a user preference is never mistaken for the guild default.
+ * The subcommand group and leaf name are forwarded unchanged for the neutral group router; both
+ * stay null for a plain command.
  */
 class JdaCommandContextMapper {
 
@@ -34,6 +36,8 @@ class JdaCommandContextMapper {
             stringOptions = event.options
                 .filter { it.type == OptionType.STRING }
                 .associate { it.name to it.asString },
+            subcommandGroup = event.subcommandGroup,
+            subcommand = event.subcommandName,
         )
     }
 }

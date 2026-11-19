@@ -121,6 +121,22 @@ class JdaRuntimeConfigTest {
     }
 
     @Test
+    fun `Given a shared config without debug When fromConfig runs Then default the radio endpoint flag to false`() {
+        val runtimeConfig = JdaRuntimeConfig.fromConfig(sampleConfig())
+
+        assertFalse(runtimeConfig.debug)
+        assertFalse(JdaRuntimeConfig(token = SECRET_TOKEN).debug)
+    }
+
+    @Test
+    fun `Given a shared config with debug When fromConfig runs Then forward the radio endpoint flag`() {
+        val runtimeConfig = JdaRuntimeConfig.fromConfig(sampleConfig(debug = true))
+
+        assertTrue(runtimeConfig.debug)
+        assertEquals("JdaRuntimeConfig(tokenSet=true)", runtimeConfig.toString())
+    }
+
+    @Test
     fun `Given the runtime config type When inspected Then it declares no guild configuration at all`() {
         // Commands are registered in every guild the client is in, so no guild id is configured.
         val guildMembers = (
@@ -264,6 +280,7 @@ class JdaRuntimeConfigTest {
 
     private fun sampleConfig(
         token: String = SECRET_TOKEN,
+        debug: Boolean = false,
         database: DatabaseConfig = DatabaseConfig(false, "db_user", "db_password", "db_name"),
         youtube: YouTubeConfig = YouTubeConfig(false, null, null, null, null, null),
         huggingChat: HuggingChatConfig = HuggingChatConfig(false, "hugging_user", "hugging_password"),
@@ -273,7 +290,7 @@ class JdaRuntimeConfigTest {
         kokoro: KokoroConfig = KokoroConfig("", "", 1.0f, ""),
     ): Config = Config(
         discordBotToken = token,
-        debug = false,
+        debug = debug,
         database = database,
         youtube = youtube,
         huggingChat = huggingChat,

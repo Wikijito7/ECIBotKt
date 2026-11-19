@@ -3,6 +3,7 @@ package es.wokis.jda.command
 import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.neutral.CommandDefinition
 import es.wokis.commands.player.PlayerCommandDefinitions
+import es.wokis.commands.radio.RadioCommandDefinitions
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.locale.LocaleRepository
@@ -10,6 +11,7 @@ import es.wokis.domain.model.GuildId
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.LocalizationCatalog
 import es.wokis.localization.PlayerMessageKeys
+import es.wokis.localization.RadioMessageKeys
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -295,6 +297,69 @@ class JdaGuildCommandRegistrarTest {
             assertTrue(option.isRequired)
             assertFalse(option.isAutoComplete)
             verify(exactly = 0) { jda.upsertCommand(any<CommandData>()) }
+        }
+
+    @Test
+    fun `Given the radio group definition When registering Then map Kord's subcommands groups and localizations`() =
+        runTest {
+            val guildId = GuildId(1234567890123456789uL)
+            val jdaGuildId = 1234567890123456789L
+            val command = RadioCommandDefinitions.radio(localization)
+            val published = slot<SlashCommandData>()
+            val upsertAction = successfulUpsertAction()
+            every { jda.getGuildById(jdaGuildId) } returns guild
+            every { guild.upsertCommand(capture(published)) } returns upsertAction
+
+            JdaGuildCommandRegistrar(jda).register(guildId, command)
+
+            verify(exactly = 1) { guild.upsertCommand(any<CommandData>()) }
+            verify(exactly = 0) { jda.upsertCommand(any<CommandData>()) }
+            verify(exactly = 0) { jda.upsertCommand(any<String>(), any<String>()) }
+
+            val data = published.captured
+            assertEquals("radio", data.name)
+            assertEquals(DefaultMemberPermissions.ENABLED, data.defaultPermissions)
+            assertEquals(
+                localization.getDefaultString(RadioMessageKeys.RADIO_COMMAND_DESCRIPTION),
+                data.description,
+            )
+            assertEquals(
+                setOf(DiscordLocale.ENGLISH_US, DiscordLocale.SPANISH),
+                data.descriptionLocalizations.toMap().keys,
+            )
+            assertTrue(data.options.isEmpty(), "a group command must not publish a top-level option")
+            assertEquals(listOf("play", "list", "countrycodes", "random"), data.subcommands.map { it.name })
+
+            val play = data.subcommands.first { it.name == "play" }
+            assertEquals(
+                localization.getDefaultString(RadioMessageKeys.RADIO_PLAY_COMMAND_DESCRIPTION),
+                play.description,
+            )
+            assertEquals(
+                setOf(DiscordLocale.ENGLISH_US, DiscordLocale.SPANISH),
+                play.descriptionLocalizations.toMap().keys,
+            )
+            val playOption = play.options.single()
+            assertEquals("radio", playOption.name)
+            assertEquals(OptionType.STRING, playOption.type)
+            assertTrue(playOption.isRequired)
+            assertTrue(playOption.isAutoComplete)
+            assertEquals(
+                setOf(DiscordLocale.ENGLISH_US, DiscordLocale.SPANISH),
+                playOption.descriptionLocalizations.toMap().keys,
+            )
+
+            val search = data.subcommandGroups.single()
+            assertEquals("search", search.name)
+            assertEquals(listOf("name", "countrycode"), search.subcommands.map { it.name })
+            assertEquals(
+                setOf(DiscordLocale.ENGLISH_US, DiscordLocale.SPANISH),
+                search.descriptionLocalizations.toMap().keys,
+            )
+            val countryCodeOption = search.subcommands.first { it.name == "countrycode" }.options.single()
+            assertEquals("countrycode", countryCodeOption.name)
+            assertTrue(countryCodeOption.isRequired)
+            assertTrue(countryCodeOption.isAutoComplete)
         }
 
     private fun successfulUpsertAction(): RestAction<Command> {

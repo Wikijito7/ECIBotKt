@@ -2,6 +2,7 @@ package es.wokis.jda
 
 import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.player.PlayerCommandDefinitions
+import es.wokis.commands.radio.RadioCommandDefinitions
 import es.wokis.jda.player.JdaPlayCommand
 import es.wokis.jda.player.JdaPlayerControlCommand
 import es.wokis.services.config.Config
@@ -43,7 +44,7 @@ import java.util.function.Consumer
 class JdaGuildCommandRegistrationTest {
 
     @Test
-    fun `Given two joined guilds When the runtime becomes ready Then each guild receives the twelve guild commands`() {
+    fun `Given two joined guilds When the runtime becomes ready Then each guild receives the thirteen guild commands`() {
         val fixture = RegistrationFixture(guildIds = listOf(FIRST_GUILD_ID, SECOND_GUILD_ID))
 
         val exitCode = fixture.run()
@@ -117,11 +118,48 @@ class JdaGuildCommandRegistrationTest {
                     "sound",
                     "sounds",
                     "tts",
+                    "radio",
                 ),
                 PUBLIC_PLAYER_COMMANDS,
                 "guild $guildId names drifted",
             )
-            assertEquals(11, PUBLIC_PLAYER_COMMANDS.size)
+            assertEquals(12, PUBLIC_PLAYER_COMMANDS.size)
+        }
+    }
+
+    @Test
+    fun `Given two joined guilds When commands are registered Then radio publishes Kord's group shape`() {
+        val fixture = RegistrationFixture(guildIds = listOf(FIRST_GUILD_ID, SECOND_GUILD_ID))
+
+        fixture.run()
+
+        fixture.published.forEach { (guildId, commands) ->
+            val radio = requireNotNull(commands.firstOrNull { it.name == "radio" } as? SlashCommandData) {
+                "guild $guildId is missing /radio"
+            }
+            assertEquals(DefaultMemberPermissions.ENABLED, radio.defaultPermissions, "/radio must stay public")
+            assertTrue(radio.options.isEmpty(), "/radio must not publish a top-level option")
+            assertTrue(radio.description.isNotBlank())
+            assertEquals(listOf("play", "list", "countrycodes", "random"), radio.subcommands.map { it.name })
+            val search = radio.subcommandGroups.single()
+            assertEquals("search", search.name)
+            assertEquals(listOf("name", "countrycode"), search.subcommands.map { it.name })
+
+            val playOption = radio.subcommands.first { it.name == "play" }.options.single()
+            assertEquals("radio", playOption.name)
+            assertTrue(playOption.isRequired)
+            assertTrue(playOption.isAutoComplete)
+            assertTrue(radio.subcommands.filterNot { it.name == "play" }.all { it.options.isEmpty() })
+
+            val nameOption = search.subcommands.first { it.name == "name" }.options.single()
+            assertEquals("name", nameOption.name)
+            assertTrue(nameOption.isRequired)
+            assertFalse(nameOption.isAutoComplete)
+
+            val countryCodeOption = search.subcommands.first { it.name == "countrycode" }.options.single()
+            assertEquals("countrycode", countryCodeOption.name)
+            assertTrue(countryCodeOption.isRequired)
+            assertTrue(countryCodeOption.isAutoComplete)
         }
     }
 
@@ -263,6 +301,7 @@ class JdaGuildCommandRegistrationTest {
             PlayerCommandDefinitions.SOUND_COMMAND_NAME,
             PlayerCommandDefinitions.SOUNDS_COMMAND_NAME,
             PlayerCommandDefinitions.TTS_COMMAND_NAME,
+            RadioCommandDefinitions.RADIO_COMMAND_NAME,
         )
         private val EXPECTED_COMMANDS = ADMIN_ONLY_COMMANDS + PUBLIC_PLAYER_COMMANDS
 

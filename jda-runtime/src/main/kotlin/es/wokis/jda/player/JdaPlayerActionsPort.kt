@@ -75,6 +75,16 @@ internal class JdaPlayerActionsPort(
         runtime.engineFor(guild).loadAndPlayTts(kokoroTtsUri(text))
     }
 
+    override suspend fun playRadio(actor: PlayerActor, radioName: String, streamUrl: String, faviconUrl: String) {
+        val guild = guildFor(actor) ?: return
+        recordCommand(actor, guild)
+        runtime.engineFor(guild).playRadio(
+            radioName = radioName,
+            radioUrl = streamUrl,
+            customFavicon = faviconUrl,
+        )
+    }
+
     override suspend fun disconnect(actor: PlayerActor) {
         guildFor(actor)?.let { guild -> runtime.disconnect(guild) }
     }

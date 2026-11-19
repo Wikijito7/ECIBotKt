@@ -39,6 +39,8 @@ class JdaCommandContextMapperTest {
         assertEquals(LocaleCode("es-ES"), context.locale)
         assertEquals(LocaleCode("es-ES"), context.guildLocale)
         assertEquals(LocaleCode("de"), context.userLocale)
+        assertNull(context.subcommandGroup)
+        assertNull(context.subcommand)
     }
 
     @Test
@@ -178,6 +180,57 @@ class JdaCommandContextMapperTest {
         assertEquals(UserId((-3L).toULong()), context.userId)
     }
 
+    @Test
+    fun `Given a group invocation When mapped Then carry the group the leaf and its options`() {
+        val option = mockk<OptionMapping> {
+            every { type } returns OptionType.STRING
+            every { name } returns "name"
+            every { asString } returns "Rock FM"
+        }
+        val event = event(
+            guildId = 10L,
+            commandName = "radio",
+            subcommandGroup = "search",
+            subcommand = "name",
+            options = listOf(option),
+        )
+
+        val context = mapper.map(event)
+
+        assertEquals("radio", context.commandName)
+        assertEquals("search", context.subcommandGroup)
+        assertEquals("name", context.subcommand)
+        assertEquals(mapOf("name" to "Rock FM"), context.stringOptions)
+    }
+
+    @Test
+    fun `Given a leaf invocation without a group When mapped Then keep the group null`() {
+        val event = event(
+            guildId = 10L,
+            commandName = "radio",
+            subcommand = "play",
+        )
+
+        val context = mapper.map(event)
+
+        assertNull(context.subcommandGroup)
+        assertEquals("play", context.subcommand)
+    }
+
+    @Test
+    fun `Given a group without a leaf When mapped Then keep the leaf null`() {
+        val event = event(
+            guildId = 10L,
+            commandName = "radio",
+            subcommandGroup = "search",
+        )
+
+        val context = mapper.map(event)
+
+        assertEquals("search", context.subcommandGroup)
+        assertNull(context.subcommand)
+    }
+
     private fun event(
         guildId: Long?,
         guildLocale: DiscordLocale = DiscordLocale.ENGLISH_US,
@@ -186,6 +239,8 @@ class JdaCommandContextMapperTest {
         userId: Long = 30L,
         commandName: String = "jda-walkthrough",
         options: List<OptionMapping> = emptyList(),
+        subcommandGroup: String? = null,
+        subcommand: String? = null,
     ): SlashCommandInteractionEvent {
         val guild = guildId?.let { id ->
             mockk<Guild> {
@@ -207,6 +262,8 @@ class JdaCommandContextMapperTest {
             every { event.user } returns user
             every { event.userLocale } returns userLocale
             every { event.options } returns options
+            every { event.subcommandGroup } returns subcommandGroup
+            every { event.subcommandName } returns subcommand
         }
     }
 }

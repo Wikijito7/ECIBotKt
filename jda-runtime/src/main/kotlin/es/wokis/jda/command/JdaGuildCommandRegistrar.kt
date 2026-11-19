@@ -2,6 +2,9 @@ package es.wokis.jda.command
 
 import es.wokis.commands.neutral.CommandDefinition
 import es.wokis.commands.neutral.GuildCommandRegistrar
+import es.wokis.commands.neutral.StringOptionDefinition
+import es.wokis.commands.neutral.SubcommandDefinition
+import es.wokis.commands.neutral.SubcommandGroupDefinition
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.GuildId
 import es.wokis.domain.model.UserId
@@ -13,6 +16,8 @@ import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData
 
 /**
  * Guild-scoped [GuildCommandRegistrar]: each call targets its own guild only, and an unavailable guild
@@ -34,13 +39,13 @@ internal class JdaGuildCommandRegistrar(
         }
 
         command.stringOption?.let { option ->
-            val optionData = OptionData(OptionType.STRING, option.name, option.description)
-                .setRequired(option.required)
-                .setAutoComplete(option.autocomplete)
-            option.descriptionLocalizations.toJdaLocalizationsOrNull()?.let { localizations ->
-                optionData.setDescriptionLocalizations(localizations)
-            }
-            commandData.addOptions(optionData)
+            commandData.addOptions(option.toOptionData())
+        }
+        if (command.subcommands.isNotEmpty()) {
+            commandData.addSubcommands(command.subcommands.map { it.toJdaData() })
+        }
+        if (command.subcommandGroups.isNotEmpty()) {
+            commandData.addSubcommandGroups(command.subcommandGroups.map { it.toJdaData() })
         }
 
         // Always explicit: JDA keeps the previous default permissions when the field is omitted.
@@ -64,6 +69,31 @@ private fun Map<LocaleCode, String>.toJdaLocalizationsOrNull(): Map<DiscordLocal
             .takeIf { it != DiscordLocale.UNKNOWN }
             ?.let { it to value }
     }.toMap().takeIf { it.isNotEmpty() }
+
+/** One narrow string option, mapped to the gateway's option shape. */
+private fun StringOptionDefinition.toOptionData(): OptionData {
+    val optionData = OptionData(OptionType.STRING, name, description)
+        .setRequired(required)
+        .setAutoComplete(autocomplete)
+    descriptionLocalizations.toJdaLocalizationsOrNull()?.let(optionData::setDescriptionLocalizations)
+    return optionData
+}
+
+/** A leaf subcommand and its optional string option. */
+private fun SubcommandDefinition.toJdaData(): SubcommandData {
+    val subcommandData = SubcommandData(name, description)
+    descriptionLocalizations.toJdaLocalizationsOrNull()?.let(subcommandData::setDescriptionLocalizations)
+    stringOption?.let { option -> subcommandData.addOptions(option.toOptionData()) }
+    return subcommandData
+}
+
+/** A subcommand group with its leaf subcommands; gateways allow no deeper nesting. */
+private fun SubcommandGroupDefinition.toJdaData(): SubcommandGroupData {
+    val groupData = SubcommandGroupData(name, description)
+    descriptionLocalizations.toJdaLocalizationsOrNull()?.let(groupData::setDescriptionLocalizations)
+    groupData.addSubcommands(subcommands.map { it.toJdaData() })
+    return groupData
+}
 
 /** Rejects ids above [Long.MAX_VALUE] instead of wrapping to a different guild, and keeps the error message value-free. */
 internal fun GuildId.toJdaId(): Long {

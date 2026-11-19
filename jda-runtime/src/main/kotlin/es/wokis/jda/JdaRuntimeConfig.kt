@@ -12,10 +12,13 @@ import java.nio.file.Path
 /**
  * Validated configuration for the isolated JDA runtime, loaded from the shared
  * `./data/config.json` with no env override. Neither [token] nor [sources] is ever rendered.
+ *
+ * [debug] selects the same pre-production radio catalog endpoint the Kord runtime uses.
  */
 internal data class JdaRuntimeConfig(
     val token: String,
     val sources: PlayerSourcesConfig = PlayerSourcesConfig(),
+    val debug: Boolean = false,
 ) {
     override fun toString(): String = "JdaRuntimeConfig(tokenSet=${token.isNotBlank()})"
 
@@ -30,6 +33,7 @@ internal data class JdaRuntimeConfig(
             return JdaRuntimeConfig(
                 token = config.discordBotToken,
                 sources = config.toPlayerSourcesConfig(),
+                debug = config.debug,
             )
         }
     }
