@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":configuration"))
     implementation(project(":locale-persistence"))
     implementation(project(":player"))
+    implementation(project(":commands"))
     implementation(libs.kotlinx.serialization)
     implementation(libs.jda)
     implementation(libs.libdaveV2Api)

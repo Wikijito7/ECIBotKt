@@ -197,12 +197,64 @@ class JdaComponentContextMapperTest {
         verify(exactly = 0) { event.member }
     }
 
+    @Test
+    fun `Given a bare component id When mapped Then carry no payload`() {
+        // Given
+        val event = event(guildId = 10L, customId = "queue_next")
+
+        // When
+        val context = mapper.map(event, ComponentId.QUEUE_NEXT)
+
+        // Then
+        assertNull(context.payload)
+    }
+
+    @Test
+    fun `Given a paginated component id When mapped Then expose the page payload`() {
+        // Given
+        val event = event(guildId = 10L, customId = "queue_next::2")
+
+        // When
+        val context = mapper.map(event, ComponentId.QUEUE_NEXT)
+
+        // Then
+        assertEquals("2", context.payload)
+        assertEquals(ComponentId.QUEUE_NEXT, context.componentId)
+    }
+
+    @Test
+    fun `Given an empty payload suffix When mapped Then expose a null payload`() {
+        // Given
+        val event = event(guildId = 10L, customId = "queue_previous::")
+
+        // When
+        val context = mapper.map(event, ComponentId.QUEUE_PREVIOUS)
+
+        // Then
+        assertNull(context.payload)
+    }
+
+    @Test
+    fun `Given an unknown custom id When mapped Then keep the resolved id and never invent one`() {
+        // Given: id resolution is the router's job; the mapper only splits the state payload.
+        val event = event(guildId = 10L, customId = "playlist_unknown::7")
+
+        // When
+        val context = mapper.map(event, ComponentId.SOUNDS_NEXT)
+
+        // Then
+        assertEquals(ComponentId.SOUNDS_NEXT, context.componentId)
+        assertEquals("7", context.payload)
+        assertNull(ComponentId.fromCustomId(event.componentId))
+    }
+
     private fun event(
         guildId: Long?,
         guildLocale: DiscordLocale = DiscordLocale.ENGLISH_US,
         userLocale: DiscordLocale = DiscordLocale.ENGLISH_US,
         channelId: Long = 20L,
         userId: Long = 30L,
+        customId: String = "player_pause",
     ): ButtonInteractionEvent {
         val guild = guildId?.let { id ->
             mockk<Guild> {
@@ -222,6 +274,7 @@ class JdaComponentContextMapperTest {
             every { event.channel } returns channel
             every { event.user } returns user
             every { event.userLocale } returns userLocale
+            every { event.componentId } returns customId
         }
     }
 }

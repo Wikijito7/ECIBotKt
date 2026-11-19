@@ -1,6 +1,7 @@
 package es.wokis.jda
 
 import es.wokis.commands.locale.LocaleCommandHandler
+import es.wokis.commands.player.PlayerCommandDefinitions
 import es.wokis.jda.player.JdaPlayCommand
 import es.wokis.jda.player.JdaPlayerControlCommand
 import es.wokis.services.config.Config
@@ -26,6 +27,7 @@ import net.dv8tion.jda.api.entities.SelfUser
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import net.dv8tion.jda.api.requests.RestAction
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -40,7 +42,7 @@ import java.util.function.Consumer
 class JdaGuildCommandRegistrationTest {
 
     @Test
-    fun `Given two joined guilds When the runtime becomes ready Then each guild receives the three guild commands`() {
+    fun `Given two joined guilds When the runtime becomes ready Then each guild receives the nine guild commands`() {
         val fixture = RegistrationFixture(guildIds = listOf(FIRST_GUILD_ID, SECOND_GUILD_ID))
 
         val exitCode = fixture.run()
@@ -101,8 +103,36 @@ class JdaGuildCommandRegistrationTest {
                     "/$commandName must be public in guild $guildId",
                 )
             }
-            assertEquals(setOf("play", "player"), PUBLIC_PLAYER_COMMANDS, "guild $guildId names drifted")
-            assertEquals(2, PUBLIC_PLAYER_COMMANDS.size)
+            assertEquals(
+                setOf("play", "player", "skip", "shuffle", "next", "queue", "disconnect", "reconnect"),
+                PUBLIC_PLAYER_COMMANDS,
+                "guild $guildId names drifted",
+            )
+            assertEquals(8, PUBLIC_PLAYER_COMMANDS.size)
+        }
+    }
+
+    @Test
+    fun `Given two joined guilds When commands are registered Then only next declares its required track option`() {
+        val fixture = RegistrationFixture(guildIds = listOf(FIRST_GUILD_ID, SECOND_GUILD_ID))
+
+        fixture.run()
+
+        fixture.published.forEach { (guildId, commands) ->
+            val byName = commands.associateBy { it.name }
+            val nextOption = (requireNotNull(byName["next"]) as SlashCommandData).options.single()
+            assertEquals("track", nextOption.name)
+            assertTrue(nextOption.isRequired, "/next must keep the required track option in guild $guildId")
+            val optionless = PUBLIC_PLAYER_COMMANDS - "next" - "play" - "player"
+            optionless.forEach { commandName ->
+                val command = requireNotNull(byName[commandName]) {
+                    "guild $guildId is missing the optionless command /$commandName"
+                }
+                assertTrue(
+                    (command as SlashCommandData).options.isEmpty(),
+                    "/$commandName must stay optionless in guild $guildId",
+                )
+            }
         }
     }
 
@@ -202,6 +232,12 @@ class JdaGuildCommandRegistrationTest {
         private val PUBLIC_PLAYER_COMMANDS = setOf(
             JdaPlayCommand.COMMAND_NAME,
             JdaPlayerControlCommand.COMMAND_NAME,
+            PlayerCommandDefinitions.SKIP_COMMAND_NAME,
+            PlayerCommandDefinitions.SHUFFLE_COMMAND_NAME,
+            PlayerCommandDefinitions.NEXT_COMMAND_NAME,
+            PlayerCommandDefinitions.QUEUE_COMMAND_NAME,
+            PlayerCommandDefinitions.DISCONNECT_COMMAND_NAME,
+            PlayerCommandDefinitions.RECONNECT_COMMAND_NAME,
         )
         private val EXPECTED_COMMANDS = ADMIN_ONLY_COMMANDS + PUBLIC_PLAYER_COMMANDS
 

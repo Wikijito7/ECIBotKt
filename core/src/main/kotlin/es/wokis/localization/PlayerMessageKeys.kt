@@ -12,6 +12,14 @@ object PlayerMessageKeys {
     const val PLAYER_COMMAND_DESCRIPTION = "player_command_description"
     const val PLAYER_COMMAND_ACTION_DESCRIPTION = "player_command_action_description"
 
+    const val SKIP_COMMAND_DESCRIPTION = "skip_command_description"
+    const val SHUFFLE_COMMAND_DESCRIPTION = "shuffle_command_description"
+    const val NEXT_COMMAND_DESCRIPTION = "next_command_description"
+    const val NEXT_COMMAND_INPUT_DESCRIPTION = "next_command_input_description"
+    const val QUEUE_COMMAND_DESCRIPTION = "queue_command_description"
+    const val DISCONNECT_COMMAND_DESCRIPTION = "disconnect_command_description"
+    const val RECONNECT_COMMAND_DESCRIPTION = "reconnect_command_description"
+
     const val PLAYER_TITLE = "player_title"
     const val PLAYER_CURRENT_TRACK = "player_current_track"
     const val PLAYER_PLAYBACK_POSITION = "player_playback_position"
@@ -61,6 +69,10 @@ object PlayerMessageKeys {
     const val DISCONNECT_COMMAND_RESPONSE = "disconnect_command_response"
     const val RECONNECT_SUCCESS = "reconnect_success"
     const val RECONNECT_NOT_CONNECTED = "reconnect_not_connected"
+
+    const val NEXT_EMPTY_QUEUE = "next_empty_queue"
+    const val NEXT_TRACK_MOVED = "next_track_moved"
+    const val NEXT_TRACK_NOT_IN_QUEUE_TRYING_SEARCH = "next_track_not_in_queue_trying_search"
 
     const val ERROR_NO_VOICE_CHANNEL = "error_no_voice_channel"
     const val ERROR_NO_TEXT_CHANNEL = "error_no_text_channel"

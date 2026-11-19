@@ -4,6 +4,7 @@ import es.wokis.commands.neutral.CommandDefinition
 import es.wokis.commands.neutral.GuildCommandRegistrar
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.GuildId
+import es.wokis.domain.model.UserId
 import es.wokis.jda.awaitRestActionCompletion
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
@@ -68,6 +69,14 @@ private fun Map<LocaleCode, String>.toJdaLocalizationsOrNull(): Map<DiscordLocal
 internal fun GuildId.toJdaId(): Long {
     require(value <= Long.MAX_VALUE.toULong()) {
         "Guild id does not fit in JDA's signed 64-bit id range"
+    }
+    return value.toLong()
+}
+
+/** Rejects ids above [Long.MAX_VALUE] instead of wrapping to a different user, and keeps the error message value-free. */
+internal fun UserId.toJdaId(): Long {
+    require(value <= Long.MAX_VALUE.toULong()) {
+        "User id does not fit in JDA's signed 64-bit id range"
     }
     return value.toLong()
 }

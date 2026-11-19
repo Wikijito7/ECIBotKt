@@ -59,6 +59,20 @@ class ImportBoundaryPolicyTest {
     }
 
     @Test
+    fun `Given the Phase 2 and Phase 6 configurations When commands roots are inspected Then both are classified once`() {
+        val expectedPaths = listOf(
+            "commands/src/main/kotlin",
+            "commands/src/test/kotlin",
+        )
+
+        listOf(ImportBoundaryConfigs.phase2(), ImportBoundaryConfigs.phase6()).forEach { config ->
+            val commandsRoots = config.roots.filter { it.module == SourceModule.COMMANDS }
+
+            assertEquals(expectedPaths, commandsRoots.map { it.path })
+        }
+    }
+
+    @Test
     fun `Given a semicolon inside a backtick identifier When evaluated Then it is not Kord and the following vendor import is denied`() {
         val header = KotlinFileHeaderParser.parse(
             "import dev.`kord;legacy`.core.Type; import net.dv8tion.jda.api.JDA\n",
@@ -257,6 +271,7 @@ class ImportBoundaryPolicyTest {
         SourceModule.CONFIGURATION to "es.wokis.services.config",
         SourceModule.LOCALE_PERSISTENCE to "es.wokis.data.locale",
         SourceModule.PLAYER to "es.wokis.player.engine",
+        SourceModule.COMMANDS to "es.wokis.commands.player",
     )
 
     private fun jdaRuntimeAllowedPhase2(vendorImport: VendorImport, packageName: String): PolicyCase =

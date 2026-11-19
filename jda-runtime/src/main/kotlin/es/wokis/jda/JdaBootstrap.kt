@@ -1,7 +1,15 @@
 package es.wokis.jda
 
+import es.wokis.commands.disconnect.DisconnectCommandHandler
 import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.neutral.GuildCommandRegistrar
+import es.wokis.commands.next.NextCommandHandler
+import es.wokis.commands.player.QueueMessageViewFactory
+import es.wokis.commands.queue.QueueCommandHandler
+import es.wokis.commands.queue.QueuePaginationHandler
+import es.wokis.commands.reconnect.ReconnectCommandHandler
+import es.wokis.commands.shuffle.ShuffleCommandHandler
+import es.wokis.commands.skip.SkipCommandHandler
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.domain.model.GuildId
@@ -9,12 +17,21 @@ import es.wokis.jda.command.JdaCommandRouter
 import es.wokis.jda.command.JdaComponentRouter
 import es.wokis.jda.command.JdaGuildCommandRegistrar
 import es.wokis.jda.command.JdaLocaleAutocompleteListener
+import es.wokis.jda.player.JdaDisconnectCommand
+import es.wokis.jda.player.JdaNeutralPlayerCommand
+import es.wokis.jda.player.JdaNextCommand
 import es.wokis.jda.player.JdaPlayCommand
+import es.wokis.jda.player.JdaPlayerActionsPort
 import es.wokis.jda.player.JdaPlayerButtonHandler
 import es.wokis.jda.player.JdaPlayerCommandController
 import es.wokis.jda.player.JdaPlayerControlCommand
 import es.wokis.jda.player.JdaPlayerRuntime
+import es.wokis.jda.player.JdaQueueCommand
+import es.wokis.jda.player.JdaReconnectCommand
+import es.wokis.jda.player.JdaShuffleCommand
+import es.wokis.jda.player.JdaSkipCommand
 import es.wokis.jda.player.PLAYER_BUTTON_IDS
+import es.wokis.jda.player.QUEUE_PAGINATION_IDS
 import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.LocaleMessageKeys
 import es.wokis.repositories.locale.LocalJsonLocaleRepository
@@ -93,13 +110,7 @@ internal fun runBootstrap(
         client.awaitReady()
 
         val joinedGuildIds = client.guilds.map { GuildId(it.idLong.toULong()) }
-        runBlocking {
-            val registrar = JdaGuildCommandRegistrar(client)
-            joinedGuildIds.forEach { guildId ->
-                registerLocaleCommand(registrar, guildId, commands.localizationService)
-                registerPlayerCommands(registrar, guildId, commands.playCommand, commands.controlCommand)
-            }
-        }
+        registerCommands(client, commands, joinedGuildIds)
 
         if (joinedGuildIds.isEmpty()) {
             LOG.warn(
@@ -108,12 +119,9 @@ internal fun runBootstrap(
             )
         }
         LOG.info(
-            "JDA ready as {}; guild-scoped /{}, /{} and /{} registered in {} guild(s); " +
+            "JDA ready as {}; guild-scoped commands registered in {} guild(s); " +
                 "intents=[GUILD_VOICE_STATES]",
             client.selfUser.name,
-            commands.localeCommand.name,
-            commands.playCommand.name,
-            commands.controlCommand.name,
             joinedGuildIds.size,
         )
 
@@ -134,11 +142,33 @@ internal fun runBootstrap(
     return finishBootstrap(primaryFailure, cleanupReport)
 }
 
+/** Upserts every guild-scoped command into each joined guild exactly once. */
+private fun registerCommands(
+    client: JDA,
+    commands: BootstrapCommands,
+    joinedGuildIds: List<GuildId>,
+) {
+    runBlocking {
+        val registrar = JdaGuildCommandRegistrar(client)
+        joinedGuildIds.forEach { guildId ->
+            registerLocaleCommand(registrar, guildId, commands.localizationService)
+            registerPlayerCommands(
+                registrar,
+                guildId,
+                commands.playCommand,
+                commands.controlCommand,
+                commands.familyCommands,
+            )
+        }
+    }
+}
+
 private class BootstrapCommands(
     val localeCommand: LocaleCommandHandler,
     val localizationService: GuildLocalizationService,
     val playCommand: JdaPlayCommand,
     val controlCommand: JdaPlayerControlCommand,
+    val familyCommands: List<JdaNeutralPlayerCommand>,
     val router: JdaCommandRouter,
     val componentRouter: JdaComponentRouter,
 )
@@ -158,12 +188,24 @@ private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): Bootstr
     val playCommand = JdaPlayCommand(playerController, localizationService)
     val controlCommand = JdaPlayerControlCommand(playerController, localizationService)
 
+    val actions = JdaPlayerActionsPort(jda = client, runtime = playerRuntime)
+    val queueViewFactory = QueueMessageViewFactory(localizationService)
+    val familyCommands = listOf(
+        JdaSkipCommand(SkipCommandHandler(actions, localizationService), localizationService),
+        JdaShuffleCommand(ShuffleCommandHandler(actions, localizationService), localizationService),
+        JdaNextCommand(NextCommandHandler(actions, localizationService), localizationService),
+        JdaQueueCommand(QueueCommandHandler(actions, localizationService, queueViewFactory), localizationService),
+        JdaDisconnectCommand(DisconnectCommandHandler(actions, localizationService), localizationService),
+        JdaReconnectCommand(ReconnectCommandHandler(actions, localizationService), localizationService),
+    )
+
     return BootstrapCommands(
         localeCommand = localeCommand,
         localizationService = localizationService,
         playCommand = playCommand,
         controlCommand = controlCommand,
-        router = JdaCommandRouter(listOf(localeCommand, playCommand, controlCommand)),
+        familyCommands = familyCommands,
+        router = JdaCommandRouter(listOf(localeCommand, playCommand, controlCommand) + familyCommands),
         componentRouter = JdaComponentRouter(
             PLAYER_BUTTON_IDS.map { id ->
                 JdaPlayerButtonHandler(
@@ -172,6 +214,8 @@ private fun buildCommands(client: JDA, playerRuntime: JdaPlayerRuntime): Bootstr
                     runtime = playerRuntime,
                     controller = playerController,
                 )
+            } + QUEUE_PAGINATION_IDS.map { id ->
+                QueuePaginationHandler(id = id, actions = actions, viewFactory = queueViewFactory)
             },
         ),
     )
@@ -278,7 +322,9 @@ internal suspend fun registerPlayerCommands(
     guildId: GuildId,
     playCommand: JdaPlayCommand,
     controlCommand: JdaPlayerControlCommand,
+    familyCommands: List<JdaNeutralPlayerCommand>,
 ) {
     playCommand.registerIn(registrar, guildId)
     controlCommand.registerIn(registrar, guildId)
+    familyCommands.forEach { command -> command.registerIn(registrar, guildId) }
 }

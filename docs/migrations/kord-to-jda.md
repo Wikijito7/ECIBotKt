@@ -234,6 +234,35 @@ What the exception allows and does not change:
   **#106** configuration features.
 - **Not claimed:** no Phase 3 PASS, no provider parity, no matrix completeness, no Phase 4 acceptance.
 
+#### Owner decision — 2026-11-18: dedicated `:commands` module for gateway-neutral command implementations (Phase 4 stage 4a)
+
+**Owner decision recorded 2026-11-18.** A dedicated `:commands` Gradle module now owns the
+**gateway-neutral command implementations** — the command definitions and their handlers — for the
+remaining command families. It depends only on `:core` (neutral contracts, domain values,
+localization and message vocabulary) and `:player` (engine model used to render `/queue`): **no JDA,
+no Kord, no Lavaplayer, no Koin**. The JDA runtime becomes **ports plus adapter plumbing**: it
+implements the neutral `PlayerActionsPort` seam, publishes the definitions guild-scoped and delivers
+the responses.
+
+Scope bounds of this decision:
+
+- **Introduced now** for the remaining families; the stage 4a slice carries `/skip`, `/shuffle`,
+  `/next`, `/queue` (with its pagination component handler), `/disconnect` and `/reconnect`. The
+  existing `/play`, `/player` and `/locale` stay where they are: the first two remain adapter-side as
+  previously recorded, `/locale` stays in `:core`.
+- **Explicitly not part of this decision:** moving the existing JDA **player orchestration** (the
+  command controller, message coordinator and channel service) into `:commands`. That extraction is a
+  **later dedicated step** with its own review; stage 4a leaves it adapter-side and untouched.
+- **Unchanged:** root Kord stays production through Phase 5 and its sources are untouched; Phase 3
+  stays **OPEN**; no provider-parity claim and no Phase 4 acceptance follow from this decision.
+
+**Stage 4a catalogue count.** The stage adds **10** localization keys — **7** command/option
+descriptions plus **3** `/next` outcomes. Any **+11** count for this stage is wrong and is corrected
+here.
+
+**Recorded payload divergence.** JDA queue pagination uses payload-carrying ids
+(`queue_next::<page>`); the Kord root keeps bare footer-derived ids until Phase 6.
+
 #### Pre-push snapshot — 2026-11-17, at the pushed head `23b75b4` plus the reconnect WIP still local/uncommitted at that snapshot
 
 This block records the **2026-11-17 pre-push snapshot**: the state observed immediately before the
