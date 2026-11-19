@@ -1,6 +1,5 @@
 package es.wokis.commands.neutral
 
-import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.domain.locale.DiscordLocaleCatalog
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.LocaleCode
@@ -35,7 +34,6 @@ class NeutralCommandPortsTest {
         GuildLocalizationService::class.java,
         LocalizationCatalog::class.java,
         LocaleMessageKeys::class.java,
-        LocaleCommandHandler::class.java,
     )
 
     private val gatewayPrefixes = listOf(

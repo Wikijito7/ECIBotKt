@@ -1,4 +1,4 @@
-package es.wokis.jda.player
+package es.wokis.commands.player
 
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.ChannelId
@@ -7,6 +7,7 @@ import es.wokis.localization.GuildLocalizationService
 import es.wokis.localization.PlayerMessageKeys
 import es.wokis.message.MessageView
 import es.wokis.player.PlayerMessageId
+import es.wokis.player.PlayerMessagePort
 import es.wokis.player.engine.PlayerEngine
 import es.wokis.player.engine.event.PlayerEvent
 import es.wokis.player.engine.model.PlayerSnapshot
@@ -22,8 +23,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import net.dv8tion.jda.api.entities.Guild
-import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel
 import org.slf4j.LoggerFactory
 import java.util.concurrent.atomic.AtomicReference
 
@@ -40,15 +39,19 @@ private val PROBLEMATIC_MARKDOWN_PATTERN = Regex("$EMOJI_PATTERN|$URL_PATTERN")
  *
  * Owns the only collector of the adapter's event fan-out: events are queued and handled serially so
  * REST latency never stalls the engine's event loop. Announcements go to the channel of the last
- * player command; the embed lives in `#player`. Nothing here may crash the runtime, so every JDA
- * failure degrades to a logged warning and, for the embed, to the invoking channel.
+ * player command; the embed lives in `#player`. Nothing here may crash the runtime, so every failure
+ * degrades to a logged warning and, for the embed, to the invoking channel. `guildName` is read at
+ * render time so a renamed guild renders its current name.
  */
-internal class JdaPlayerMessageCoordinator(
-    private val guild: Guild,
+class PlayerMessageCoordinator(
+    private val initialGuildId: GuildId,
+    private val guildName: () -> String,
     private val engine: PlayerEngine,
-    private val adapter: JdaGuildPlayerVoiceAdapter,
+    private val eventsPort: PlayerEventsPort,
     private val localizationService: GuildLocalizationService,
-    private val channelService: JdaPlayerChannelService,
+    private val channelPort: PlayerChannelPort,
+    private val messagePort: PlayerMessagePort,
+    private val voiceTargets: PlayerVoiceTargetPort,
     private val viewFactory: PlayerMessageViewFactory,
     scope: CoroutineScope,
     private val onLeave: suspend () -> Unit,
@@ -56,7 +59,6 @@ internal class JdaPlayerMessageCoordinator(
 
     private val coordinatorJob = SupervisorJob(scope.coroutineContext[Job])
     private val coordinatorScope = CoroutineScope(scope.coroutineContext + coordinatorJob)
-    private val port = JdaPlayerMessagePort(guild.jda)
     private val eventQueue = Channel<PlayerEvent>(Channel.UNLIMITED)
     private val leaveTimer = AtomicReference<Job?>(null)
 
@@ -64,7 +66,7 @@ internal class JdaPlayerMessageCoordinator(
     private var commandChannelId: ChannelId? = null
 
     @Volatile
-    private var guildId: GuildId = GuildId(guild.idLong.toULong())
+    private var guildId: GuildId = initialGuildId
 
     @Volatile
     private var guildLocale: LocaleCode? = null
@@ -85,7 +87,7 @@ internal class JdaPlayerMessageCoordinator(
     init {
         coordinatorScope.launch {
             try {
-                adapter.events.collect { eventQueue.trySend(it) }
+                eventsPort.events.collect { eventQueue.trySend(it) }
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (error: Exception) {
@@ -113,10 +115,10 @@ internal class JdaPlayerMessageCoordinator(
     }
 
     /** Loads [input] and joins voice once it is active; failures surface as chat messages. */
-    fun startPlayback(channel: VoiceChannel, input: String) {
-        voiceChannelId = ChannelId(channel.idLong.toULong())
+    fun startPlayback(target: PlayerVoiceTarget, input: String) {
+        voiceChannelId = target.channelId
         cancelLeaveTimer()
-        coordinatorScope.launch { runPlayback(channel, input) }
+        coordinatorScope.launch { runPlayback(target, input) }
     }
 
     override fun close() {
@@ -163,11 +165,11 @@ internal class JdaPlayerMessageCoordinator(
         val channelId = commandChannelId ?: return
         // Kord sends `found_track_list` first and then edits it into the added-songs text.
         try {
-            val messageId = port.send(
+            val messageId = messagePort.send(
                 channelId,
                 text(PlayerMessageKeys.FOUND_TRACK_LIST, event.name, event.trackCount),
             )
-            port.edit(
+            messagePort.edit(
                 channelId = channelId,
                 messageId = messageId,
                 content = addedSongsText(event, localizationService, guildId, guildLocale),
@@ -185,7 +187,7 @@ internal class JdaPlayerMessageCoordinator(
         // Kord parity: only `/player` creates the embed; a track start announces or edits an existing one.
         if (playerMessageId == null) {
             val currentName = snapshot.current?.displayName.orEmpty()
-            val channelName = resolveVoiceChannelName(guild, voiceChannelId, recordedVoiceChannelName)
+            val channelName = resolveVoiceChannelName(voiceChannelId, recordedVoiceChannelName, voiceTargets)
             announce(text(PlayerMessageKeys.NOW_PLAYING, currentName, channelName))
             return
         }
@@ -200,7 +202,7 @@ internal class JdaPlayerMessageCoordinator(
     private suspend fun announce(content: String) {
         val channelId = commandChannelId ?: return
         try {
-            port.send(channelId, content)
+            messagePort.send(channelId, content)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
@@ -214,22 +216,30 @@ internal class JdaPlayerMessageCoordinator(
      */
     suspend fun ensurePlayerView(): String = try {
         val snapshot = engine.snapshot()
-        val view = viewFactory.createPlayerView(guild.name, snapshot, guildId, guildLocale)
-        val result = channelService.setUp(guild, view)
-        if (result == null) {
-            fallbackToCommandChannel(view)
-            text(PlayerMessageKeys.PLAYER_CHANNEL_CREATION_FAILED)
-        } else {
-            playerChannelId = result.channelId
-            playerMessageId = result.messageId
-            text(
-                if (result.isNewChannel) {
-                    PlayerMessageKeys.PLAYER_CHANNEL_CREATED
-                } else {
-                    PlayerMessageKeys.PLAYER_SHOWN_ON_EXISTING_CHANNEL
-                },
-                result.channelId.value,
-            )
+        val view = viewFactory.createPlayerView(guildName(), snapshot, guildId, guildLocale)
+        when (val result = channelPort.setUp(view)) {
+            PlayerChannelSetup.Failed -> {
+                fallbackToCommandChannel(view)
+                text(PlayerMessageKeys.PLAYER_CHANNEL_CREATION_FAILED)
+            }
+
+            is PlayerChannelSetup.Created -> {
+                playerChannelId = result.channelId
+                playerMessageId = result.messageId
+                text(
+                    PlayerMessageKeys.PLAYER_CHANNEL_CREATED,
+                    result.channelId.value,
+                )
+            }
+
+            is PlayerChannelSetup.Reused -> {
+                playerChannelId = result.channelId
+                playerMessageId = result.messageId
+                text(
+                    PlayerMessageKeys.PLAYER_SHOWN_ON_EXISTING_CHANNEL,
+                    result.channelId.value,
+                )
+            }
         }
     } catch (cancellation: CancellationException) {
         throw cancellation
@@ -241,13 +251,14 @@ internal class JdaPlayerMessageCoordinator(
 
     /** Builds the view for the current snapshot without posting or tracking a message. */
     suspend fun playerView(guildLocale: LocaleCode?): MessageView =
-        viewFactory.createPlayerView(guild.name, engine.snapshot(), guildId, guildLocale)
+        viewFactory.createPlayerView(guildName(), engine.snapshot(), guildId, guildLocale)
 
     private suspend fun updatePlayerView(snapshot: PlayerSnapshot) {
         val channelId = playerChannelId ?: return
         val messageId = playerMessageId ?: return
         try {
-            port.edit(channelId, messageId, viewFactory.createPlayerView(guild.name, snapshot, guildId, guildLocale))
+            val view = viewFactory.createPlayerView(guildName(), snapshot, guildId, guildLocale)
+            messagePort.edit(channelId, messageId, view)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
@@ -262,7 +273,7 @@ internal class JdaPlayerMessageCoordinator(
         val channelId = commandChannelId ?: return
         val content = text(PlayerMessageKeys.PLAYER_CHANNEL_CREATION_FAILED)
         try {
-            port.send(channelId, view?.copy(content = content) ?: MessageView(content = content))
+            messagePort.send(channelId, view?.copy(content = content) ?: MessageView(content = content))
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
@@ -292,8 +303,8 @@ internal class JdaPlayerMessageCoordinator(
         leaveTimer.getAndSet(null)?.cancel()
     }
 
-    private suspend fun runPlayback(channel: VoiceChannel, input: String) {
-        val baseRevision = adapter.presentation.value.revision
+    private suspend fun runPlayback(target: PlayerVoiceTarget, input: String) {
+        val baseRevision = eventsPort.playbackState.value.revision
         try {
             engine.loadAndPlay(input)
         } catch (cancellation: CancellationException) {
@@ -303,33 +314,32 @@ internal class JdaPlayerMessageCoordinator(
             return
         }
         // A track was already playing: the new input is queued, so there is no start to wait for.
-        if (adapter.presentation.value.activeTrack) {
-            connect(channel)
+        if (eventsPort.playbackState.value.activeTrack) {
+            connect(target)
             return
         }
         when (awaitPlaybackStart(baseRevision)) {
-            JdaPlayerPlaybackStart.TimedOut -> announce(text(PlayerMessageKeys.PLAYER_LOAD_TIMEOUT))
+            PlaybackStart.TimedOut -> announce(text(PlayerMessageKeys.PLAYER_LOAD_TIMEOUT))
             // A rejected load or a failed playback already produced its own event message.
-            is JdaPlayerPlaybackStart.Failed -> Unit
-            JdaPlayerPlaybackStart.Started -> connect(channel)
+            PlaybackStart.Failed -> Unit
+            PlaybackStart.Started -> connect(target)
         }
     }
 
-    private suspend fun awaitPlaybackStart(baseRevision: Long): JdaPlayerPlaybackStart {
+    private suspend fun awaitPlaybackStart(baseRevision: Long): PlaybackStart {
         val state = withTimeoutOrNull(LOAD_START_TIMEOUT_MILLIS) {
-            adapter.presentation.first { presentation ->
+            eventsPort.playbackState.first { presentation ->
                 presentation.revision > baseRevision &&
-                    (presentation.activeTrack || presentation.loadFailure != null)
+                    (presentation.activeTrack || presentation.loadFailed)
             }
         }
-        if (state == null) return JdaPlayerPlaybackStart.TimedOut
-        val failure = state.loadFailure
-        return if (failure == null) JdaPlayerPlaybackStart.Started else JdaPlayerPlaybackStart.Failed(failure)
+        if (state == null) return PlaybackStart.TimedOut
+        return if (state.loadFailed) PlaybackStart.Failed else PlaybackStart.Started
     }
 
-    private suspend fun connect(channel: VoiceChannel) {
+    private suspend fun connect(target: PlayerVoiceTarget) {
         try {
-            if (!adapter.connect(channel)) announce(text(PlayerMessageKeys.PLAYER_VOICE_SESSION_REFUSED))
+            if (!eventsPort.connect(target)) announce(text(PlayerMessageKeys.PLAYER_VOICE_SESSION_REFUSED))
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (error: Exception) {
@@ -351,16 +361,26 @@ internal class JdaPlayerMessageCoordinator(
         }
 
     private companion object {
-        private val LOG = LoggerFactory.getLogger(JdaPlayerMessageCoordinator::class.java)
+        private val LOG = LoggerFactory.getLogger(PlayerMessageCoordinator::class.java)
     }
 }
 
 /** Kord reads the connected channel's name at track start; the recorded name is only a fallback. */
-private fun resolveVoiceChannelName(guild: Guild, voiceChannelId: ChannelId?, fallback: String): String =
-    voiceChannelId
-        ?.takeIf { it.value <= Long.MAX_VALUE.toULong() }
-        ?.let { guild.jda.getVoiceChannelById(it.value.toLong())?.name }
-        ?: fallback
+private suspend fun resolveVoiceChannelName(
+    voiceChannelId: ChannelId?,
+    recordedName: String,
+    voiceTargets: PlayerVoiceTargetPort,
+): String = voiceChannelId?.let { voiceTargets.channelName(it) } ?: recordedName
+
+/** Outcome of waiting for the adapter to report a track or a load failure. */
+private sealed interface PlaybackStart {
+
+    data object Started : PlaybackStart
+
+    data object Failed : PlaybackStart
+
+    data object TimedOut : PlaybackStart
+}
 
 private suspend fun queuedText(
     event: PlayerEvent.TrackQueued,

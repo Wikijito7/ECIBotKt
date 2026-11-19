@@ -264,6 +264,29 @@ here.
 **Recorded payload divergence.** JDA queue pagination uses payload-carrying ids
 (`queue_next::<page>`); the Kord root keeps bare footer-derived ids until Phase 6.
 
+#### Owner decision — 2026-11-19: no `kord` module rename, and the remaining player orchestration + locale handler move into `:commands` (Phase 4 stage 4d)
+
+**Owner decision recorded 2026-11-19.** Two decisions, taken together:
+
+- **The root `src/` is NOT renamed to a `kord` module.** Kord is removed entirely at **Phase 6**, so a
+  module rename would be churn on code that is deleted in the same phase. The root sources stay where
+  they are until the cutover; this decision overrides any earlier suggestion of a `kord` module name.
+- **The remaining player orchestration moves into `:commands` now as a dedicated extraction** — the
+  owner-approved **Phase 4 stage 4d** that the stage-4a decision explicitly deferred. The
+  `LocaleCommandHandler` (with its autocomplete handler), the player command controller, the player
+  message coordinator and the `#player` channel REST seam join the gateway-neutral `:commands` module,
+  completing the `:commands` ownership boundary. `:jda-runtime` keeps only ports, routers and thin
+  adapters; the JDA REST/voice implementations stay adapter-side behind those ports.
+
+Scope bounds of this decision:
+
+- **Pure structural extraction:** no message, timing, localization-key or behaviour change; the same
+  thirteen commands, component ids, autocomplete handlers and pagination stay in place.
+- `:commands` remains **gateway-free** (no Kord/JDA imports — scanner enforced), reads **no**
+  environment variable and keeps **no** guild-id config field; the root Kord sources are untouched.
+- **Unchanged:** Phase 3 stays **OPEN**; this is **not** Phase 4 acceptance; root Kord stays production
+  through Phase 5; Phase 6 owns the root code/build switch and Kord removal.
+
 #### Pre-push snapshot — 2026-11-17, at the pushed head `23b75b4` plus the reconnect WIP still local/uncommitted at that snapshot
 
 This block records the **2026-11-17 pre-push snapshot**: the state observed immediately before the

@@ -5,6 +5,8 @@ import es.wokis.commands.locale.LocaleAutocompleteHandler
 import es.wokis.commands.locale.LocaleCommandHandler
 import es.wokis.commands.neutral.GuildCommandRegistrar
 import es.wokis.commands.next.NextCommandHandler
+import es.wokis.commands.player.PlayerCommandController
+import es.wokis.commands.player.PlayerMessageCoordinators
 import es.wokis.commands.player.QueueMessageViewFactory
 import es.wokis.commands.queue.QueueCommandHandler
 import es.wokis.commands.queue.QueuePaginationHandler
@@ -44,9 +46,9 @@ import es.wokis.jda.player.JdaNextCommand
 import es.wokis.jda.player.JdaPlayCommand
 import es.wokis.jda.player.JdaPlayerActionsPort
 import es.wokis.jda.player.JdaPlayerButtonHandler
-import es.wokis.jda.player.JdaPlayerCommandController
 import es.wokis.jda.player.JdaPlayerControlCommand
 import es.wokis.jda.player.JdaPlayerRuntime
+import es.wokis.jda.player.JdaPlayerVoiceTargetPort
 import es.wokis.jda.player.JdaQueueCommand
 import es.wokis.jda.player.JdaRadioCommand
 import es.wokis.jda.player.JdaReconnectCommand
@@ -225,15 +227,16 @@ private fun buildCommands(
         setGuildLocaleUseCase = SetGuildLocaleUseCase(localeRepository),
         localizationService = localizationService,
     )
-    val playerController = JdaPlayerCommandController(
-        jda = client,
-        runtime = playerRuntime,
+    val actions = JdaPlayerActionsPort(jda = client, runtime = playerRuntime)
+    val playerController = PlayerCommandController(
+        actions = actions,
+        coordinators = playerCoordinators(client, playerRuntime),
+        voiceTargets = JdaPlayerVoiceTargetPort(client),
         localizationService = localizationService,
     )
     val playCommand = JdaPlayCommand(playerController, localizationService)
     val controlCommand = JdaPlayerControlCommand(playerController, localizationService)
 
-    val actions = JdaPlayerActionsPort(jda = client, runtime = playerRuntime)
     val queueViewFactory = QueueMessageViewFactory(localizationService)
     val soundsCatalog = JdaSoundsCatalogPort()
     val soundsViewFactory = SoundsMessageViewFactory(localizationService)
@@ -275,6 +278,14 @@ private fun buildCommands(
             ),
         ),
     )
+}
+
+private fun playerCoordinators(
+    client: JDA,
+    playerRuntime: JdaPlayerRuntime,
+): PlayerMessageCoordinators = PlayerMessageCoordinators { guildId ->
+    val rawId = guildId.value.takeIf { it <= Long.MAX_VALUE.toULong() }
+    rawId?.let { client.getGuildById(it.toLong()) }?.let(playerRuntime::messagesFor)
 }
 
 private fun buildRadioCommand(
@@ -328,7 +339,7 @@ private fun buildFamilyCommands(
 private fun buildComponentRouter(
     client: JDA,
     playerRuntime: JdaPlayerRuntime,
-    playerController: JdaPlayerCommandController,
+    playerController: PlayerCommandController,
     actions: JdaPlayerActionsPort,
     queueViewFactory: QueueMessageViewFactory,
     soundsCatalog: JdaSoundsCatalogPort,

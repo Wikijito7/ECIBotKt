@@ -5,6 +5,7 @@ import es.wokis.commands.neutral.CommandDefinition
 import es.wokis.commands.neutral.CommandResponder
 import es.wokis.commands.neutral.CommandResponse
 import es.wokis.commands.neutral.GuildCommandRegistrar
+import es.wokis.commands.player.PlayerCommandController
 import es.wokis.commands.player.PlayerCommandDefinitions
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.LocaleCode
@@ -253,7 +254,7 @@ class JdaPlayerCommandsTest {
         }
 
     /** Fresh strict controller per test so no stub or recorded call leaks across cases. */
-    private fun newController(): JdaPlayerCommandController = mockk()
+    private fun newController(): PlayerCommandController = mockk()
 
     /**
      * Every family adapter the bootstrap publishes alongside /play and /player. Handlers are strict
