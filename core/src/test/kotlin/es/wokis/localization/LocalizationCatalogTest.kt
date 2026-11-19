@@ -60,6 +60,18 @@ class LocalizationCatalogTest {
     }
 
     @Test
+    fun `Given the two shipped catalogs When compared Then they expose exactly the same key set`() {
+        val englishKeys = resourceKeys("lang.yml")
+        val spanishKeys = resourceKeys("lang_es-ES.yml")
+
+        assertEquals(
+            englishKeys,
+            spanishKeys,
+            "lang.yml and lang_es-ES.yml must ship the same keys in both directions",
+        )
+    }
+
+    @Test
     fun `Given the neutral locale command keys When read Then they resolve from the shared classpath`() {
         listOf(
             LocaleMessageKeys.LOCALE_COMMAND_DESCRIPTION,

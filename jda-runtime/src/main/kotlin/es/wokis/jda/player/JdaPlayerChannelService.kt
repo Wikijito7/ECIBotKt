@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
+import net.dv8tion.jda.api.exceptions.MissingAccessException
 import org.slf4j.LoggerFactory
 import java.util.EnumSet
 
@@ -43,14 +44,7 @@ internal class JdaPlayerChannelService {
     suspend fun setUp(guild: Guild, view: MessageView): JdaPlayerChannelResult? {
         val (channel, isNewChannel) = findOrCreate(guild) ?: return null
         clearMessages(channel)
-        val message = try {
-            channel.sendMessage(JdaMessageViewMapper.toCreateData(view)).awaitRestAction()
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (error: Exception) {
-            LOG.warn("Could not send the player message in guild '{}'", guild.name, error)
-            return null
-        }
+        val message = sendPlayerMessage(channel, view) ?: return null
         return JdaPlayerChannelResult(
             channelId = ChannelId(channel.idLong.toULong()),
             messageId = PlayerMessageId(message.idLong.toULong()),
@@ -58,15 +52,48 @@ internal class JdaPlayerChannelService {
         )
     }
 
+    /**
+     * A hidden channel is reported as a failure like any other unwritable one, so the coordinator's
+     * invoking-channel fallback posts the localized warning. Only classes are logged, never ids.
+     */
+    private suspend fun sendPlayerMessage(channel: TextChannel, view: MessageView): Message? = try {
+        channel.sendMessage(JdaMessageViewMapper.toCreateData(view)).awaitRestAction()
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (hidden: MissingAccessException) {
+        LOG.warn(
+            "Could not send the player message: {} is hidden ({})",
+            TextChannel::class.simpleName,
+            hidden.javaClass.simpleName,
+        )
+        null
+    } catch (error: Exception) {
+        LOG.warn(
+            "Could not send the player message: {} failed ({})",
+            TextChannel::class.simpleName,
+            error.javaClass.simpleName,
+            error,
+        )
+        null
+    }
+
     private suspend fun findOrCreate(guild: Guild): Pair<TextChannel, Boolean>? {
         // Divergence from Kord: the match ignores case, so a renamed `#Player` still counts as the player channel.
+        // Obfuscated channels are skipped: the bot cannot see them, and reusing one cannot post the embed.
         guild.textChannels
-            .firstOrNull { it.name.equals(PLAYER_CHANNEL_NAME, ignoreCase = true) }
+            .firstOrNull { it.name.equals(PLAYER_CHANNEL_NAME, ignoreCase = true) && !it.isObfuscated }
             ?.let { return it to false }
         return try {
             createChannel(guild) to true
         } catch (cancellation: CancellationException) {
             throw cancellation
+        } catch (hidden: MissingAccessException) {
+            LOG.warn(
+                "Could not create the #player channel: {} is hidden ({})",
+                TextChannel::class.simpleName,
+                hidden.javaClass.simpleName,
+            )
+            null
         } catch (error: Exception) {
             LOG.warn("Could not create the #player channel in guild '{}'", guild.name, error)
             null
