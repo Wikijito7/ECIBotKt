@@ -493,6 +493,7 @@ class JdaPlayerRuntimeTest {
 
         val channel: TextChannel = mockk {
             every { idLong } returns this@RecordingRuntimeChannel.id
+            every { isObfuscated } returns false
             every { sendMessage(any<String>()) } answers {
                 sentTexts += firstArg<String>()
                 createAction

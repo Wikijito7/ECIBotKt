@@ -3380,6 +3380,137 @@ not pre-push numbers. For the current published state, use **PR #123's live head
   **no Phase 3 PASS** is claimed and this work is **not** Phase 4 acceptance.
 
 
+#### Phase 4 parity audit — 2026-11-19 (branch `feature/114-phase4-hidden-channels-audit`, base `e387a75`, PR #130 head)
+
+**What this is.** The Phase 4 exit-criteria audit requested by the owner: one row per command family, per
+component id, per `#player` lifecycle concern and per localization/hidden-channel concern, each citing the
+**stage that landed it** and the **suite that pins it**. It was built by reading the branch inventory and
+running the cited suites; the mutation rows were produced in a throwaway `git worktree` and removed
+afterwards. Nothing was committed or pushed for this audit.
+
+**What this is not.** It is **not** a Phase 4 acceptance claim, **not** a Phase 3 PASS and **not** a
+provider-parity statement. **Phase 3 stays IN PROGRESS / OPEN**; Phase 5 still depends on Phase 4
+acceptance; the owner performs the final manual verification. Root Kord stays production and its sources
+are untouched by this branch.
+
+**Evidence conventions.** "Landed" names the stage branch and commit that introduced the behaviour, plus a
+PR number only where that number is already recorded in this document; merge/open status is tracked in the
+progress record and is not re-asserted here. Suite names are given without their module prefix in the
+narrow tables and with `commands:` / `jda:` prefixes where the same concern is pinned on both sides.
+Hidden-channel rows cite the obfuscated-channel cases the Test Agent added in this same working tree.
+Production and test changes therefore share this working tree: the audit-table author wrote only the
+production and documentation changes, and nothing is committed or pushed.
+
+**Build and quality evidence for this branch.** `:jda-runtime:compileKotlin` **passed**, and so did
+`:jda-runtime:compileTestKotlin` (test **sources** compile). `detektBudget` reports **30/40** findings —
+root 16, `:commands` 0, `:configuration` 0, `:core` 1, `:jda-runtime` 4, `:locale-persistence` 0,
+`:player` 9 — with **no baseline** and **zero new findings** from this branch (the four `:jda-runtime`
+findings are the pre-existing `JdaVoiceSessionPort`/`JdaRuntimeConfig` ones). The parallel Test Agent
+added the `isObfuscated` stubs and the obfuscated-channel cases to the same working tree; after those
+landed, `JdaPlayerChannelPortTest` (7), `JdaPlayerChannelServiceTest` (14) and
+`JdaPlayerMessagePortTest` (12) all pass, so the earlier 17 `MockKException` failures were a
+**test-fixture** delta only, already closed.
+
+##### Command families (13 rows)
+
+| Family (Kord surface) | Landed | Evidence — suite(s) that pin Kord parity |
+| --- | --- | --- |
+| `/locale` | Phase 2D (PR #119, merge `f56d225`); moved into `:commands` by stage 4d (PR #130 head `e387a75`) | `commands:LocaleCommandHandlerTest` (persist-before-confirm, `reset`, canonical case, no-guild/no-option errors, guild default never overwritten by the user locale), `commands:LocaleAutocompleteHandlerTest` (canonical tags, case-insensitive match, 25-choice cap), `jda:JdaBootstrapTest` (JDA definition + en/es-ES localized descriptions, no fabricated ar/he), `jda:JdaGuildCommandRegistrationTest` (13 guild commands, `/locale` admin-only) |
+| `/play` | Stage 4b public commands (`feature/114-phase4-public-player-commands` @ `976da6e`; merged as `055c52e`, PR #124); orchestration extracted in 4d @ `e387a75` | `commands:PlayerCommandControllerTest` (voice/DM guards, search acknowledgement, load hand-off, timeout/rejected-load/connect failures), `jda:JdaPlayerCommandsTest` (public definition, defer-then-reply, empty option), `commands:PlayerMessageCoordinatorTest` (queued/playlist/no-matches/load-failure announcements), `jda:JdaPlayerRuntimeTest` |
+| `/player` (embed + buttons) | Stage 4b channel/messages (`af07063`, `2d8c6b8`), buttons (`a88beda`, `9e60d4f`); extracted in 4d @ `e387a75` | `commands:PlayerCommandControllerTest` (queue/pause/resume/skip/stop/disconnect/reconnect actions), `jda:JdaPlayerCommandsTest` (optional action, empty action renders the view), `commands:PlayerMessageCoordinatorTest` (create/reuse/edit-only/stop/leave/fallback), `jda:JdaMessageViewMapperTest` (embed + button row), `jda:JdaPlayerButtonHandlerTest`, `jda:JdaPlayerComponentRoutingTest` |
+| `/queue` (paginated) | Stage 4a (`feature/114-phase4-commands-module` @ `1909d2c`) | `commands:QueueCommandHandlerTest` (text-only guard, first page + arrows, single page, empty), `commands:QueuePaginationHandlerTest` (next/previous, clamping, malformed payload, ack-before-edit), `commands:QueuePaginationTest` (field-limit pagination), `commands:QueueMessageViewFactoryTest` (Kord embed/footer/disabled edges), `jda:JdaPlayerFamilyCommandsTest`, `jda:JdaPlayerComponentRoutingTest` (payload never changes the route) |
+| `/skip` | Stage 4a @ `1909d2c` | `commands:SkipCommandHandlerTest` (guards, unconditional confirmation, guild locale), `jda:JdaPlayerFamilyCommandsTest` (definition + public defer) |
+| `/shuffle` | Stage 4a @ `1909d2c` | `commands:ShuffleCommandHandlerTest` (guards, shuffle-once, unchanged queue still confirms), `jda:JdaPlayerFamilyCommandsTest` |
+| `/next` | Stage 4a @ `1909d2c` | `commands:NextCommandHandlerTest` (blank/omitted option, URL vs search, queued match, empty queue, trim), `commands:TrackInputTest` (Monochrome/Tidal rewrite), `jda:JdaPlayerFamilyCommandsTest` |
+| `/disconnect` | Stage 4a @ `1909d2c` | `commands:DisconnectCommandHandlerTest` (stop→clear→disconnect order, idle player, DM/out-of-voice guards), `jda:JdaPlayerFamilyCommandsTest` |
+| `/reconnect` | Stage 4a @ `1909d2c` | `commands:ReconnectCommandHandlerTest` (restored/not-connected/failed keys), `commands:PlayerCommandControllerTest` (dedicated path without stop/clear, timeout, in-progress, generic failure), `jda:JdaPlayerFamilyCommandsTest`, adapter `jda:JdaGuildPlayerVoiceAdapterReconnectTest` + `ReconnectEdgeCaseTest` + `ReconnectConfirmationFailureTest` |
+| `/sound` (autocomplete) | Stage 4b sound/sounds/tts (PR #128, `feature/114-phase4-sound-tts-commands` @ `81be0e9`) | `commands:SoundCommandHandlerTest` (required name, guards, unknown sound, exact case, play once), `commands:SoundAutocompleteHandlerTest` (prefix-first ordering, case-insensitive, 25 cap, 100-char truncation), `commands:SoundCommandDefinitionsTest`, `jda:JdaAutocompleteRouterTest`, `jda:JdaPlayerFamilyCommandsTest` |
+| `/sounds` (paginated) | PR #128 @ `81be0e9` | `commands:SoundsCommandHandlerTest` (three-column page, total count, empty, single page without arrows), `commands:SoundPaginationHandlerTest` (direction from the bound id, clamping, malformed payload), `commands:SoundsMessageViewFactoryTest` (50-per-column, 3 columns/page, disabled edges, brand colour), `jda:JdaPlayerFamilyCommandsTest` |
+| `/tts` | PR #128 @ `81be0e9` | `commands:TtsCommandHandlerTest` (required/blank message, guards, unencoded text, guild locale), `commands:SoundCommandDefinitionsTest` (required message, no autocomplete), `jda:JdaTtsUriTest` (URI building), `jda:JdaPlayerFamilyCommandsTest` |
+| `/radio` (6 subcommands: `play`, `list`, `search name`, `search countrycode`, `random`, `countrycodes`) | Stage 4c (`feature/114-phase4-radio-commands` @ `480fe97`) | `commands:RadioCommandHandlerTest` (group/leaf dispatch, unknown leaf/group, locality), `commands:RadioCommandDefinitionsTest` (group shape + 25-option cap + Kord order), `commands:RadioPlayCommandHandlerTest`, `commands:RadioListCommandHandlerTest`, `commands:RadioSearchCommandHandlerTest` (name + country code), `commands:RadioRandomCommandHandlerTest`, `commands:RadioCountryCodesCommandHandlerTest` (flag field, 8 per line, 100/page, arrows), `commands:RadioAutocompleteHandlersTest`, `commands:RadioPaginationTest`, `jda:JdaGuildCommandRegistrationTest` (public group shape `play/list/countrycodes/random` + nested `search`), `jda:JdaRadioComponentRoutingTest` |
+
+##### Component ids (18 rows)
+
+| Component id | Handler (module) | Landed | Pinning suite(s) |
+| --- | --- | --- | --- |
+| `QUEUE_PREVIOUS` | `QueuePaginationHandler` (`:commands`) | Stage 4a @ `1909d2c` | `commands:QueuePaginationHandlerTest`, `jda:JdaPlayerComponentRoutingTest` (queue arrow click) |
+| `QUEUE_NEXT` | `QueuePaginationHandler` (`:commands`) | Stage 4a @ `1909d2c` | same |
+| `PLAYER_RESUME` | `JdaPlayerButtonHandler` (`:jda-runtime`) | Stage 4b buttons (`a88beda`, `9e60d4f`) | `jda:JdaPlayerButtonHandlerTest`, `jda:JdaPlayerComponentRoutingTest` (the six ids exactly) |
+| `PLAYER_PAUSE` | `JdaPlayerButtonHandler` (`:jda-runtime`) | Stage 4b buttons | same |
+| `PLAYER_SKIP` | `JdaPlayerButtonHandler` (`:jda-runtime`) | Stage 4b buttons | same |
+| `PLAYER_DISCONNECT` | `JdaPlayerButtonHandler` (`:jda-runtime`) | Stage 4b buttons | same |
+| `PLAYER_SHUFFLE` | `JdaPlayerButtonHandler` (`:jda-runtime`) | Stage 4b buttons | same |
+| `PLAYER_RECONNECT` | `JdaPlayerButtonHandler` (`:jda-runtime`) | Stage 4b buttons | same |
+| `SOUNDS_PREVIOUS` | `SoundPaginationHandler` (`:commands`) | PR #128 @ `81be0e9` — **routing fix 2** | `commands:SoundPaginationHandlerTest` (decrements and clamps at 1), `commands:SoundsMessageViewFactoryTest` (disabled on page 1), `jda:JdaRadioComponentRoutingTest` (18-id membership) |
+| `SOUNDS_NEXT` | `SoundPaginationHandler` (`:commands`) | PR #128 @ `81be0e9` — routing fix 2 counterpart | same |
+| `RADIO_LIST_NEXT` | `RadioListPaginationHandler` (`:commands`) | Stage 4c @ `480fe97` | `commands:RadioListPaginationHandlerTest`, `jda:JdaRadioComponentRoutingTest` (id pair exactly) |
+| `RADIO_LIST_PREVIOUS` | `RadioListPaginationHandler` (`:commands`) | Stage 4c @ `480fe97` | same |
+| `RADIO_SEARCH_NAME_NEXT` | `RadioSearchPaginationHandler(kind = NAME)` (`:commands`) | Stage 4c @ `480fe97` — **routing fix 1** | `commands:RadioSearchPaginationHandlerTest` (same query on the next page), `jda:JdaComponentRouterTest` (`::payload` split), `jda:JdaPlayerComponentRoutingTest` (payload never changes the route) |
+| `RADIO_SEARCH_NAME_PREVIOUS` | `RadioSearchPaginationHandler(kind = NAME)` (`:commands`) | Stage 4c @ `480fe97` | same |
+| `RADIO_SEARCH_COUNTRY_CODE_NEXT` | `RadioSearchPaginationHandler(kind = COUNTRY_CODE)` (`:commands`) | Stage 4c @ `480fe97` | `commands:RadioSearchPaginationHandlerTest` (country lookup with its own arrows), `jda:JdaRadioComponentRoutingTest` (kind ids never overlap) |
+| `RADIO_SEARCH_COUNTRY_CODE_PREVIOUS` | `RadioSearchPaginationHandler(kind = COUNTRY_CODE)` (`:commands`) | Stage 4c @ `480fe97` | same |
+| `RADIO_COUNTRYCODES_NEXT` | `RadioCountryCodesPaginationHandler` (`:commands`) | Stage 4c @ `480fe97` — **routing fix 3 (paired)** | `commands:RadioCountryCodesPaginationHandlerTest`, `commands:RadioCountryCodesCommandHandlerTest` (arrows emitted past 100 codes), `jda:JdaRadioComponentRoutingTest` (click → page 2) |
+| `RADIO_COUNTRYCODES_PREVIOUS` | `RadioCountryCodesPaginationHandler` (`:commands`) | Stage 4c @ `480fe97` — routing fix 3 (paired) | same |
+
+##### `#player` lifecycle
+
+| Lifecycle row | Behaviour pinned | Landed | Pinning suite(s) |
+| --- | --- | --- | --- |
+| Find-or-create | Reuse a case-insensitive `player` match; **skip obfuscated** channels; otherwise create | Stage 4b (`af07063`), hidden-channel skip this branch | `jda:JdaPlayerChannelServiceTest` ("existing in any case → reuse", "no player channel → create", "only an obfuscated player channel → create a visible one", "obfuscated and a visible → reuse the visible one") |
+| Creation overwrite | Exact `@everyone` overwrite: allow `VIEW_CHANNEL` + `MESSAGE_HISTORY`, deny `MESSAGE_SEND`, applied atomically on create | Stage 4b (`af07063`) | `jda:JdaPlayerChannelServiceTest` ("create with the exact everyone overwrite") |
+| Backlog clear | Unbounded history clear; 90-id bulk chunks; per-message fallback on a failed bulk; lone remainder never hits the bulk endpoint; unchanged page stops the loop | Stage 4b (`af07063`), single-message crash fix `9e60d4f` | `jda:JdaPlayerChannelServiceTest` (100/90+10, bulk fallback, lone remainder, one-message, >5 pages, chunk-level fallback) |
+| Embed ensure (`/player`) | Only `/player` creates the embed; `Created`/`Reused` status keys carry the channel id | Stage 4b (`2d8c6b8`) | `commands:PlayerMessageCoordinatorTest` (idle, active track, reused channel) |
+| Edit-only afterwards | A track start never posts a second embed; later queue/stop events edit the tracked message | Stage 4b (`2d8c6b8`) | `commands:PlayerMessageCoordinatorTest` (fresh guild announces only, existing embed edits, later events edit, stopped → empty state) |
+| Leave timer | 10 s idle timer re-checks the snapshot before leaving; cancelled by queue/start/stop/play; installed before start | Stage 4b (`2d8c6b8`), PR #124 head | `commands:PlayerMessageCoordinatorTest` (leave once, stay on active track, cancel cases, install race), `jda:JdaPlayerRuntimeTest` (expiry ⇒ stop + disconnect) |
+| Playlist announcement | `found_track_list` sent, then edited into the added-songs text | Stage 4b (`af07063`) | `commands:PlayerMessageCoordinatorTest` |
+| Fallbacks | `Failed`/thrown setup ⇒ localized `player_channel_creation_failed` embed posted in the invoking channel; announce/edit failures are logged and never crash the runtime | Stage 4b (`2d8c6b8`), hidden-channel hardening this branch | `commands:PlayerMessageCoordinatorTest` ("cannot be created → fall back", "port throws → fall back", cancelled embed update keeps ids) |
+
+##### Localization
+
+| Row | Verified evidence | Gap / limitation |
+| --- | --- | --- |
+| en-US + es-ES key parity | `core/lang.yml` and `core/lang_es-ES.yml` hold **identical key sets** (131 lines each; key-set diff empty, checked 2026-11-19). Cross-file equality is now pinned by `LocalizationCatalogTest` ("the two shipped catalogs → exactly the same key set"), and per-key presence by `LocalizationCatalogTest`, `PlayerLocalizationTest` (≥70 player keys) and `RadioLocalizationTest` (exactly 22 radio keys) | None remaining; the equality test was added by the Test Agent in this working tree |
+| Resolution order: persisted guild locale → guild default → `en-US` | `GuildLocalizationServiceTest`, `PlayerLocalizationTest` (persisted beats guild default; guild default; `en-US` fallback; per-key fallback), `RadioLocalizationTest` | None for the resolution itself |
+| `/locale` writes | Persist before confirming, `reset` removes the override, non-canonical case rejected, unknown locale rejected, guild default never overwritten by the user locale | `commands:LocaleCommandHandlerTest` |
+| Restart persistence (`./data/guild_locales.json`) | `LocalJsonLocaleRepositoryTest` ("locale set → repository recreated → locale persists", legacy JSON shape, decimal keys, concurrent writes); `LocaleRestartPersistenceTest` (persisted → recreated repository → Spanish resolution; missing locale → guild default; other guild → `en-US`); `JdaBootstrap` constructs `LocalJsonLocaleRepository(LocaleJson.json)`, the shared Kord/JDA file | **Limitation:** no test crosses the JDA **bootstrap** itself ("persist → restart the JDA runtime → applied per guild"). Repository-level and neutral restart-resolution tests are the current pins; recorded for the owner, not asserted as end-to-end bootstrap coverage |
+
+##### Hidden / obfuscated channel handling — this branch
+
+| Row | Change | Pin |
+| --- | --- | --- |
+| `JdaPlayerChannelPort` (find-or-create `#player`) | Added a specific `MissingAccessException` catch around `service.setUp` (covers the `ObfuscatedChannelException` subtype, verified in JDA 6.7.0) → class-only log (`TextChannel` + exception `simpleName`, **no guild name/ids/secrets**) → `PlayerChannelSetup.Failed`; the coordinator's existing fallback posts the localized `player_channel_creation_failed` embed in the invoking channel | `jda:JdaPlayerChannelPortTest` ("obfuscated player channel → Failed without ids", "missing access failure → Failed without ids"); fallback itself pinned by `commands:PlayerMessageCoordinatorTest` |
+| `JdaPlayerChannelService` (send / create / reuse) | Send path extracted with a specific hidden-channel catch returning `null`; create path gets the same catch; `findOrCreate` skips obfuscated `textChannels` so an invisible `#player` is not "reused". `ReturnCount` stays within budget | `jda:JdaPlayerChannelServiceTest` ("hidden channel on send → null", "hidden channel creation failure → null", "only an obfuscated player channel → create a visible one", "obfuscated and a visible → reuse the visible one") |
+| `JdaPlayerMessagePort` (announce / fallback / edit) | `requireTextChannel` fails fast with `ObfuscatedChannelException` on an obfuscated cached channel (class-only log) instead of issuing REST; the coordinator's `announce`, `fallbackToCommandChannel`, `onPlaylistQueued` and `updatePlayerView` already contain every failure, so the runtime degrades with a logged warning | `jda:JdaPlayerMessagePortTest` ("obfuscated channel → fail fast before any REST call"); generic containment pinned by `commands:PlayerMessageCoordinatorTest` |
+| Component interactions on hidden channels | `event.message.embeds` (and the context mapping) already run **inside** the contained coroutine try; unknown ids are rejected before any containment is needed | `jda:JdaComponentRouterTest` ("message without an embed", "embeds cannot be read", "throwing handler") — **no gap found**, no production change |
+| Autocomplete interactions on hidden channels | The context mapping runs inside the contained try; the pre-try routing reads (`event.name`, `event.focusedOption.name`) do not touch channel state | `jda:JdaAutocompleteRouterTest` (throwing handler contained, cancellation propagates) — **no gap found** |
+| Test-fixture delta (not a production gap) — **closed** | The two new `isObfuscated` reads were unstubbed in the existing **strict** MockK fixtures; the Test Agent added `every { isObfuscated } returns false` plus the obfuscated cases in this working tree, and the three suites now pass (7 + 14 + 12 tests) | `jda:JdaPlayerChannelPortTest`, `jda:JdaPlayerChannelServiceTest`, `jda:JdaPlayerMessagePortTest` |
+
+##### Routing-fix discrimination (mutation checks, scratch worktree only)
+
+A detached `git worktree` at base `e387a75` was used, the mutation was applied there, the named suite was
+run, and the worktree was removed afterwards (`git worktree prune`); the audit branch's working tree was
+never mutated and nothing was committed. Baseline runs of the same suites passed before each mutation.
+These rows are **scratch-verified only**: the mutated tree no longer exists, so they are **not
+re-runnable in review**; the owner may re-run them by re-applying the same mutation to a fresh worktree.
+
+| Fix | Mutation applied in the scratch copy | Regression suite | Observed result |
+| --- | --- | --- | --- |
+| 2 — `SOUNDS_PREVIOUS` | `SoundPaginationHandler.forward` forced to `true` (pre-fix "always forward") | `SoundPaginationHandlerTest` | **FAILED**: 2 of 11 — "previous click on the second page → first page" and "first-page previous click → clamp"; forward/next cases still passed |
+| 1 — `RADIO_SEARCH_NAME_NEXT` base-id split | `ComponentId.fromCustomId` compares the **raw** id (drop `customId.substringBefore("::")`) | `JdaComponentRouterTest` + `JdaPlayerComponentRoutingTest` | **FAILED**: 3 of 15 — "payload suffixed component id → route base id", "payload queue arrow → route unchanged", "queue arrow click → edit the page"; a payload-bearing id no longer routes |
+| 3 — paired `RADIO_COUNTRYCODES_NEXT`/`PREVIOUS` | `RadioCountryCodesPaginationHandler.forward` forced to `true` | `RadioCountryCodesPaginationHandlerTest` | **FAILED**: 2 of 10 — last-page "previous" and first-page previous clamp |
+| 3b — direction safety on the same pager family | `RadioSearchPaginationHandler.forward` forced to `false` (always back) | `RadioSearchPaginationHandlerTest` | **FAILED**: 5 of 9 — both next-page cases, separator query, failed page, ack-before-edit |
+
+**Audit conclusion (for the owner, not an acceptance claim).** Every command family, all 18 component ids,
+the `#player` lifecycle, the localization resolution and the hidden-channel paths have a cited landing
+stage and a cited pinning suite. Two evidence limits remain, both **test-only** and recorded for the
+owner: (a) no test crosses the **JDA bootstrap** for restart persistence, even though the repository and
+neutral restart-resolution levels are pinned; (b) the JDA-seam click routing is tested for the player,
+queue and radio country-code arrows, while the `SOUNDS_*`, `RADIO_LIST_*` and `RADIO_SEARCH_*` arrows are
+pinned at their neutral handlers plus the 18-id distinctness check that includes them — the bootstrap
+wiring itself is not click-tested for those pairs. Building the audit required **no further production
+change** beyond the hidden-channel hardening in this branch. **Phase 3 remains OPEN; no Phase 4
+acceptance, no Phase 3 PASS and no provider-parity claim is made here.**
+
 ### Phase 5 — Test and staging gate (full isolated JDA implementation)
 
 **Ownership:** Phase 5 tests and stages the **full isolated JDA implementation** while the Kord

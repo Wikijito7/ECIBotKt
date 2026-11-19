@@ -9,7 +9,9 @@ import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Message
+import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
+import net.dv8tion.jda.api.exceptions.ObfuscatedChannelException
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction
@@ -27,7 +29,7 @@ class JdaPlayerMessagePortTest {
     @Test
     fun `Given a text channel When sending Then use the exact channel and content and return the message id`() = runTest {
         val jda = mockk<JDA>()
-        val channel = mockk<TextChannel>()
+        val channel = textChannel()
         val action = mockk<MessageCreateAction>()
         val message = mockk<Message>()
         every { jda.getTextChannelById(42L) } returns channel
@@ -48,7 +50,7 @@ class JdaPlayerMessagePortTest {
     @Test
     fun `Given an existing message When editing Then use the exact channel message and content`() = runTest {
         val jda = mockk<JDA>()
-        val channel = mockk<TextChannel>()
+        val channel = textChannel()
         val action = mockk<MessageEditAction>()
         every { jda.getTextChannelById(42L) } returns channel
         every { channel.editMessageById(900L, "Finished") } returns action
@@ -66,7 +68,7 @@ class JdaPlayerMessagePortTest {
     fun `Given a text-only view When content is null or blank Then fail without REST and non-blank text still round-trips`() =
         runTest {
             val jda = mockk<JDA>()
-            val channel = mockk<TextChannel>()
+            val channel = textChannel()
             val createAction = mockk<MessageCreateAction>()
             val editAction = mockk<MessageEditAction>()
             val message = mockk<Message>()
@@ -109,7 +111,7 @@ class JdaPlayerMessagePortTest {
     @Test
     fun `Given an existing message When deleting Then use the exact channel and message`() = runTest {
         val jda = mockk<JDA>()
-        val channel = mockk<TextChannel>()
+        val channel = textChannel()
         val action = mockk<AuditableRestAction<Void>>()
         every { jda.getTextChannelById(42L) } returns channel
         every { channel.deleteMessageById(900L) } returns action
@@ -126,7 +128,7 @@ class JdaPlayerMessagePortTest {
     @Test
     fun `Given a REST failure When sending Then propagate the original error`() = runTest {
         val jda = mockk<JDA>()
-        val channel = mockk<TextChannel>()
+        val channel = textChannel()
         val action = mockk<MessageCreateAction>()
         val expected = IllegalStateException("rest failed")
         every { jda.getTextChannelById(42L) } returns channel
@@ -146,7 +148,7 @@ class JdaPlayerMessagePortTest {
     @Test
     fun `Given a REST failure When editing Then propagate the original error`() = runTest {
         val jda = mockk<JDA>()
-        val channel = mockk<TextChannel>()
+        val channel = textChannel()
         val action = mockk<MessageEditAction>()
         val expected = IllegalArgumentException("edit failed")
         every { jda.getTextChannelById(42L) } returns channel
@@ -166,7 +168,7 @@ class JdaPlayerMessagePortTest {
     @Test
     fun `Given a REST failure When deleting Then propagate the original error`() = runTest {
         val jda = mockk<JDA>()
-        val channel = mockk<TextChannel>()
+        val channel = textChannel()
         val action = mockk<AuditableRestAction<Void>>()
         val expected = IllegalStateException("delete failed")
         every { jda.getTextChannelById(42L) } returns channel
@@ -201,6 +203,33 @@ class JdaPlayerMessagePortTest {
     }
 
     @Test
+    fun `Given an obfuscated channel When any operation runs Then fail fast before any REST call`() = runTest {
+        val jda = mockk<JDA>()
+        val channel = mockk<TextChannel> {
+            every { isObfuscated } returns true
+            every { guild } returns mockk { every { idLong } returns GUILD_ID }
+            every { idLong } returns CHANNEL_ID
+            every { type } returns ChannelType.TEXT
+        }
+        every { jda.getTextChannelById(42L) } returns channel
+        val port = JdaPlayerMessagePort(jda)
+
+        val send = runCatching { port.send(channelId, "text") }.exceptionOrNull()
+        val edit = runCatching { port.edit(channelId, messageId, "text") }.exceptionOrNull()
+        val delete = runCatching { port.delete(channelId, messageId) }.exceptionOrNull()
+
+        // Then: every operation reports the hidden channel without echoing its id
+        listOf(send, edit, delete).forEach { error ->
+            assertTrue(error is ObfuscatedChannelException)
+            assertFalse(error?.message.orEmpty().contains(CHANNEL_ID.toString()))
+        }
+        verify(exactly = 3) { jda.getTextChannelById(42L) }
+        verify(exactly = 0) { channel.sendMessage(any<String>()) }
+        verify(exactly = 0) { channel.editMessageById(any<Long>(), any<String>()) }
+        verify(exactly = 0) { channel.deleteMessageById(any<Long>()) }
+    }
+
+    @Test
     fun `Given an id above the signed JDA range When sending Then fail before touching the JDA cache`() = runTest {
         val jda = mockk<JDA>()
         val port = JdaPlayerMessagePort(jda)
@@ -220,7 +249,7 @@ class JdaPlayerMessagePortTest {
     @Test
     fun `Given an id above the signed JDA range When editing Then fail before issuing the REST call`() = runTest {
         val jda = mockk<JDA>()
-        val channel = mockk<TextChannel>()
+        val channel = textChannel()
         every { jda.getTextChannelById(42L) } returns channel
         val port = JdaPlayerMessagePort(jda)
         val oversizedMessageId = PlayerMessageId(ULong.MAX_VALUE)
@@ -239,7 +268,7 @@ class JdaPlayerMessagePortTest {
     @Test
     fun `Given an id above the signed JDA range When deleting Then fail before issuing the REST call`() = runTest {
         val jda = mockk<JDA>()
-        val channel = mockk<TextChannel>()
+        val channel = textChannel()
         every { jda.getTextChannelById(42L) } returns channel
         val port = JdaPlayerMessagePort(jda)
         val oversizedMessageId = PlayerMessageId(ULong.MAX_VALUE)
@@ -253,5 +282,15 @@ class JdaPlayerMessagePortTest {
         assertEquals("Message id does not fit in JDA's signed 64-bit id range", error?.message)
         assertFalse(error?.message.orEmpty().contains(oversizedMessageId.value.toString()))
         verify(exactly = 0) { channel.deleteMessageById(any<Long>()) }
+    }
+
+    /** Every cached text channel fixture must resolve `isObfuscated`, which the port now reads. */
+    private fun textChannel(): TextChannel = mockk<TextChannel> {
+        every { isObfuscated } returns false
+    }
+
+    private companion object {
+        private const val GUILD_ID = 1L
+        private const val CHANNEL_ID = 42L
     }
 }

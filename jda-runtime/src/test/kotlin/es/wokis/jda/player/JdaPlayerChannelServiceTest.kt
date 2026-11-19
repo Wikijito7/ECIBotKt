@@ -13,7 +13,9 @@ import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageHistory
 import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
+import net.dv8tion.jda.api.exceptions.MissingAccessException
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction
 import net.dv8tion.jda.api.requests.restaction.ChannelAction
@@ -28,6 +30,16 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class JdaPlayerChannelServiceTest {
+
+    /** The `MissingAccessException` family reads these members when it is constructed. */
+    private val missingAccess: MissingAccessException by lazy {
+        val hiddenChannel = mockk<TextChannel> {
+            every { guild } returns mockk { every { idLong } returns 1L }
+            every { idLong } returns 42L
+            every { type } returns ChannelType.TEXT
+        }
+        MissingAccessException(hiddenChannel, Permission.VIEW_CHANNEL)
+    }
 
     @Test
     fun `Given an existing player channel in any case When setup runs Then reuse it without creating`() = runTest {
@@ -179,6 +191,74 @@ class JdaPlayerChannelServiceTest {
     }
 
     @Test
+    fun `Given a hidden channel on send When setup runs Then return null without crashing`() = runTest {
+        val channel = ChannelFixture()
+        channel.historyPages(emptyList())
+        channel.failSend(missingAccess)
+
+        val result = JdaPlayerChannelService().setUp(guildWith(channel), playerView())
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `Given a hidden channel creation failure When setup runs Then return null without crashing`() = runTest {
+        val guild = mockk<Guild> {
+            every { textChannels } returns emptyList()
+            every { name } returns "Jungle"
+            every { createTextChannel("player") } throws missingAccess
+        }
+
+        val result = JdaPlayerChannelService().setUp(guild, playerView())
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `Given only an obfuscated player channel When setup runs Then create a visible one instead`() = runTest {
+        val hidden = ChannelFixture(id = 42L, name = "PLAYER", obfuscated = true)
+        val created = ChannelFixture(id = 77L, name = "player")
+        created.historyPages(emptyList())
+        val role = mockk<Role>()
+        val createAction = mockk<ChannelAction<TextChannel>>()
+        every {
+            createAction.addPermissionOverride(role, any<Collection<Permission>>(), any<Collection<Permission>>())
+        } returns createAction
+        every { createAction.queue(any(), any()) } answers {
+            firstArg<Consumer<TextChannel>>().accept(created.channel)
+        }
+        val guild = mockk<Guild> {
+            every { textChannels } returns listOf(hidden.channel)
+            every { publicRole } returns role
+            every { name } returns "Jungle"
+            every { createTextChannel("player") } returns createAction
+        }
+
+        val result = JdaPlayerChannelService().setUp(guild, playerView())
+
+        assertTrue(requireNotNull(result).isNewChannel)
+        assertEquals(ChannelId(77uL), result.channelId)
+        verify(exactly = 1) { guild.createTextChannel("player") }
+    }
+
+    @Test
+    fun `Given an obfuscated and a visible player channel When setup runs Then reuse the visible one`() = runTest {
+        val hidden = ChannelFixture(id = 42L, name = "player", obfuscated = true)
+        val visible = ChannelFixture(id = 55L, name = "Player")
+        visible.historyPages(emptyList())
+        val guild = mockk<Guild> {
+            every { textChannels } returns listOf(hidden.channel, visible.channel)
+            every { name } returns "Jungle"
+        }
+
+        val result = JdaPlayerChannelService().setUp(guild, playerView())
+
+        assertFalse(requireNotNull(result).isNewChannel)
+        assertEquals(ChannelId(55uL), result.channelId)
+        verify(exactly = 0) { guild.createTextChannel("player") }
+    }
+
+    @Test
     fun `Given a backlog larger than five pages When cleared Then keep clearing until a short page`() = runTest {
         val channel = ChannelFixture()
         val fullPages = (0 until 6).map { page ->
@@ -248,6 +328,7 @@ class JdaPlayerChannelServiceTest {
     private class ChannelFixture(
         private val id: Long = 42L,
         private val name: String = "player",
+        private val obfuscated: Boolean = false,
     ) {
         private val history: MessageHistory = mockk()
         private val sendAction: MessageCreateAction = mockk()
@@ -258,6 +339,7 @@ class JdaPlayerChannelServiceTest {
         val channel: TextChannel = mockk {
             every { idLong } returns this@ChannelFixture.id
             every { getName() } returns this@ChannelFixture.name
+            every { isObfuscated } returns this@ChannelFixture.obfuscated
             every { history } returns this@ChannelFixture.history
             every { sendMessage(any<MessageCreateData>()) } returns sendAction
         }

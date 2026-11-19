@@ -8,6 +8,8 @@ import es.wokis.player.PlayerMessageId
 import es.wokis.player.PlayerMessagePort
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
+import net.dv8tion.jda.api.exceptions.ObfuscatedChannelException
+import org.slf4j.LoggerFactory
 
 /** [PlayerMessagePort] backed by JDA; plain text keeps the single-content REST path. */
 internal class JdaPlayerMessagePort(
@@ -39,14 +41,27 @@ internal class JdaPlayerMessagePort(
             .awaitRestActionCompletion()
     }
 
-    private fun requireTextChannel(channelId: ChannelId): TextChannel =
-        jda.getTextChannelById(channelId.toJdaId())
+    private fun requireTextChannel(channelId: ChannelId): TextChannel {
+        val channel = jda.getTextChannelById(channelId.toJdaId())
             ?: error("The requested player text channel is not available to the bot")
+        if (channel.isObfuscated) {
+            LOG.warn(
+                "A player text channel is hidden from the bot ({})",
+                ObfuscatedChannelException::class.simpleName,
+            )
+            throw ObfuscatedChannelException(channel)
+        }
+        return channel
+    }
 
     private fun requireText(view: MessageView): String =
         requireNotNull(view.content?.takeIf(String::isNotBlank)) {
             "A text-only player message requires non-blank content"
         }
+
+    private companion object {
+        private val LOG = LoggerFactory.getLogger(JdaPlayerMessagePort::class.java)
+    }
 }
 
 private fun ChannelId.toJdaId(): Long = value.toJdaLong("Channel id")

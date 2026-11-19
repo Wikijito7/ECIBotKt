@@ -7,10 +7,16 @@ import es.wokis.message.MessageView
 import es.wokis.player.PlayerMessageId
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.channel.ChannelType
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
+import net.dv8tion.jda.api.exceptions.MissingAccessException
+import net.dv8tion.jda.api.exceptions.ObfuscatedChannelException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFailsWith
@@ -23,10 +29,19 @@ import kotlin.test.assertFailsWith
  */
 class JdaPlayerChannelPortTest {
 
-    private val guild: Guild = mockk()
+    private val guild: Guild = mockk {
+        every { name } returns "Jungle"
+    }
     private val service: JdaPlayerChannelService = mockk()
     private val port: PlayerChannelPort = JdaPlayerChannelPort(guild, service)
     private val view = MessageView(content = "player")
+
+    /** The obfuscated/missing-access exceptions read these members when they are constructed. */
+    private val hiddenChannel: TextChannel = mockk {
+        every { guild } returns mockk { every { idLong } returns HIDDEN_GUILD_ID }
+        every { idLong } returns HIDDEN_CHANNEL_ID
+        every { type } returns ChannelType.TEXT
+    }
 
     @Test
     fun `Given a freshly created channel When the view is set up Then report Created with both ids`() = runTest {
@@ -71,6 +86,26 @@ class JdaPlayerChannelPortTest {
         assertFailsWith<CancellationException> { port.setUp(view) }
     }
 
+    @Test
+    fun `Given an obfuscated player channel When the view is set up Then report Failed without ids`() = runTest {
+        coEvery { service.setUp(guild, view) } throws ObfuscatedChannelException(hiddenChannel)
+
+        val setup = port.setUp(view)
+
+        assertEquals(PlayerChannelSetup.Failed, setup)
+        coVerify(exactly = 1) { service.setUp(guild, view) }
+    }
+
+    @Test
+    fun `Given a missing access failure When the view is set up Then report Failed without ids`() = runTest {
+        coEvery { service.setUp(guild, view) } throws MissingAccessException(hiddenChannel, Permission.VIEW_CHANNEL)
+
+        val setup = port.setUp(view)
+
+        assertEquals(PlayerChannelSetup.Failed, setup)
+        coVerify(exactly = 1) { service.setUp(guild, view) }
+    }
+
     private fun result(isNewChannel: Boolean): JdaPlayerChannelResult = JdaPlayerChannelResult(
         channelId = channelId,
         messageId = messageId,
@@ -80,6 +115,8 @@ class JdaPlayerChannelPortTest {
     private companion object {
         private const val PLAYER_CHANNEL_ID = 77L
         private const val PLAYER_MESSAGE_ID = 900L
+        private const val HIDDEN_GUILD_ID = 42L
+        private const val HIDDEN_CHANNEL_ID = 55L
 
         private val channelId = ChannelId(PLAYER_CHANNEL_ID.toULong())
         private val messageId = PlayerMessageId(PLAYER_MESSAGE_ID.toULong())
