@@ -3,22 +3,33 @@ package es.wokis.jda.player
 import es.wokis.domain.model.ChannelId
 import es.wokis.message.MessageView
 import es.wokis.player.PlayerMessageId
+import es.wokis.player.PlayerMessagePermanentFailure
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
+import net.dv8tion.jda.api.exceptions.ErrorResponseException
+import net.dv8tion.jda.api.exceptions.MissingAccessException
 import net.dv8tion.jda.api.exceptions.ObfuscatedChannelException
+import net.dv8tion.jda.api.exceptions.RateLimitedException
+import net.dv8tion.jda.api.requests.ErrorResponse
+import net.dv8tion.jda.api.requests.Route
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.concurrent.TimeoutException
 import java.util.function.Consumer
 
 class JdaPlayerMessagePortTest {
@@ -166,6 +177,140 @@ class JdaPlayerMessagePortTest {
     }
 
     @Test
+    fun `Given an unknown message response When editing Then report a permanent failure with the original cause`() = runTest {
+        val jda = mockk<JDA>()
+        val channel = textChannel()
+        val action = mockk<MessageEditAction>()
+        val cause = mockk<ErrorResponseException>(relaxed = true) {
+            every { errorResponse } returns ErrorResponse.UNKNOWN_MESSAGE
+        }
+        every { jda.getTextChannelById(42L) } returns channel
+        every { channel.editMessageById(900L, "Finished") } returns action
+        every { action.queue(any(), any()) } answers {
+            secondArg<Consumer<Throwable>>().accept(cause)
+        }
+
+        val actual = runCatching {
+            JdaPlayerMessagePort(jda).edit(channelId, messageId, "Finished")
+        }.exceptionOrNull()
+
+        assertTrue(actual is PlayerMessagePermanentFailure)
+        assertSame(cause, actual?.cause)
+    }
+
+    @Test
+    fun `Given a real missing access failure When editing Then report a permanent failure`() = runTest {
+        val jda = mockk<JDA>()
+        val channel = textChannel()
+        val action = mockk<MessageEditAction>()
+        val cause = MissingAccessException(channel, Permission.MESSAGE_SEND)
+        every { jda.getTextChannelById(42L) } returns channel
+        every { channel.editMessageById(900L, "Finished") } returns action
+        every { action.queue(any(), any()) } answers {
+            secondArg<Consumer<Throwable>>().accept(cause)
+        }
+
+        val actual = runCatching {
+            JdaPlayerMessagePort(jda).edit(channelId, messageId, "Finished")
+        }.exceptionOrNull()
+
+        assertTrue(actual is PlayerMessagePermanentFailure)
+        assertSame(cause, actual?.cause)
+    }
+
+    @Test
+    fun `Given a missing permissions response When editing Then report a permanent failure`() = runTest {
+        val jda = mockk<JDA>()
+        val channel = textChannel()
+        val action = mockk<MessageEditAction>()
+        val cause = mockk<ErrorResponseException>(relaxed = true) {
+            every { errorResponse } returns ErrorResponse.MISSING_PERMISSIONS
+        }
+        every { jda.getTextChannelById(42L) } returns channel
+        every { channel.editMessageById(900L, "Finished") } returns action
+        every { action.queue(any(), any()) } answers {
+            secondArg<Consumer<Throwable>>().accept(cause)
+        }
+
+        val actual = runCatching {
+            JdaPlayerMessagePort(jda).edit(channelId, messageId, "Finished")
+        }.exceptionOrNull()
+
+        assertTrue(actual is PlayerMessagePermanentFailure)
+    }
+
+    @Test
+    fun `Given a timed out edit When editing Then propagate the original retryable error`() = runTest {
+        val jda = mockk<JDA>()
+        val channel = textChannel()
+        val action = mockk<MessageEditAction>()
+        val cause = TimeoutException("read timed out")
+        every { jda.getTextChannelById(42L) } returns channel
+        every { channel.editMessageById(900L, "Finished") } returns action
+        every { action.queue(any(), any()) } answers {
+            secondArg<Consumer<Throwable>>().accept(cause)
+        }
+
+        val actual = runCatching {
+            JdaPlayerMessagePort(jda).edit(channelId, messageId, "Finished")
+        }.exceptionOrNull()
+
+        assertTrue(actual is TimeoutException, "a timeout must keep its original type so the caller retries")
+        assertEquals(cause.message, actual?.message)
+        assertFalse(actual is PlayerMessagePermanentFailure)
+    }
+
+    @Test
+    fun `Given a real rate limited edit When editing Then propagate the RateLimitedException unwrapped`() = runTest {
+        val jda = mockk<JDA>()
+        val channel = textChannel()
+        val action = mockk<MessageEditAction>()
+        val route = Route.patch("channels/{channel_id}/messages/{message_id}")
+            .compile(CHANNEL_ID.toString(), MESSAGE_ID.toString())
+        val cause = RateLimitedException(route, RATE_LIMIT_RETRY_AFTER_MILLIS)
+        every { jda.getTextChannelById(42L) } returns channel
+        every { channel.editMessageById(900L, "Finished") } returns action
+        every { action.queue(any(), any()) } answers {
+            secondArg<Consumer<Throwable>>().accept(cause)
+        }
+
+        val actual = runCatching {
+            JdaPlayerMessagePort(jda).edit(channelId, messageId, "Finished")
+        }.exceptionOrNull()
+
+        // Then: the real JDA rate limit keeps its type and its retry-after so the caller backs off,
+        // and the permanent wrapper never re-wraps it because the same instance escapes.
+        assertTrue(actual is RateLimitedException, "a rate limit must keep its original type so the caller retries")
+        val rateLimited = actual as RateLimitedException
+        assertSame(cause, rateLimited)
+        assertEquals(RATE_LIMIT_RETRY_AFTER_MILLIS, rateLimited.retryAfter)
+    }
+
+    @Test
+    fun `Given a cancellation While editing Then rethrow the cancellation unchanged`() = runTest {
+        val jda = mockk<JDA>()
+        val channel = textChannel()
+        val action = mockk<MessageEditAction>()
+        val cause = CancellationException("coordinator cancelled")
+        every { jda.getTextChannelById(42L) } returns channel
+        every { channel.editMessageById(900L, "Finished") } returns action
+        every { action.queue(any(), any()) } answers {
+            secondArg<Consumer<Throwable>>().accept(cause)
+        }
+
+        val actual = runCatching {
+            JdaPlayerMessagePort(jda).edit(channelId, messageId, "Finished")
+        }.exceptionOrNull()
+
+        assertTrue(
+            actual is CancellationException,
+            "a cancellation must escape as itself, never as a permanent failure",
+        )
+        assertEquals(cause.message, actual?.message)
+        assertFalse(actual is PlayerMessagePermanentFailure)
+    }
+
+    @Test
     fun `Given a REST failure When deleting Then propagate the original error`() = runTest {
         val jda = mockk<JDA>()
         val channel = textChannel()
@@ -195,11 +340,37 @@ class JdaPlayerMessagePortTest {
         val edit = runCatching { port.edit(channelId, messageId, "text") }.exceptionOrNull()
         val delete = runCatching { port.delete(channelId, messageId) }.exceptionOrNull()
 
-        listOf(send, edit, delete).forEach { error ->
+        // Then: send and delete keep the retryable asymmetry; only an edit reports the permanent loss.
+        listOf(send, delete).forEach { error ->
             assertTrue(error is IllegalStateException)
-            assertTrue(error?.message.orEmpty().contains("not available"))
+            assertFalse(error is PlayerMessagePermanentFailure)
+            assertEquals(MISSING_CHANNEL_MESSAGE, error?.message)
         }
+        assertTrue(edit is PlayerMessagePermanentFailure)
+        assertEquals(MISSING_CHANNEL_MESSAGE, edit?.message)
+        assertNull(edit?.cause, "an unresolvable channel has no gateway cause to preserve")
         verify(exactly = 3) { jda.getTextChannelById(42L) }
+    }
+
+    @Test
+    fun `Given a deleted player channel When editing Then report a permanent failure the coordinator can drop`() = runTest {
+        val jda = mockk<JDA>()
+        every { jda.getTextChannelById(42L) } returns null
+        val port = JdaPlayerMessagePort(jda)
+
+        val actual = runCatching {
+            port.edit(channelId, messageId, "Finished")
+        }.exceptionOrNull()
+
+        // Then: the type is the coordinator-facing contract that makes /player rebuild the handle.
+        assertTrue(actual is PlayerMessagePermanentFailure)
+        assertEquals(MISSING_CHANNEL_MESSAGE, actual?.message)
+        assertNull(actual?.cause)
+        assertFalse(
+            actual?.message.orEmpty().contains(CHANNEL_ID.toString()),
+            "the permanent failure must stay value-free",
+        )
+        verify(exactly = 1) { jda.getTextChannelById(any<Long>()) }
     }
 
     @Test
@@ -218,11 +389,15 @@ class JdaPlayerMessagePortTest {
         val edit = runCatching { port.edit(channelId, messageId, "text") }.exceptionOrNull()
         val delete = runCatching { port.delete(channelId, messageId) }.exceptionOrNull()
 
-        // Then: every operation reports the hidden channel without echoing its id
-        listOf(send, edit, delete).forEach { error ->
+        // Then: send and delete report the hidden channel; an edit reports a permanent loss so the
+        // coordinator may drop the handle. No operation ever echoes the channel id.
+        listOf(send, delete).forEach { error ->
             assertTrue(error is ObfuscatedChannelException)
             assertFalse(error?.message.orEmpty().contains(CHANNEL_ID.toString()))
         }
+        assertTrue(edit is PlayerMessagePermanentFailure)
+        assertTrue(edit?.cause is ObfuscatedChannelException)
+        assertFalse(edit?.message.orEmpty().contains(CHANNEL_ID.toString()))
         verify(exactly = 3) { jda.getTextChannelById(42L) }
         verify(exactly = 0) { channel.sendMessage(any<String>()) }
         verify(exactly = 0) { channel.editMessageById(any<Long>(), any<String>()) }
@@ -284,13 +459,25 @@ class JdaPlayerMessagePortTest {
         verify(exactly = 0) { channel.deleteMessageById(any<Long>()) }
     }
 
-    /** Every cached text channel fixture must resolve `isObfuscated`, which the port now reads. */
+    /**
+     * Every cached text channel fixture must resolve `isObfuscated`, which the port now reads, plus
+     * the identity members a real JDA exception (for example [MissingAccessException]) reads when the
+     * test constructs it over this same channel.
+     */
     private fun textChannel(): TextChannel = mockk<TextChannel> {
         every { isObfuscated } returns false
+        every { guild } returns mockk { every { idLong } returns GUILD_ID }
+        every { idLong } returns CHANNEL_ID
+        every { type } returns ChannelType.TEXT
     }
 
     private companion object {
         private const val GUILD_ID = 1L
         private const val CHANNEL_ID = 42L
+        private const val MESSAGE_ID = 900L
+        private const val RATE_LIMIT_RETRY_AFTER_MILLIS = 1_500L
+
+        /** Value-free: an unresolvable channel id must never leak into a failure message. */
+        private const val MISSING_CHANNEL_MESSAGE = "The requested player text channel is not available to the bot"
     }
 }

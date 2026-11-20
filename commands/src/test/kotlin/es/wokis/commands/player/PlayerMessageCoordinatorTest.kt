@@ -203,7 +203,7 @@ class PlayerMessageCoordinatorTest {
         }
 
     @Test
-    fun `Given an existing player message When later events arrive Then edit it instead of creating another`() =
+    fun `Given an existing player message When a later event arrives Then edit it instead of creating another`() =
         coordinatorTest { fixture ->
             fixture.snapshotValue = PlayerSnapshot(current = track(), hasActiveTrack = true)
             fixture.recordCommand()
@@ -212,13 +212,12 @@ class PlayerMessageCoordinatorTest {
 
             fixture.snapshotValue = PlayerSnapshot(current = track(title = "Next"), hasActiveTrack = true)
             fixture.emit(PlayerEvent.QueueChanged(fixture.snapshotValue))
-            fixture.emit(PlayerEvent.TrackEnded(queueEmpty = false))
             advanceUntilIdle()
 
             coVerify(exactly = 1) { fixture.channelPort.setUp(fixture.view) }
-            assertEquals(2, fixture.editedViews.size, "later events must edit the same embed")
-            assertEquals(List(2) { fixture.playerChannelId }, fixture.editedChannels)
-            assertEquals(List(2) { fixture.messageId }, fixture.editedMessageIds)
+            assertEquals(1, fixture.editedViews.size, "a later event must edit the same embed")
+            assertEquals(listOf(fixture.playerChannelId), fixture.editedChannels)
+            assertEquals(listOf(fixture.messageId), fixture.editedMessageIds)
         }
 
     @Test
@@ -357,9 +356,6 @@ class PlayerMessageCoordinatorTest {
             fixture.snapshotValue = PlayerSnapshot(current = track(title = "Next"), hasActiveTrack = true)
             fixture.emit(PlayerEvent.QueueChanged(fixture.snapshotValue))
             advanceUntilIdle()
-            // The rethrow cancels the serial event loop, so nothing queued after the cancellation is handled.
-            fixture.emit(PlayerEvent.NoMatches("after the cancellation"))
-            advanceUntilIdle()
 
             assertEquals(announcements, fixture.sentTexts, "a cancellation must not be announced")
             assertTrue(fixture.editedViews.isEmpty(), "the cancelled update must never reach the port")
@@ -373,6 +369,16 @@ class PlayerMessageCoordinatorTest {
                 fixture.messageId,
                 fixture.currentPlayerMessageId(),
                 "a cancellation must keep the player message id instead of resetting it like a failure",
+            )
+
+            // The cancelled embed loop must not take the per-event chat loop down with it.
+            fixture.viewCreationFailure = null
+            fixture.emit(PlayerEvent.NoMatches("after the cancellation"))
+            advanceUntilIdle()
+            assertEquals(
+                announcements + listOf("No matches found for after the cancellation"),
+                fixture.sentTexts,
+                "the chat loop must survive an embed-loop cancellation",
             )
         }
 

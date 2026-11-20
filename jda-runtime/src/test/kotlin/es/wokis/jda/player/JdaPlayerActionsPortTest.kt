@@ -5,6 +5,7 @@ import es.wokis.commands.player.PlayerActor
 import es.wokis.commands.player.PlayerMessageCoordinator
 import es.wokis.commands.player.PlayerQueueSnapshot
 import es.wokis.commands.player.PlayerReconnectResult
+import es.wokis.commands.player.PlayerVoiceTarget
 import es.wokis.domain.locale.LocaleCode
 import es.wokis.domain.model.ChannelId
 import es.wokis.domain.model.GuildId
@@ -55,10 +56,22 @@ class JdaPlayerActionsPortTest {
         every { guild.getMemberById(USER_ID) } returns member
         every { member.voiceState } returns voiceState
         every { voiceState.channel } returns channelUnion
+        every { voiceChannel.idLong } returns VOICE_CHANNEL_ID
         every { voiceChannel.name } returns "General"
         every { runtime.engineFor(guild) } returns engine
         every { runtime.messagesFor(guild) } returns coordinator
     }
+
+    /** The content commands announce first, then join the caller's channel, then load. */
+    private fun givenContentCommandSeams() {
+        justRun { coordinator.recordCommand(any(), any(), any(), any()) }
+        coEvery { coordinator.connectVoice(any()) } returns Unit
+    }
+
+    private fun voiceTarget(): PlayerVoiceTarget = PlayerVoiceTarget(
+        channelId = ChannelId(VOICE_CHANNEL_ID.toULong()),
+        channelName = "General",
+    )
 
     private fun givenUnknownGuild() {
         every { jda.getGuildById(GUILD_ID) } returns null
@@ -199,9 +212,9 @@ class JdaPlayerActionsPortTest {
     }
 
     @Test
-    fun `Given a voice caller When next loads an input Then announce in the command channel and load to front`() = runTest {
+    fun `Given a voice caller When next loads an input Then announce connect and load to front in order`() = runTest {
         givenGuildAndVoice()
-        justRun { coordinator.recordCommand(any(), any(), any(), any()) }
+        givenContentCommandSeams()
         coEvery { engine.loadAndPlay(any(), any()) } returns Unit
 
         port.loadNext(actor(GUILD_LOCALE), "https://example.invalid/track")
@@ -213,6 +226,7 @@ class JdaPlayerActionsPortTest {
                 GUILD_LOCALE,
                 "General",
             )
+            coordinator.connectVoice(voiceTarget())
             engine.loadAndPlay("https://example.invalid/track", true)
         }
     }
@@ -230,7 +244,7 @@ class JdaPlayerActionsPortTest {
     @Test
     fun `Given a voice caller When a sound plays Then announce in the command channel before the custom-name load`() = runTest {
         givenGuildAndVoice()
-        justRun { coordinator.recordCommand(any(), any(), any(), any()) }
+        givenContentCommandSeams()
         coEvery { engine.loadAndPlayMultipleWithCustomName(any(), any()) } returns Unit
 
         port.playSound(actor(GUILD_LOCALE), "rain")
@@ -242,6 +256,7 @@ class JdaPlayerActionsPortTest {
                 GUILD_LOCALE,
                 "General",
             )
+            coordinator.connectVoice(voiceTarget())
             engine.loadAndPlayMultipleWithCustomName(listOf("./audio/rain.mp3"), "rain")
         }
     }
@@ -257,9 +272,9 @@ class JdaPlayerActionsPortTest {
     }
 
     @Test
-    fun `Given a voice caller When tts loads Then announce before the encoded Kokoro load`() = runTest {
+    fun `Given a voice caller When tts loads Then announce connect and the encoded Kokoro load in order`() = runTest {
         givenGuildAndVoice()
-        justRun { coordinator.recordCommand(any(), any(), any(), any()) }
+        givenContentCommandSeams()
         coEvery { engine.loadAndPlayTts(any()) } returns Unit
 
         port.loadTts(actor(GUILD_LOCALE), "hola mundo & adiós")
@@ -271,8 +286,47 @@ class JdaPlayerActionsPortTest {
                 GUILD_LOCALE,
                 "General",
             )
+            coordinator.connectVoice(voiceTarget())
             engine.loadAndPlayTts("kokoro://?text=hola%20mundo%20%26%20adi%C3%B3s")
         }
+    }
+
+    @Test
+    fun `Given a voice caller When a radio plays Then announce connect and the stream load in order`() = runTest {
+        givenGuildAndVoice()
+        givenContentCommandSeams()
+        coEvery { engine.playRadio(any(), any(), any()) } returns Unit
+
+        port.playRadio(
+            actor(GUILD_LOCALE),
+            radioName = "Jungle FM",
+            streamUrl = "https://radio.example/live",
+            faviconUrl = "https://radio.example/icon.png",
+        )
+
+        coVerifyOrder {
+            coordinator.recordCommand(
+                ChannelId(CHANNEL_ID.toULong()),
+                GuildId(GUILD_ID.toULong()),
+                GUILD_LOCALE,
+                "General",
+            )
+            coordinator.connectVoice(voiceTarget())
+            engine.playRadio("Jungle FM", "https://radio.example/live", "https://radio.example/icon.png")
+        }
+    }
+
+    @Test
+    fun `Given a caller outside voice When a content command runs Then skip the connect seam and still load`() = runTest {
+        givenGuildAndVoice()
+        every { voiceState.channel } returns null
+        givenContentCommandSeams()
+        coEvery { engine.loadAndPlayMultipleWithCustomName(any(), any()) } returns Unit
+
+        port.playSound(actor(), "rain")
+
+        coVerify(exactly = 0) { coordinator.connectVoice(any()) }
+        coVerify(exactly = 1) { engine.loadAndPlayMultipleWithCustomName(listOf("./audio/rain.mp3"), "rain") }
     }
 
     @Test
@@ -388,6 +442,7 @@ class JdaPlayerActionsPortTest {
         const val GUILD_ID = 42L
         const val USER_ID = 44L
         const val CHANNEL_ID = 43L
+        const val VOICE_CHANNEL_ID = 45L
         val GUILD_LOCALE = LocaleCode("es-ES")
     }
 }

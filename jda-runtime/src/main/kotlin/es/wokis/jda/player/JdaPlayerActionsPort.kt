@@ -6,6 +6,8 @@ import es.wokis.commands.player.PlayerActionsPort
 import es.wokis.commands.player.PlayerActor
 import es.wokis.commands.player.PlayerQueueSnapshot
 import es.wokis.commands.player.PlayerReconnectResult
+import es.wokis.commands.player.PlayerVoiceTarget
+import es.wokis.domain.model.ChannelId
 import es.wokis.jda.command.toJdaId
 import es.wokis.player.engine.PlayerEngine
 import kotlinx.coroutines.CancellationException
@@ -27,7 +29,7 @@ internal class JdaPlayerActionsPort(
 ) : PlayerActionsPort, AudioContentActionsPort {
 
     override suspend fun isVoiceAvailable(actor: PlayerActor): Boolean =
-        guildFor(actor)?.let { guild -> callerVoiceChannel(guild, actor) != null } == true
+        guildFor(actor)?.let { guild -> guild.callerVoiceChannel(actor) != null } == true
 
     override suspend fun isGuildAvailable(actor: PlayerActor): Boolean = guildFor(actor) != null
 
@@ -59,12 +61,14 @@ internal class JdaPlayerActionsPort(
     override suspend fun loadNext(actor: PlayerActor, input: String) {
         val guild = guildFor(actor) ?: return
         recordCommand(actor, guild)
+        connectVoice(actor, guild)
         runtime.engineFor(guild).loadAndPlay(url = input, addToFront = true)
     }
 
     override suspend fun playSound(actor: PlayerActor, soundName: String) {
         val guild = guildFor(actor) ?: return
         recordCommand(actor, guild)
+        connectVoice(actor, guild)
         runtime.engineFor(guild).loadAndPlayMultipleWithCustomName(
             tracks = listOf(JdaSoundFiles.pathFor(soundName)),
             customName = soundName,
@@ -74,12 +78,14 @@ internal class JdaPlayerActionsPort(
     override suspend fun loadTts(actor: PlayerActor, text: String) {
         val guild = guildFor(actor) ?: return
         recordCommand(actor, guild)
+        connectVoice(actor, guild)
         runtime.engineFor(guild).loadAndPlayTts(kokoroTtsUri(text))
     }
 
     override suspend fun playRadio(actor: PlayerActor, radioName: String, streamUrl: String, faviconUrl: String) {
         val guild = guildFor(actor) ?: return
         recordCommand(actor, guild)
+        connectVoice(actor, guild)
         runtime.engineFor(guild).playRadio(
             radioName = radioName,
             radioUrl = streamUrl,
@@ -93,7 +99,7 @@ internal class JdaPlayerActionsPort(
 
     override suspend fun reconnect(actor: PlayerActor): PlayerReconnectResult {
         val guild = guildFor(actor) ?: return PlayerReconnectResult.NOT_CONNECTED
-        val channel = callerVoiceChannel(guild, actor) ?: return PlayerReconnectResult.NOT_CONNECTED
+        val channel = guild.callerVoiceChannel(actor) ?: return PlayerReconnectResult.NOT_CONNECTED
         return try {
             when (runtime.reconnect(guild, channel)) {
                 JdaPlayerReconnectResult.Reconnected -> PlayerReconnectResult.RECONNECTED
@@ -121,17 +127,35 @@ internal class JdaPlayerActionsPort(
             channelId = actor.channelId,
             guildId = actor.guildId,
             guildLocale = actor.guildLocale,
-            channelName = callerVoiceChannel(guild, actor)?.name,
+            channelName = guild.callerVoiceChannel(actor)?.name,
+        )
+    }
+
+    /**
+     * Kord parity for content commands: join the caller's channel before the load starts.
+     *
+     * The coordinator owns the connect, so a refusal or failure is announced as the same non-fatal
+     * warning `/play` emits and the load still runs. The adapter reuses an existing session for the
+     * same channel, so repeated loads are idempotent.
+     */
+    private suspend fun connectVoice(actor: PlayerActor, guild: Guild) {
+        val channel = guild.callerVoiceChannel(actor) ?: return
+        runtime.messagesFor(guild).connectVoice(
+            PlayerVoiceTarget(
+                channelId = ChannelId(channel.idLong.toULong()),
+                channelName = channel.name,
+            ),
         )
     }
 
     private suspend fun <T> withEngine(actor: PlayerActor, action: suspend (PlayerEngine) -> T): T? =
         guildFor(actor)?.let { guild -> action(runtime.engineFor(guild)) }
 
-    private fun callerVoiceChannel(guild: Guild, actor: PlayerActor): VoiceChannel? =
-        guild.getMemberById(actor.userId.toJdaId())?.voiceState?.channel as? VoiceChannel
-
     private companion object {
         private val LOG = LoggerFactory.getLogger(JdaPlayerActionsPort::class.java)
     }
 }
+
+/** The caller's voice channel in [this] guild, or null when the member is not in one. */
+private fun Guild.callerVoiceChannel(actor: PlayerActor): VoiceChannel? =
+    getMemberById(actor.userId.toJdaId())?.voiceState?.channel as? VoiceChannel

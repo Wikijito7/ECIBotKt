@@ -62,6 +62,12 @@ internal class PlayerMessageCoordinatorFixture(
     var channelSetup: PlayerChannelSetup =
         PlayerChannelSetup.Created(channelId = playerChannelId, messageId = messageId)
     var viewCreationFailure: Throwable? = null
+
+    /** Suspend hook run before each embed is built; a test can hold an edit in flight with it. */
+    var viewCreationGate: (suspend () -> Unit)? = null
+
+    /** Failure applied to the next embed edit; a test clears it to let the retry succeed. */
+    var viewEditFailure: Throwable? = null
     var leaveCalls = 0
         private set
 
@@ -87,6 +93,7 @@ internal class PlayerMessageCoordinatorFixture(
         coEvery { channelPort.setUp(any()) } answers { channelSetup }
         coEvery { voiceTargets.channelName(any()) } returns "General"
         coEvery { viewFactory.createPlayerView(any(), any(), any(), any()) } coAnswers {
+            viewCreationGate?.invoke()
             viewCreationFailure?.let { throw it }
             viewSnapshots += secondArg<PlayerSnapshot>()
             view
@@ -108,6 +115,7 @@ internal class PlayerMessageCoordinatorFixture(
             editedTexts += thirdArg<String>()
         }
         coEvery { messagePort.edit(any(), any(), any<MessageView>()) } coAnswers {
+            viewEditFailure?.let { failure -> throw failure }
             editedChannels += ChannelId(firstArg<Long>().toULong())
             editedMessageIds += PlayerMessageId(secondArg<Long>().toULong())
             editedViews += thirdArg<MessageView>()
