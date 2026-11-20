@@ -10,7 +10,7 @@ import es.wokis.domain.model.GuildId
 /**
  * Thin JDA adapter for one neutral player command.
  *
- * It publishes the guild-scoped definition, defers the public reply and delegates every decision to
+ * It feeds the definition to the registrar, defers the public reply and delegates every decision to
  * [delegate]; the reply itself is delivered by the delegate through the same responder.
  */
 internal abstract class JdaNeutralPlayerCommand(
