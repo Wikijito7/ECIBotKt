@@ -3268,7 +3268,12 @@ locally, no PR existed and no CI verdict existed; that is history, not the 2026-
   joined after startup receives its commands on the next restart; no `GuildJoinEvent` registration is
   installed. **This is the historical `23b75b4` state:** as of the dated **2026-11-18 Phase 4** update
   above, the two diagnostics were removed and **exactly three guild-scoped commands** (`/locale`,
-  `/play`, `/player`) remain.
+  `/play`, `/player`) remain. **Reconciliation fix (Phase 5,
+  `feature/114-phase5-command-reconciliation`):** the runtime no longer registers per guild — it
+  empties the command set of every joined guild at boot (and of every guild joining later), then
+  publishes the full set once with `jda.updateCommands().addCommands(...)`. Those historical
+  guild-scoped copies, including the residual `/jda-*` commands, are purged; only the global set
+  remains.
 - **Minimal command surface.** Two guild-only, administrator-only commands with one string option
   each: `/jda-play input:<string>` and `/jda-player action:<queue|pause|resume|skip|stop|disconnect|reconnect>`.
   The handlers defer the interaction before the load wait, never block a thread, and never collect

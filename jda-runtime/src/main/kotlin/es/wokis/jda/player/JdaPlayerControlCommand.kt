@@ -10,7 +10,7 @@ import es.wokis.commands.player.PlayerCommandDefinitions
 import es.wokis.domain.model.GuildId
 import es.wokis.localization.GuildLocalizationService
 
-/** Public, guild-scoped `/player`; an omitted action shows the player view (Kord parity). */
+/** Public `/player`, published in the global command set; an omitted action shows the player view (Kord parity). */
 internal class JdaPlayerControlCommand(
     private val controller: PlayerCommandController,
     private val localizationService: GuildLocalizationService,

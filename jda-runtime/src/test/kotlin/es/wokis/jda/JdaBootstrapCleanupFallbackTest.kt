@@ -28,7 +28,7 @@ import net.dv8tion.jda.api.entities.SelfUser
 import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.managers.AudioManager
-import net.dv8tion.jda.api.requests.RestAction
+import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -252,7 +252,8 @@ class JdaBootstrapCleanupFallbackTest {
         val audioManager: AudioManager = mockk()
         val runtime: Runtime = mockk()
         val selfUser: SelfUser = mockk()
-        private val upsertAction: RestAction<Command> = mockk()
+        private val guildPurgeAction: CommandListUpdateAction = mockk()
+        private val globalPublishAction: CommandListUpdateAction = mockk()
 
         lateinit var shutdownHook: Thread
             private set
@@ -275,10 +276,16 @@ class JdaBootstrapCleanupFallbackTest {
             every { selfUser.name } returns "Fixture Bot"
             every { jda.getGuildById(FIXTURE_GUILD_JDA_ID) } returns guild
             every { guild.idLong } returns FIXTURE_GUILD_JDA_ID
-            every { guild.upsertCommand(any<CommandData>()) } returns upsertAction
-            every { upsertAction.queue(any(), any()) } answers {
-                events += "command-registered"
-                firstArg<Consumer<Command?>>().accept(null)
+            every { guild.updateCommands() } returns guildPurgeAction
+            every { guildPurgeAction.queue(any(), any()) } answers {
+                events += "guild-purge"
+                firstArg<Consumer<List<Command>?>>().accept(emptyList())
+            }
+            every { jda.updateCommands() } returns globalPublishAction
+            every { globalPublishAction.addCommands(any<Collection<CommandData>>()) } returns globalPublishAction
+            every { globalPublishAction.queue(any(), any()) } answers {
+                events += "global-publish"
+                firstArg<Consumer<List<Command>?>>().accept(emptyList())
             }
             every { jda.awaitShutdown() } answers {
                 events += "await-shutdown"

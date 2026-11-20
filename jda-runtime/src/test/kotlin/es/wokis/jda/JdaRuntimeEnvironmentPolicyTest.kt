@@ -31,13 +31,33 @@ class JdaRuntimeEnvironmentPolicyTest {
 
     @Test
     fun `Given the JDA production sources When scanned Then registration stays a startup-only step`() {
-        val offenders = scanProduction(FORBIDDEN_EVENT_REGISTRATION_TOKENS)
+        val sources = productionSources()
 
-        // A guild joined while the runtime is live receives its commands on the next restart. An
-        // event-driven registration pass would need its own coverage.
+        // Command publication is startup-only: the per-guild upsert path is gone, and no listener
+        // may register commands while the runtime is live. The guild purger is the single allowed
+        // guild-lifecycle listener, and it only empties command sets.
+        val upsertOffenders = sources.flatMap { (path, source) ->
+            offendersIn(path, source, PER_GUILD_REGISTRATION_TOKENS)
+        }
         assertTrue(
-            offenders.isEmpty(),
-            "JDA production must not register commands from a guild event listener: $offenders",
+            upsertOffenders.isEmpty(),
+            "JDA production must not register commands per guild: $upsertOffenders",
+        )
+
+        val eventOffenders = sources
+            .filterNot { (path, _) -> isGuildPurger(path) }
+            .flatMap { (path, source) -> offendersIn(path, source, GUILD_EVENT_TOKENS) }
+        assertTrue(
+            eventOffenders.isEmpty(),
+            "only $GUILD_PURGER_FILE may react to guild lifecycle events: $eventOffenders",
+        )
+
+        val purgerSource = requireNotNull(sources.firstOrNull { (path, _) -> isGuildPurger(path) }) {
+            "missing the guild command purger source"
+        }.second
+        assertTrue(
+            !purgerSource.contains("upsertCommand"),
+            "the guild purger must empty the guild command set, never register into it",
         )
     }
 
@@ -46,22 +66,26 @@ class JdaRuntimeEnvironmentPolicyTest {
         assertEquals(Path.of("./data", "config.json"), DEFAULT_CONFIG_PATH)
     }
 
-    private fun scanProduction(forbiddenTokens: List<String>): List<String> {
+    private fun scanProduction(forbiddenTokens: List<String>): List<String> =
+        productionSources().flatMap { (path, source) -> offendersIn(path, source, forbiddenTokens) }
+
+    private fun productionSources(): List<Pair<String, String>> {
         val sourceRoot = jdaMainSourceRoot()
         return Files.walk(sourceRoot).use { paths ->
             paths
                 .filter { path -> Files.isRegularFile(path) && path.fileName.toString().endsWith(".kt") }
-                .flatMap { path -> offendersIn(sourceRoot, path, forbiddenTokens).stream() }
+                .map { path -> sourceRoot.relativize(path).toString() to Files.readString(path) }
                 .toList()
         }
     }
 
-    private fun offendersIn(sourceRoot: Path, path: Path, forbiddenTokens: List<String>): List<String> {
-        val source = Files.readString(path)
-        return forbiddenTokens
+    private fun offendersIn(relativePath: String, source: String, forbiddenTokens: List<String>): List<String> =
+        forbiddenTokens
             .filter { token -> source.contains(token) }
-            .map { token -> "${sourceRoot.relativize(path)} contains '$token'" }
-    }
+            .map { token -> "$relativePath contains '$token'" }
+
+    private fun isGuildPurger(relativePath: String): Boolean =
+        relativePath.substringAfterLast('/').substringAfterLast('\\') == GUILD_PURGER_FILE
 
     private fun jdaMainSourceRoot(): Path {
         var directory: Path? = Path.of("").toAbsolutePath().normalize()
@@ -91,11 +115,20 @@ class JdaRuntimeEnvironmentPolicyTest {
             "GUILD_ID_PROPERTY",
         )
 
-        private val FORBIDDEN_EVENT_REGISTRATION_TOKENS = listOf(
+        private val PER_GUILD_REGISTRATION_TOKENS = listOf(
+            "upsertCommand",
+        )
+
+        private val GUILD_EVENT_TOKENS = listOf(
             "GuildJoinEvent",
             "onGuildJoin",
             "GuildReadyEvent",
             "onGuildReady",
+            "GuildLeaveEvent",
+            "onGuildLeave",
+            "GuildAvailableEvent",
         )
+
+        private const val GUILD_PURGER_FILE = "JdaGuildCommandPurger.kt"
     }
 }

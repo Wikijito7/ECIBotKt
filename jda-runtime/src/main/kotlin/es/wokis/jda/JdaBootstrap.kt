@@ -36,10 +36,13 @@ import es.wokis.commands.tts.TtsCommandHandler
 import es.wokis.domain.locale.GetGuildLocaleUseCase
 import es.wokis.domain.locale.SetGuildLocaleUseCase
 import es.wokis.domain.model.GuildId
+import es.wokis.jda.command.CollectingCommandRegistrar
 import es.wokis.jda.command.JdaAutocompleteRouter
 import es.wokis.jda.command.JdaCommandRouter
 import es.wokis.jda.command.JdaComponentRouter
-import es.wokis.jda.command.JdaGuildCommandRegistrar
+import es.wokis.jda.command.JdaGuildCommandPurger
+import es.wokis.jda.command.purgeGuildCommands
+import es.wokis.jda.command.registerGlobalCommands
 import es.wokis.jda.player.JdaDisconnectCommand
 import es.wokis.jda.player.JdaNeutralPlayerCommand
 import es.wokis.jda.player.JdaNextCommand
@@ -75,6 +78,7 @@ import es.wokis.repositories.locale.LocaleJson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.Guild
 import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
 
@@ -83,12 +87,16 @@ private val LOG = LoggerFactory.getLogger("es.wokis.jda.JdaBootstrap")
 private const val EXIT_SUCCESS = 0
 private const val EXIT_FAILURE = 1
 
+/** Definitions are guild-agnostic; the collecting registrar ignores this placeholder id. */
+private val COMMAND_COLLECTION_GUILD_ID = GuildId(0u)
+
 /**
  * Isolated JDA bootstrap.
  *
- * DAVE preflight runs before the gateway client exists. Commands are upserted guild-scoped into
- * every guild joined at startup; nothing is registered globally. The token comes from the shared
- * `./data/config.json` and is never rendered.
+ * DAVE preflight runs before the gateway client exists. Commands are published once per boot as a
+ * single global bulk overwrite after every joined guild's command set is emptied; guilds joining
+ * later are purged on join. The token comes from the shared `./data/config.json` and is never
+ * rendered.
  *
  * Startup and cleanup failures produce a non-zero exit; every cleanup step is attempted even when
  * another fails.
@@ -146,6 +154,7 @@ internal fun runBootstrap(
         client.addEventListener(commands.router)
         client.addEventListener(commands.componentRouter)
         client.addEventListener(commands.autocompleteRouter)
+        client.addEventListener(JdaGuildCommandPurger())
 
         shutdownHook = Thread({ client.shutdown() }, "jda-shutdown").also {
             Runtime.getRuntime().addShutdownHook(it)
@@ -153,20 +162,19 @@ internal fun runBootstrap(
 
         client.awaitReady()
 
-        val joinedGuildIds = client.guilds.map { GuildId(it.idLong.toULong()) }
-        registerCommands(client, commands, joinedGuildIds)
+        // One snapshot for the warning, the purge and its count: guilds may join or leave mid-boot.
+        val joinedGuilds = client.guilds.toList()
+        registerCommands(client, commands, joinedGuilds)
 
-        if (joinedGuildIds.isEmpty()) {
+        if (joinedGuilds.isEmpty()) {
             LOG.warn(
-                "JDA ready as {} but the client is not a member of any guild; no command registered",
+                "JDA ready as {} but the client is not a member of any guild; only the global command set is published",
                 client.selfUser.name,
             )
         }
         LOG.info(
-            "JDA ready as {}; guild-scoped commands registered in {} guild(s); " +
-                "intents=[GUILD_VOICE_STATES]",
+            "JDA ready as {}; global command set published; intents=[GUILD_VOICE_STATES]",
             client.selfUser.name,
-            joinedGuildIds.size,
         )
 
         client.awaitShutdown()
@@ -187,25 +195,34 @@ internal fun runBootstrap(
     return finishBootstrap(primaryFailure, cleanupReport)
 }
 
-/** Upserts every guild-scoped command into each joined guild exactly once. */
+/**
+ * Reconciles command registration with the global-only layout: every guild of [joinedGuilds] (the
+ * single ready-time snapshot) has its command set emptied first, then the collected definitions are
+ * published as one global bulk overwrite.
+ *
+ * Purging before the global PUT is deliberate: a failure between the two steps leaves the guilds
+ * with no commands instead of a stale guild copy shadowing the not-yet-updated global set, and the
+ * non-zero exit makes the next boot retry.
+ */
 private fun registerCommands(
     client: JDA,
     commands: BootstrapCommands,
-    joinedGuildIds: List<GuildId>,
+    joinedGuilds: List<Guild>,
 ) {
     runBlocking {
-        val registrar = JdaGuildCommandRegistrar(client)
-        joinedGuildIds.forEach { guildId ->
-            registerLocaleCommand(registrar, guildId, commands.localizationService)
-            registerPlayerCommands(
-                registrar,
-                guildId,
-                commands.playCommand,
-                commands.controlCommand,
-                commands.familyCommands,
-            )
-            commands.radioCommand.registerIn(registrar, guildId)
-        }
+        val registrar = CollectingCommandRegistrar()
+        registerLocaleCommand(registrar, COMMAND_COLLECTION_GUILD_ID, commands.localizationService)
+        registerPlayerCommands(
+            registrar,
+            COMMAND_COLLECTION_GUILD_ID,
+            commands.playCommand,
+            commands.controlCommand,
+            commands.familyCommands,
+        )
+        commands.radioCommand.registerIn(registrar, COMMAND_COLLECTION_GUILD_ID)
+
+        purgeGuildCommands(joinedGuilds)
+        registerGlobalCommands(client, registrar.definitions())
     }
 }
 

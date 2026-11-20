@@ -11,7 +11,7 @@ import es.wokis.domain.model.GuildId
 import es.wokis.localization.GuildLocalizationService
 
 /**
- * Public, guild-scoped `/play`; the interaction is deferred before the provider load.
+ * Public `/play`, published in the global command set; the interaction is deferred before the provider load.
  */
 internal class JdaPlayCommand(
     private val controller: PlayerCommandController,
