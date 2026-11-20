@@ -35,3 +35,15 @@ interface PlayerMessagePort {
     /** Deletes an existing player message. */
     suspend fun delete(channelId: ChannelId, messageId: PlayerMessageId)
 }
+
+/**
+ * Signals that an edit can never succeed again for the tracked message: the message is gone or the
+ * bot no longer has access to its channel.
+ *
+ * Adapters translate their permanent gateway failures to this type so a caller can drop the stale
+ * handle and rebuild the player view on the next `/player`. Any other failure stays retryable.
+ *
+ * Catch-order contract: rethrow [kotlinx.coroutines.CancellationException] before handling this
+ * type, or a cancelled edit stops propagating and the coroutine keeps running as if it succeeded.
+ */
+class PlayerMessagePermanentFailure(message: String, cause: Throwable? = null) : Exception(message, cause)
