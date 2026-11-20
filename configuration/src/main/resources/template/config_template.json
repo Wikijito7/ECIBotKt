@@ -1,6 +1,7 @@
 {
   "discord_bot_token": "",
   "debug": false,
+  "log_file": "./data/logs/jda-runtime.log",
   "database": {
     "enabled": false,
     "username": "db_username",

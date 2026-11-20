@@ -94,13 +94,18 @@ private const val EXIT_FAILURE = 1
  * another fails.
  */
 fun main() {
+    // Config load/validation failures are console-only by construction: the tee is installed below, not yet.
     val exitCode = try {
-        runBootstrap(JdaRuntimeConfig.fromConfig(loadSharedConfig()))
+        val sharedConfig = loadSharedConfig()
+        val runtimeConfig = JdaRuntimeConfig.fromConfig(sharedConfig)
+        StagingLogTee.install(sharedConfig.logFile)
+        runBootstrap(runtimeConfig)
     } catch (configurationError: JdaRuntimeConfigException) {
         LOG.error("Invalid JDA runtime configuration: {}", configurationError.message)
         EXIT_FAILURE
     }
 
+    // main() is intentionally thin (real FS + exitProcess) with no unit-test seam; do not refactor this order.
     if (exitCode != EXIT_SUCCESS) {
         exitProcess(exitCode)
     }
